@@ -9,7 +9,7 @@
     margin: 0; padding: 0;
     width: 100%; height: 100%;
     overflow: hidden;
-    background: #cfe9ff;
+    background: #ffd6ec;
     touch-action: none;
     -webkit-user-select: none; user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -20,57 +20,41 @@
     width: 100%; height: 100%;
     touch-action: none;
   }
-  /* Aloitusruutu */
-  #startScreen {
-    position: fixed; inset: 0;
+  /* Karttaruutu: otsikko ei peitä labyrintin kosketuksia */
+  #hubChrome {
+    position: fixed; left: 0; right: 0; top: 0;
     display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: linear-gradient(#ffd6ec, #d6b3ff 55%, #b3e0ff);
+    align-items: center;
+    pointer-events: none;
     z-index: 10;
+    padding-top: 1.2vmin;
   }
-  #startScreen h1 {
+  #hubChrome h1 {
     color: #8a2be2;
-    font-size: 9vmin;
-    margin: 0 0 2vmin 0;
-    text-shadow: 0 3px 0 #fff;
+    font-size: 6.2vmin;
+    margin: 0;
+    text-shadow: 0 2px 0 #fff;
     text-align: center;
   }
-  #startScreen p {
+  #hubChrome p {
     color: #a0559d;
-    font-size: 4vmin;
-    margin: 0 0 6vmin 0;
+    font-size: 3.1vmin;
+    margin: 0.6vmin 0 0 0;
   }
-  #playBtn {
-    width: 26vmin; height: 26vmin;
-    border-radius: 50%;
-    border: 1.2vmin solid #fff;
-    background: radial-gradient(circle at 35% 30%, #ff9ed2, #ff4fa8);
-    color: #fff;
-    font-size: 11vmin;
-    box-shadow: 0 1.5vmin 0 #d13a8a;
-    cursor: pointer;
-    padding-left: 2vmin;
-  }
-  #playBtn:active { transform: translateY(1vmin); box-shadow: 0 0.5vmin 0 #d13a8a; }
-  #skipRow {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2vmin;
-    margin-top: 5vmin;
-    max-width: 90vmin;
-  }
-  #skipRow button {
-    border: 0.5vmin solid #fff;
+  #karttaBtn {
+    position: fixed;
+    top: 1.5vmin; left: 1.5vmin;
+    display: none;
+    border: 0.6vmin solid #fff;
     border-radius: 4vmin;
     background: rgba(255,255,255,0.7);
     color: #7a3cb8;
     font-size: 3.4vmin;
-    padding: 1.4vmin 3.2vmin;
+    padding: 1.2vmin 2.6vmin;
     cursor: pointer;
+    z-index: 5;
     font-family: inherit;
   }
-  #skipRow button:active { transform: translateY(0.4vmin); }
   /* Uudestaan-nappi */
   #replayBtn {
     position: fixed;
@@ -135,15 +119,11 @@
 <body>
 <canvas id="game"></canvas>
 
-<div id="startScreen">
+<div id="hubChrome">
   <h1>&#10024; Vernan taikapolku &#10024;</h1>
-  <p>Ker&auml;&auml; t&auml;hdet ja puput, ja ratsasta lopuksi linnaan!</p>
-  <button id="playBtn">&#9654;</button>
-  <div id="skipRow">
-    <button type="button" data-skip="start">Ensimm&auml;inen</button>
-    <button type="button" data-skip="garden">Toinen</button>
-  </div>
+  <p>K&auml;vele linnalle &mdash; tai poikkea seikkailuun!</p>
 </div>
+<button id="karttaBtn">Kartta</button>
 <button id="replayBtn">&#8635; Uudestaan</button>
 <button id="continueBtn">&#129419; Jatka</button>
 <button id="jumpBtn">&#8593;</button>
@@ -163,6 +143,7 @@
   var groundTop = 0, groundBottom = 0;
 
   var running = false;
+  var mode = 'hub';          // 'hub' = karttalabyrintti, 'play' = pelivaihe
   var celebrating = false;
   var celebrateT = 0;
   var lastTime = 0;
@@ -251,6 +232,29 @@
   var holdSX = 0, holdSY = 0;
   var holdMoved = false;
   var lastPX = 0, lastPY = 0;
+
+  // Karttalabyrintti: merkit . polku, # seinä, S alku, G linna,
+  // 1/2 pelivaiheet, b/c/d tulevia huoneita (lisää kirjain + HUB_ROOMS).
+  var HUB_MAP = [
+    '#############',
+    '#S....#....G#',
+    '#.##.#.###.##',
+    '#.#1...#2...#',
+    '#.####.###.##',
+    '#...........#',
+    '###.#.#.#.###',
+    '#.#b#.#c#d..#',
+    '#############'
+  ];
+  var HUB_ROOMS = {
+    '1': { kind: 'start', name: 'Metsä', color: '#5dbe5a' },
+    '2': { kind: 'garden', name: 'Puutarha', color: '#8a5cff' },
+    'b': { name: 'Pian' },
+    'c': { name: 'Pian' },
+    'd': { name: 'Pian' }
+  };
+  var hubPawn = { c: 1, r: 1, x: 0, y: 0, facing: 1, walkPhase: 0, path: [] };
+  var hubToast = { text: '', t: 0 };
 
   // ---------- Äänet (WebAudio, ei tiedostoja) ----------
   var audioCtx = null, masterGain = null, muted = false;
@@ -960,6 +964,7 @@
     document.getElementById('replayBtn').style.display = 'none';
     document.getElementById('continueBtn').style.display = 'none';
     document.getElementById('jumpBtn').style.display = 'none';
+    document.getElementById('karttaBtn').style.display = 'block';
   }
 
   function skipTo(kind) {
@@ -970,15 +975,282 @@
   function beginPlay(kind) {
     initAudio();
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    document.getElementById('startScreen').style.display = 'none';
+    mode = 'play';
+    document.getElementById('hubChrome').style.display = 'none';
     document.getElementById('muteBtn').style.display = 'block';
+    document.getElementById('karttaBtn').style.display = 'block';
     resize();
     skipTo(kind);
     running = true;
     lastTime = 0;
-    requestAnimationFrame(loop);
     playNote(784, 0, 0.3, 'triangle', 0.4);
     playNote(1047, 0.12, 0.4, 'triangle', 0.4);
+  }
+
+  function showHub() {
+    mode = 'hub';
+    running = false;
+    holding = false;
+    celebrating = false;
+    document.getElementById('hubChrome').style.display = 'flex';
+    document.getElementById('replayBtn').style.display = 'none';
+    document.getElementById('continueBtn').style.display = 'none';
+    document.getElementById('jumpBtn').style.display = 'none';
+    document.getElementById('karttaBtn').style.display = 'none';
+    document.getElementById('muteBtn').style.display = 'block';
+    document.body.style.background = '#ffd6ec';
+    lastTime = 0;
+  }
+
+  function hubWalkable(ch) {
+    return ch && ch !== '#';
+  }
+
+  function hubAt(c, r) {
+    if (r < 0 || r >= HUB_MAP.length) return '#';
+    if (c < 0 || c >= HUB_MAP[r].length) return '#';
+    return HUB_MAP[r].charAt(c);
+  }
+
+  function hubFind(ch) {
+    var r, c;
+    for (r = 0; r < HUB_MAP.length; r++) {
+      c = HUB_MAP[r].indexOf(ch);
+      if (c >= 0) return { c: c, r: r };
+    }
+    return { c: 1, r: 1 };
+  }
+
+  function hubLayout() {
+    var rows = HUB_MAP.length;
+    var cols = HUB_MAP[0].length;
+    var top = viewH * 0.15;
+    var bot = viewH * 0.03;
+    var cell = Math.min((viewW * 0.92) / cols, (viewH - top - bot) / rows);
+    var ox = (viewW - cell * cols) / 2;
+    var oy = top + (viewH - top - bot - cell * rows) / 2;
+    return { rows: rows, cols: cols, cell: cell, ox: ox, oy: oy };
+  }
+
+  function hubCenter(c, r, lay) {
+    return {
+      x: lay.ox + (c + 0.5) * lay.cell,
+      y: lay.oy + (r + 0.5) * lay.cell
+    };
+  }
+
+  function hubPixelCell(px, py, lay) {
+    var c = Math.floor((px - lay.ox) / lay.cell);
+    var r = Math.floor((py - lay.oy) / lay.cell);
+    if (c < 0 || r < 0 || c >= lay.cols || r >= lay.rows) return null;
+    return { c: c, r: r };
+  }
+
+  function hubBfs(sc, sr, tc, tr) {
+    if (!hubWalkable(hubAt(tc, tr))) return [];
+    if (sc === tc && sr === tr) return [];
+    var key = function (c, r) { return r * 32 + c; };
+    var q = [{ c: sc, r: sr }];
+    var prev = {};
+    prev[key(sc, sr)] = null;
+    var qi = 0;
+    var dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+    while (qi < q.length) {
+      var cur = q[qi++];
+      if (cur.c === tc && cur.r === tr) break;
+      var d;
+      for (d = 0; d < 4; d++) {
+        var nc = cur.c + dirs[d][0];
+        var nr = cur.r + dirs[d][1];
+        if (!hubWalkable(hubAt(nc, nr))) continue;
+        var k = key(nc, nr);
+        if (prev[k] !== undefined) continue;
+        prev[k] = cur;
+        q.push({ c: nc, r: nr });
+      }
+    }
+    if (prev[key(tc, tr)] === undefined) return [];
+    var path = [];
+    var step = { c: tc, r: tr };
+    while (step) {
+      path.push(step);
+      step = prev[key(step.c, step.r)];
+    }
+    path.reverse();
+    path.shift();
+    return path;
+  }
+
+  function hubArrive(ch) {
+    var room = HUB_ROOMS[ch];
+    if (room) {
+      if (room.kind) {
+        beginPlay(room.kind);
+        return;
+      }
+      hubToast.text = 'Pian lisää seikkailuja!';
+      hubToast.t = 1.8;
+      playNote(392, 0, 0.18, 'triangle', 0.28);
+      return;
+    }
+    if (ch === 'G') {
+      beginPlay('start');
+      return;
+    }
+  }
+
+  function handleHubTap(px, py) {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    var lay = hubLayout();
+    var cell = hubPixelCell(px, py, lay);
+    if (!cell || !hubWalkable(hubAt(cell.c, cell.r))) return;
+    if (cell.c === hubPawn.c && cell.r === hubPawn.r && hubPawn.path.length === 0) {
+      hubArrive(hubAt(cell.c, cell.r));
+      return;
+    }
+    hubPawn.path = hubBfs(hubPawn.c, hubPawn.r, cell.c, cell.r);
+  }
+
+  function updateHub(dt) {
+    globalT += dt;
+    hubSpark += dt;
+    if (hubToast.t > 0) hubToast.t -= dt;
+    var lay = hubLayout();
+    if (hubPawn.path.length > 0) {
+      var next = hubPawn.path[0];
+      var p = hubCenter(next.c, next.r, lay);
+      var dx = p.x - hubPawn.x;
+      var dy = p.y - hubPawn.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dx > 4) hubPawn.facing = 1;
+      else if (dx < -4) hubPawn.facing = -1;
+      var sp = lay.cell * 3.2 * dt;
+      if (dist <= sp || dist < 2) {
+        hubPawn.c = next.c;
+        hubPawn.r = next.r;
+        hubPawn.x = p.x;
+        hubPawn.y = p.y;
+        hubPawn.path.shift();
+        if (hubPawn.path.length === 0) hubArrive(hubAt(hubPawn.c, hubPawn.r));
+      } else {
+        hubPawn.x += (dx / dist) * sp;
+        hubPawn.y += (dy / dist) * sp;
+        hubPawn.walkPhase += dt * 9;
+      }
+    } else {
+      var stay = hubCenter(hubPawn.c, hubPawn.r, lay);
+      hubPawn.x = stay.x;
+      hubPawn.y = stay.y;
+    }
+  }
+
+  function drawHubLock(c, x, y, s) {
+    c.strokeStyle = '#6b5a80';
+    c.lineWidth = Math.max(2, s * 0.12);
+    c.beginPath();
+    c.arc(x, y - s * 0.15, s * 0.22, Math.PI, 0);
+    c.stroke();
+    c.fillStyle = '#c9b3e0';
+    roundRect(c, x - s * 0.28, y - s * 0.12, s * 0.56, s * 0.42, s * 0.08);
+    c.fill();
+  }
+
+  function drawHub() {
+    if (!viewW || !viewH) return;
+    var lay = hubLayout();
+    var g = ctx.createLinearGradient(0, 0, 0, viewH);
+    g.addColorStop(0, '#ffd6ec');
+    g.addColorStop(0.55, '#d6b3ff');
+    g.addColorStop(1, '#b3e0ff');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, viewW, viewH);
+
+    var r, c, ch, x, y, s, room, i;
+    s = lay.cell;
+    for (r = 0; r < lay.rows; r++) {
+      for (c = 0; c < lay.cols; c++) {
+        ch = hubAt(c, r);
+        x = lay.ox + c * s;
+        y = lay.oy + r * s;
+        if (ch === '#') {
+          ctx.fillStyle = (c + r) % 2 === 0 ? '#4fb356' : '#3ea04a';
+          roundRect(ctx, x + s * 0.04, y + s * 0.04, s * 0.92, s * 0.92, s * 0.22);
+          ctx.fill();
+          if ((c * 13 + r * 7) % 5 === 0) {
+            drawFlower(ctx, x + s * 0.5, y + s * 0.42, s * 0.08, (c + r) % 2 ? '#ff7bac' : '#ffe27a');
+          }
+        } else {
+          ctx.fillStyle = '#f7e4b0';
+          roundRect(ctx, x + s * 0.12, y + s * 0.12, s * 0.76, s * 0.76, s * 0.18);
+          ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          roundRect(ctx, x + s * 0.22, y + s * 0.22, s * 0.56, s * 0.22, s * 0.1);
+          ctx.fill();
+        }
+      }
+    }
+
+    for (r = 0; r < lay.rows; r++) {
+      for (c = 0; c < lay.cols; c++) {
+        ch = hubAt(c, r);
+        x = lay.ox + (c + 0.5) * s;
+        y = lay.oy + (r + 0.5) * s;
+        room = HUB_ROOMS[ch];
+        if (ch === 'G') {
+          drawCastle(ctx, x, y + s * 0.32, s * 0.85);
+        } else if (ch === 'S') {
+          ctx.fillStyle = 'rgba(255,126,172,0.45)';
+          ctx.beginPath();
+          ctx.arc(x, y + Math.sin(globalT * 3) * s * 0.04, s * 0.16, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (room) {
+          ctx.fillStyle = room.kind ? room.color : '#d5c6ea';
+          ctx.beginPath();
+          ctx.arc(x, y - s * 0.06, s * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = s * 0.05;
+          ctx.stroke();
+          if (!room.kind) drawHubLock(ctx, x, y - s * 0.04, s);
+          ctx.fillStyle = room.kind ? '#fff' : '#6b5a80';
+          ctx.font = 'bold ' + Math.round(s * 0.16) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(room.name, x, y + s * 0.26);
+        }
+      }
+    }
+
+    for (i = 0; i < 10; i++) {
+      var fx = ((globalT * (18 + i) + i * 70) % (viewW + 40)) - 20;
+      var fy = viewH * 0.18 + (i % 3) * viewH * 0.08;
+      ctx.globalAlpha = 0.35 + Math.sin(globalT * 2 + i) * 0.15;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(fx, fy, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    var moving = hubPawn.path.length > 0;
+    drawPrincessFree(
+      ctx, hubPawn.x, hubPawn.y + lay.cell * 0.22,
+      lay.cell / 70, hubPawn.facing, hubPawn.walkPhase, moving, globalT
+    );
+
+    if (hubToast.t > 0) {
+      ctx.globalAlpha = Math.min(1, hubToast.t * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      roundRect(ctx, viewW * 0.2, viewH * 0.08, viewW * 0.6, viewH * 0.08, viewH * 0.03);
+      ctx.fill();
+      ctx.fillStyle = '#8a2be2';
+      ctx.font = 'bold ' + Math.round(viewH * 0.035) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(hubToast.text, viewW / 2, viewH * 0.12);
+      ctx.globalAlpha = 1;
+    }
   }
 
   // ---------- Kosketus ----------
@@ -1256,6 +1528,7 @@
     document.getElementById('replayBtn').style.display = 'none';
     document.getElementById('continueBtn').style.display = 'none';
     document.getElementById('jumpBtn').style.display = 'block';
+    document.getElementById('karttaBtn').style.display = 'block';
     layoutLevel2();
     princess.x = viewW * 0.12;
     princess.y = groundTop;
@@ -2389,12 +2662,16 @@
 
   // ---------- Silmukka ----------
   function loop(ts) {
-    if (!running) return;
     if (!lastTime) lastTime = ts;
     var dt = Math.min((ts - lastTime) / 1000, 0.05);
     lastTime = ts;
-    update(dt);
-    draw();
+    if (mode === 'hub') {
+      updateHub(dt);
+      drawHub();
+    } else if (running) {
+      update(dt);
+      draw();
+    }
     requestAnimationFrame(loop);
   }
 
@@ -2410,19 +2687,23 @@
     return { x: e.clientX, y: e.clientY };
   }
   function pointerDown(e) {
-    holding = true;
+    e.preventDefault();
     var p = eventPos(e);
+    if (mode === 'hub') {
+      handleHubTap(p.x, p.y);
+      return;
+    }
+    holding = true;
     lastPX = p.x; lastPY = p.y;
     holdSX = p.x; holdSY = p.y;
     holdStartG = globalT;
     holdMoved = false;
     holdWorldX = p.x + camX;
     if (level === 1) handleTap(p.x, p.y);
-    e.preventDefault();
   }
   function pointerMove(e) {
     if (e.touches) e.preventDefault();
-    if (!holding) return;
+    if (mode === 'hub' || !holding) return;
     var p = eventPos(e);
     lastPX = p.x; lastPY = p.y;
     if (Math.abs(p.x - holdSX) + Math.abs(p.y - holdSY) > 22) holdMoved = true;
@@ -2431,7 +2712,7 @@
   }
   function pointerUp(e) {
     if (e && e.touches && e.touches.length > 0) return;
-    if (level === 2 && holding && !holdMoved && (globalT - holdStartG) < 0.22) {
+    if (mode === 'play' && level === 2 && holding && !holdMoved && (globalT - holdStartG) < 0.22) {
       shootWand(lastPX, lastPY);
     }
     holding = false;
@@ -2447,12 +2728,8 @@
   document.addEventListener('touchcancel', pointerUp);
   window.addEventListener('mouseup', pointerUp);
 
-  document.getElementById('playBtn').addEventListener('click', function () {
-    beginPlay('start');
-  });
-  document.getElementById('skipRow').addEventListener('click', function (e) {
-    var kind = e.target && e.target.getAttribute('data-skip');
-    if (kind) beginPlay(kind);
+  document.getElementById('karttaBtn').addEventListener('click', function () {
+    showHub();
   });
 
   document.getElementById('replayBtn').addEventListener('click', function () {
@@ -2492,22 +2769,27 @@
     tap: handleTap,
     princess: princess,
     startL2: initLevel2,
+    showHub: showHub,
+    play: beginPlay,
     info: function () {
       return {
-        running: running, worldW: worldW, viewW: viewW, viewH: viewH,
+        running: running, mode: mode, worldW: worldW, viewW: viewW, viewH: viewH,
         camX: camX, ux: unicorn.x, utx: unicorn.tx, uy: unicorn.y,
         stars: countStars(), bunnies: countBunnies(),
         goalReady: goalReady, celebrating: celebrating,
         level: level, butterflies: countButterflies(),
-        px: princess.x, py: princess.y
+        px: princess.x, py: princess.y,
+        hub: { c: hubPawn.c, r: hubPawn.r }
       };
     }
   };
 
-  // Esilataus: maisema valmiiksi aloitusruudun taakse (jos ikkunalla on jo koko)
   resize();
-  initGame();
-  draw();
+  showHub();
+  var hubStart = hubFind('S');
+  hubPawn.c = hubStart.c;
+  hubPawn.r = hubStart.r;
+  requestAnimationFrame(loop);
 })();
 </script>
 </body>
