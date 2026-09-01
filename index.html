@@ -185,6 +185,28 @@
       (activeGate.mode === 'show' || activeGate.mode === 'input' || activeGate.mode === 'opening');
   }
 
+  // Pienet tehtävät (lasku, muisti). Sama idea kuin taikaportit: pysäyttää ja avaa tien.
+  var TASK_BF_COLORS = ['#ff7bac', '#ffd24f', '#7fd4ff'];
+  var TASK_BF_NOTES = [523, 659, 784];
+  function makeTask(fx, type) {
+    return {
+      fx: fx, x: 0, type: type, opened: false,
+      mode: 'idle',
+      timer: 0, shakeT: 0, litT: 0,
+      a: 1, b: 1, answers: [2, 1, 3], correct: 2,
+      seq: [], inputIdx: 0, litOrb: -1, lastShown: -1
+    };
+  }
+  var tasks = [];
+  var activeTask = null;
+  function taskActive() {
+    return !!activeTask &&
+      (activeTask.mode === 'show' || activeTask.mode === 'input' || activeTask.mode === 'opening');
+  }
+  function puzzleBusy() {
+    return spellActive() || taskActive();
+  }
+
   // Myrskypilvet tiputtavat salamapisaroita; osuma sirottaa kerättyjä tähtiä
   var clouds = [];
   var drops = [];
@@ -344,6 +366,7 @@
       stars[i].px = stars[i].ax; stars[i].py = stars[i].ay;
     }
     for (i = 0; i < gates.length; i++) gates[i].x = gates[i].fx * worldW;
+    for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
     for (i = 0; i < clouds.length; i++) clouds[i].x *= ratio;
     for (i = 0; i < drops.length; i++) drops[i].x *= ratio;
     troll.x *= ratio;
@@ -938,6 +961,9 @@
     gates = [makeGate(0.40, 4, 3), makeGate(0.72, 5, 4)];
     for (i = 0; i < gates.length; i++) gates[i].x = gates[i].fx * worldW;
     activeGate = null;
+    tasks = [makeTask(0.24, 'math')];
+    for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
+    activeTask = null;
 
     clouds = [
       { zA: 0.06, zB: 0.28, fy: 0.34, x: 0.15 * worldW, dir: 1, dropT: 3.0, warnT: 0 },
@@ -1270,6 +1296,11 @@
     if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     var i, d, dx, dy;
 
+    if (taskActive()) {
+      handleTaskTap(px, py);
+      return;
+    }
+
     // Loitsutila: vain palloihin voi koskea
     if (spellActive()) {
       if (activeGate.mode !== 'input') return;
@@ -1335,7 +1366,7 @@
   }
 
   function setWalkTarget(px, py) {
-    if (!running || celebrating || spellActive()) return;
+    if (!running || celebrating || puzzleBusy()) return;
     var wx = px + camX;
     var wy = py;
     var maxX = worldW - viewW * 0.03;
@@ -1343,6 +1374,11 @@
     for (i = 0; i < gates.length; i++) {
       if (!gates[i].opened && gates[i].x > unicorn.x) {
         maxX = Math.min(maxX, gates[i].x - viewW * 0.09);
+      }
+    }
+    for (i = 0; i < tasks.length; i++) {
+      if (!tasks[i].opened && tasks[i].x > unicorn.x) {
+        maxX = Math.min(maxX, tasks[i].x - viewW * 0.09);
       }
     }
     unicorn.tx = Math.min(Math.max(wx, viewW * 0.05), maxX);
@@ -1423,6 +1459,147 @@
       g.timer = -1.0;
       g.inputIdx = 0;
       g.lastShown = -1;
+    }
+  }
+
+  function shuffleNums(arr) {
+    var i, j, t;
+    for (i = arr.length - 1; i > 0; i--) {
+      j = Math.floor(Math.random() * (i + 1));
+      t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    return arr;
+  }
+
+  function taskStart(t) {
+    activeTask = t;
+    holding = false;
+    unicorn.tx = unicorn.x;
+    unicorn.ty = unicorn.y;
+    princess.vx = 0;
+    t.timer = -0.35;
+    t.inputIdx = 0;
+    t.litOrb = -1;
+    t.lastShown = -1;
+    t.shakeT = 0;
+    t.litT = 0;
+    if (t.type === 'math') {
+      t.a = 1 + Math.floor(Math.random() * 3);
+      t.b = 1 + Math.floor(Math.random() * 2);
+      t.correct = t.a + t.b;
+      var w1 = t.correct === 2 ? 3 : t.correct - 1;
+      var w2 = t.correct + 1;
+      if (w1 < 1) w1 = t.correct + 2;
+      t.answers = shuffleNums([t.correct, w1, w2]);
+      t.mode = 'input';
+      playNote(659, 0, 0.2, 'triangle', 0.35);
+    } else {
+      t.seq = [];
+      for (var i = 0; i < 3; i++) t.seq.push(Math.floor(Math.random() * 3));
+      t.mode = 'show';
+    }
+  }
+
+  function taskSolved() {
+    var t = activeTask;
+    t.mode = 'opening';
+    t.timer = 0;
+    var notes = [523, 659, 784, 1047];
+    for (var i = 0; i < notes.length; i++) {
+      playNote(notes[i], 0.1 + i * 0.1, 0.35, 'triangle', 0.4);
+    }
+  }
+
+  function handleTaskTap(px, py) {
+    var t = activeTask;
+    if (!t || t.mode !== 'input') return;
+    var op = orbPositions(3);
+    var i, dx, dy;
+    for (i = 0; i < 3; i++) {
+      dx = px - op.xs[i];
+      dy = py - op.y;
+      if (Math.sqrt(dx * dx + dy * dy) >= op.r * 1.4) continue;
+      if (t.type === 'math') {
+        t.litOrb = i;
+        t.litT = 0.3;
+        if (t.answers[i] === t.correct) {
+          playNote(TASK_BF_NOTES[Math.min(i, 2)], 0, 0.3, 'triangle', 0.45);
+          taskSolved();
+        } else {
+          playNote(170, 0, 0.3, 'sawtooth', 0.2);
+          t.shakeT = 0.5;
+        }
+        return;
+      }
+      t.litOrb = i;
+      t.litT = 0.35;
+      if (i === t.seq[t.inputIdx]) {
+        playNote(TASK_BF_NOTES[i], 0, 0.3, 'triangle', 0.45);
+        t.inputIdx++;
+        if (t.inputIdx >= t.seq.length) taskSolved();
+      } else {
+        playNote(170, 0, 0.3, 'sawtooth', 0.2);
+        t.shakeT = 0.5;
+        t.mode = 'show';
+        t.timer = -0.9;
+        t.inputIdx = 0;
+        t.lastShown = -1;
+      }
+      return;
+    }
+  }
+
+  function updateTasks(dt) {
+    var i, t, actorX;
+    if (level === 2) actorX = princess.x;
+    else actorX = unicorn.x;
+    if (!activeTask && !celebrating) {
+      for (i = 0; i < tasks.length; i++) {
+        t = tasks[i];
+        if (!t.opened && Math.abs(actorX - t.x) < viewW * 0.14) {
+          taskStart(t);
+          break;
+        }
+      }
+    } else if (activeTask) {
+      t = activeTask;
+      if (t.mode === 'show') {
+        t.timer += dt;
+        if (t.timer >= 0) {
+          var stepLen = 0.8;
+          var step = Math.floor(t.timer / stepLen);
+          if (step < t.seq.length) {
+            var inStep = t.timer - step * stepLen;
+            t.litOrb = inStep < 0.5 ? t.seq[step] : -1;
+            if (t.lastShown !== step && inStep < 0.5) {
+              t.lastShown = step;
+              playNote(TASK_BF_NOTES[t.seq[step]], 0, 0.35, 'triangle', 0.4);
+            }
+          } else {
+            t.litOrb = -1;
+            t.mode = 'input';
+            t.inputIdx = 0;
+          }
+        }
+      } else if (t.mode === 'opening') {
+        t.timer += dt;
+        if (Math.random() < dt * 16) {
+          spawnSparkles(
+            t.x + (Math.random() - 0.5) * viewH * 0.18,
+            groundTop - Math.random() * viewH * 0.22,
+            3, '#ffe27a'
+          );
+        }
+        if (t.timer > 1.1) {
+          t.opened = true;
+          t.mode = 'done';
+          activeTask = null;
+        }
+      }
+      if (t.litT > 0) t.litT -= dt;
+      if (t.shakeT > 0) t.shakeT -= dt;
     }
   }
 
@@ -1540,6 +1717,9 @@
     princess.coyote = 0.12;
     owl.awake = false;
     owl.flyT = 0;
+    tasks = [makeTask(0.34, 'math'), makeTask(0.70, 'memory')];
+    for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
+    activeTask = null;
     butterflies = [];
     var i;
     for (i = 0; i < BUTTERFLY_COUNT; i++) {
@@ -1556,7 +1736,7 @@
   }
 
   function tryJump() {
-    if (level !== 2 || !running || celebrating) return;
+    if (level !== 2 || !running || celebrating || puzzleBusy()) return;
     if (princess.coyote <= 0) return;
     princess.vy = -viewH * 0.92;
     princess.onGround = false;
@@ -1566,7 +1746,7 @@
   }
 
   function shootWand(px, py) {
-    if (celebrating) return;
+    if (celebrating || puzzleBusy()) return;
     var ox = princess.x + princess.facing * viewH * 0.04;
     var oy = princess.y - viewH * 0.13;
     var dx = px + camX - ox;
@@ -1598,7 +1778,9 @@
     var pw = viewH * 0.045;
     var runSp = viewW * 0.22;
 
-    if (!celebrating && holding) {
+    updateTasks(dt);
+
+    if (!celebrating && holding && !puzzleBusy()) {
       var dxh = holdWorldX - princess.x;
       if (Math.abs(dxh) > 10) {
         princess.vx = (dxh > 0 ? 1 : -1) * runSp;
@@ -1613,6 +1795,15 @@
 
     princess.x += princess.vx * dt;
     princess.x = Math.min(Math.max(princess.x, pw), worldW - pw);
+    for (i = 0; i < tasks.length; i++) {
+      if (!tasks[i].opened && tasks[i].x > princess.x - 8) {
+        var lim = tasks[i].x - viewH * 0.09;
+        if (princess.x > lim) {
+          princess.x = lim;
+          princess.vx = 0;
+        }
+      }
+    }
 
     if (!owl.awake && Math.abs(princess.x - owl.x) < viewH * 0.07 &&
         Math.abs(princess.y - owl.y) < viewH * 0.08) {
@@ -1847,6 +2038,8 @@
 
     drawOwl(ctx);
 
+    for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
+
     var bfColors = ['#ff7bac', '#c9a0ff', '#7fd4ff', '#ffd24f'];
     for (i = 0; i < butterflies.length; i++) {
       var bf = butterflies[i];
@@ -1910,6 +2103,7 @@
       drawButterfly(ctx, pad + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.8, hs * 1.1, i, bfColors[i % bfColors.length]);
       ctx.restore();
     }
+    drawTaskOverlay(ctx);
   }
 
   // ---------- Päivitys ----------
@@ -1925,7 +2119,7 @@
     var dx = unicorn.tx - unicorn.x;
     var dy = unicorn.ty - unicorn.y;
     var dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist > 6 && !celebrating && !spellActive()) {
+    if (dist > 6 && !celebrating && !puzzleBusy()) {
       unicorn.moving = true;
       var step = Math.min(unicorn.speed * dt, dist);
       unicorn.x += (dx / dist) * step;
@@ -1974,7 +2168,7 @@
       if (bn.state === 'hidden') {
         var bnear = Math.abs(unicorn.x - bn.bushX) < viewW * 0.35;
         var peekTarget = 0.12;
-        if (bnear && !spellActive()) {
+        if (bnear && !puzzleBusy()) {
           bn.phaseT += dt;
           if (bn.phase === 'waiting' && bn.phaseT > bn.waitTime) {
             bn.phase = 'peeking';
@@ -2023,6 +2217,7 @@
     }
 
     // Taikaportit
+    updateTasks(dt);
     if (!activeGate && !celebrating) {
       for (i = 0; i < gates.length; i++) {
         if (!gates[i].opened && Math.abs(unicorn.x - gates[i].x) < viewW * 0.14) {
@@ -2071,7 +2266,7 @@
 
     // Myrskypilvet: seuraavat yksisarvista alueellaan ja tiputtavat pisaroita
     if (invulnT > 0) invulnT -= dt;
-    var hazardsOn = !celebrating && !spellActive();
+    var hazardsOn = !celebrating && !puzzleBusy();
     for (i = 0; i < clouds.length; i++) {
       var cl = clouds[i];
       var zMin = cl.zA * worldW, zMax = cl.zB * worldW;
@@ -2220,6 +2415,7 @@
 
     // Taikaportit
     for (i = 0; i < gates.length; i++) drawGate(ctx, gates[i]);
+    for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
 
     // Myrskypilvet
     for (i = 0; i < clouds.length; i++) drawStormCloud(ctx, clouds[i]);
@@ -2300,6 +2496,7 @@
     drawGuide(ctx);
     drawHUD();
     drawSpellOverlay(ctx);
+    drawTaskOverlay(ctx);
   }
 
   function drawBushFront(c, x, baseY, s) {
@@ -2369,6 +2566,106 @@
       c.arc(jx, jy, pw * (lit ? 0.55 : 0.4), 0, Math.PI * 2);
       c.fill();
       c.globalAlpha = 1;
+    }
+  }
+
+  function drawTaskArch(c, task) {
+    var gx = task.x - camX;
+    var gw = viewH * 0.11;
+    var gh = viewH * 0.32;
+    if (gx < -gw * 3 || gx > viewW + gw * 3) return;
+    var baseY = groundTop + viewH * 0.02;
+    var pw = viewH * 0.035;
+    var veil = task.type === 'math' ? '255,210,80' : '120,210,255';
+    var pillar = task.type === 'math' ? '#f0d48a' : '#b8d4ff';
+    if (!task.opened) {
+      var shimmer = 0.32 + Math.sin(globalT * 2.5) * 0.10;
+      var cg = c.createLinearGradient(0, baseY - gh, 0, baseY);
+      cg.addColorStop(0, 'rgba(' + veil + ',' + shimmer + ')');
+      cg.addColorStop(1, 'rgba(' + veil + ',' + (shimmer * 0.45) + ')');
+      c.fillStyle = cg;
+      c.fillRect(gx - gw + pw / 2, baseY - gh, (gw - pw / 2) * 2, gh);
+    }
+    var i;
+    for (i = -1; i <= 1; i += 2) {
+      var px = gx + i * gw;
+      c.fillStyle = pillar;
+      c.fillRect(px - pw / 2, baseY - gh, pw, gh);
+      c.fillStyle = '#fff6d8';
+      c.fillRect(px - pw * 0.8, baseY - gh - pw * 0.5, pw * 1.6, pw * 0.5);
+    }
+    c.strokeStyle = '#fff6d8';
+    c.lineWidth = pw * 0.8;
+    c.beginPath();
+    c.arc(gx, baseY - gh, gw, Math.PI, 0);
+    c.stroke();
+    if (task.type === 'math') {
+      drawStar(c, gx, baseY - gh - gw * 0.15, pw * 0.9, globalT, 0.8);
+    } else {
+      drawButterfly(c, gx, baseY - gh - gw * 0.1, pw * 1.1, globalT, TASK_BF_COLORS[0]);
+    }
+  }
+
+  function drawTaskOverlay(c) {
+    if (!taskActive()) return;
+    var t = activeTask;
+    var op = orbPositions(3);
+    var shake = t.shakeT > 0 ? Math.sin(globalT * 45) * 10 * t.shakeT : 0;
+    var i;
+    c.fillStyle = 'rgba(40,20,70,0.52)';
+    c.fillRect(0, 0, viewW, viewH);
+    c.fillStyle = '#fff';
+    c.font = 'bold ' + Math.round(viewH * 0.055) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(t.type === 'math' ? 'Kuinka monta?' : 'Muista järjestys!', viewW / 2, viewH * 0.18);
+
+    if (t.type === 'math') {
+      var starR = viewH * 0.032;
+      var gap = starR * 2.3;
+      var leftW = (t.a - 1) * gap;
+      var plusX = viewW / 2;
+      var rowY = viewH * 0.32;
+      var left0 = plusX - viewH * 0.08 - leftW;
+      var right0 = plusX + viewH * 0.08;
+      for (i = 0; i < t.a; i++) drawStar(c, left0 + i * gap + shake, rowY, starR, i * 0.4, 0.9);
+      c.fillStyle = '#ffe27a';
+      c.font = 'bold ' + Math.round(viewH * 0.07) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+      c.fillText('+', plusX + shake, rowY);
+      for (i = 0; i < t.b; i++) drawStar(c, right0 + i * gap + shake, rowY, starR, i * 0.5, 0.9);
+    } else {
+      var dotR = viewH * 0.012;
+      for (i = 0; i < t.seq.length; i++) {
+        c.fillStyle = i < t.inputIdx ? '#ffe27a' : 'rgba(255,255,255,0.35)';
+        c.beginPath();
+        c.arc(viewW / 2 + (i - (t.seq.length - 1) / 2) * dotR * 4 + shake, op.y - op.r * 2.15, dotR, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+
+    for (i = 0; i < 3; i++) {
+      var lit = t.litOrb === i && (t.mode === 'show' ? true : t.litT > 0);
+      var r = op.r * (lit ? 1.16 : 1);
+      var x = op.xs[i] + shake;
+      if (lit) {
+        var glow = c.createRadialGradient(x, op.y, r * 0.3, x, op.y, r * 2);
+        glow.addColorStop(0, 'rgba(255,255,255,0.5)');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = glow;
+        c.beginPath(); c.arc(x, op.y, r * 2, 0, Math.PI * 2); c.fill();
+      }
+      c.fillStyle = '#fff';
+      c.beginPath(); c.arc(x, op.y, r, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = TASK_BF_COLORS[i];
+      c.lineWidth = viewH * 0.008;
+      c.stroke();
+      if (t.type === 'math') {
+        c.fillStyle = '#8a2be2';
+        c.font = 'bold ' + Math.round(r * 0.9) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+        c.fillText(String(t.answers[i]), x, op.y + r * 0.08);
+      } else {
+        drawButterfly(c, x, op.y, r * 0.42, globalT + i, TASK_BF_COLORS[i]);
+      }
     }
   }
 
@@ -2497,7 +2794,7 @@
   // Opastenuoli: näyttää suunnan lähimpään keräämättömään asiaan tai
   // (kaiken kerättyä) linnaan, jotta maali löytyy aina ilman tekstiä.
   function drawGuide(c) {
-    if (!running || celebrating || spellActive()) return;
+    if (!running || celebrating || puzzleBusy()) return;
     var targetX = null;
     var i, d;
     if (goalReady) {
@@ -2693,6 +2990,10 @@
       handleHubTap(p.x, p.y);
       return;
     }
+    if (taskActive()) {
+      handleTaskTap(p.x, p.y);
+      return;
+    }
     holding = true;
     lastPX = p.x; lastPY = p.y;
     holdSX = p.x; holdSY = p.y;
@@ -2712,7 +3013,7 @@
   }
   function pointerUp(e) {
     if (e && e.touches && e.touches.length > 0) return;
-    if (mode === 'play' && level === 2 && holding && !holdMoved && (globalT - holdStartG) < 0.22) {
+    if (mode === 'play' && level === 2 && !puzzleBusy() && holding && !holdMoved && (globalT - holdStartG) < 0.22) {
       shootWand(lastPX, lastPY);
     }
     holding = false;
