@@ -23,15 +23,16 @@ Peli ei tarvitse nettiyhteyttä pelaamiseen eikä asennuksia.
 Maailma on viiden ruudun levyinen ja rauhallisesti rytmitetty: keräiltävät
 ovat ryppäissä, joiden välissä on tyhjiä maisemaosuuksia.
 
-- Napauta maata → yksisarvinen kävelee sinne.
+- Pidä sormea pohjassa → yksisarvinen ratsastaa sormen mukaan.
+  Napauta maata → kävelee siihen kohtaan.
 - **Tähdet (10 kpl)** leijuvat ja pakenevat lähestyjää — nappaa sormella.
   Ohi mennyt napautus säikäyttää tähden uuteen paikkaan.
 - **Puput (3 kpl)** kurkkivat pensaista hetken kerrallaan.
   Kaksi hutia → pupu vaihtaa lähimpään toiseen pensaaseen.
 - **Myrskypilvet (2 kpl)** partioivat omilla alueillaan ja tiputtavat
   salamapisaroita. Osuma sirottaa 3 kerättyä tähteä lähimaastoon.
-- **Peikko** partioi porttien välissä. Kiinni jäädessä se vie pupun
-  takaisin pensaaseen. Yksisarvinen on peikkoa nopeampi.
+- **Peikko** partioi porttien välissä. Ohi saa ratsastaa vauhdissa;
+  jos jää paikalleen peikon viereen, se vie yhden pupun pensaaseen.
 - **Kaksi taikaporttia**: 4 värin loitsu (3 palloa) ja 5 värin loitsu
   (4 palloa). Katso järjestys, toista napauttamalla. Väärästä ei rangaista.
 - **Maali**: kun kaikki on kerätty, linnan ylle syttyy majakkatähti —
@@ -43,7 +44,8 @@ ovat ryppäissä, joiden välissä on tyhjiä maisemaosuuksia.
 
 - Pupun kurkkausaika: `bn.phaseT > 1.2` (sekunteina)
 - Loitsujen pituus/pallot: `makeGate(0.40, 4, 3)` ja `makeGate(0.72, 5, 4)`
-- Peikon jahtausnopeus: `viewW * 0.09`
+- Peikon jahtausnopeus: `viewW * 0.045`
+- Peikko varastaa paikallaan: `troll.stillT > 0.55`
 - Pilvien pudotustahti: `cl.dropT = 3.5 + Math.random() * 2.0`
 - Tähtien pakonopeus: `viewW * 0.06`
 
