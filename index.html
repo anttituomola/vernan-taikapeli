@@ -52,6 +52,25 @@
     padding-left: 2vmin;
   }
   #playBtn:active { transform: translateY(1vmin); box-shadow: 0 0.5vmin 0 #d13a8a; }
+  #skipRow {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2vmin;
+    margin-top: 5vmin;
+    max-width: 90vmin;
+  }
+  #skipRow button {
+    border: 0.5vmin solid #fff;
+    border-radius: 4vmin;
+    background: rgba(255,255,255,0.7);
+    color: #7a3cb8;
+    font-size: 3.4vmin;
+    padding: 1.4vmin 3.2vmin;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #skipRow button:active { transform: translateY(0.4vmin); }
   /* Uudestaan-nappi */
   #replayBtn {
     position: fixed;
@@ -120,6 +139,12 @@
   <h1>&#10024; Vernan taikapolku &#10024;</h1>
   <p>Ker&auml;&auml; t&auml;hdet ja puput, ja ratsasta lopuksi linnaan!</p>
   <button id="playBtn">&#9654;</button>
+  <div id="skipRow">
+    <button type="button" data-skip="start">Mets&auml;</button>
+    <button type="button" data-skip="troll">Peikko</button>
+    <button type="button" data-skip="castle">Linna</button>
+    <button type="button" data-skip="garden">Puutarha</button>
+  </div>
 </div>
 <button id="replayBtn">&#8635; Uudestaan</button>
 <button id="continueBtn">&#129419; Jatka</button>
@@ -936,6 +961,54 @@
     document.getElementById('replayBtn').style.display = 'none';
     document.getElementById('continueBtn').style.display = 'none';
     document.getElementById('jumpBtn').style.display = 'none';
+  }
+
+  function openAllGates() {
+    var i;
+    for (i = 0; i < gates.length; i++) {
+      gates[i].opened = true;
+      gates[i].mode = 'done';
+    }
+    activeGate = null;
+  }
+
+  function skipTo(kind) {
+    if (kind === 'garden') {
+      initLevel2();
+      return;
+    }
+    initGame();
+    if (kind === 'start') return;
+    openAllGates();
+    if (kind === 'troll') {
+      var i;
+      for (i = 0; i < 6; i++) stars[i].collected = true;
+      bunnies[0].state = 'found';
+      bunnies[1].state = 'found';
+      unicorn.x = unicorn.tx = worldW * 0.55;
+      camX = Math.min(Math.max(unicorn.x - viewW / 2, 0), Math.max(0, worldW - viewW));
+    } else if (kind === 'castle') {
+      var j;
+      for (j = 0; j < stars.length; j++) stars[j].collected = true;
+      for (j = 0; j < bunnies.length; j++) bunnies[j].state = 'found';
+      goalReady = true;
+      unicorn.x = unicorn.tx = worldW * 0.86;
+      camX = Math.max(0, worldW - viewW);
+    }
+  }
+
+  function beginPlay(kind) {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('muteBtn').style.display = 'block';
+    resize();
+    skipTo(kind);
+    running = true;
+    lastTime = 0;
+    requestAnimationFrame(loop);
+    playNote(784, 0, 0.3, 'triangle', 0.4);
+    playNote(1047, 0.12, 0.4, 'triangle', 0.4);
   }
 
   // ---------- Kosketus ----------
@@ -2405,17 +2478,11 @@
   window.addEventListener('mouseup', pointerUp);
 
   document.getElementById('playBtn').addEventListener('click', function () {
-    initAudio();
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('muteBtn').style.display = 'block';
-    resize();
-    initGame();
-    running = true;
-    lastTime = 0;
-    requestAnimationFrame(loop);
-    playNote(784, 0, 0.3, 'triangle', 0.4);
-    playNote(1047, 0.12, 0.4, 'triangle', 0.4);
+    beginPlay('start');
+  });
+  document.getElementById('skipRow').addEventListener('click', function (e) {
+    var kind = e.target && e.target.getAttribute('data-skip');
+    if (kind) beginPlay(kind);
   });
 
   document.getElementById('replayBtn').addEventListener('click', function () {
