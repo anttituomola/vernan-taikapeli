@@ -140,10 +140,8 @@
   <p>Ker&auml;&auml; t&auml;hdet ja puput, ja ratsasta lopuksi linnaan!</p>
   <button id="playBtn">&#9654;</button>
   <div id="skipRow">
-    <button type="button" data-skip="start">Mets&auml;</button>
-    <button type="button" data-skip="troll">Peikko</button>
-    <button type="button" data-skip="castle">Linna</button>
-    <button type="button" data-skip="garden">Puutarha</button>
+    <button type="button" data-skip="start">Ensimm&auml;inen</button>
+    <button type="button" data-skip="garden">Toinen</button>
   </div>
 </div>
 <button id="replayBtn">&#8635; Uudestaan</button>
@@ -232,12 +230,13 @@
   var camX = 0;
 
   var level = 1;
-  var BUTTERFLY_COUNT = 8;
+  var BUTTERFLY_COUNT = 10;
   var butterflyDefs = [
-    { fx: 0.14, fy: 0.28 }, { fx: 0.20, fy: 0.34 },
-    { fx: 0.33, fy: 0.46 }, { fx: 0.47, fy: 0.26 },
-    { fx: 0.52, fy: 0.22 }, { fx: 0.64, fy: 0.50 },
-    { fx: 0.80, fy: 0.34 }, { fx: 0.90, fy: 0.18 }
+    { fx: 0.12, fy: 0.22 }, { fx: 0.18, fy: 0.40 },
+    { fx: 0.30, fy: 0.52 }, { fx: 0.38, fy: 0.28 },
+    { fx: 0.48, fy: 0.44 }, { fx: 0.55, fy: 0.20 },
+    { fx: 0.64, fy: 0.54 }, { fx: 0.74, fy: 0.36 },
+    { fx: 0.86, fy: 0.48 }, { fx: 0.93, fy: 0.22 }
   ];
   var platforms = [];
   var princess = {
@@ -963,38 +962,9 @@
     document.getElementById('jumpBtn').style.display = 'none';
   }
 
-  function openAllGates() {
-    var i;
-    for (i = 0; i < gates.length; i++) {
-      gates[i].opened = true;
-      gates[i].mode = 'done';
-    }
-    activeGate = null;
-  }
-
   function skipTo(kind) {
-    if (kind === 'garden') {
-      initLevel2();
-      return;
-    }
-    initGame();
-    if (kind === 'start') return;
-    openAllGates();
-    if (kind === 'troll') {
-      var i;
-      for (i = 0; i < 6; i++) stars[i].collected = true;
-      bunnies[0].state = 'found';
-      bunnies[1].state = 'found';
-      unicorn.x = unicorn.tx = worldW * 0.55;
-      camX = Math.min(Math.max(unicorn.x - viewW / 2, 0), Math.max(0, worldW - viewW));
-    } else if (kind === 'castle') {
-      var j;
-      for (j = 0; j < stars.length; j++) stars[j].collected = true;
-      for (j = 0; j < bunnies.length; j++) bunnies[j].state = 'found';
-      goalReady = true;
-      unicorn.x = unicorn.tx = worldW * 0.86;
-      camX = Math.max(0, worldW - viewW);
-    }
+    if (kind === 'garden') initLevel2();
+    else initGame();
   }
 
   function beginPlay(kind) {
@@ -1263,11 +1233,11 @@
     var g = groundTop;
     platforms = [
       { x: 0, y: g, w: worldW },
-      { x: worldW * 0.10, y: g - viewH * 0.20, w: worldW * 0.16 },
-      { x: worldW * 0.28, y: g - viewH * 0.36, w: worldW * 0.13 },
-      { x: worldW * 0.44, y: g - viewH * 0.18, w: worldW * 0.16 },
-      { x: worldW * 0.60, y: g - viewH * 0.38, w: worldW * 0.14 },
-      { x: worldW * 0.78, y: g - viewH * 0.24, w: worldW * 0.18 }
+      { x: worldW * 0.12, y: g - viewH * 0.22, w: worldW * 0.11 },
+      { x: worldW * 0.30, y: g - viewH * 0.40, w: worldW * 0.09 },
+      { x: worldW * 0.46, y: g - viewH * 0.20, w: worldW * 0.10 },
+      { x: worldW * 0.62, y: g - viewH * 0.42, w: worldW * 0.10 },
+      { x: worldW * 0.82, y: g - viewH * 0.28, w: worldW * 0.11 }
     ];
     owl.x = platforms[4].x + platforms[4].w * 0.55;
     owl.y = platforms[4].y;
@@ -1315,7 +1285,7 @@
   function tryJump() {
     if (level !== 2 || !running || celebrating) return;
     if (princess.coyote <= 0) return;
-    princess.vy = -viewH * 1.02;
+    princess.vy = -viewH * 0.92;
     princess.onGround = false;
     princess.coyote = 0;
     playNote(784, 0, 0.12, 'sine', 0.35);
@@ -1329,8 +1299,8 @@
     var dx = px + camX - ox;
     var dy = py - oy;
     var len = Math.sqrt(dx * dx + dy * dy) || 1;
-    var sp = viewH * 0.95;
-    sparks.push({ x: ox, y: oy, vx: dx / len * sp, vy: dy / len * sp, age: 0, life: 0.85 });
+    var sp = viewH * 0.78;
+    sparks.push({ x: ox, y: oy, vx: dx / len * sp, vy: dy / len * sp, age: 0, life: 0.62 });
     playNote(988, 0, 0.12, 'sine', 0.4);
     playNote(1319, 0.05, 0.18, 'triangle', 0.3);
     spawnSparkles(ox, oy, 6, '#e4b8ff');
@@ -1353,7 +1323,7 @@
   function updateLevel2(dt) {
     var i, g = groundTop;
     var pw = viewH * 0.045;
-    var runSp = viewW * 0.32;
+    var runSp = viewW * 0.22;
 
     if (!celebrating && holding) {
       var dxh = holdWorldX - princess.x;
@@ -1411,9 +1381,9 @@
     for (i = 0; i < butterflies.length; i++) {
       var bf = butterflies[i];
       if (bf.collected) continue;
-      bf.phase += dt * 2.2;
-      var near = Math.abs((bf.ax + Math.sin(bf.phase) * viewW * 0.02) - princess.x) < viewW * 0.18;
-      if (near) bf.ax += ((bf.ax - princess.x) >= 0 ? 1 : -1) * viewW * 0.04 * dt;
+      bf.phase += dt * 2.6;
+      var near = Math.abs((bf.ax + Math.sin(bf.phase) * viewW * 0.02) - princess.x) < viewW * 0.26;
+      if (near) bf.ax += ((bf.ax - princess.x) >= 0 ? 1 : -1) * viewW * 0.09 * dt;
       bf.ax = Math.min(Math.max(bf.ax, viewW * 0.04), worldW - viewW * 0.04);
     }
 
@@ -1446,7 +1416,7 @@
         var bx = b2.ax + Math.sin(b2.phase) * viewW * 0.018;
         var by = b2.ay + Math.cos(b2.phase * 1.3) * viewH * 0.02;
         var sdx = sp.x - bx, sdy = sp.y - by;
-        if (sdx * sdx + sdy * sdy < viewH * 0.055 * viewH * 0.055) {
+        if (sdx * sdx + sdy * sdy < viewH * 0.038 * viewH * 0.038) {
           collectButterfly(b2);
           sparks.splice(i, 1);
           break;

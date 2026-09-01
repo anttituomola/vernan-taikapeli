@@ -4,8 +4,8 @@ Selainpeli 6-vuotiaalle: prinsessa ratsastaa yksisarvisella taikametsän läpi,
 nappaa karkailevia tähtiä, väijyy pensaissa piileskeleviä pupuja ja avaa
 kaksi taikaporttia väriloitsuilla — samalla vältellen myrskypilviä ja
 pupuja varastelevaa peikkoa. Lopuksi ratsastetaan linnaan juhlimaan.
-Aloitusruudusta voi hypätä suoraan: **Metsä**, **Peikko**, **Linna**
-tai **Puutarha**. Koko peli on yksi tiedosto: `index.html`.
+
+Koko peli on yksi tiedosto: `index.html`.
 
 ## Siirto tabletille
 
