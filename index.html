@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Vernan taikapolku</title>
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #cfe9ff;
+    touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: "Comic Sans MS", "Segoe UI", sans-serif;
+  }
+  #game {
+    display: block;
+    width: 100%; height: 100%;
+    touch-action: none;
+  }
+  /* Aloitusruutu */
+  #startScreen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: linear-gradient(#ffd6ec, #d6b3ff 55%, #b3e0ff);
+    z-index: 10;
+  }
+  #startScreen h1 {
+    color: #8a2be2;
+    font-size: 9vmin;
+    margin: 0 0 2vmin 0;
+    text-shadow: 0 3px 0 #fff;
+    text-align: center;
+  }
+  #startScreen p {
+    color: #a0559d;
+    font-size: 4vmin;
+    margin: 0 0 6vmin 0;
+  }
+  #playBtn {
+    width: 26vmin; height: 26vmin;
+    border-radius: 50%;
+    border: 1.2vmin solid #fff;
+    background: radial-gradient(circle at 35% 30%, #ff9ed2, #ff4fa8);
+    color: #fff;
+    font-size: 11vmin;
+    box-shadow: 0 1.5vmin 0 #d13a8a;
+    cursor: pointer;
+    padding-left: 2vmin;
+  }
+  #playBtn:active { transform: translateY(1vmin); box-shadow: 0 0.5vmin 0 #d13a8a; }
+  /* Uudestaan-nappi */
+  #replayBtn {
+    position: fixed;
+    left: 50%; bottom: 6vmin;
+    transform: translateX(-50%);
+    display: none;
+    border: 0.8vmin solid #fff;
+    border-radius: 6vmin;
+    background: linear-gradient(#ffd24f, #ff9d2e);
+    color: #fff;
+    font-size: 6vmin;
+    padding: 2vmin 6vmin;
+    box-shadow: 0 1vmin 0 #d17a1e;
+    cursor: pointer;
+    z-index: 5;
+  }
+  /* Ääninappi */
+  #muteBtn {
+    position: fixed;
+    top: 1.5vmin; right: 1.5vmin;
+    width: 9vmin; height: 9vmin;
+    border-radius: 50%;
+    border: 0.6vmin solid #fff;
+    background: rgba(255,255,255,0.55);
+    font-size: 4.5vmin;
+    cursor: pointer;
+    z-index: 5;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="startScreen">
+  <h1>&#10024; Vernan taikapolku &#10024;</h1>
+  <p>Ker&auml;&auml; t&auml;hdet ja puput, ja ratsasta lopuksi linnaan!</p>
+  <button id="playBtn">&#9654;</button>
+</div>
+<button id="replayBtn">&#8635; Uudestaan</button>
+<button id="muteBtn">&#128266;</button>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Perusasiat ----------
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d');
+  var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+
+  var viewW = 0, viewH = 0;   // ruudun koko CSS-pikseleinä
+  var worldW = 0;             // maailman leveys
+  var groundTop = 0, groundBottom = 0;
+
+  var running = false;
+  var celebrating = false;
+  var celebrateT = 0;
+  var lastTime = 0;
+  var globalT = 0;
+
+  // ---------- Pelin sisältö ----------
+  var STAR_COUNT = 10;
+  var BUNNY_COUNT = 3;
+
+  // fx = kohta maailman leveydestä, fy = korkeus polun yläpuolella (osuus ruudun korkeudesta),
+  // jotta tähdet pysyvät aina yksisarvisen ulottuvilla kaikilla ruuduilla.
+  // Ryppäinä, joiden välissä on tyhjiä rauhallisia osuuksia
+  var starDefs = [
+    { fx: 0.07, fy: 0.06 }, { fx: 0.12, fy: 0.14 }, { fx: 0.16, fy: 0.08 },
+    { fx: 0.26, fy: 0.18 }, { fx: 0.31, fy: 0.10 }, { fx: 0.36, fy: 0.16 },
+    { fx: 0.48, fy: 0.07 }, { fx: 0.59, fy: 0.15 }, { fx: 0.79, fy: 0.09 },
+    { fx: 0.88, fy: 0.13 }
+  ];
+  function starY(def) { return groundTop - def.fy * viewH - viewH * 0.10; }
+  var bushDefs = [
+    { fx: 0.18 }, { fx: 0.52 }, { fx: 0.85 }
+  ];
+
+  // Taikaportit: aukeavat vain toistamalla väriloitsu (katso järjestys, napauta perässä)
+  var ORB_COLORS = ['#ff5f7e', '#ffe94f', '#5fa8ff', '#6fd66f'];
+  var ORB_NOTES = [659, 784, 523, 587];
+  function makeGate(fx, seqLen, orbCount) {
+    return {
+      fx: fx, x: 0, seqLen: seqLen, orbs: orbCount, opened: false,
+      mode: 'idle',   // idle | show | input | opening | done
+      seq: [], inputIdx: 0, timer: 0,
+      litOrb: -1, litT: 0, shakeT: 0, lastShown: -1
+    };
+  }
+  var gates = [];
+  var activeGate = null;
+  function spellActive() {
+    return !!activeGate &&
+      (activeGate.mode === 'show' || activeGate.mode === 'input' || activeGate.mode === 'opening');
+  }
+
+  // Myrskypilvet tiputtavat salamapisaroita; osuma sirottaa kerättyjä tähtiä
+  var clouds = [];
+  var drops = [];
+  var invulnT = 0;
+
+  // Peikko partioi loppumatkalla ja varastaa pupun, jos jää kiinni
+  var troll = { zA: 0.56, zB: 0.70, x: 0, dir: 1, cooldown: 0, bounceT: 0 };
+
+  // Maali: kun kaikki on kerätty, linnan ylle syttyy majakkatähti ja
+  // juhla alkaa vasta kun ratsastaa linnalle asti.
+  var goalReady = false;
+
+  var stars = [];    // {x,y,collected,twinkle}
+  var bunnies = [];  // {bushX, x,y, state:'hidden'|'found', hopT, earT}
+  var particles = [];
+  var confetti = [];
+  var tapRing = null; // {x,y,t}
+
+  var unicorn = {
+    x: 0, y: 0, tx: 0, ty: 0,
+    speed: 265, facing: 1, moving: false, walkPhase: 0
+  };
+  var camX = 0;
+
+  // ---------- Äänet (WebAudio, ei tiedostoja) ----------
+  var audioCtx = null, masterGain = null, muted = false;
+
+  function initAudio() {
+    if (audioCtx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = new AC();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.4;
+    masterGain.connect(audioCtx.destination);
+  }
+  function playNote(freq, startDelay, dur, type, vol) {
+    if (!audioCtx || muted) return;
+    var t0 = audioCtx.currentTime + startDelay;
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = type || 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(vol || 0.5, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(t0); osc.stop(t0 + dur + 0.05);
+  }
+  function soundStar(n) { // joka tähti hieman edellistä korkeampi
+    var base = 620 * Math.pow(1.07, n);
+    playNote(base, 0, 0.35, 'sine', 0.5);
+    playNote(base * 1.5, 0.07, 0.4, 'sine', 0.35);
+  }
+  function soundBunny() {
+    if (!audioCtx || muted) return;
+    var t0 = audioCtx.currentTime;
+    var osc = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(250, t0);
+    osc.frequency.linearRampToValueAtTime(620, t0 + 0.12);
+    osc.frequency.linearRampToValueAtTime(420, t0 + 0.25);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.5, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(t0); osc.stop(t0 + 0.35);
+  }
+  function soundFanfare() {
+    var notes = [523, 659, 784, 1047, 784, 1047, 1319];
+    for (var i = 0; i < notes.length; i++) {
+      playNote(notes[i], i * 0.16, 0.5, 'triangle', 0.4);
+    }
+    playNote(523, 1.2, 1.2, 'sine', 0.3);
+    playNote(659, 1.2, 1.2, 'sine', 0.3);
+    playNote(784, 1.2, 1.2, 'sine', 0.3);
+  }
+
+  // ---------- Koko ja tausta ----------
+  var bgCanvas = document.createElement('canvas');
+  var bgScale = 1;
+
+  function resize() {
+    viewW = window.innerWidth;
+    viewH = window.innerHeight;
+    canvas.width = Math.round(viewW * DPR);
+    canvas.height = Math.round(viewH * DPR);
+    canvas.style.width = viewW + 'px';
+    canvas.style.height = viewH + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    var oldWorldW = worldW;
+    worldW = Math.min(viewW * 5, 8000);
+    groundTop = viewH * 0.74;
+    groundBottom = viewH * 0.94;
+
+    // Skaalataan liikkuvat oliot uuteen maailmaan (esim. näytön kääntö)
+    var ratio = oldWorldW > 0 ? worldW / oldWorldW : 1;
+    unicorn.x *= ratio;
+    unicorn.tx *= ratio;
+    camX *= ratio;
+
+    // Päivitä olioiden paikat murto-osista
+    var i;
+    for (i = 0; i < stars.length; i++) {
+      stars[i].ax = starDefs[i].fx * worldW;
+      stars[i].ay = starY(starDefs[i]);
+      stars[i].ox = 0; stars[i].oy = 0;
+      stars[i].px = stars[i].ax; stars[i].py = stars[i].ay;
+    }
+    for (i = 0; i < gates.length; i++) gates[i].x = gates[i].fx * worldW;
+    for (i = 0; i < clouds.length; i++) clouds[i].x *= ratio;
+    for (i = 0; i < drops.length; i++) drops[i].x *= ratio;
+    troll.x *= ratio;
+    for (i = 0; i < bunnies.length; i++) {
+      bunnies[i].bushX = bushDefs[i].fx * worldW;
+      if (bunnies[i].state === 'hidden') {
+        bunnies[i].x = bunnies[i].bushX;
+        bunnies[i].y = groundTop + 10;
+      } else {
+        bunnies[i].x *= ratio;
+      }
+    }
+    unicorn.y = Math.min(Math.max(unicorn.y, groundTop), groundBottom);
+    unicorn.ty = Math.min(Math.max(unicorn.ty, groundTop), groundBottom);
+
+    renderBackground();
+  }
+
+  function renderBackground() {
+    if (worldW < 1 || viewH < 1) return;
+    // Piirretään koko maailman tausta kerran valmiiksi -> kevyt piirtää joka ruudulla.
+    // Vanhojen laitteiden canvas-raja ~4096 px: iso maailma piirretään
+    // pienennettynä ja skaalataan ruudulle piirrettäessä.
+    bgScale = Math.min(1, 4000 / worldW);
+    bgCanvas.width = Math.round(worldW * bgScale);
+    bgCanvas.height = Math.round(viewH * bgScale);
+    var b = bgCanvas.getContext('2d');
+    b.setTransform(bgScale, 0, 0, bgScale, 0, 0);
+    var w = worldW, h = viewH;
+    var horizon = h * 0.68;
+    var i, x;
+
+    // Taivas
+    var sky = b.createLinearGradient(0, 0, 0, horizon);
+    sky.addColorStop(0, '#8ed3ff');
+    sky.addColorStop(0.6, '#c9ecff');
+    sky.addColorStop(1, '#ffeef8');
+    b.fillStyle = sky;
+    b.fillRect(0, 0, w, horizon + 2);
+
+    // Aurinko
+    var sunX = w * 0.12, sunY = h * 0.16, sunR = h * 0.07;
+    var sg = b.createRadialGradient(sunX, sunY, sunR * 0.2, sunX, sunY, sunR * 2.2);
+    sg.addColorStop(0, 'rgba(255,236,150,1)');
+    sg.addColorStop(0.4, 'rgba(255,220,110,0.85)');
+    sg.addColorStop(1, 'rgba(255,220,110,0)');
+    b.fillStyle = sg;
+    b.fillRect(sunX - sunR * 2.2, sunY - sunR * 2.2, sunR * 4.4, sunR * 4.4);
+    b.fillStyle = '#ffe27a';
+    b.beginPath(); b.arc(sunX, sunY, sunR, 0, Math.PI * 2); b.fill();
+
+    // Pilvet
+    b.fillStyle = 'rgba(255,255,255,0.92)';
+    for (i = 0; i < 7; i++) {
+      x = w * (0.05 + i * 0.14);
+      var cy = h * (0.10 + (i % 3) * 0.07);
+      var cs = h * 0.030 + (i % 2) * h * 0.012;
+      cloudShape(b, x, cy, cs);
+    }
+
+    // Kaukaiset kukkulat
+    b.fillStyle = '#bfe3b0';
+    b.beginPath();
+    b.moveTo(0, horizon);
+    for (x = 0; x <= w; x += 8) {
+      b.lineTo(x, horizon - Math.sin(x * 0.004) * h * 0.05 - h * 0.03);
+    }
+    b.lineTo(w, horizon); b.closePath(); b.fill();
+
+    // Linna maailman lopussa
+    drawCastle(b, w * 0.955, horizon, h * 0.30);
+
+    // Nurmi
+    var grass = b.createLinearGradient(0, horizon, 0, h);
+    grass.addColorStop(0, '#9fdc7f');
+    grass.addColorStop(1, '#5cbb52');
+    b.fillStyle = grass;
+    b.fillRect(0, horizon, w, h - horizon);
+
+    // Polku
+    b.fillStyle = '#f0d9a8';
+    b.beginPath();
+    b.moveTo(0, groundTop);
+    for (x = 0; x <= w; x += 12) {
+      b.lineTo(x, groundTop + Math.sin(x * 0.01) * 6);
+    }
+    b.lineTo(w, groundBottom + 8);
+    for (x = w; x >= 0; x -= 12) {
+      b.lineTo(x, groundBottom + 8 + Math.sin(x * 0.013) * 6);
+    }
+    b.closePath(); b.fill();
+
+    // Puut polun taakse
+    for (i = 0; i < 12; i++) {
+      x = w * (0.04 + i * 0.085) + (i % 3) * 18;
+      drawTree(b, x, horizon + h * 0.02, h * (0.10 + (i % 3) * 0.02));
+    }
+
+    // Kukkia
+    var flowerColors = ['#ff7bac', '#ffd24f', '#b78bff', '#ff9d5c', '#7fd4ff'];
+    for (i = 0; i < 60; i++) {
+      x = (i * 137.5) % w;
+      var fy2 = horizon + h * 0.03 + ((i * 53) % Math.max(1, (groundTop - horizon - h * 0.05)));
+      drawFlower(b, x, fy2, h * 0.008, flowerColors[i % flowerColors.length]);
+    }
+
+    // Pensaat (pupujen piilot)
+    for (i = 0; i < bushDefs.length; i++) {
+      drawBush(b, bushDefs[i].fx * w, groundTop + 12, h * 0.055);
+    }
+  }
+
+  function cloudShape(b, x, y, s) {
+    b.beginPath();
+    b.arc(x, y, s * 1.2, 0, Math.PI * 2);
+    b.arc(x + s * 1.4, y + s * 0.2, s * 0.9, 0, Math.PI * 2);
+    b.arc(x - s * 1.4, y + s * 0.25, s * 0.85, 0, Math.PI * 2);
+    b.arc(x + s * 0.5, y - s * 0.6, s * 0.8, 0, Math.PI * 2);
+    b.fill();
+  }
+  function drawCastle(b, x, baseY, size) {
+    var tw = size * 0.22;
+    b.fillStyle = '#e8d5f2';
+    b.fillRect(x - size * 0.4, baseY - size * 0.55, size * 0.8, size * 0.55);
+    var towers = [-0.4, 0, 0.4];
+    for (var i = 0; i < towers.length; i++) {
+      var tx = x + towers[i] * size;
+      var th = size * (i === 1 ? 0.95 : 0.7);
+      b.fillStyle = '#dcc3ee';
+      b.fillRect(tx - tw / 2, baseY - th, tw, th);
+      b.fillStyle = '#c286e0';
+      b.beginPath();
+      b.moveTo(tx - tw * 0.75, baseY - th);
+      b.lineTo(tx + tw * 0.75, baseY - th);
+      b.lineTo(tx, baseY - th - size * 0.28);
+      b.closePath(); b.fill();
+      b.fillStyle = '#8a5cb8';
+      b.fillRect(tx - tw * 0.12, baseY - th + size * 0.12, tw * 0.24, size * 0.14);
+    }
+    b.fillStyle = '#a76fd0';
+    b.beginPath();
+    b.moveTo(x - size * 0.1, baseY);
+    b.lineTo(x + size * 0.1, baseY);
+    b.lineTo(x + size * 0.1, baseY - size * 0.3);
+    b.arc(x, baseY - size * 0.3, size * 0.1, 0, Math.PI, true);
+    b.closePath(); b.fill();
+    // Lippu
+    b.strokeStyle = '#8a5cb8'; b.lineWidth = 2;
+    b.beginPath();
+    b.moveTo(x, baseY - size * 0.95 - size * 0.28);
+    b.lineTo(x, baseY - size * 1.15 - size * 0.28);
+    b.stroke();
+    b.fillStyle = '#ff7bac';
+    b.beginPath();
+    b.moveTo(x, baseY - size * 1.15 - size * 0.28);
+    b.lineTo(x + size * 0.18, baseY - size * 1.09 - size * 0.28);
+    b.lineTo(x, baseY - size * 1.03 - size * 0.28);
+    b.closePath(); b.fill();
+  }
+  function drawTree(b, x, baseY, s) {
+    b.fillStyle = '#9c6b3f';
+    b.fillRect(x - s * 0.08, baseY - s * 0.5, s * 0.16, s * 0.55);
+    var lg = b.createRadialGradient(x, baseY - s * 0.9, s * 0.1, x, baseY - s * 0.9, s * 0.75);
+    lg.addColorStop(0, '#8fd977');
+    lg.addColorStop(1, '#4ea84f');
+    b.fillStyle = lg;
+    b.beginPath();
+    b.arc(x, baseY - s * 0.9, s * 0.55, 0, Math.PI * 2);
+    b.arc(x - s * 0.35, baseY - s * 0.65, s * 0.4, 0, Math.PI * 2);
+    b.arc(x + s * 0.35, baseY - s * 0.65, s * 0.4, 0, Math.PI * 2);
+    b.fill();
+  }
+  function drawFlower(b, x, y, s, color) {
+    b.fillStyle = color;
+    for (var i = 0; i < 5; i++) {
+      var a = (i / 5) * Math.PI * 2;
+      b.beginPath();
+      b.arc(x + Math.cos(a) * s, y + Math.sin(a) * s, s * 0.8, 0, Math.PI * 2);
+      b.fill();
+    }
+    b.fillStyle = '#fff3b0';
+    b.beginPath(); b.arc(x, y, s * 0.7, 0, Math.PI * 2); b.fill();
+  }
+  function drawBush(b, x, baseY, s) {
+    var g = b.createRadialGradient(x, baseY - s * 0.6, s * 0.2, x, baseY - s * 0.6, s * 1.4);
+    g.addColorStop(0, '#7ccb62');
+    g.addColorStop(1, '#3f9a44');
+    b.fillStyle = g;
+    b.beginPath();
+    b.arc(x, baseY - s * 0.5, s, 0, Math.PI * 2);
+    b.arc(x - s * 0.9, baseY - s * 0.3, s * 0.7, 0, Math.PI * 2);
+    b.arc(x + s * 0.9, baseY - s * 0.3, s * 0.7, 0, Math.PI * 2);
+    b.fill();
+    b.fillStyle = '#ff7bac';
+    b.beginPath(); b.arc(x - s * 0.5, baseY - s * 0.9, s * 0.12, 0, Math.PI * 2); b.fill();
+    b.beginPath(); b.arc(x + s * 0.6, baseY - s * 0.6, s * 0.12, 0, Math.PI * 2); b.fill();
+  }
+
+  // ---------- Piirto: tähti, pupu, yksisarvinen ----------
+  function drawStar(c, x, y, r, rot, glow) {
+    if (glow > 0) {
+      var g = c.createRadialGradient(x, y, r * 0.3, x, y, r * 2.4);
+      g.addColorStop(0, 'rgba(255,230,120,' + (0.55 * glow) + ')');
+      g.addColorStop(1, 'rgba(255,230,120,0)');
+      c.fillStyle = g;
+      c.beginPath(); c.arc(x, y, r * 2.4, 0, Math.PI * 2); c.fill();
+    }
+    c.save();
+    c.translate(x, y);
+    c.rotate(rot);
+    c.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var rr = (i % 2 === 0) ? r : r * 0.45;
+      var a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+      c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    c.closePath();
+    c.fillStyle = '#ffd94f';
+    c.fill();
+    c.strokeStyle = '#e8a800';
+    c.lineWidth = Math.max(1.5, r * 0.09);
+    c.stroke();
+    c.restore();
+  }
+
+  function drawBunny(c, x, y, s, hopY, earWiggle, faceOnly) {
+    c.save();
+    c.translate(x, y - hopY);
+    if (!faceOnly) {
+      // Vartalo
+      c.fillStyle = '#ffffff';
+      c.beginPath();
+      c.ellipse ? c.ellipse(0, -s * 0.55, s * 0.62, s * 0.55, 0, 0, Math.PI * 2)
+                : c.arc(0, -s * 0.55, s * 0.58, 0, Math.PI * 2);
+      c.fill();
+      // Jalat
+      c.beginPath(); c.arc(-s * 0.3, -s * 0.08, s * 0.2, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(s * 0.3, -s * 0.08, s * 0.2, 0, Math.PI * 2); c.fill();
+      // Häntä
+      c.beginPath(); c.arc(-s * 0.62, -s * 0.45, s * 0.16, 0, Math.PI * 2); c.fill();
+    }
+    // Korvat
+    var headY = faceOnly ? 0 : -s * 1.05;
+    c.save();
+    c.translate(0, headY);
+    var wig = Math.sin(earWiggle) * 0.15;
+    earShape(c, -s * 0.22, -s * 0.35, s, -0.25 + wig);
+    earShape(c, s * 0.22, -s * 0.35, s, 0.25 - wig);
+    // Pää
+    c.fillStyle = '#ffffff';
+    c.beginPath(); c.arc(0, 0, s * 0.42, 0, Math.PI * 2); c.fill();
+    // Silmät ja nenä
+    c.fillStyle = '#333';
+    c.beginPath(); c.arc(-s * 0.15, -s * 0.05, s * 0.05, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(s * 0.15, -s * 0.05, s * 0.05, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#ff9ec6';
+    c.beginPath(); c.arc(0, s * 0.1, s * 0.06, 0, Math.PI * 2); c.fill();
+    // Posket
+    c.fillStyle = 'rgba(255,158,198,0.5)';
+    c.beginPath(); c.arc(-s * 0.26, s * 0.1, s * 0.08, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(s * 0.26, s * 0.1, s * 0.08, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.restore();
+  }
+  function earShape(c, x, y, s, tilt) {
+    c.save();
+    c.translate(x, y);
+    c.rotate(tilt);
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.ellipse ? c.ellipse(0, -s * 0.3, s * 0.13, s * 0.38, 0, 0, Math.PI * 2)
+              : c.arc(0, -s * 0.3, s * 0.2, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#ffc4dd';
+    c.beginPath();
+    c.ellipse ? c.ellipse(0, -s * 0.28, s * 0.06, s * 0.26, 0, 0, Math.PI * 2)
+              : c.arc(0, -s * 0.28, s * 0.1, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+
+  var maneColors = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'];
+
+  function drawUnicorn(c, x, y, s, facing, walkPhase, moving, t) {
+    c.save();
+    c.translate(x, y);
+    c.scale(facing, 1);
+    var bob = moving ? Math.sin(walkPhase * 2) * s * 3 : Math.sin(t * 2) * s * 1.2;
+    c.translate(0, -bob);
+
+    var i;
+    // Takajalat + etujalat
+    c.strokeStyle = '#f5f0ff';
+    c.lineWidth = s * 9;
+    c.lineCap = 'round';
+    var legXs = [-26, -12, 12, 26];
+    for (i = 0; i < 4; i++) {
+      var swing = moving ? Math.sin(walkPhase + i * Math.PI * 0.9) * s * 8 : 0;
+      c.beginPath();
+      c.moveTo(legXs[i] * s, -s * 38);
+      c.lineTo(legXs[i] * s + swing, -s * 2);
+      c.stroke();
+    }
+    // Kaviot
+    c.fillStyle = '#d9b3ff';
+    for (i = 0; i < 4; i++) {
+      var swing2 = moving ? Math.sin(walkPhase + i * Math.PI * 0.9) * s * 8 : 0;
+      c.beginPath();
+      c.arc(legXs[i] * s + swing2, -s * 2, s * 4.5, 0, Math.PI * 2);
+      c.fill();
+    }
+    // Häntä
+    for (i = 0; i < maneColors.length; i++) {
+      c.strokeStyle = maneColors[i];
+      c.lineWidth = s * 3;
+      c.beginPath();
+      c.moveTo(-s * 36, -s * 48);
+      c.quadraticCurveTo(
+        -s * 52, -s * (42 - i * 3) + Math.sin(t * 3 + i) * s * 2,
+        -s * (46 + i * 2), -s * (20 - i * 2)
+      );
+      c.stroke();
+    }
+    // Vartalo
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.ellipse ? c.ellipse(0, -s * 46, s * 38, s * 20, 0, 0, Math.PI * 2)
+              : c.arc(0, -s * 46, s * 30, 0, Math.PI * 2);
+    c.fill();
+    // Kaula
+    c.beginPath();
+    c.moveTo(s * 22, -s * 56);
+    c.quadraticCurveTo(s * 34, -s * 70, s * 36, -s * 82);
+    c.lineTo(s * 46, -s * 76);
+    c.quadraticCurveTo(s * 40, -s * 60, s * 34, -s * 44);
+    c.closePath();
+    c.fill();
+    // Pää
+    c.beginPath();
+    c.ellipse ? c.ellipse(s * 44, -s * 82, s * 13, s * 9, -0.25, 0, Math.PI * 2)
+              : c.arc(s * 44, -s * 82, s * 11, 0, Math.PI * 2);
+    c.fill();
+    // Turpa
+    c.fillStyle = '#ffd9ec';
+    c.beginPath();
+    c.arc(s * 54, -s * 79, s * 4.5, 0, Math.PI * 2);
+    c.fill();
+    // Korva
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.moveTo(s * 36, -s * 90);
+    c.lineTo(s * 40, -s * 100);
+    c.lineTo(s * 44, -s * 90);
+    c.closePath(); c.fill();
+    // Sarvi
+    var hg = c.createLinearGradient(s * 44, -s * 112, s * 44, -s * 92);
+    hg.addColorStop(0, '#ffe27a');
+    hg.addColorStop(1, '#ffb54f');
+    c.fillStyle = hg;
+    c.beginPath();
+    c.moveTo(s * 41, -s * 92);
+    c.lineTo(s * 48, -s * 92);
+    c.lineTo(s * 46, -s * 113);
+    c.closePath(); c.fill();
+    // Silmä
+    c.fillStyle = '#333';
+    c.beginPath(); c.arc(s * 44, -s * 84, s * 1.8, 0, Math.PI * 2); c.fill();
+    // Harja
+    for (i = 0; i < maneColors.length; i++) {
+      c.strokeStyle = maneColors[i];
+      c.lineWidth = s * 2.6;
+      c.beginPath();
+      c.moveTo(s * (38 - i * 1.5), -s * (92 - i * 2));
+      c.quadraticCurveTo(
+        s * (26 - i * 2), -s * (80 - i * 3) + Math.sin(t * 3 + i) * s * 1.5,
+        s * (20 - i * 2), -s * (62 - i * 3)
+      );
+      c.stroke();
+    }
+
+    // ----- Prinsessa selässä -----
+    c.save();
+    c.translate(-s * 4, -s * 62);
+    // Mekko
+    c.fillStyle = '#ff6fb0';
+    c.beginPath();
+    c.moveTo(0, -s * 14);
+    c.quadraticCurveTo(-s * 16, s * 2, -s * 12, s * 6);
+    c.lineTo(s * 12, s * 6);
+    c.quadraticCurveTo(s * 16, s * 2, 0, -s * 14);
+    c.closePath(); c.fill();
+    // Ylävartalo
+    c.fillStyle = '#ff6fb0';
+    c.beginPath();
+    c.ellipse ? c.ellipse(0, -s * 14, s * 5.5, s * 8, 0, 0, Math.PI * 2)
+              : c.arc(0, -s * 14, s * 6, 0, Math.PI * 2);
+    c.fill();
+    // Käsi kohti ohjaksia
+    c.strokeStyle = '#ffd9b8';
+    c.lineWidth = s * 3;
+    c.beginPath();
+    c.moveTo(s * 2, -s * 16);
+    c.quadraticCurveTo(s * 10, -s * 12, s * 16, -s * 14);
+    c.stroke();
+    // Pää
+    c.fillStyle = '#ffd9b8';
+    c.beginPath(); c.arc(0, -s * 27, s * 6, 0, Math.PI * 2); c.fill();
+    // Hiukset
+    c.fillStyle = '#f7c948';
+    c.beginPath();
+    c.arc(0, -s * 29, s * 6.2, Math.PI * 0.95, Math.PI * 2.05);
+    c.fill();
+    c.beginPath();
+    c.ellipse ? c.ellipse(-s * 5, -s * 22, s * 2.5, s * 7, 0.3, 0, Math.PI * 2)
+              : c.arc(-s * 5, -s * 22, s * 3, 0, Math.PI * 2);
+    c.fill();
+    // Silmä ja hymy
+    c.fillStyle = '#333';
+    c.beginPath(); c.arc(s * 2, -s * 27, s * 0.9, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#c0392b';
+    c.lineWidth = s * 0.9;
+    c.beginPath(); c.arc(s * 1.5, -s * 25, s * 2, 0.2, Math.PI - 0.6); c.stroke();
+    // Kruunu
+    c.fillStyle = '#ffd24f';
+    c.beginPath();
+    c.moveTo(-s * 4.5, -s * 33);
+    c.lineTo(-s * 4.5, -s * 37);
+    c.lineTo(-s * 2.2, -s * 34.5);
+    c.lineTo(0, -s * 38);
+    c.lineTo(s * 2.2, -s * 34.5);
+    c.lineTo(s * 4.5, -s * 37);
+    c.lineTo(s * 4.5, -s * 33);
+    c.closePath(); c.fill();
+    c.restore();
+
+    c.restore();
+  }
+
+  // ---------- Hiukkaset ----------
+  function spawnSparkles(x, y, n, color) {
+    for (var i = 0; i < n; i++) {
+      if (particles.length > 120) break;
+      var a = Math.random() * Math.PI * 2;
+      var sp = 40 + Math.random() * 120;
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40,
+        life: 0.7 + Math.random() * 0.5, age: 0,
+        size: 3 + Math.random() * 4,
+        color: color || '#ffe27a'
+      });
+    }
+  }
+  function spawnConfetti() {
+    var colors = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff', '#ff9ec6'];
+    for (var i = 0; i < 80; i++) {
+      confetti.push({
+        x: Math.random() * viewW,
+        y: -20 - Math.random() * viewH,
+        vy: 60 + Math.random() * 90,
+        vx: (Math.random() - 0.5) * 40,
+        rot: Math.random() * Math.PI * 2,
+        vr: (Math.random() - 0.5) * 6,
+        size: 5 + Math.random() * 6,
+        color: colors[i % colors.length]
+      });
+    }
+  }
+
+  // ---------- Pelin alustus ----------
+  function initGame() {
+    stars = [];
+    bunnies = [];
+    particles = [];
+    confetti = [];
+    celebrating = false;
+    celebrateT = 0;
+    var i;
+    for (i = 0; i < STAR_COUNT; i++) {
+      var sax = starDefs[i].fx * worldW;
+      var say = starY(starDefs[i]);
+      stars.push({
+        ax: sax, ay: say, ox: 0, oy: 0, px: sax, py: say,
+        collected: false,
+        twinkle: Math.random() * Math.PI * 2
+      });
+    }
+    for (i = 0; i < BUNNY_COUNT; i++) {
+      bunnies.push({
+        bushX: bushDefs[i].fx * worldW,
+        x: bushDefs[i].fx * worldW,
+        y: groundTop + 10,
+        state: 'hidden',
+        peek: 0.12,          // paljonko pupu näkyy pensaan takaa (0..1)
+        phase: 'waiting',
+        phaseT: Math.random() * 1.5,
+        waitTime: 1.0 + Math.random() * 1.5,
+        hopT: Math.random() * Math.PI * 2,
+        earT: Math.random() * Math.PI * 2
+      });
+    }
+    gates = [makeGate(0.40, 4, 3), makeGate(0.72, 5, 4)];
+    for (i = 0; i < gates.length; i++) gates[i].x = gates[i].fx * worldW;
+    activeGate = null;
+
+    clouds = [
+      { zA: 0.06, zB: 0.28, fy: 0.34, x: 0.15 * worldW, dir: 1, dropT: 3.0, warnT: 0 },
+      { zA: 0.44, zB: 0.64, fy: 0.30, x: 0.55 * worldW, dir: -1, dropT: 4.0, warnT: 0 }
+    ];
+    drops = [];
+    invulnT = 0;
+    troll.x = 0.63 * worldW;
+    troll.dir = 1;
+    troll.cooldown = 0;
+    troll.bounceT = 0;
+    goalReady = false;
+    unicorn.x = viewW * 0.10;
+    unicorn.y = (groundTop + groundBottom) / 2;
+    unicorn.tx = unicorn.x;
+    unicorn.ty = unicorn.y;
+    unicorn.facing = 1;
+    unicorn.moving = false;
+    camX = 0;
+    document.getElementById('replayBtn').style.display = 'none';
+  }
+
+  // ---------- Kosketus ----------
+  function orbPositions(n) {
+    var r = viewH * 0.085;
+    var cy = viewH * 0.45;
+    var gap = Math.min(viewW * 0.9 / n, r * 3.0);
+    var xs = [];
+    for (var i = 0; i < n; i++) {
+      xs.push(viewW / 2 + (i - (n - 1) / 2) * gap);
+    }
+    return { r: r, xs: xs, y: cy };
+  }
+
+  function handleTap(px, py) {
+    if (!running || celebrating) return;
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    var i, d, dx, dy;
+
+    // Loitsutila: vain palloihin voi koskea
+    if (spellActive()) {
+      if (activeGate.mode !== 'input') return;
+      var op = orbPositions(activeGate.orbs);
+      for (i = 0; i < op.xs.length; i++) {
+        dx = px - op.xs[i];
+        dy = py - op.y;
+        if (Math.sqrt(dx * dx + dy * dy) < op.r * 1.4) {
+          spellTapOrb(i);
+          return;
+        }
+      }
+      return;
+    }
+
+    var wx = px + camX;
+    var wy = py;
+
+    // Osuiko tähteen? Suora osuma nappaa, läheltä ohi mennyt säikäyttää
+    // tähden uuteen paikkaan.
+    var starHit = viewH * 0.07;
+    var nearest = null, nearestD = 1e9;
+    for (i = 0; i < stars.length; i++) {
+      var st = stars[i];
+      if (st.collected) continue;
+      dx = wx - st.px;
+      dy = wy - st.py;
+      d = Math.sqrt(dx * dx + dy * dy);
+      if (d < nearestD) { nearestD = d; nearest = st; }
+    }
+    if (nearest && nearestD < starHit) {
+      collectStar(nearest);
+      return;
+    }
+    if (nearest && nearestD < starHit * 2.3) {
+      scareStar(nearest);
+      return;
+    }
+
+    // Osuiko kurkkivaan pupuun? Pitää ehtiä napauttaa kun pupu on esillä.
+    var bs = viewH * 0.055;
+    for (i = 0; i < bunnies.length; i++) {
+      var bn = bunnies[i];
+      if (bn.state !== 'hidden') continue;
+      var hy = groundTop + 12 - bs * 0.5 - bn.peek * bs * 1.6;
+      dx = wx - bn.bushX;
+      dy = wy - hy;
+      if (Math.sqrt(dx * dx + dy * dy) < viewH * 0.09) {
+        if (bn.peek > 0.5) {
+          foundBunny(bn);
+        } else {
+          // Huti: korvat vilkuttavat, ja toisesta hudista pupu vaihtaa pensasta
+          bn.earT += 6;
+          bn.missCount = (bn.missCount || 0) + 1;
+          if (bn.missCount >= 2) relocateBunny(bn);
+        }
+        return;
+      }
+    }
+
+    // Muuten: kävele kohti kosketusta (suljettu portti pysäyttää)
+    var maxX = worldW - viewW * 0.03;
+    for (i = 0; i < gates.length; i++) {
+      if (!gates[i].opened && gates[i].x > unicorn.x) {
+        maxX = Math.min(maxX, gates[i].x - viewW * 0.09);
+      }
+    }
+    unicorn.tx = Math.min(Math.max(wx, viewW * 0.05), maxX);
+    unicorn.ty = Math.min(Math.max(wy, groundTop), groundBottom);
+    tapRing = { x: unicorn.tx, y: unicorn.ty, t: 0 };
+  }
+
+  function scareStar(st) {
+    spawnSparkles(st.px, st.py, 8, '#fff3b0');
+    playNote(520, 0, 0.12, 'sine', 0.3);
+    playNote(360, 0.08, 0.15, 'sine', 0.25);
+    var jump = (0.04 + Math.random() * 0.04) * worldW;
+    var dir2 = Math.random() < 0.5 ? -1 : 1;
+    // Pysytään maailman sisällä
+    if (st.ax + dir2 * jump < viewW * 0.06 || st.ax + dir2 * jump > worldW - viewW * 0.05) dir2 = -dir2;
+    st.ax += dir2 * jump;
+    st.ay = groundTop - (0.14 + Math.random() * 0.16) * viewH;
+    st.ox = 0; st.oy = 0;
+    st.px = st.ax; st.py = st.ay;
+    spawnSparkles(st.px, st.py, 8, '#ffe27a');
+  }
+
+  function relocateBunny(bn) {
+    bn.missCount = 0;
+    // Lähin muu pensas, ettei pupua tarvitse jahdata maailman toiselle laidalle
+    var best = null, bd = 1e9;
+    for (var i = 0; i < bushDefs.length; i++) {
+      var bx2 = bushDefs[i].fx * worldW;
+      var d = Math.abs(bx2 - bn.bushX);
+      if (d > viewW * 0.05 && d < bd) { bd = d; best = bx2; }
+    }
+    if (best === null) return;
+    spawnSparkles(bn.bushX, groundTop - viewH * 0.04, 10, '#9fdc7f');
+    bn.bushX = best;
+    bn.peek = 0.12;
+    bn.phase = 'waiting';
+    bn.phaseT = 0;
+    bn.waitTime = 1.5 + Math.random() * 2.0;
+    playNote(820, 0, 0.1, 'sine', 0.3);
+    playNote(1040, 0.09, 0.12, 'sine', 0.3);
+  }
+
+  function spellStart(g) {
+    activeGate = g;
+    g.mode = 'show';
+    g.timer = -0.4;
+    g.inputIdx = 0;
+    g.litOrb = -1;
+    g.lastShown = -1;
+    g.seq = [];
+    for (var i = 0; i < g.seqLen; i++) {
+      g.seq.push(Math.floor(Math.random() * g.orbs));
+    }
+    unicorn.tx = unicorn.x;
+    unicorn.ty = unicorn.y;
+  }
+
+  function spellTapOrb(k) {
+    var g = activeGate;
+    g.litOrb = k;
+    g.litT = 0.35;
+    if (k === g.seq[g.inputIdx]) {
+      playNote(ORB_NOTES[k], 0, 0.35, 'triangle', 0.5);
+      g.inputIdx++;
+      if (g.inputIdx >= g.seq.length) {
+        g.mode = 'opening';
+        g.timer = 0;
+        var notes = [523, 659, 784, 1047];
+        for (var i = 0; i < notes.length; i++) {
+          playNote(notes[i], 0.2 + i * 0.12, 0.4, 'triangle', 0.45);
+        }
+      }
+    } else {
+      // Väärin: ei rangaistusta, loitsu näytetään uudelleen
+      playNote(170, 0, 0.3, 'sawtooth', 0.2);
+      g.shakeT = 0.5;
+      g.mode = 'show';
+      g.timer = -1.0;
+      g.inputIdx = 0;
+      g.lastShown = -1;
+    }
+  }
+
+  function foundBunny(bn) {
+    bn.state = 'found';
+    bn.y = groundTop + 10;
+    soundBunny();
+    spawnSparkles(bn.bushX, bn.y - viewH * 0.08, 14, '#ff9ec6');
+    checkComplete();
+  }
+
+  function collectStar(st) {
+    st.collected = true;
+    soundStar(countStars());
+    spawnSparkles(st.px, st.py, 16, '#ffe27a');
+    checkComplete();
+  }
+
+  // Pisaraosuma: enintään 3 kerättyä tähteä sirottuu takaisin maastoon
+  function hitUnicorn() {
+    if (invulnT > 0 || celebrating) return;
+    invulnT = 2.5;
+    playNote(330, 0, 0.18, 'sawtooth', 0.3);
+    playNote(220, 0.14, 0.3, 'sawtooth', 0.3);
+    spawnSparkles(unicorn.x, unicorn.y - viewH * 0.10, 14, '#8fc7ff');
+    goalReady = false;
+    var lost = 0;
+    for (var i = stars.length - 1; i >= 0 && lost < 3; i--) {
+      var st = stars[i];
+      if (!st.collected) continue;
+      st.collected = false;
+      lost++;
+      var dir2 = Math.random() < 0.5 ? -1 : 1;
+      var ax2 = unicorn.x + dir2 * (0.05 + Math.random() * 0.08) * worldW;
+      st.ax = Math.min(Math.max(ax2, viewW * 0.06), worldW - viewW * 0.05);
+      st.ay = groundTop - (0.14 + Math.random() * 0.16) * viewH;
+      st.ox = 0; st.oy = 0;
+      st.px = st.ax; st.py = st.ay;
+      spawnSparkles(st.px, st.py, 8, '#ffe27a');
+    }
+  }
+
+  function countStars() {
+    var n = 0;
+    for (var i = 0; i < stars.length; i++) if (stars[i].collected) n++;
+    return n;
+  }
+  function countBunnies() {
+    var n = 0;
+    for (var i = 0; i < bunnies.length; i++) if (bunnies[i].state === 'found') n++;
+    return n;
+  }
+  function checkComplete() {
+    if (goalReady || celebrating) return;
+    if (countStars() === STAR_COUNT && countBunnies() === BUNNY_COUNT) {
+      // Kaikki kerätty: linnan majakka syttyy, juhla odottaa linnalla
+      goalReady = true;
+      playNote(523, 0, 0.3, 'triangle', 0.4);
+      playNote(659, 0.15, 0.3, 'triangle', 0.4);
+      playNote(784, 0.3, 0.5, 'triangle', 0.4);
+    }
+  }
+
+  function startCelebration() {
+    celebrating = true;
+    celebrateT = 0;
+    unicorn.tx = unicorn.x;
+    soundFanfare();
+    spawnConfetti();
+    setTimeout(function () {
+      document.getElementById('replayBtn').style.display = 'block';
+    }, 3000);
+  }
+
+  // ---------- Päivitys ----------
+  function update(dt) {
+    globalT += dt;
+    var i;
+
+    // Yksisarvisen liike
+    var dx = unicorn.tx - unicorn.x;
+    var dy = unicorn.ty - unicorn.y;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 6 && !celebrating && !spellActive()) {
+      unicorn.moving = true;
+      var step = Math.min(unicorn.speed * dt, dist);
+      unicorn.x += (dx / dist) * step;
+      unicorn.y += (dy / dist) * step;
+      if (Math.abs(dx) > 4) unicorn.facing = dx > 0 ? 1 : -1;
+      unicorn.walkPhase += dt * 10;
+      // Kimallejälki
+      if (Math.random() < dt * 12) {
+        spawnSparkles(unicorn.x - unicorn.facing * 40, unicorn.y - 20, 1, '#d9b3ff');
+      }
+    } else {
+      unicorn.moving = false;
+    }
+
+    // Kamera seuraa
+    var targetCam = unicorn.x - viewW / 2;
+    targetCam = Math.min(Math.max(targetCam, 0), worldW - viewW);
+    camX += (targetCam - camX) * Math.min(1, dt * 4);
+
+    // Tähdet: leijuvat ja väistelevät hitaasti, kun yksisarvinen lähestyy
+    for (i = 0; i < stars.length; i++) {
+      var st = stars[i];
+      if (st.collected) continue;
+      st.twinkle += dt * 3;
+      var curX = st.ax + st.ox;
+      var nearStar = Math.abs(curX - unicorn.x) < viewW * 0.16;
+      if (nearStar) {
+        var dir = (curX - unicorn.x) >= 0 ? 1 : -1;
+        st.ox += dir * viewW * 0.06 * dt;
+        st.oy -= viewH * 0.04 * dt;
+      } else {
+        st.ox -= st.ox * Math.min(1, dt * 0.8);
+        st.oy -= st.oy * Math.min(1, dt * 0.8);
+      }
+      var oMax = viewW * 0.12;
+      st.ox = Math.min(Math.max(st.ox, -oMax), oMax);
+      st.oy = Math.min(Math.max(st.oy, -viewH * 0.10), 0);
+      st.px = st.ax + st.ox + Math.sin(st.twinkle * 0.7 + i) * viewW * 0.012;
+      st.py = st.ay + st.oy + Math.sin(st.twinkle + i) * viewH * 0.02;
+    }
+
+    // Puput: kurkkivat pensaasta vain hetken kerrallaan
+    for (i = 0; i < bunnies.length; i++) {
+      var bn = bunnies[i];
+      bn.earT += dt * (bn.state === 'hidden' ? 4 : 8);
+      if (bn.state === 'hidden') {
+        var bnear = Math.abs(unicorn.x - bn.bushX) < viewW * 0.35;
+        var peekTarget = 0.12;
+        if (bnear && !spellActive()) {
+          bn.phaseT += dt;
+          if (bn.phase === 'waiting' && bn.phaseT > bn.waitTime) {
+            bn.phase = 'peeking';
+            bn.phaseT = 0;
+          } else if (bn.phase === 'peeking' && bn.phaseT > 1.2) {
+            bn.phase = 'waiting';
+            bn.phaseT = 0;
+            bn.waitTime = 1.5 + Math.random() * 2.0;
+          }
+          if (bn.phase === 'peeking') peekTarget = 1;
+        } else {
+          bn.phase = 'waiting';
+          bn.phaseT = 0;
+        }
+        bn.peek += (peekTarget - bn.peek) * Math.min(1, dt * 9);
+      } else {
+        // Seuraa jonossa: 1. pupu seuraa yksisarvista, seuraavat edellistä
+        var leadX, leadY;
+        if (i === 0 || bunnies[i - 1].state !== 'found') {
+          leadX = unicorn.x - unicorn.facing * viewH * 0.16;
+          leadY = unicorn.y + 4;
+        } else {
+          leadX = bunnies[i - 1].x - unicorn.facing * viewH * 0.09;
+          leadY = bunnies[i - 1].y + 2;
+        }
+        var bdx = leadX - bn.x;
+        var bdy = leadY - bn.y;
+        var bd = Math.sqrt(bdx * bdx + bdy * bdy);
+        if (celebrating) {
+          bn.hopT += dt * 8;
+        } else if (bd > viewH * 0.02) {
+          var bstep = Math.min(unicorn.speed * 1.1 * dt, bd);
+          bn.x += (bdx / bd) * bstep;
+          bn.y += (bdy / bd) * bstep;
+          bn.hopT += dt * 9;
+        } else {
+          bn.hopT += dt * 2;
+        }
+        bn.y = Math.min(Math.max(bn.y, groundTop), groundBottom);
+      }
+    }
+
+    // Maali: kaikki kerätty ja perillä linnalla -> juhla
+    if (goalReady && !celebrating && unicorn.x > worldW * 0.90) {
+      startCelebration();
+    }
+
+    // Taikaportit
+    if (!activeGate && !celebrating) {
+      for (i = 0; i < gates.length; i++) {
+        if (!gates[i].opened && Math.abs(unicorn.x - gates[i].x) < viewW * 0.14) {
+          spellStart(gates[i]);
+          break;
+        }
+      }
+    } else if (activeGate) {
+      var ag = activeGate;
+      if (ag.mode === 'show') {
+        ag.timer += dt;
+        if (ag.timer >= 0) {
+          var stepLen = 0.85;
+          var step = Math.floor(ag.timer / stepLen);
+          if (step < ag.seq.length) {
+            var inStep = ag.timer - step * stepLen;
+            ag.litOrb = inStep < 0.55 ? ag.seq[step] : -1;
+            if (ag.lastShown !== step && inStep < 0.55) {
+              ag.lastShown = step;
+              playNote(ORB_NOTES[ag.seq[step]], 0, 0.4, 'triangle', 0.4);
+            }
+          } else {
+            ag.litOrb = -1;
+            ag.mode = 'input';
+            ag.inputIdx = 0;
+          }
+        }
+      } else if (ag.mode === 'opening') {
+        ag.timer += dt;
+        if (Math.random() < dt * 20) {
+          spawnSparkles(
+            ag.x + (Math.random() - 0.5) * viewH * 0.2,
+            groundTop - Math.random() * viewH * 0.25,
+            3, '#ffe27a'
+          );
+        }
+        if (ag.timer > 1.3) {
+          ag.opened = true;
+          ag.mode = 'done';
+          activeGate = null;
+        }
+      }
+      if (ag.litT > 0) ag.litT -= dt;
+      if (ag.shakeT > 0) ag.shakeT -= dt;
+    }
+
+    // Myrskypilvet: seuraavat yksisarvista alueellaan ja tiputtavat pisaroita
+    if (invulnT > 0) invulnT -= dt;
+    var hazardsOn = !celebrating && !spellActive();
+    for (i = 0; i < clouds.length; i++) {
+      var cl = clouds[i];
+      var zMin = cl.zA * worldW, zMax = cl.zB * worldW;
+      if (hazardsOn) {
+        var uxIn = unicorn.x > zMin - viewW * 0.25 && unicorn.x < zMax + viewW * 0.25;
+        if (uxIn) {
+          var chaseX = Math.min(Math.max(unicorn.x, zMin), zMax);
+          var cd = chaseX - cl.x;
+          cl.x += Math.min(Math.max(cd, -viewW * 0.05 * dt), viewW * 0.05 * dt);
+        } else {
+          cl.x += cl.dir * viewW * 0.03 * dt;
+          if (cl.x < zMin) { cl.x = zMin; cl.dir = 1; }
+          if (cl.x > zMax) { cl.x = zMax; cl.dir = -1; }
+        }
+        cl.dropT -= dt;
+        if (cl.dropT <= 0 && Math.abs(cl.x - unicorn.x) < viewH * 0.14 && cl.warnT <= 0) {
+          cl.warnT = 0.8;
+          cl.dropT = 3.5 + Math.random() * 2.0;
+          playNote(140, 0, 0.2, 'sawtooth', 0.15);
+        }
+        if (cl.warnT > 0) {
+          cl.warnT -= dt;
+          if (cl.warnT <= 0) {
+            drops.push({ x: cl.x, y: cl.fy * viewH + viewH * 0.045, vy: viewH * 0.35 });
+          }
+        }
+      }
+    }
+    for (i = drops.length - 1; i >= 0; i--) {
+      var dr = drops[i];
+      dr.vy += viewH * 0.55 * dt;
+      dr.y += dr.vy * dt;
+      var hitX = Math.abs(dr.x - unicorn.x) < viewH * 0.075;
+      var hitY = Math.abs(dr.y - (unicorn.y - viewH * 0.085)) < viewH * 0.10;
+      if (hitX && hitY) {
+        drops.splice(i, 1);
+        hitUnicorn();
+      } else if (dr.y > groundBottom) {
+        spawnSparkles(dr.x, dr.y, 6, '#8fc7ff');
+        drops.splice(i, 1);
+      }
+    }
+
+    // Peikko: partioi alueellaan, jahtaa lähellä ja varastaa pupun kiinni jäädessä
+    if (hazardsOn) {
+      var tzA = troll.zA * worldW, tzB = troll.zB * worldW;
+      var chasing = unicorn.x > tzA - viewW * 0.05 && unicorn.x < tzB + viewW * 0.05;
+      if (chasing) troll.dir = unicorn.x > troll.x ? 1 : -1;
+      troll.x += troll.dir * (chasing ? viewW * 0.09 : viewW * 0.035) * dt;
+      if (troll.x < tzA) { troll.x = tzA; troll.dir = 1; }
+      if (troll.x > tzB) { troll.x = tzB; troll.dir = -1; }
+      troll.bounceT += dt * (chasing ? 11 : 6);
+      if (troll.cooldown > 0) troll.cooldown -= dt;
+      if (troll.cooldown <= 0 && Math.abs(troll.x - unicorn.x) < viewH * 0.10) {
+        var lastFound = null;
+        for (i = bunnies.length - 1; i >= 0; i--) {
+          if (bunnies[i].state === 'found') { lastFound = bunnies[i]; break; }
+        }
+        if (lastFound) {
+          spawnSparkles(lastFound.x, lastFound.y - viewH * 0.05, 12, '#c9c9c9');
+          lastFound.state = 'hidden';
+          lastFound.peek = 0.12;
+          lastFound.phase = 'waiting';
+          lastFound.phaseT = 0;
+          lastFound.waitTime = 1.5 + Math.random() * 2.0;
+          lastFound.missCount = 0;
+          relocateBunny(lastFound);
+          goalReady = false;
+          playNote(300, 0, 0.15, 'square', 0.25);
+          playNote(200, 0.13, 0.25, 'square', 0.25);
+          troll.cooldown = 5;
+        } else {
+          playNote(150, 0, 0.2, 'sawtooth', 0.2);
+          troll.cooldown = 3;
+        }
+      }
+    }
+
+    // Hiukkaset
+    for (i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.age += dt;
+      if (p.age >= p.life) { particles.splice(i, 1); continue; }
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 60 * dt;
+    }
+
+    // Konfetti
+    if (celebrating) {
+      celebrateT += dt;
+      for (i = confetti.length - 1; i >= 0; i--) {
+        var cf = confetti[i];
+        cf.y += cf.vy * dt;
+        cf.x += cf.vx * dt + Math.sin(globalT * 3 + i) * 30 * dt;
+        cf.rot += cf.vr * dt;
+        if (cf.y > viewH + 20) {
+          cf.y = -20;
+          cf.x = Math.random() * viewW;
+        }
+      }
+    }
+
+    if (tapRing) {
+      tapRing.t += dt;
+      if (tapRing.t > 0.5) tapRing = null;
+    }
+  }
+
+  // ---------- Piirto ----------
+  function draw() {
+    var i;
+    // Piilossa oleva/0-kokoinen ikkuna: taustaa ei ole voitu piirtää
+    if (!bgCanvas.width || !viewW || !viewH) return;
+    ctx.clearRect(0, 0, viewW, viewH);
+
+    // Tausta (piirretty pienennettynä, skaalataan ruudulle)
+    ctx.drawImage(bgCanvas, 0, 0, bgCanvas.width, bgCanvas.height, -camX, 0, worldW, viewH);
+
+    // Liikkuvat pilvet
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    var c1x = ((globalT * 12) % (viewW + 300)) - 150;
+    var c2x = ((globalT * 8 + viewW * 0.6) % (viewW + 300)) - 150;
+    cloudShape(ctx, c1x, viewH * 0.08, viewH * 0.025);
+    cloudShape(ctx, c2x, viewH * 0.20, viewH * 0.020);
+
+    // Kosketusrengas
+    if (tapRing) {
+      var tr = tapRing.t / 0.5;
+      ctx.strokeStyle = 'rgba(255,255,255,' + (1 - tr) + ')';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(tapRing.x - camX, tapRing.y, 10 + tr * 30, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Taikaportit
+    for (i = 0; i < gates.length; i++) drawGate(ctx, gates[i]);
+
+    // Myrskypilvet
+    for (i = 0; i < clouds.length; i++) drawStormCloud(ctx, clouds[i]);
+
+    // Tähdet
+    var starR = viewH * 0.038;
+    for (i = 0; i < stars.length; i++) {
+      var st = stars[i];
+      if (st.collected) continue;
+      var glow = 0.6 + Math.sin(st.twinkle * 1.7) * 0.4;
+      drawStar(ctx, st.px - camX, st.py, starR, Math.sin(st.twinkle * 0.6) * 0.2, glow);
+    }
+
+    // Piilossa olevat puput kurkkivat pensaan takaa
+    var bs = viewH * 0.055;
+    for (i = 0; i < bunnies.length; i++) {
+      var bn = bunnies[i];
+      if (bn.state === 'hidden') {
+        ctx.save();
+        ctx.translate(bn.bushX - camX, groundTop + 12 - bs * 0.5 - bn.peek * bs * 1.6);
+        drawBunny(ctx, 0, 0, bs * 0.9, 0, bn.earT, true);
+        ctx.restore();
+      }
+    }
+    // Pensaiden etuosat pupujen eteen
+    for (i = 0; i < bunnies.length; i++) {
+      drawBushFront(ctx, bunnies[i].bushX - camX, groundTop + 12, bs);
+    }
+
+    // Löytyneet puput
+    for (i = 0; i < bunnies.length; i++) {
+      var bn2 = bunnies[i];
+      if (bn2.state !== 'found') continue;
+      var hop = Math.abs(Math.sin(bn2.hopT)) * viewH * 0.03;
+      drawBunny(ctx, bn2.x - camX, bn2.y, viewH * 0.045, hop, bn2.earT, false);
+    }
+
+    // Peikko
+    drawTroll(ctx);
+
+    // Yksisarvinen ja prinsessa (vilkkuu osuman jälkeen)
+    var us = viewH / 800;
+    if (invulnT > 0 && Math.sin(globalT * 20) > 0) ctx.globalAlpha = 0.45;
+    drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
+    ctx.globalAlpha = 1;
+
+    // Salamapisarat
+    for (i = 0; i < drops.length; i++) drawDrop(ctx, drops[i]);
+
+    // Hiukkaset
+    for (i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var alpha = 1 - p.age / p.life;
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = alpha;
+      ctx.save();
+      ctx.translate(p.x - camX, p.y);
+      ctx.rotate(p.age * 3);
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    // Juhla: sateenkaari + konfetti
+    if (celebrating) {
+      drawRainbow(ctx);
+      for (i = 0; i < confetti.length; i++) {
+        var cf = confetti[i];
+        ctx.save();
+        ctx.translate(cf.x, cf.y);
+        ctx.rotate(cf.rot);
+        ctx.fillStyle = cf.color;
+        ctx.fillRect(-cf.size / 2, -cf.size / 3, cf.size, cf.size * 0.66);
+        ctx.restore();
+      }
+    }
+
+    drawGuide(ctx);
+    drawHUD();
+    drawSpellOverlay(ctx);
+  }
+
+  function drawBushFront(c, x, baseY, s) {
+    if (x < -s * 2.5 || x > viewW + s * 2.5) return;
+    var g = c.createRadialGradient(x, baseY - s * 0.3, s * 0.2, x, baseY - s * 0.3, s * 1.3);
+    g.addColorStop(0, '#6cbe55');
+    g.addColorStop(1, '#358a3c');
+    c.fillStyle = g;
+    c.beginPath();
+    c.arc(x, baseY - s * 0.35, s * 0.85, 0, Math.PI * 2);
+    c.arc(x - s * 0.85, baseY - s * 0.2, s * 0.6, 0, Math.PI * 2);
+    c.arc(x + s * 0.85, baseY - s * 0.2, s * 0.6, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#ff7bac';
+    c.beginPath(); c.arc(x + s * 0.3, baseY - s * 0.75, s * 0.11, 0, Math.PI * 2); c.fill();
+  }
+
+  function drawGate(c, gate) {
+    var gx = gate.x - camX;
+    var gw = viewH * 0.11;   // pilarien etäisyys keskeltä
+    var gh = viewH * 0.32;   // pilarien korkeus
+    if (gx < -gw * 3 || gx > viewW + gw * 3) return;
+    var baseY = groundTop + viewH * 0.02;
+    var pw = viewH * 0.035;
+    var i;
+
+    // Hohtava "verho" suljetussa portissa
+    if (!gate.opened) {
+      var shimmer = 0.30 + Math.sin(globalT * 2.5) * 0.10;
+      var cg = c.createLinearGradient(0, baseY - gh, 0, baseY);
+      cg.addColorStop(0, 'rgba(190,130,255,' + shimmer + ')');
+      cg.addColorStop(1, 'rgba(255,180,240,' + (shimmer * 0.6) + ')');
+      c.fillStyle = cg;
+      c.fillRect(gx - gw + pw / 2, baseY - gh, (gw - pw / 2) * 2, gh);
+    }
+
+    // Pilarit
+    for (i = -1; i <= 1; i += 2) {
+      var px = gx + i * gw;
+      var pg = c.createLinearGradient(px - pw / 2, 0, px + pw / 2, 0);
+      pg.addColorStop(0, '#cba3ee');
+      pg.addColorStop(0.5, '#f0e0fb');
+      pg.addColorStop(1, '#a97fd0');
+      c.fillStyle = pg;
+      c.fillRect(px - pw / 2, baseY - gh, pw, gh);
+      c.fillStyle = '#e8d5f2';
+      c.fillRect(px - pw * 0.8, baseY - gh - pw * 0.6, pw * 1.6, pw * 0.6);
+      c.fillRect(px - pw * 0.8, baseY - pw * 0.4, pw * 1.6, pw * 0.4);
+    }
+
+    // Kaari
+    c.strokeStyle = '#e8d5f2';
+    c.lineWidth = pw * 0.8;
+    c.beginPath();
+    c.arc(gx, baseY - gh, gw, Math.PI, 0);
+    c.stroke();
+
+    // Kaaren jalokivet loitsuväreissä
+    for (i = 0; i < gate.orbs; i++) {
+      var a = Math.PI + Math.PI * (i + 1) / (gate.orbs + 1);
+      var jx = gx + Math.cos(a) * gw;
+      var jy = baseY - gh + Math.sin(a) * gw;
+      var lit = gate.opened || (activeGate === gate && spellActive() && gate.litOrb === i);
+      c.fillStyle = ORB_COLORS[i];
+      c.globalAlpha = lit ? 1 : 0.75;
+      c.beginPath();
+      c.arc(jx, jy, pw * (lit ? 0.55 : 0.4), 0, Math.PI * 2);
+      c.fill();
+      c.globalAlpha = 1;
+    }
+  }
+
+  function drawStormCloud(c, cl) {
+    var x = cl.x - camX;
+    var y = cl.fy * viewH;
+    var s = viewH * 0.035;
+    if (x < -s * 6 || x > viewW + s * 6) return;
+    var warn = cl.warnT > 0;
+    c.fillStyle = warn ? '#5d6472' : '#7d8593';
+    cloudShape(c, x, y, s);
+    c.fillStyle = 'rgba(255,255,255,0.25)';
+    cloudShape(c, x - s * 0.4, y - s * 0.5, s * 0.55);
+    // Silmät: vihainen ilme
+    c.fillStyle = '#2f3540';
+    c.beginPath(); c.arc(x - s * 0.5, y + s * 0.15, s * 0.14, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x + s * 0.5, y + s * 0.15, s * 0.14, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#2f3540';
+    c.lineWidth = s * 0.12;
+    c.beginPath();
+    c.moveTo(x - s * 0.85, y - s * 0.25); c.lineTo(x - s * 0.25, y - s * 0.05);
+    c.moveTo(x + s * 0.85, y - s * 0.25); c.lineTo(x + s * 0.25, y - s * 0.05);
+    c.stroke();
+    // Varoitussalama ennen pisaraa
+    if (warn && Math.sin(globalT * 25) > -0.2) {
+      c.fillStyle = '#ffe94f';
+      c.beginPath();
+      c.moveTo(x, y + s * 1.1);
+      c.lineTo(x - s * 0.35, y + s * 1.9);
+      c.lineTo(x + s * 0.05, y + s * 1.9);
+      c.lineTo(x - s * 0.25, y + s * 2.6);
+      c.lineTo(x + s * 0.45, y + s * 1.7);
+      c.lineTo(x + s * 0.05, y + s * 1.7);
+      c.lineTo(x + s * 0.35, y + s * 1.1);
+      c.closePath();
+      c.fill();
+    }
+  }
+
+  function drawDrop(c, dr) {
+    var x = dr.x - camX;
+    if (x < -20 || x > viewW + 20) return;
+    var s = viewH * 0.014;
+    c.fillStyle = '#5aa9ff';
+    c.beginPath();
+    c.moveTo(x, dr.y - s * 1.6);
+    c.quadraticCurveTo(x + s, dr.y - s * 0.3, x + s * 0.8, dr.y + s * 0.3);
+    c.arc(x, dr.y + s * 0.3, s * 0.8, 0, Math.PI);
+    c.quadraticCurveTo(x - s, dr.y - s * 0.3, x, dr.y - s * 1.6);
+    c.fill();
+    c.fillStyle = '#ffe94f';
+    c.beginPath(); c.arc(x, dr.y, s * 0.35, 0, Math.PI * 2); c.fill();
+  }
+
+  function drawTroll(c) {
+    var x = troll.x - camX;
+    var s = viewH * 0.05;
+    if (x < -s * 4 || x > viewW + s * 4) return;
+    var y = groundTop + viewH * 0.06;
+    var hop = Math.abs(Math.sin(troll.bounceT)) * s * 0.35;
+    c.save();
+    c.translate(x, y - hop);
+    c.scale(troll.dir, 1);
+    // Jalat
+    c.fillStyle = '#5e8c4a';
+    c.beginPath(); c.arc(-s * 0.45, 0, s * 0.28, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(s * 0.45, 0, s * 0.28, 0, Math.PI * 2); c.fill();
+    // Vartalo
+    var bg2 = c.createRadialGradient(0, -s * 0.9, s * 0.2, 0, -s * 0.9, s * 1.3);
+    bg2.addColorStop(0, '#8fb56f');
+    bg2.addColorStop(1, '#6a9552');
+    c.fillStyle = bg2;
+    c.beginPath();
+    c.ellipse ? c.ellipse(0, -s * 0.9, s * 0.95, s * 1.05, 0, 0, Math.PI * 2)
+              : c.arc(0, -s * 0.9, s, 0, Math.PI * 2);
+    c.fill();
+    // Maha
+    c.fillStyle = '#c6dba9';
+    c.beginPath();
+    c.ellipse ? c.ellipse(0, -s * 0.65, s * 0.5, s * 0.6, 0, 0, Math.PI * 2)
+              : c.arc(0, -s * 0.65, s * 0.5, 0, Math.PI * 2);
+    c.fill();
+    // Kädet
+    c.strokeStyle = '#6a9552';
+    c.lineWidth = s * 0.35;
+    c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(-s * 0.8, -s * 1.1);
+    c.lineTo(-s * 1.25, -s * 0.45 + Math.sin(troll.bounceT) * s * 0.2);
+    c.moveTo(s * 0.8, -s * 1.1);
+    c.lineTo(s * 1.25, -s * 0.45 - Math.sin(troll.bounceT) * s * 0.2);
+    c.stroke();
+    // Korvat, tukka
+    c.fillStyle = '#6a9552';
+    c.beginPath(); c.arc(-s * 0.85, -s * 1.75, s * 0.2, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(s * 0.85, -s * 1.75, s * 0.2, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#4c7440';
+    c.lineWidth = s * 0.1;
+    c.beginPath();
+    c.moveTo(-s * 0.2, -s * 2.15); c.lineTo(-s * 0.3, -s * 2.5);
+    c.moveTo(0, -s * 2.2); c.lineTo(0, -s * 2.6);
+    c.moveTo(s * 0.2, -s * 2.15); c.lineTo(s * 0.3, -s * 2.5);
+    c.stroke();
+    // Nenä
+    c.fillStyle = '#a4c583';
+    c.beginPath(); c.arc(s * 0.45, -s * 1.55, s * 0.28, 0, Math.PI * 2); c.fill();
+    // Silmät ja kulmakarvat
+    c.fillStyle = '#ffffff';
+    c.beginPath(); c.arc(s * 0.15, -s * 1.75, s * 0.2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#333';
+    c.beginPath(); c.arc(s * 0.22, -s * 1.73, s * 0.09, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#3d5c33';
+    c.lineWidth = s * 0.12;
+    c.beginPath();
+    c.moveTo(-s * 0.05, -s * 2.0); c.lineTo(s * 0.35, -s * 1.93);
+    c.stroke();
+    // Suu
+    c.strokeStyle = '#3d5c33';
+    c.lineWidth = s * 0.1;
+    c.beginPath();
+    c.arc(s * 0.3, -s * 1.2, s * 0.22, Math.PI * 1.1, Math.PI * 1.9);
+    c.stroke();
+    c.restore();
+  }
+
+  // Opastenuoli: näyttää suunnan lähimpään keräämättömään asiaan tai
+  // (kaiken kerättyä) linnaan, jotta maali löytyy aina ilman tekstiä.
+  function drawGuide(c) {
+    if (!running || celebrating || spellActive()) return;
+    var targetX = null;
+    var i, d;
+    if (goalReady) {
+      targetX = worldW * 0.945;
+      // Majakkatähti linnan yllä
+      var bx = worldW * 0.955 - camX;
+      if (bx > -viewH * 0.3 && bx < viewW + viewH * 0.3) {
+        var by = viewH * 0.22 + Math.sin(globalT * 2) * viewH * 0.012;
+        drawStar(c, bx, by, viewH * 0.05, Math.sin(globalT * 0.9) * 0.35, 1);
+      }
+    } else {
+      var bd = 1e9;
+      for (i = 0; i < stars.length; i++) {
+        if (stars[i].collected) continue;
+        d = Math.abs(stars[i].px - unicorn.x);
+        if (d < bd) { bd = d; targetX = stars[i].px; }
+      }
+      for (i = 0; i < bunnies.length; i++) {
+        if (bunnies[i].state !== 'hidden') continue;
+        d = Math.abs(bunnies[i].bushX - unicorn.x);
+        if (d < bd) { bd = d; targetX = bunnies[i].bushX; }
+      }
+    }
+    if (targetX === null) return;
+    var sx = targetX - camX;
+    var margin = viewW * 0.05;
+    if (sx >= margin && sx <= viewW - margin) return; // kohde jo näkyvissä
+    var dir = sx < margin ? -1 : 1;
+    var ax = dir < 0 ? viewH * 0.10 : viewW - viewH * 0.10;
+    var ay = viewH * 0.42;
+    var pulse = 1 + Math.sin(globalT * 4) * 0.12;
+    var r = viewH * 0.034 * pulse;
+    c.fillStyle = 'rgba(255,255,255,0.75)';
+    c.beginPath(); c.arc(ax, ay, r * 1.6, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#ffb300';
+    c.beginPath();
+    c.moveTo(ax + dir * r, ay);
+    c.lineTo(ax - dir * r * 0.6, ay - r * 0.85);
+    c.lineTo(ax - dir * r * 0.2, ay);
+    c.lineTo(ax - dir * r * 0.6, ay + r * 0.85);
+    c.closePath();
+    c.fill();
+  }
+
+  function drawSpellOverlay(c) {
+    if (!spellActive()) return;
+    var g = activeGate;
+    c.fillStyle = 'rgba(50,20,70,0.5)';
+    c.fillRect(0, 0, viewW, viewH);
+
+    var op = orbPositions(g.orbs);
+    var shake = g.shakeT > 0 ? Math.sin(globalT * 45) * 10 * g.shakeT : 0;
+    var i;
+
+    // Edistymispisteet: montako väriä loitsusta on jo toistettu
+    var dotR = viewH * 0.012;
+    for (i = 0; i < g.seq.length; i++) {
+      var dx2 = viewW / 2 + (i - (g.seq.length - 1) / 2) * dotR * 4;
+      c.fillStyle = i < g.inputIdx ? '#ffe27a' : 'rgba(255,255,255,0.35)';
+      c.beginPath();
+      c.arc(dx2 + shake, op.y - op.r * 2.1, dotR, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    // Väripallot
+    for (i = 0; i < g.orbs; i++) {
+      var lit = g.litOrb === i && (g.mode === 'show' ? true : g.litT > 0);
+      var r = op.r * (lit ? 1.18 : 1);
+      var x = op.xs[i] + shake;
+      if (lit) {
+        var glow = c.createRadialGradient(x, op.y, r * 0.4, x, op.y, r * 2);
+        glow.addColorStop(0, 'rgba(255,255,255,0.5)');
+        glow.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = glow;
+        c.beginPath(); c.arc(x, op.y, r * 2, 0, Math.PI * 2); c.fill();
+      }
+      var og = c.createRadialGradient(x - r * 0.3, op.y - r * 0.3, r * 0.1, x, op.y, r);
+      og.addColorStop(0, lit ? '#ffffff' : 'rgba(255,255,255,0.65)');
+      og.addColorStop(0.35, ORB_COLORS[i]);
+      og.addColorStop(1, ORB_COLORS[i]);
+      c.fillStyle = og;
+      c.beginPath(); c.arc(x, op.y, r, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.9)';
+      c.lineWidth = viewH * 0.006;
+      c.stroke();
+    }
+  }
+
+  function drawRainbow(c) {
+    var appear = Math.min(1, celebrateT / 1.5);
+    var cx = viewW / 2;
+    var cy = viewH * 0.95;
+    var baseR = viewH * 0.75;
+    var band = viewH * 0.025;
+    c.save();
+    c.globalAlpha = 0.75 * appear;
+    var sweep = Math.PI * appear;
+    for (var i = 0; i < maneColors.length; i++) {
+      c.strokeStyle = maneColors[i];
+      c.lineWidth = band;
+      c.beginPath();
+      c.arc(cx, cy, baseR + i * band, Math.PI, Math.PI + sweep);
+      c.stroke();
+    }
+    c.restore();
+  }
+
+  function drawHUD() {
+    var s = viewH * 0.022;
+    var pad = s * 1.4;
+    var i;
+    // Tausta
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    roundRect(ctx, pad * 0.5, pad * 0.5, s * 2.4 * STAR_COUNT + pad, s * 3.4, s);
+    ctx.fill();
+    // Tähdet
+    for (i = 0; i < STAR_COUNT; i++) {
+      var x = pad + s * 1.2 + i * s * 2.4;
+      var y = pad * 0.5 + s * 1.7;
+      if (stars[i] && stars[i].collected) {
+        drawStar(ctx, x, y, s, 0, 0);
+      } else {
+        ctx.strokeStyle = 'rgba(150,120,40,0.55)';
+        ctx.lineWidth = 1.5;
+        starOutline(ctx, x, y, s);
+      }
+    }
+    // Puput
+    var bx = pad * 0.5;
+    var by = pad * 0.5 + s * 4.2;
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    roundRect(ctx, bx, by, s * 3.4 * BUNNY_COUNT + pad, s * 3.6, s);
+    ctx.fill();
+    for (i = 0; i < BUNNY_COUNT; i++) {
+      var fx = bx + pad * 0.5 + s * 1.6 + i * s * 3.4;
+      var fy = by + s * 2.3;
+      ctx.save();
+      ctx.globalAlpha = (bunnies[i] && bunnies[i].state === 'found') ? 1 : 0.25;
+      drawBunny(ctx, fx, fy, s * 1.5, 0, 0, true);
+      ctx.restore();
+    }
+  }
+  function starOutline(c, x, y, r) {
+    c.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var rr = (i % 2 === 0) ? r : r * 0.45;
+      var a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+      c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    c.closePath();
+    c.stroke();
+  }
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r);
+    c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r);
+    c.arcTo(x, y, x + w, y, r);
+    c.closePath();
+  }
+
+  // ---------- Silmukka ----------
+  function loop(ts) {
+    if (!running) return;
+    if (!lastTime) lastTime = ts;
+    var dt = Math.min((ts - lastTime) / 1000, 0.05);
+    lastTime = ts;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- Tapahtumat ----------
+  window.addEventListener('resize', function () {
+    resize();
+  });
+
+  function pointerHandler(e) {
+    var px, py;
+    if (e.touches && e.touches.length > 0) {
+      px = e.touches[0].clientX;
+      py = e.touches[0].clientY;
+    } else {
+      px = e.clientX;
+      py = e.clientY;
+    }
+    handleTap(px, py);
+    e.preventDefault();
+  }
+  canvas.addEventListener('touchstart', pointerHandler, { passive: false });
+  canvas.addEventListener('mousedown', function (e) {
+    // Vältetään tuplakäsittely kosketuslaitteilla
+    if (e.button === 0) handleTap(e.clientX, e.clientY);
+  });
+  document.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
+
+  document.getElementById('playBtn').addEventListener('click', function () {
+    initAudio();
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('muteBtn').style.display = 'block';
+    resize();
+    initGame();
+    running = true;
+    lastTime = 0;
+    requestAnimationFrame(loop);
+    playNote(784, 0, 0.3, 'triangle', 0.4);
+    playNote(1047, 0.12, 0.4, 'triangle', 0.4);
+  });
+
+  document.getElementById('replayBtn').addEventListener('click', function () {
+    initGame();
+  });
+
+  document.getElementById('muteBtn').addEventListener('click', function () {
+    muted = !muted;
+    this.innerHTML = muted ? '&#128263;' : '&#128266;';
+  });
+
+  // Debug-kahva testausta varten
+  window.VT = {
+    u: unicorn,
+    gates: function () { return gates; },
+    active: function () { return activeGate; },
+    troll: troll,
+    clouds: function () { return clouds; },
+    drops: function () { return drops; },
+    stars: function () { return stars; },
+    bunnies: function () { return bunnies; },
+    cam: function () { return camX; },
+    tick: function (dt) { update(dt); draw(); },
+    tap: handleTap,
+    info: function () {
+      return {
+        running: running, worldW: worldW, viewW: viewW, viewH: viewH,
+        camX: camX, ux: unicorn.x, utx: unicorn.tx, uy: unicorn.y,
+        stars: countStars(), bunnies: countBunnies(),
+        goalReady: goalReady, celebrating: celebrating
+      };
+    }
+  };
+
+  // Esilataus: maisema valmiiksi aloitusruudun taakse (jos ikkunalla on jo koko)
+  resize();
+  initGame();
+  draw();
+})();
+</script>
+</body>
+</html>
