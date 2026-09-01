@@ -3,7 +3,8 @@
 Selainpeli 6-vuotiaalle: prinsessa ratsastaa yksisarvisella taikametsän läpi,
 nappaa karkailevia tähtiä, väijyy pensaissa piileskeleviä pupuja ja avaa
 kaksi taikaporttia väriloitsuilla — samalla vältellen myrskypilviä ja
-pupuja varastelevaa peikkoa. Koko peli on yksi tiedosto: `index.html`.
+pupuja varastelevaa peikkoa. Lopuksi ratsastetaan linnaan juhlimaan.
+Koko peli on yksi tiedosto: `index.html`.
 
 ## Siirto tabletille
 
@@ -19,26 +20,32 @@ Peli ei tarvitse nettiyhteyttä pelaamiseen eikä asennuksia.
 
 ## Pelin kulku (taso 1)
 
+Maailma on viiden ruudun levyinen ja rauhallisesti rytmitetty: keräiltävät
+ovat ryppäissä, joiden välissä on tyhjiä maisemaosuuksia.
+
 - Napauta maata → yksisarvinen kävelee sinne.
 - **Tähdet (10 kpl)** leijuvat ja pakenevat lähestyjää — nappaa sormella.
-  Ohi mennyt napautus säikäyttää tähden kokonaan uuteen paikkaan.
-- **Puput (3 kpl)** kurkkivat pensaista alle sekunnin kerrallaan.
-  Kaksi hutia → pupu vaihtaa pensasta.
-- **Myrskypilvet (2 kpl)** jahtaavat ja tiputtavat salamapisaroita.
-  Osuma sirottaa 3 kerättyä tähteä takaisin maastoon — väistä liikkumalla!
-- **Peikko** partioi loppumatkalla. Kiinni jäädessä se varastaa pupun
+  Ohi mennyt napautus säikäyttää tähden uuteen paikkaan.
+- **Puput (3 kpl)** kurkkivat pensaista hetken kerrallaan.
+  Kaksi hutia → pupu vaihtaa lähimpään toiseen pensaaseen.
+- **Myrskypilvet (2 kpl)** partioivat omilla alueillaan ja tiputtavat
+  salamapisaroita. Osuma sirottaa 3 kerättyä tähteä lähimaastoon.
+- **Peikko** partioi porttien välissä. Kiinni jäädessä se vie pupun
   takaisin pensaaseen. Yksisarvinen on peikkoa nopeampi.
 - **Kaksi taikaporttia**: 4 värin loitsu (3 palloa) ja 5 värin loitsu
   (4 palloa). Katso järjestys, toista napauttamalla. Väärästä ei rangaista.
-- Kun kaikki on kerätty: sateenkaari, konfetit ja juhlat. ↻ aloittaa alusta.
+- **Maali**: kun kaikki on kerätty, linnan ylle syttyy majakkatähti —
+  ratsasta linnalle, niin juhla alkaa. ↻ aloittaa alusta.
+- **Opastenuoli** ruudun laidassa näyttää aina suunnan lähimpään
+  keräämättömään asiaan (tai linnaan), joten mikään ei jää löytymättä.
 
 ## Vaikeuden säätö (index.html:n luvut)
 
-- Pupun kurkkausaika: `bn.phaseT > 0.95` (sekunteina)
-- Loitsujen pituus/pallot: `makeGate(0.45, 4, 3)` ja `makeGate(0.80, 5, 4)`
-- Peikon jahtausnopeus: `viewW * 0.115`
-- Pilvien pudotustahti: `cl.dropT = 2.2 + Math.random() * 1.3`
-- Tähtien pakonopeus: `viewW * 0.085`
+- Pupun kurkkausaika: `bn.phaseT > 1.2` (sekunteina)
+- Loitsujen pituus/pallot: `makeGate(0.40, 4, 3)` ja `makeGate(0.72, 5, 4)`
+- Peikon jahtausnopeus: `viewW * 0.09`
+- Pilvien pudotustahti: `cl.dropT = 3.5 + Math.random() * 2.0`
+- Tähtien pakonopeus: `viewW * 0.06`
 
 ## Jatkokehitysideoita (taso 2+)
 
