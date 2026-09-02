@@ -246,13 +246,10 @@ function hubRoute(sc, sr, tc, tr) {
   return hubBfsToNearestGate(sc, sr);
 }
 
-function hubArrive(ch, replayOk) {
+function hubArrive(ch) {
   var room = HUB_ROOMS[ch];
   if (room) {
-    if (room.kind && hubCleared[room.kind]) {
-      if (replayOk) beginPlay(room.kind);
-      return;
-    }
+    if (room.kind && hubCleared[room.kind]) return;
     if (room.kind) {
       beginPlay(room.kind);
       return;
@@ -278,7 +275,7 @@ function handleHubTap(px, py) {
   var cell = hubPixelCell(px, py, lay);
   if (!cell || !hubWalkable(hubAt(cell.c, cell.r))) return;
   if (cell.c === hubPawn.c && cell.r === hubPawn.r && hubPawn.path.length === 0) {
-    hubArrive(hubAt(cell.c, cell.r), true);
+    hubArrive(hubAt(cell.c, cell.r));
     return;
   }
   hubPawn.path = hubRoute(hubPawn.c, hubPawn.r, cell.c, cell.r);
@@ -307,7 +304,7 @@ function updateHub(dt) {
       if (hubPawn.path.length === 0) {
         var landed = hubAt(hubPawn.c, hubPawn.r);
         if (hubIsGate(landed)) hubApproach = { c: prevC, r: prevR };
-        hubArrive(landed, false);
+        hubArrive(landed);
       }
     } else {
       hubPawn.x += (dx / dist) * sp;
@@ -430,18 +427,23 @@ function drawHub() {
         ctx.arc(x, y + Math.sin(globalT * 3) * s * 0.04, s * 0.16, 0, Math.PI * 2);
         ctx.fill();
       } else if (room) {
+        var isCleared = !!(room.kind && hubCleared[room.kind]);
         var isNext = room.kind && room.kind === nextKind;
         var rad = s * (isNext ? 0.30 + Math.sin(globalT * 4) * 0.03 : 0.28);
-        ctx.fillStyle = room.kind ? room.color : '#d5c6ea';
+        ctx.fillStyle = isCleared ? '#c5b8d0' : (room.kind ? room.color : '#d5c6ea');
         ctx.beginPath();
         ctx.arc(x, y - s * 0.02, rad, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#fff';
+        ctx.strokeStyle = isCleared ? '#e8dfef' : '#fff';
         ctx.lineWidth = s * 0.05;
         ctx.stroke();
         if (!room.kind) drawHubLock(ctx, x, y - s * 0.02, s);
-        else drawHubRoomIcon(ctx, room.kind, x, y - s * 0.02, s);
-        if (room.kind && hubCleared[room.kind]) {
+        else {
+          if (isCleared) ctx.globalAlpha = 0.4;
+          drawHubRoomIcon(ctx, room.kind, x, y - s * 0.02, s);
+          ctx.globalAlpha = 1;
+        }
+        if (isCleared) {
           drawStar(ctx, x + s * 0.2, y - s * 0.22, s * 0.11, 0, 0.85);
         }
       }

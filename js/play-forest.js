@@ -275,8 +275,7 @@ function handleTaskTap(px, py) {
 
 function updateTasks(dt) {
   var i, t, actorX;
-  if (level === 2) actorX = princess.x;
-  else actorX = unicorn.x;
+  actorX = phaseNow().control === 'ride' ? unicorn.x : princess.x;
   if (!activeTask && !celebrating) {
     for (i = 0; i < tasks.length; i++) {
       t = tasks[i];

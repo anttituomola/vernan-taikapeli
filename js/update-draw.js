@@ -494,11 +494,6 @@ function drawTaskArch(c, task) {
   c.beginPath();
   c.arc(gx, baseY - gh, gw, Math.PI, 0);
   c.stroke();
-  if (task.type === 'math') {
-    drawStar(c, gx, baseY - gh - gw * 0.15, pw * 0.9, globalT, 0.8);
-  } else {
-    drawButterfly(c, gx, baseY - gh - gw * 0.1, pw * 1.1, globalT, TASK_BF_COLORS[0]);
-  }
 }
 
 function drawTaskOverlay(c) {
