@@ -195,6 +195,70 @@ function shuffleNums(arr) {
   return arr;
 }
 
+function pickNumberAnswers(correct, extras) {
+  var pool = shuffleNums([correct - 2, correct - 1, correct + 1, correct + 2].concat(extras || []));
+  var wrong = [], i, n;
+  for (i = 0; i < pool.length && wrong.length < 2; i++) {
+    n = pool[i];
+    if (n < 1 || n === correct || wrong.indexOf(n) >= 0) continue;
+    wrong.push(n);
+  }
+  while (wrong.length < 2) {
+    n = correct + wrong.length + 3;
+    if (wrong.indexOf(n) < 0) wrong.push(n);
+  }
+  return shuffleNums([correct, wrong[0], wrong[1]]);
+}
+
+function makeMathProblem(t) {
+  t.a = 3 + Math.floor(Math.random() * 7);
+  t.b = 2 + Math.floor(Math.random() * 8);
+  if (t.a + t.b > 15) t.b = 15 - t.a;
+  if (t.b < 2) t.b = 2;
+  t.correct = t.a + t.b;
+  t.answers = pickNumberAnswers(t.correct, [t.a, t.b]);
+}
+
+function makeCountProblem(t) {
+  t.glyph = TASK_GLYPH_KINDS[Math.floor(Math.random() * TASK_GLYPH_KINDS.length)];
+  t.color = Math.floor(Math.random() * TASK_BF_COLORS.length);
+  t.a = 4 + Math.floor(Math.random() * 5);
+  t.correct = t.a;
+  t.answers = pickNumberAnswers(t.correct, []);
+}
+
+function otherIndex(n, count) {
+  return (n + 1 + Math.floor(Math.random() * (count - 1))) % count;
+}
+
+function makeMatchProblem(t) {
+  var ki = Math.floor(Math.random() * TASK_GLYPH_KINDS.length);
+  var ci = Math.floor(Math.random() * TASK_BF_COLORS.length);
+  var slot = Math.floor(Math.random() * 3);
+  var otherK = otherIndex(ki, TASK_GLYPH_KINDS.length);
+  var otherC = otherIndex(ci, TASK_BF_COLORS.length);
+  t.prompt = { kind: TASK_GLYPH_KINDS[ki], color: ci };
+  t.choices = [null, null, null];
+  t.choices[slot] = { kind: TASK_GLYPH_KINDS[ki], color: ci };
+  t.choices[(slot + 1) % 3] = { kind: TASK_GLYPH_KINDS[ki], color: otherC };
+  t.choices[(slot + 2) % 3] = { kind: TASK_GLYPH_KINDS[otherK], color: ci };
+  t.correct = slot;
+}
+
+function makeOddProblem(t) {
+  var ki = Math.floor(Math.random() * TASK_GLYPH_KINDS.length);
+  var ci = Math.floor(Math.random() * TASK_BF_COLORS.length);
+  var slot = Math.floor(Math.random() * 3);
+  var diff = Math.random() < 0.5
+    ? { kind: TASK_GLYPH_KINDS[otherIndex(ki, TASK_GLYPH_KINDS.length)], color: ci }
+    : { kind: TASK_GLYPH_KINDS[ki], color: otherIndex(ci, TASK_BF_COLORS.length) };
+  var same = { kind: TASK_GLYPH_KINDS[ki], color: ci };
+  t.prompt = null;
+  t.choices = [same, same, same];
+  t.choices[slot] = diff;
+  t.correct = slot;
+}
+
 function taskStart(t) {
   activeTask = t;
   holding = false;
@@ -207,16 +271,24 @@ function taskStart(t) {
   t.lastShown = -1;
   t.shakeT = 0;
   t.litT = 0;
+  t.prompt = null;
+  t.choices = null;
   if (t.type === 'math') {
-    t.a = 1 + Math.floor(Math.random() * 3);
-    t.b = 1 + Math.floor(Math.random() * 2);
-    t.correct = t.a + t.b;
-    var w1 = t.correct === 2 ? 3 : t.correct - 1;
-    var w2 = t.correct + 1;
-    if (w1 < 1) w1 = t.correct + 2;
-    t.answers = shuffleNums([t.correct, w1, w2]);
+    makeMathProblem(t);
     t.mode = 'input';
     playNote(659, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'count') {
+    makeCountProblem(t);
+    t.mode = 'input';
+    playNote(698, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'match') {
+    makeMatchProblem(t);
+    t.mode = 'input';
+    playNote(784, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'odd') {
+    makeOddProblem(t);
+    t.mode = 'input';
+    playNote(523, 0, 0.2, 'triangle', 0.35);
   } else {
     t.seq = [];
     for (var i = 0; i < 3; i++) t.seq.push(Math.floor(Math.random() * 3));
@@ -243,10 +315,22 @@ function handleTaskTap(px, py) {
     dx = px - op.xs[i];
     dy = py - op.y;
     if (Math.sqrt(dx * dx + dy * dy) >= op.r * 1.4) continue;
-    if (t.type === 'math') {
+    if (t.type === 'math' || t.type === 'count') {
       t.litOrb = i;
       t.litT = 0.3;
       if (t.answers[i] === t.correct) {
+        playNote(TASK_BF_NOTES[Math.min(i, 2)], 0, 0.3, 'triangle', 0.45);
+        taskSolved();
+      } else {
+        playNote(170, 0, 0.3, 'sawtooth', 0.2);
+        t.shakeT = 0.5;
+      }
+      return;
+    }
+    if (t.type === 'match' || t.type === 'odd') {
+      t.litOrb = i;
+      t.litT = 0.3;
+      if (i === t.correct) {
         playNote(TASK_BF_NOTES[Math.min(i, 2)], 0, 0.3, 'triangle', 0.45);
         taskSolved();
       } else {

@@ -58,13 +58,15 @@ function spellActive() {
 // Pienet tehtävät (lasku, muisti). Sama idea kuin taikaportit: pysäyttää ja avaa tien.
 var TASK_BF_COLORS = ['#ff7bac', '#ffd24f', '#7fd4ff'];
 var TASK_BF_NOTES = [523, 659, 784];
+var TASK_GLYPH_KINDS = ['flower', 'star', 'heart'];
 function makeTask(fx, type) {
   return {
     fx: fx, x: 0, type: type, opened: false,
     mode: 'idle',
     timer: 0, shakeT: 0, litT: 0,
     a: 1, b: 1, answers: [2, 1, 3], correct: 2,
-    seq: [], inputIdx: 0, litOrb: -1, lastShown: -1
+    seq: [], inputIdx: 0, litOrb: -1, lastShown: -1,
+    prompt: null, choices: null, glyph: 'flower'
   };
 }
 var tasks = [];

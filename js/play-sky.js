@@ -14,7 +14,7 @@ function initSky() {
   camX = 0;
   gates = [];
   activeGate = null;
-  tasks = [makeTask(0.28, 'memory'), makeTask(0.66, 'math')];
+  tasks = [makeTask(0.28, 'memory'), makeTask(0.66, 'odd')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   activeTask = null;
   moons = [];

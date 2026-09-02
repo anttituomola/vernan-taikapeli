@@ -14,7 +14,7 @@ function initIce() {
   camX = 0;
   gates = [];
   activeGate = null;
-  tasks = [makeTask(0.30, 'math'), makeTask(0.68, 'memory')];
+  tasks = [makeTask(0.30, 'odd'), makeTask(0.68, 'count')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   activeTask = null;
   flakes = [];

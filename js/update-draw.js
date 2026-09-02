@@ -464,6 +464,42 @@ function drawGate(c, gate) {
   }
 }
 
+function taskArchStyle(type) {
+  if (type === 'math') return { veil: '255,210,80', pillar: '#f0d48a' };
+  if (type === 'count') return { veil: '130,225,175', pillar: '#9ee6b8' };
+  if (type === 'match') return { veil: '255,140,190', pillar: '#f5b3d2' };
+  if (type === 'odd') return { veil: '190,150,255', pillar: '#d0b8f8' };
+  return { veil: '120,210,255', pillar: '#b8d4ff' };
+}
+
+function drawTaskGlyph(c, kind, x, y, s, color) {
+  var i, a;
+  c.fillStyle = color;
+  if (kind === 'flower') {
+    drawFlower(c, x, y, s * 0.52, color);
+    return;
+  }
+  if (kind === 'heart') {
+    c.beginPath();
+    c.moveTo(x, y + s * 0.52);
+    c.bezierCurveTo(x - s * 1.05, y - s * 0.05, x - s * 0.35, y - s * 0.85, x, y - s * 0.22);
+    c.bezierCurveTo(x + s * 0.35, y - s * 0.85, x + s * 1.05, y - s * 0.05, x, y + s * 0.52);
+    c.fill();
+    return;
+  }
+  c.save();
+  c.translate(x, y);
+  c.beginPath();
+  for (i = 0; i < 10; i++) {
+    var rr = (i % 2 === 0) ? s : s * 0.42;
+    a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  c.closePath();
+  c.fill();
+  c.restore();
+}
+
 function drawTaskArch(c, task) {
   var gx = task.x - camX;
   var gw = viewH * 0.11;
@@ -471,8 +507,9 @@ function drawTaskArch(c, task) {
   if (gx < -gw * 3 || gx > viewW + gw * 3) return;
   var baseY = groundTop + viewH * 0.02;
   var pw = viewH * 0.035;
-  var veil = task.type === 'math' ? '255,210,80' : '120,210,255';
-  var pillar = task.type === 'math' ? '#f0d48a' : '#b8d4ff';
+  var style = taskArchStyle(task.type);
+  var veil = style.veil;
+  var pillar = style.pillar;
   if (!task.opened) {
     var shimmer = 0.32 + Math.sin(globalT * 2.5) * 0.10;
     var cg = c.createLinearGradient(0, baseY - gh, 0, baseY);
@@ -505,22 +542,44 @@ function drawTaskOverlay(c) {
   c.fillStyle = 'rgba(40,20,70,0.52)';
   c.fillRect(0, 0, viewW, viewH);
 
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
   if (t.type === 'math') {
-    var starR = viewH * 0.032;
-    var gap = starR * 2.3;
-    var leftW = (t.a - 1) * gap;
-    var plusX = viewW / 2;
-    var rowY = viewH * 0.32;
-    var left0 = plusX - viewH * 0.08 - leftW;
-    var right0 = plusX + viewH * 0.08;
-    for (i = 0; i < t.a; i++) drawStar(c, left0 + i * gap + shake, rowY, starR, i * 0.4, 0.9);
     c.fillStyle = '#ffe27a';
-    c.font = 'bold ' + Math.round(viewH * 0.07) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    c.fillText('+', plusX + shake, rowY);
-    for (i = 0; i < t.b; i++) drawStar(c, right0 + i * gap + shake, rowY, starR, i * 0.5, 0.9);
-  } else {
+    c.font = 'bold ' + Math.round(viewH * 0.09) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.fillText(t.a + ' + ' + t.b + ' = ?', viewW / 2 + shake, viewH * 0.32);
+  } else if (t.type === 'count') {
+    var gs = viewH * 0.028;
+    var gap = gs * 2.35;
+    var cols = t.a > 4 ? 4 : t.a;
+    var rows = Math.ceil(t.a / cols);
+    var gridW = (cols - 1) * gap;
+    var gridH = (rows - 1) * gap;
+    var gx0 = viewW / 2 - gridW / 2 + shake;
+    var gy0 = viewH * 0.28 - gridH / 2;
+    for (i = 0; i < t.a; i++) {
+      drawTaskGlyph(
+        c, t.glyph,
+        gx0 + (i % cols) * gap,
+        gy0 + Math.floor(i / cols) * gap,
+        gs, TASK_BF_COLORS[t.color]
+      );
+    }
+  } else if (t.type === 'match' && t.prompt) {
+    c.fillStyle = 'rgba(255,255,255,0.88)';
+    c.beginPath();
+    c.arc(viewW / 2 + shake, viewH * 0.30, viewH * 0.07, 0, Math.PI * 2);
+    c.fill();
+    drawTaskGlyph(
+      c, t.prompt.kind,
+      viewW / 2 + shake, viewH * 0.30,
+      viewH * 0.042, TASK_BF_COLORS[t.prompt.color]
+    );
+  } else if (t.type === 'odd') {
+    c.fillStyle = '#ffe27a';
+    c.font = 'bold ' + Math.round(viewH * 0.11) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.fillText('?', viewW / 2 + shake, viewH * 0.28);
+  } else if (t.type === 'memory') {
     var dotR = viewH * 0.012;
     for (i = 0; i < t.seq.length; i++) {
       c.fillStyle = i < t.inputIdx ? '#ffe27a' : 'rgba(255,255,255,0.35)';
@@ -546,10 +605,14 @@ function drawTaskOverlay(c) {
     c.strokeStyle = TASK_BF_COLORS[i];
     c.lineWidth = viewH * 0.008;
     c.stroke();
-    if (t.type === 'math') {
+    if (t.type === 'math' || t.type === 'count') {
+      var ans = String(t.answers[i]);
       c.fillStyle = '#8a2be2';
-      c.font = 'bold ' + Math.round(r * 0.9) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
-      c.fillText(String(t.answers[i]), x, op.y + r * 0.08);
+      c.font = 'bold ' + Math.round(r * (ans.length > 1 ? 0.7 : 0.9)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+      c.fillText(ans, x, op.y + r * 0.08);
+    } else if (t.type === 'match' || t.type === 'odd') {
+      var ch = t.choices && t.choices[i];
+      if (ch) drawTaskGlyph(c, ch.kind, x, op.y, r * 0.5, TASK_BF_COLORS[ch.color]);
     } else {
       drawButterfly(c, x, op.y, r * 0.42, globalT + i, TASK_BF_COLORS[i]);
     }

@@ -41,7 +41,7 @@ function initLevel2() {
   princess.coyote = 0.12;
   owl.awake = false;
   owl.flyT = 0;
-  tasks = [makeTask(0.34, 'math'), makeTask(0.70, 'memory')];
+  tasks = [makeTask(0.34, 'match'), makeTask(0.70, 'memory')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   activeTask = null;
   butterflies = [];
