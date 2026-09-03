@@ -417,38 +417,12 @@ function drawHubLock(c, x, y, s) {
 function drawHub() {
   if (!viewW || !viewH) return;
   var lay = hubLayout();
-  var g = ctx.createLinearGradient(0, 0, 0, viewH);
-  g.addColorStop(0, '#ffd6ec');
-  g.addColorStop(0.55, '#d6b3ff');
-  g.addColorStop(1, '#b3e0ff');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, viewW, viewH);
+  renderHubBg(lay);
+  ctx.clearRect(0, 0, viewW, viewH);
+  ctx.drawImage(hubBgCanvas, 0, 0, hubBgCanvas.width, hubBgCanvas.height, 0, 0, viewW, viewH);
 
   var r, c, ch, x, y, s, room, i;
   s = lay.cell;
-  for (r = 0; r < lay.rows; r++) {
-    for (c = 0; c < lay.cols; c++) {
-      ch = hubAt(c, r);
-      x = lay.ox + c * s;
-      y = lay.oy + r * s;
-      if (ch === '#') {
-        ctx.fillStyle = (c + r) % 2 === 0 ? '#4fb356' : '#3ea04a';
-        roundRect(ctx, x + s * 0.04, y + s * 0.04, s * 0.92, s * 0.92, s * 0.22);
-        ctx.fill();
-        if ((c * 13 + r * 7) % 5 === 0) {
-          drawFlower(ctx, x + s * 0.5, y + s * 0.42, s * 0.08, (c + r) % 2 ? '#ff7bac' : '#ffe27a');
-        }
-      } else {
-        ctx.fillStyle = '#f7e4b0';
-        roundRect(ctx, x + s * 0.12, y + s * 0.12, s * 0.76, s * 0.76, s * 0.18);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        roundRect(ctx, x + s * 0.22, y + s * 0.22, s * 0.56, s * 0.22, s * 0.1);
-        ctx.fill();
-      }
-    }
-  }
-
   var nextKind = hubNextKind();
   for (r = 0; r < lay.rows; r++) {
     for (c = 0; c < lay.cols; c++) {
@@ -459,59 +433,42 @@ function drawHub() {
       if (ch === 'G') {
         var castleReady = !nextKind && !finaleDone;
         if (castleReady || finaleDone) {
-          var gr = ctx.createRadialGradient(x, y, s * 0.1, x, y, s * 0.7);
-          gr.addColorStop(0, 'rgba(255,230,140,' + (castleReady ? 0.55 + Math.sin(globalT * 4) * 0.2 : 0.35) + ')');
+          var gr = ctx.createRadialGradient(x, y, s * 0.1, x, y, s * 0.9);
+          gr.addColorStop(0, 'rgba(255,230,140,' + (castleReady ? 0.6 + Math.sin(globalT * 4) * 0.2 : 0.4) + ')');
           gr.addColorStop(1, 'rgba(255,230,140,0)');
           ctx.fillStyle = gr;
-          ctx.beginPath(); ctx.arc(x, y, s * 0.7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(x, y, s * 0.9, 0, Math.PI * 2); ctx.fill();
         }
-        drawCastle(ctx, x, y + s * 0.32, s * 0.85);
-        if (finaleDone) drawStar(ctx, x, y - s * 0.42, s * 0.14, globalT * 0.5, 0.9);
-      } else if (ch === 'S') {
-        ctx.fillStyle = 'rgba(255,126,172,0.45)';
-        ctx.beginPath();
-        ctx.arc(x, y + Math.sin(globalT * 3) * s * 0.04, s * 0.16, 0, Math.PI * 2);
-        ctx.fill();
+        drawCastle(ctx, x, y + s * 0.42, s * 1.05);
+        if (finaleDone) drawStar(ctx, x, y - s * 0.55, s * 0.16, globalT * 0.5, 0.9);
+        if (castleReady) drawHintArrow(ctx, x, y - s * 1.1);
       } else if (room) {
-        var isCleared = !!(room.kind && hubCleared[room.kind]);
-        var isNext = room.kind && room.kind === nextKind;
-        var rad = s * (isNext ? 0.30 + Math.sin(globalT * 4) * 0.03 : 0.28);
-        ctx.fillStyle = isCleared ? '#c5b8d0' : (room.kind ? room.color : '#d5c6ea');
-        ctx.beginPath();
-        ctx.arc(x, y - s * 0.02, rad, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = isCleared ? '#e8dfef' : '#fff';
-        ctx.lineWidth = s * 0.05;
-        ctx.stroke();
-        if (!room.kind) drawHubLock(ctx, x, y - s * 0.02, s);
-        else {
-          if (isCleared) ctx.globalAlpha = 0.4;
-          drawHubRoomIcon(ctx, room.kind, x, y - s * 0.02, s);
-          ctx.globalAlpha = 1;
-        }
-        if (isCleared) {
-          drawStar(ctx, x + s * 0.2, y - s * 0.22, s * 0.11, 0, 0.85);
-        }
+        drawHubMedallion(ctx, room, x, y, s, !!(room.kind && hubCleared[room.kind]), room.kind === nextKind);
       }
     }
   }
 
-  for (i = 0; i < 10; i++) {
-    var fx = ((globalT * (18 + i) + i * 70) % (viewW + 40)) - 20;
-    var fy = viewH * 0.18 + (i % 3) * viewH * 0.08;
-    ctx.globalAlpha = 0.35 + Math.sin(globalT * 2 + i) * 0.15;
-    ctx.fillStyle = '#fff';
+  // Kiiltomadot / kimalteet
+  for (i = 0; i < 14; i++) {
+    var fx = ((globalT * (14 + i * 3) + i * 97) % (viewW + 40)) - 20;
+    var fy = viewH * (0.2 + (i % 5) * 0.15) + Math.sin(globalT * 1.5 + i) * viewH * 0.02;
+    ctx.globalAlpha = 0.4 + Math.sin(globalT * 3 + i) * 0.3;
+    ctx.fillStyle = i % 3 === 0 ? '#ffe27a' : '#ffffff';
     ctx.beginPath();
-    ctx.arc(fx, fy, 2.2, 0, Math.PI * 2);
+    ctx.arc(fx, fy, 2 + (i % 2), 0, Math.PI * 2);
     ctx.fill();
   }
   ctx.globalAlpha = 1;
 
+  // Prinsessa ratsastaa yksisarvisella
   var moving = hubPawn.path.length > 0;
-  drawPrincessFree(
-    ctx, hubPawn.x, hubPawn.y + lay.cell * 0.22,
-    lay.cell / 70, hubPawn.facing, hubPawn.walkPhase, moving, globalT
-  );
+  var us = lay.cell / 150;
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  if (ctx.ellipse) ctx.ellipse(hubPawn.x, hubPawn.y + lay.cell * 0.4, lay.cell * 0.34, lay.cell * 0.08, 0, 0, Math.PI * 2);
+  else ctx.arc(hubPawn.x, hubPawn.y + lay.cell * 0.4, lay.cell * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  drawUnicorn(ctx, hubPawn.x, hubPawn.y + lay.cell * 0.4, us, hubPawn.facing, hubPawn.walkPhase, moving, globalT);
 
   if (hubToast.t > 0 && hubToast.kind) {
     ctx.globalAlpha = Math.min(1, hubToast.t * 2);
@@ -528,3 +485,246 @@ function drawHub() {
   }
 }
 
+
+// ---------- Kartan ilme ----------
+// Staattinen maasto, polku, mökki ja linna piirretään kerran omalle canvasille.
+var hubBgCanvas = document.createElement('canvas');
+var hubBgKey = '';
+
+function hubHash(c, r) {
+  var h = ((c + 1) * 73856093) ^ ((r + 1) * 19349663);
+  h = (h ^ (h >>> 13)) * 1274126177;
+  return (((h ^ (h >>> 16)) >>> 0) % 1000) / 1000;
+}
+
+// Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
+function hubBand(c, r) {
+  if (r <= 2) return 'forest';
+  if (r <= 4) return 'garden';
+  if (r <= 6) return 'ice';
+  if (r <= 8) return 'pond';
+  if (r <= 10) return 'cave';
+  return c < 5 ? 'meadow' : 'swamp';
+}
+
+var HUB_TILE_COLORS = {
+  forest: ['#5dbb5a', '#52ad52'],
+  garden: ['#7cc86a', '#6fbb60'],
+  ice: ['#e4f4ff', '#d2eafc'],
+  pond: ['#5fc7d8', '#4fb8cc'],
+  cave: ['#4a3f7a', '#3f3568'],
+  meadow: ['#8fd97a', '#7fcc6c'],
+  swamp: ['#3e6e4a', '#356240']
+};
+
+function drawMushroomTile(b, x, baseY, s) {
+  b.fillStyle = '#fff3e0';
+  b.fillRect(x - s * 0.18, baseY - s * 0.5, s * 0.36, s * 0.5);
+  b.fillStyle = '#ff5f5f';
+  b.beginPath(); b.arc(x, baseY - s * 0.5, s * 0.55, Math.PI, 0); b.fill();
+  b.fillStyle = '#fff';
+  b.beginPath(); b.arc(x - s * 0.2, baseY - s * 0.7, s * 0.09, 0, Math.PI * 2); b.fill();
+  b.beginPath(); b.arc(x + s * 0.18, baseY - s * 0.62, s * 0.08, 0, Math.PI * 2); b.fill();
+}
+
+function drawHubTile(b, band, x, y, s, c, r) {
+  var rnd = hubHash(c, r), rnd2 = hubHash(r, c);
+  var cols = HUB_TILE_COLORS[band];
+  var cx = x + s / 2, cy = y + s / 2;
+  b.fillStyle = cols[(c + r) % 2];
+  b.fillRect(x, y, s + 1, s + 1);
+  if (band === 'forest') {
+    if (rnd < 0.6) drawTree(b, cx + (rnd2 - 0.5) * s * 0.3, y + s * 0.95, s * 0.6);
+    else drawFlower(b, cx + (rnd2 - 0.5) * s * 0.4, cy, s * 0.07, rnd2 < 0.5 ? '#ff7bac' : '#ffe27a');
+  } else if (band === 'garden') {
+    var gcols = ['#ff7bac', '#c9a0ff', '#ffd24f', '#7fd4ff'];
+    drawFlower(b, x + s * 0.3, y + s * 0.35, s * 0.08, gcols[Math.floor(rnd * 4)]);
+    drawFlower(b, x + s * 0.7, y + s * 0.65, s * 0.07, gcols[Math.floor(rnd2 * 4)]);
+    if (rnd > 0.6) drawMushroomTile(b, x + s * 0.5, y + s * 0.9, s * 0.2);
+  } else if (band === 'ice') {
+    b.fillStyle = 'rgba(255,255,255,0.75)';
+    b.beginPath();
+    if (b.ellipse) b.ellipse(cx + (rnd - 0.5) * s * 0.3, y + s * 0.82, s * 0.34, s * 0.12, 0, 0, Math.PI * 2);
+    else b.arc(cx, y + s * 0.8, s * 0.2, 0, Math.PI * 2);
+    b.fill();
+    if (rnd2 < 0.5) drawSnowflake(b, cx + (rnd - 0.5) * s * 0.4, y + s * 0.42, s * 0.15);
+  } else if (band === 'pond') {
+    b.strokeStyle = 'rgba(255,255,255,0.4)';
+    b.lineWidth = Math.max(1, s * 0.03);
+    b.beginPath();
+    b.arc(cx + (rnd - 0.5) * s * 0.4, cy + (rnd2 - 0.5) * s * 0.4, s * 0.2, Math.PI * 1.1, Math.PI * 1.9);
+    b.stroke();
+    if (rnd < 0.45) {
+      b.fillStyle = '#4fb356';
+      b.beginPath();
+      if (b.ellipse) b.ellipse(cx, cy + s * 0.15, s * 0.24, s * 0.12, 0, 0, Math.PI * 2);
+      else b.arc(cx, cy + s * 0.15, s * 0.16, 0, Math.PI * 2);
+      b.fill();
+      b.fillStyle = '#ff7bac';
+      b.beginPath(); b.arc(cx, cy + s * 0.15, s * 0.05, 0, Math.PI * 2); b.fill();
+    }
+  } else if (band === 'cave') {
+    b.fillStyle = '#5a4f8f';
+    b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, y + s * 0.85, s * 0.22, Math.PI, 0); b.fill();
+    if (rnd2 < 0.55) drawCrystal(b, cx + (rnd - 0.5) * s * 0.4, cy - s * 0.05, s * 0.14, CRYSTAL_COLORS[Math.floor(rnd * CRYSTAL_COLORS.length)]);
+  } else if (band === 'meadow') {
+    drawFlower(b, x + s * 0.32, y + s * 0.4, s * 0.07, rnd < 0.5 ? '#ff7bac' : '#ffe27a');
+    drawFlower(b, x + s * 0.7, y + s * 0.68, s * 0.07, rnd2 < 0.5 ? '#c9a0ff' : '#ff9d5c');
+    if (rnd > 0.7) {
+      var i;
+      b.lineWidth = Math.max(1, s * 0.035);
+      for (i = 0; i < 3; i++) {
+        b.strokeStyle = maneColors[i * 2];
+        b.beginPath(); b.arc(cx, y + s * 0.75, s * (0.28 - i * 0.05), Math.PI, 0); b.stroke();
+      }
+    }
+  } else {
+    b.strokeStyle = '#8bbf6a';
+    b.lineWidth = Math.max(1, s * 0.05);
+    b.lineCap = 'round';
+    var k;
+    for (k = 0; k < 3; k++) {
+      var rx = x + s * (0.25 + k * 0.25) + (rnd - 0.5) * s * 0.1;
+      b.beginPath(); b.moveTo(rx, y + s * 0.95); b.lineTo(rx + s * 0.06, y + s * (0.45 + (k % 2) * 0.15)); b.stroke();
+    }
+    if (rnd2 < 0.3) {
+      var wg = b.createRadialGradient(cx, cy - s * 0.1, s * 0.02, cx, cy - s * 0.1, s * 0.2);
+      wg.addColorStop(0, 'rgba(220,255,200,0.9)');
+      wg.addColorStop(1, 'rgba(220,255,200,0)');
+      b.fillStyle = wg;
+      b.beginPath(); b.arc(cx, cy - s * 0.1, s * 0.2, 0, Math.PI * 2); b.fill();
+    }
+  }
+}
+
+function drawCottage(b, x, baseY, s) {
+  b.fillStyle = '#f5deb3';
+  b.fillRect(x - s * 0.32, baseY - s * 0.42, s * 0.64, s * 0.42);
+  b.fillStyle = '#c0504d';
+  b.beginPath();
+  b.moveTo(x - s * 0.42, baseY - s * 0.42);
+  b.lineTo(x, baseY - s * 0.8);
+  b.lineTo(x + s * 0.42, baseY - s * 0.42);
+  b.closePath(); b.fill();
+  b.fillStyle = '#8a5cb8';
+  b.fillRect(x - s * 0.09, baseY - s * 0.26, s * 0.18, s * 0.26);
+  b.fillStyle = '#ffe27a';
+  b.fillRect(x + s * 0.12, baseY - s * 0.34, s * 0.12, s * 0.12);
+}
+
+function renderHubBg(lay) {
+  var key = viewW + 'x' + viewH;
+  if (hubBgKey === key) return;
+  hubBgKey = key;
+  hubBgCanvas.width = Math.round(viewW * DPR);
+  hubBgCanvas.height = Math.round(viewH * DPR);
+  var b = hubBgCanvas.getContext('2d');
+  b.setTransform(DPR, 0, 0, DPR, 0, 0);
+  var s = lay.cell, r, c, ch, x, y, i;
+
+  // Taivas ja aurinko
+  var g = b.createLinearGradient(0, 0, 0, viewH);
+  g.addColorStop(0, '#ffd6ec');
+  g.addColorStop(0.5, '#d6b3ff');
+  g.addColorStop(1, '#b3e0ff');
+  b.fillStyle = g;
+  b.fillRect(0, 0, viewW, viewH);
+  var sunX = viewW * 0.9, sunY = viewH * 0.1, sunR = viewH * 0.06;
+  var sg = b.createRadialGradient(sunX, sunY, sunR * 0.3, sunX, sunY, sunR * 3);
+  sg.addColorStop(0, 'rgba(255,240,180,0.9)');
+  sg.addColorStop(1, 'rgba(255,240,180,0)');
+  b.fillStyle = sg;
+  b.fillRect(sunX - sunR * 3, sunY - sunR * 3, sunR * 6, sunR * 6);
+  b.fillStyle = 'rgba(255,255,255,0.85)';
+  for (i = 0; i < 6; i++) cloudShape(b, viewW * (0.05 + i * 0.18), viewH * (0.06 + (i % 2) * 0.05), viewH * 0.02);
+
+  // Karttalauta
+  var pad = s * 0.45;
+  var bx = lay.ox - pad, by = lay.oy - pad, bw = lay.cols * s + pad * 2, bh = lay.rows * s + pad * 2;
+  b.fillStyle = 'rgba(0,0,0,0.12)';
+  roundRect(b, bx + s * 0.12, by + s * 0.16, bw, bh, s * 0.6);
+  b.fill();
+  b.fillStyle = '#f7ead2';
+  roundRect(b, bx, by, bw, bh, s * 0.6);
+  b.fill();
+  b.strokeStyle = '#d9b98a';
+  b.lineWidth = Math.max(2, s * 0.08);
+  b.stroke();
+
+  // Maasto
+  b.save();
+  roundRect(b, lay.ox, lay.oy, lay.cols * s, lay.rows * s, s * 0.35);
+  b.clip();
+  for (r = 0; r < lay.rows; r++) {
+    for (c = 0; c < lay.cols; c++) {
+      drawHubTile(b, hubBand(c, r), lay.ox + c * s, lay.oy + r * s, s, c, r);
+    }
+  }
+
+  // Polku yhtenäisenä tienä: reunus ja päällyste
+  var passes = [['#b8965e', 0.7], ['#f3e2b3', 0.54]];
+  var p, cx, cy;
+  for (p = 0; p < passes.length; p++) {
+    b.strokeStyle = passes[p][0];
+    b.lineWidth = s * passes[p][1];
+    b.lineCap = 'round';
+    b.lineJoin = 'round';
+    for (r = 0; r < lay.rows; r++) {
+      for (c = 0; c < lay.cols; c++) {
+        ch = hubAt(c, r);
+        if (!hubWalkable(ch)) continue;
+        cx = lay.ox + (c + 0.5) * s;
+        cy = lay.oy + (r + 0.5) * s;
+        b.beginPath(); b.moveTo(cx, cy); b.lineTo(cx + 0.01, cy); b.stroke();
+        if (hubWalkable(hubAt(c + 1, r))) { b.beginPath(); b.moveTo(cx, cy); b.lineTo(cx + s, cy); b.stroke(); }
+        if (hubWalkable(hubAt(c, r + 1))) { b.beginPath(); b.moveTo(cx, cy); b.lineTo(cx, cy + s); b.stroke(); }
+      }
+    }
+  }
+  // Kivet tiellä
+  b.fillStyle = 'rgba(180,150,100,0.45)';
+  for (r = 0; r < lay.rows; r++) {
+    for (c = 0; c < lay.cols; c++) {
+      ch = hubAt(c, r);
+      if (!hubWalkable(ch) || HUB_ROOMS[ch] || ch === 'G' || ch === 'S') continue;
+      cx = lay.ox + (c + 0.5) * s;
+      cy = lay.oy + (r + 0.5) * s;
+      for (i = 0; i < 3; i++) {
+        var hh = hubHash(c * 3 + i, r * 5 + i);
+        var hv = hubHash(r * 7 + i, c * 2 + i);
+        b.beginPath();
+        b.arc(cx + (hh - 0.5) * s * 0.5, cy + (hv - 0.5) * s * 0.4, s * 0.035, 0, Math.PI * 2);
+        b.fill();
+      }
+    }
+  }
+  b.restore();
+
+  // Mökki alussa
+  var st = hubFind('S');
+  drawCottage(b, lay.ox + (st.c + 0.5) * s, lay.oy + (st.r + 0.5) * s + s * 0.38, s * 0.9);
+}
+
+function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
+  var rad = s * (isNext ? 0.36 + Math.sin(globalT * 4) * 0.02 : 0.34);
+  if (isNext) {
+    var gl = c.createRadialGradient(x, y, rad * 0.8, x, y, rad * 1.9);
+    gl.addColorStop(0, 'rgba(255,230,140,0.55)');
+    gl.addColorStop(1, 'rgba(255,230,140,0)');
+    c.fillStyle = gl;
+    c.beginPath(); c.arc(x, y, rad * 1.9, 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = 'rgba(0,0,0,0.2)';
+  c.beginPath(); c.arc(x + s * 0.03, y + s * 0.06, rad, 0, Math.PI * 2); c.fill();
+  c.fillStyle = isCleared ? '#d9cfe6' : '#ffe27a';
+  c.beginPath(); c.arc(x, y, rad, 0, Math.PI * 2); c.fill();
+  c.fillStyle = isCleared ? '#c5b8d0' : room.color;
+  c.beginPath(); c.arc(x, y, rad * 0.8, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.35)';
+  c.beginPath(); c.arc(x - rad * 0.3, y - rad * 0.38, rad * 0.26, 0, Math.PI * 2); c.fill();
+  if (isCleared) c.globalAlpha = 0.5;
+  drawHubRoomIcon(c, room.kind, x, y, s * 1.15);
+  c.globalAlpha = 1;
+  if (isCleared) drawStar(c, x + rad * 0.72, y - rad * 0.72, s * 0.13, 0, 0.9);
+  if (isNext) drawHintArrow(c, x, y - rad * 2.2);
+}

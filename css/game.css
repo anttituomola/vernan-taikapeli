@@ -25,8 +25,13 @@ html, body {
   }
   #hubChrome h1 {
     color: #8a2be2;
-    font-size: 5.4vmin;
+    font-size: 5vmin;
     margin: 0;
+    padding: 0.6vmin 4vmin;
+    border-radius: 4vmin;
+    background: linear-gradient(#fff8e6, #ffe6b8);
+    border: 0.5vmin solid #f5b3d2;
+    box-shadow: 0 0.6vmin 0 #d9a3c4, 0 1vmin 2vmin rgba(0,0,0,0.15);
     text-shadow: 0 2px 0 #fff;
     text-align: center;
     letter-spacing: 0.04em;
