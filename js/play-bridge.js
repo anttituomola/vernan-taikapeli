@@ -36,7 +36,7 @@ function initBridge() {
   for (i = 0; i < RING_COUNT; i++) {
     rings.push({
       ax: ringDefs[i].fx * worldW, ay: groundTop - ringDefs[i].fy * viewH,
-      collected: false, phase: Math.random() * Math.PI * 2,
+      collected: false, returned: false, phase: Math.random() * Math.PI * 2,
       color: maneColors[i % maneColors.length],
       onRestore: function (r) { r.ax = r.homeX; r.ay = r.homeY; }
     });
@@ -81,6 +81,7 @@ function respawnBridge() {
     if (rings[i].homeX > checkpoint.x - viewW * 0.1 && !rings[i].collected) {
       rings[i].ax = rings[i].homeX;
       rings[i].ay = rings[i].homeY;
+      rings[i].returned = false;
     }
   }
   spawnSparkles(princess.x, princess.y, 14, '#ffe27a');
@@ -116,10 +117,15 @@ function collectRing(r) {
 function missRing(r) {
   loseHeart();
   spawnSparkles(r.ax, r.ay, 8, '#c9c9e0');
-  // Rengas leijuu edemmäs uuteen paikkaan, jotta kentän voi yhä läpäistä
+  // Rengas leijuu edemmäs uuteen paikkaan, jotta kentän voi yhä läpäistä.
+  // Prinsessa pääsee vain 70 %:iin ruudusta, joten lopussa rengas pysyy sen sisällä.
   var ahead = camX + viewW * (1.1 + Math.random() * 0.2);
-  r.ax = Math.min(ahead, worldW - viewW * 0.12);
+  r.ax = Math.min(ahead, worldW - viewW * 0.5);
   r.ay = groundTop - viewH * (0.18 + Math.random() * 0.34);
+  r.returned = true;
+  playNote(520, 0, 0.1, 'sine', 0.25);
+  playNote(780, 0.07, 0.12, 'sine', 0.22);
+  playNote(1040, 0.14, 0.16, 'sine', 0.2);
 }
 
 function handleBridgeTap(px, py) {
@@ -177,14 +183,15 @@ function updateBridge(dt) {
     var ry = r.ay + Math.sin(r.phase) * viewH * 0.01;
     var rr = viewH * 0.075;
     var dx = princess.x - r.ax, dy = princess.y - viewH * 0.06 - ry;
-    if (Math.abs(dx) < rr * 0.5 && Math.abs(dy) < rr * 0.85) {
+    if (Math.abs(dx) < rr * 0.6 && Math.abs(dy) < rr * 1.0) {
       collectRing(r);
       continue;
     }
     if (endZone) {
       // Lopussa jäljellä olevat renkaat leijuvat näkyville
-      if (r.ax < camX + viewW * 0.05 || r.ax > camX + viewW * 0.95) {
-        r.ax = camX + viewW * (0.5 + Math.random() * 0.4);
+      if (r.ax < camX + viewW * 0.12 || r.ax > camX + viewW * 0.6) {
+        r.ax = camX + viewW * (0.2 + Math.random() * 0.35);
+        spawnSparkles(r.ax, r.ay, 6, r.color);
       }
     } else if (r.ax < camX + viewW * 0.02 && !busy) {
       missRing(r);
@@ -330,6 +337,12 @@ function drawBridge() {
     if (!rings[i].collected) drawRing(ctx, rings[i]);
   }
   for (i = 0; i < thunder.length; i++) drawThunderCloud(ctx, thunder[i]);
+  // Ohitettu rengas odottaa edessä: nuoli kertoo sen, kunnes rengas on kerätty
+  if (!celebrating) {
+    for (i = 0; i < rings.length; i++) {
+      if (rings[i].returned && !rings[i].collected) { drawEdgeArrow(ctx, rings[i].ax); break; }
+    }
+  }
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
   drawPrincessFree(ctx, princess.x - camX, princess.y, viewH / 520, princess.facing, princess.walkPhase, true, globalT);
   ctx.globalAlpha = 1;

@@ -56,7 +56,9 @@ tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.
   Tehtävät: rytmi (taputa iskut perässä) ×2, muistiloitsu 5 väriä / 4 palloa.
 - **Sateenkaarisilta** ♥ — ruutu vierii itsestään ja nopeutuu: lennä
   renkaiden läpi, väistä ukkospilviä. Ohi mennyt rengas vie sydämen ja
-  ilmestyy uudelleen edemmäs. Tehtävä: kummalla puolella on enemmän.
+  ilmestyy uudelleen edemmäs — opastenuoli näyttää sen, kunnes se on kerätty.
+  Lopussa jäljellä olevat renkaat leijuvat prinsessan ulottuville.
+  Tehtävä: kummalla puolella on enemmän.
 - **Linna (finaali)** ♥ — Myrskynoidan suojapallot välähtävät järjestyksessä;
   ammu ne sauvalla samassa järjestyksessä (3 kierrosta, sarja pitenee 3→5).
   Salamat pakottavat liikkumaan, väärä pallo heittää sammakon. Sitten
