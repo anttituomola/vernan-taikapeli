@@ -22,9 +22,9 @@ function layoutCave() {
   }
   // Kiinteät kielekkeet
   platforms.push({ kind: 'ledge', x: worldW * 0.08, y: g - viewH * 0.22, w: worldW * 0.05 });
-  platforms.push({ kind: 'ledge', x: worldW * 0.25, y: g - viewH * 0.36, w: worldW * 0.05 });
+  platforms.push({ kind: 'ledge', x: worldW * 0.25, y: g - viewH * 0.20, w: worldW * 0.05 });
   platforms.push({ kind: 'ledge', x: worldW * 0.42, y: g - viewH * 0.20, w: worldW * 0.05 });
-  platforms.push({ kind: 'ledge', x: worldW * 0.60, y: g - viewH * 0.38, w: worldW * 0.05 });
+  platforms.push({ kind: 'ledge', x: worldW * 0.60, y: g - viewH * 0.20, w: worldW * 0.05 });
   platforms.push({ kind: 'ledge', x: worldW * 0.78, y: g - viewH * 0.22, w: worldW * 0.045 });
   // Liikkuvat tasot kuilujen yllä
   platforms.push({
@@ -32,7 +32,7 @@ function layoutCave() {
     range: worldW * 0.018, speed: 1.1, phase: 0, vx: 0
   });
   platforms.push({
-    kind: 'mover', baseX: worldW * 0.8775 - worldW * 0.025, x: 0, y: g - viewH * 0.26, w: worldW * 0.05,
+    kind: 'mover', baseX: worldW * 0.8775 - worldW * 0.025, x: 0, y: g - viewH * 0.18, w: worldW * 0.05,
     range: worldW * 0.02, speed: 0.9, phase: 1.5, vx: 0
   });
   for (i = 0; i < platforms.length; i++) {
@@ -43,10 +43,10 @@ function layoutCave() {
 }
 
 var crystalDefs = [
-  { fx: 0.10, fy: 0.34 }, { fx: 0.18, fy: 0.30 }, { fx: 0.27, fy: 0.48 },
+  { fx: 0.10, fy: 0.30 }, { fx: 0.18, fy: 0.30 }, { fx: 0.27, fy: 0.40 },
   { fx: 0.36, fy: 0.30 }, { fx: 0.44, fy: 0.32 }, { fx: 0.545, fy: 0.26 },
-  { fx: 0.62, fy: 0.50 }, { fx: 0.72, fy: 0.30 }, { fx: 0.80, fy: 0.34 },
-  { fx: 0.88, fy: 0.42 }
+  { fx: 0.62, fy: 0.40 }, { fx: 0.72, fy: 0.30 }, { fx: 0.80, fy: 0.30 },
+  { fx: 0.88, fy: 0.36 }
 ];
 
 function initCave() {
