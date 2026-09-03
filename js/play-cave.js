@@ -8,7 +8,7 @@ var crystals = [];
 var stalactites = [];
 var bats = [];
 var caveDoor = { fx: 0.965, x: 0, open: false };
-var caveGround = [[0.0, 0.16], [0.195, 0.34], [0.375, 0.52], [0.565, 0.70], [0.735, 0.86], [0.895, 1.0]];
+var caveGround = [[0.0, 0.165], [0.195, 0.345], [0.375, 0.52], [0.565, 0.705], [0.735, 0.865], [0.895, 1.0]];
 var caveWaterY = 0;
 
 var CRYSTAL_COLORS = ['#8fd3ff', '#c9a0ff', '#ff9ec6', '#9fffd8', '#ffe27a'];
@@ -28,12 +28,12 @@ function layoutCave() {
   platforms.push({ kind: 'ledge', x: worldW * 0.78, y: g - viewH * 0.22, w: worldW * 0.045 });
   // Liikkuvat tasot kuilujen yllä
   platforms.push({
-    kind: 'mover', baseX: worldW * 0.5425 - worldW * 0.02, x: 0, y: g - viewH * 0.10, w: worldW * 0.04,
-    range: worldW * 0.02, speed: 1.4, phase: 0, vx: 0
+    kind: 'mover', baseX: worldW * 0.5425 - worldW * 0.025, x: 0, y: g - viewH * 0.10, w: worldW * 0.05,
+    range: worldW * 0.018, speed: 1.1, phase: 0, vx: 0
   });
   platforms.push({
-    kind: 'mover', baseX: worldW * 0.8775 - worldW * 0.02, x: 0, y: g - viewH * 0.26, w: worldW * 0.04,
-    range: worldW * 0.025, speed: 1.1, phase: 1.5, vx: 0
+    kind: 'mover', baseX: worldW * 0.8775 - worldW * 0.025, x: 0, y: g - viewH * 0.26, w: worldW * 0.05,
+    range: worldW * 0.02, speed: 0.9, phase: 1.5, vx: 0
   });
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'mover') platforms[i].x = platforms[i].baseX;
@@ -43,9 +43,9 @@ function layoutCave() {
 }
 
 var crystalDefs = [
-  { fx: 0.10, fy: 0.34 }, { fx: 0.175, fy: 0.12 }, { fx: 0.27, fy: 0.48 },
-  { fx: 0.355, fy: 0.14 }, { fx: 0.44, fy: 0.32 }, { fx: 0.545, fy: 0.26 },
-  { fx: 0.62, fy: 0.50 }, { fx: 0.72, fy: 0.14 }, { fx: 0.80, fy: 0.34 },
+  { fx: 0.10, fy: 0.34 }, { fx: 0.18, fy: 0.30 }, { fx: 0.27, fy: 0.48 },
+  { fx: 0.36, fy: 0.30 }, { fx: 0.44, fy: 0.32 }, { fx: 0.545, fy: 0.26 },
+  { fx: 0.62, fy: 0.50 }, { fx: 0.72, fy: 0.30 }, { fx: 0.80, fy: 0.34 },
   { fx: 0.88, fy: 0.42 }
 ];
 
@@ -127,7 +127,19 @@ function caveFell() {
   var heartsBefore = hearts;
   loseHeart();
   // failSection palautti jo lyhdylle, jos sydämet loppuivat
-  if (hearts <= heartsBefore && hearts > 0) respawnCave();
+  if (hearts <= heartsBefore && hearts > 0) respawnAtPitEdge();
+}
+
+// Kuilun vasemmalle reunalle, jotta hyppyä voi yrittää heti uudestaan
+function respawnAtPitEdge() {
+  var i, best = 0, x = princess.x;
+  for (i = 0; i < caveGround.length; i++) {
+    var end = caveGround[i][1] * worldW;
+    if (end <= x + 1 && end > best) best = end;
+  }
+  var rx = best > 0 ? best - viewH * 0.09 : checkpoint.x;
+  resetPrincess(rx, groundTop);
+  spawnSparkles(princess.x, princess.y - viewH * 0.1, 10, '#6fd0ff');
 }
 
 function updateCave(dt) {
@@ -167,7 +179,7 @@ function updateCave(dt) {
       }
     } else if (st.state === 'shake') {
       st.t += dt;
-      if (st.t > 0.6) { st.state = 'fall'; st.vy = 0; }
+      if (st.t > 0.85) { st.state = 'fall'; st.vy = 0; }
     } else if (st.state === 'fall') {
       st.vy += viewH * 1.6 * dt;
       st.y += st.vy * dt;
@@ -199,7 +211,7 @@ function updateCave(dt) {
       continue;
     }
     if (!puzzleBusy()) {
-      bt.x += bt.dir * viewW * 0.11 * dt;
+      bt.x += bt.dir * viewW * 0.085 * dt;
       if (bt.x < bt.zA * worldW) { bt.x = bt.zA * worldW; bt.dir = 1; }
       if (bt.x > bt.zB * worldW) { bt.x = bt.zB * worldW; bt.dir = -1; }
     }
@@ -408,8 +420,8 @@ function drawCaveDoorGlow(c) {
 function drawDarkness(c, lx, ly, radius) {
   var g = c.createRadialGradient(lx, ly, radius * 0.35, lx, ly, radius);
   g.addColorStop(0, 'rgba(5,4,20,0)');
-  g.addColorStop(0.7, 'rgba(5,4,20,0.55)');
-  g.addColorStop(1, 'rgba(5,4,20,0.92)');
+  g.addColorStop(0.7, 'rgba(5,4,20,0.5)');
+  g.addColorStop(1, 'rgba(5,4,20,0.86)');
   c.fillStyle = g;
   c.fillRect(0, 0, viewW, viewH);
 }
@@ -436,7 +448,7 @@ function drawCave() {
   drawParticlesLayer(ctx);
 
   // Pimeys: valo prinsessan ympärillä, valonlähteet piirretään päälle
-  if (!celebrating) drawDarkness(ctx, princess.x - camX, princess.y - viewH * 0.08, viewH * 0.55);
+  if (!celebrating) drawDarkness(ctx, princess.x - camX, princess.y - viewH * 0.08, viewH * 0.72);
   for (i = 0; i < crystals.length; i++) {
     var cr = crystals[i];
     if (cr.collected) continue;
