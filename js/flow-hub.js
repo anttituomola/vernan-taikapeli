@@ -79,8 +79,12 @@ function skipTo(kind) {
 function markPhaseCleared() {
   var k;
   for (k in PHASES) {
-    if (PHASES[k].level === level) hubCleared[k] = true;
+    if (PHASES[k].level === level) {
+      hubCleared[k] = true;
+      if (k === 'finale') finaleDone = true;
+    }
   }
+  saveProgress();
 }
 
 function hubNextKind() {
@@ -260,6 +264,11 @@ function hubArrive(ch) {
     return;
   }
   if (ch === 'G') {
+    // Linna: finaali aukeaa, kun kaikki huoneet on läpäisty
+    if (!hubNextKind() && !finaleDone) {
+      beginPlay('finale');
+      return;
+    }
     hubToast.kind = 'castle';
     hubToast.t = 2.2;
     playNote(659, 0, 0.22, 'triangle', 0.4);
@@ -363,6 +372,34 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath();
     c.arc(x + s * 0.07, y - s * 0.06, s * 0.13, 0, Math.PI * 2);
     c.fill();
+  } else if (kind === 'cave') {
+    c.fillStyle = '#8fd3ff';
+    c.beginPath();
+    c.moveTo(x, y - s * 0.24);
+    c.lineTo(x + s * 0.12, y - s * 0.08);
+    c.lineTo(x + s * 0.08, y + s * 0.16);
+    c.lineTo(x - s * 0.08, y + s * 0.16);
+    c.lineTo(x - s * 0.12, y - s * 0.08);
+    c.closePath();
+    c.fill();
+  } else if (kind === 'swamp') {
+    c.fillStyle = '#c8ffb0';
+    c.beginPath();
+    c.arc(x, y - s * 0.02, s * 0.14, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#eafff0';
+    c.beginPath();
+    c.arc(x - s * 0.04, y - s * 0.06, s * 0.06, 0, Math.PI * 2);
+    c.fill();
+  } else if (kind === 'bridge') {
+    var cols = ['#ff5f7e', '#ffe94f', '#5fa8ff'];
+    c.lineWidth = Math.max(2, s * 0.05);
+    for (i = 0; i < cols.length; i++) {
+      c.strokeStyle = cols[i];
+      c.beginPath();
+      c.arc(x, y + s * 0.1, s * (0.22 - i * 0.05), Math.PI, 0);
+      c.stroke();
+    }
   }
 }
 
@@ -420,7 +457,16 @@ function drawHub() {
       y = lay.oy + (r + 0.5) * s;
       room = HUB_ROOMS[ch];
       if (ch === 'G') {
+        var castleReady = !nextKind && !finaleDone;
+        if (castleReady || finaleDone) {
+          var gr = ctx.createRadialGradient(x, y, s * 0.1, x, y, s * 0.7);
+          gr.addColorStop(0, 'rgba(255,230,140,' + (castleReady ? 0.55 + Math.sin(globalT * 4) * 0.2 : 0.35) + ')');
+          gr.addColorStop(1, 'rgba(255,230,140,0)');
+          ctx.fillStyle = gr;
+          ctx.beginPath(); ctx.arc(x, y, s * 0.7, 0, Math.PI * 2); ctx.fill();
+        }
         drawCastle(ctx, x, y + s * 0.32, s * 0.85);
+        if (finaleDone) drawStar(ctx, x, y - s * 0.42, s * 0.14, globalT * 0.5, 0.9);
       } else if (ch === 'S') {
         ctx.fillStyle = 'rgba(255,126,172,0.45)';
         ctx.beginPath();

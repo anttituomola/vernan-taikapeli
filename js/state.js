@@ -55,18 +55,22 @@ function spellActive() {
     (activeGate.mode === 'show' || activeGate.mode === 'input' || activeGate.mode === 'opening');
 }
 
-// Pienet tehtävät (lasku, muisti). Sama idea kuin taikaportit: pysäyttää ja avaa tien.
-var TASK_BF_COLORS = ['#ff7bac', '#ffd24f', '#7fd4ff'];
-var TASK_BF_NOTES = [523, 659, 784];
+// Pienet tehtävät (lasku, muisti, kuvio, rytmi...). Sama idea kuin taikaportit:
+// pysäyttää ja avaa tien. opts: { seqLen, orbs } muistitehtävän pituus ja värien määrä.
+var TASK_BF_COLORS = ['#ff7bac', '#ffd24f', '#7fd4ff', '#8fe38f'];
+var TASK_BF_NOTES = [523, 659, 784, 988];
 var TASK_GLYPH_KINDS = ['flower', 'star', 'heart'];
-function makeTask(fx, type) {
+function makeTask(fx, type, opts) {
+  opts = opts || {};
   return {
     fx: fx, x: 0, type: type, opened: false,
     mode: 'idle',
     timer: 0, shakeT: 0, litT: 0,
     a: 1, b: 1, answers: [2, 1, 3], correct: 2,
     seq: [], inputIdx: 0, litOrb: -1, lastShown: -1,
-    prompt: null, choices: null, glyph: 'flower'
+    seqLen: opts.seqLen || 3, orbs: opts.orbs || 3,
+    prompt: null, choices: null, glyph: 'flower',
+    items: null, beats: null, taps: null, inputT: 0
   };
 }
 var tasks = [];
@@ -161,7 +165,11 @@ var HUB_MAP = [
   '#.###########',
   '#..........b#',
   '###########.#',
-  '#G....d...c.#',
+  '#.....d...c.#',
+  '#.###########',
+  '#e..........#',
+  '###########.#',
+  '#G....g...f.#',
   '#############'
 ];
 var HUB_ROOMS = {
@@ -169,9 +177,12 @@ var HUB_ROOMS = {
   '2': { kind: 'garden', name: 'Puutarha', color: '#8a5cff' },
   'b': { kind: 'ice', name: 'Jää', color: '#8ecbff' },
   'c': { kind: 'pond', name: 'Lampi', color: '#3ecfb0' },
-  'd': { kind: 'sky', name: 'Taivas', color: '#7a5cff' }
+  'd': { kind: 'sky', name: 'Taivas', color: '#7a5cff' },
+  'e': { kind: 'cave', name: 'Kristalliluola', color: '#4a3f8a' },
+  'f': { kind: 'swamp', name: 'Noidan suo', color: '#3e7a4c' },
+  'g': { kind: 'bridge', name: 'Sateenkaarisilta', color: '#ff8fc0' }
 };
-var HUB_ORDER = ['start', 'garden', 'ice', 'pond', 'sky'];
+var HUB_ORDER = ['start', 'garden', 'ice', 'pond', 'sky', 'cave', 'swamp', 'bridge'];
 var hubCleared = {};
 var hubPlaying = null;
 var hubApproach = null;

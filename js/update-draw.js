@@ -4,10 +4,12 @@
 // ---------- Päivitys ----------
 function update(dt) {
   globalT += dt;
-  if (level === 2) { updateLevel2(dt); return; }
-  if (level === 3) { updateIce(dt); return; }
-  if (level === 4) { updatePond(dt); return; }
-  if (level === 5) { updateSky(dt); return; }
+  if (hurtFlash > 0) hurtFlash -= dt;
+  updateHearts(dt);
+  phaseNow().update(dt);
+}
+
+function updateForest(dt) {
   var i;
 
   // Yksisarvisen liike
@@ -279,10 +281,11 @@ function update(dt) {
 
 // ---------- Piirto ----------
 function draw() {
-  if (level === 2) { drawLevel2(); return; }
-  if (level === 3) { drawIce(); return; }
-  if (level === 4) { drawPond(); return; }
-  if (level === 5) { drawSky(); return; }
+  phaseNow().draw();
+  drawHurtFlash(ctx);
+}
+
+function drawForest() {
   var i;
   // Piilossa oleva/0-kokoinen ikkuna: taustaa ei ole voitu piirtää
   if (!bgCanvas.width || !viewW || !viewH) return;
@@ -466,9 +469,13 @@ function drawGate(c, gate) {
 
 function taskArchStyle(type) {
   if (type === 'math') return { veil: '255,210,80', pillar: '#f0d48a' };
+  if (type === 'minus') return { veil: '255,170,90', pillar: '#f2c39a' };
   if (type === 'count') return { veil: '130,225,175', pillar: '#9ee6b8' };
+  if (type === 'compare') return { veil: '110,200,230', pillar: '#a8dcec' };
   if (type === 'match') return { veil: '255,140,190', pillar: '#f5b3d2' };
+  if (type === 'pattern') return { veil: '120,220,200', pillar: '#a6e6d8' };
   if (type === 'odd') return { veil: '190,150,255', pillar: '#d0b8f8' };
+  if (type === 'rhythm') return { veil: '255,120,150', pillar: '#f5a8bc' };
   return { veil: '120,210,255', pillar: '#b8d4ff' };
 }
 
@@ -536,7 +543,7 @@ function drawTaskArch(c, task) {
 function drawTaskOverlay(c) {
   if (!taskActive()) return;
   var t = activeTask;
-  var op = orbPositions(3);
+  var op = orbPositions(t.orbs || 3);
   var shake = t.shakeT > 0 ? Math.sin(globalT * 45) * 10 * t.shakeT : 0;
   var i;
   c.fillStyle = 'rgba(40,20,70,0.52)';
@@ -544,10 +551,18 @@ function drawTaskOverlay(c) {
 
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  if (t.type === 'math') {
+  if (t.type === 'rhythm') {
+    drawRhythmOverlay(c, t, shake);
+    return;
+  }
+  if (t.type === 'math' || t.type === 'minus') {
     c.fillStyle = '#ffe27a';
     c.font = 'bold ' + Math.round(viewH * 0.09) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
-    c.fillText(t.a + ' + ' + t.b + ' = ?', viewW / 2 + shake, viewH * 0.32);
+    c.fillText(t.a + (t.type === 'math' ? ' + ' : ' − ') + t.b + ' = ?', viewW / 2 + shake, viewH * 0.32);
+  } else if (t.type === 'pattern') {
+    drawPatternPrompt(c, t, shake);
+  } else if (t.type === 'compare') {
+    drawComparePrompt(c, t, op, shake);
   } else if (t.type === 'count') {
     var gs = viewH * 0.028;
     var gap = gs * 2.35;
@@ -589,7 +604,7 @@ function drawTaskOverlay(c) {
     }
   }
 
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < t.orbs; i++) {
     var lit = t.litOrb === i && (t.mode === 'show' ? true : t.litT > 0);
     var r = op.r * (lit ? 1.16 : 1);
     var x = op.xs[i] + shake;
@@ -602,19 +617,28 @@ function drawTaskOverlay(c) {
     }
     c.fillStyle = '#fff';
     c.beginPath(); c.arc(x, op.y, r, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = TASK_BF_COLORS[i];
+    c.strokeStyle = TASK_BF_COLORS[i % TASK_BF_COLORS.length];
     c.lineWidth = viewH * 0.008;
     c.stroke();
-    if (t.type === 'math' || t.type === 'count') {
+    if (t.type === 'math' || t.type === 'count' || t.type === 'minus') {
       var ans = String(t.answers[i]);
       c.fillStyle = '#8a2be2';
       c.font = 'bold ' + Math.round(r * (ans.length > 1 ? 0.7 : 0.9)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
       c.fillText(ans, x, op.y + r * 0.08);
-    } else if (t.type === 'match' || t.type === 'odd') {
+    } else if (t.type === 'match' || t.type === 'odd' || t.type === 'pattern') {
       var ch = t.choices && t.choices[i];
       if (ch) drawTaskGlyph(c, ch.kind, x, op.y, r * 0.5, TASK_BF_COLORS[ch.color]);
+    } else if (t.type === 'compare') {
+      // Valintapallo osoittaa ylös omaan ryhmäänsä
+      c.fillStyle = '#8a2be2';
+      c.beginPath();
+      c.moveTo(x, op.y - r * 0.5);
+      c.lineTo(x + r * 0.42, op.y + r * 0.2);
+      c.lineTo(x - r * 0.42, op.y + r * 0.2);
+      c.closePath();
+      c.fill();
     } else {
-      drawButterfly(c, x, op.y, r * 0.42, globalT + i, TASK_BF_COLORS[i]);
+      drawButterfly(c, x, op.y, r * 0.42, globalT + i, TASK_BF_COLORS[i % TASK_BF_COLORS.length]);
     }
   }
 }

@@ -79,6 +79,28 @@ function updateParticles(dt) {
   }
 }
 
+// Kultainen nuoli ruudun laidassa, kun kohde on näkymän ulkopuolella
+function drawEdgeArrow(c, targetX) {
+  var sx = targetX - camX;
+  var margin = viewW * 0.05;
+  if (sx >= margin && sx <= viewW - margin) return;
+  var dir = sx < margin ? -1 : 1;
+  var ax = dir < 0 ? viewH * 0.10 : viewW - viewH * 0.10;
+  var ay = viewH * 0.42;
+  var pulse = 1 + Math.sin(globalT * 4) * 0.12;
+  var r = viewH * 0.034 * pulse;
+  c.fillStyle = 'rgba(255,255,255,0.75)';
+  c.beginPath(); c.arc(ax, ay, r * 1.6, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#ffb300';
+  c.beginPath();
+  c.moveTo(ax + dir * r, ay);
+  c.lineTo(ax - dir * r * 0.6, ay - r * 0.85);
+  c.lineTo(ax - dir * r * 0.2, ay);
+  c.lineTo(ax - dir * r * 0.6, ay + r * 0.85);
+  c.closePath();
+  c.fill();
+}
+
 function drawCelebrateLayer() {
   var i;
   if (!celebrating) return;

@@ -44,12 +44,8 @@ function pointerDown(e) {
   holdStartG = globalT;
   holdMoved = false;
   holdWorldX = p.x + camX;
-  if (phaseNow().control === 'ride') {
-    if (level === 3) handleIceTap(p.x, p.y);
-    else handleTap(p.x, p.y);
-  } else if (phaseNow().control === 'fly') {
-    handleSkyTap(p.x, p.y);
-  }
+  var ph = phaseNow();
+  if (ph.tap) ph.tap(p.x, p.y);
 }
 function pointerMove(e) {
   if (e.touches) e.preventDefault();
@@ -121,6 +117,12 @@ window.VT = {
   startL2: initLevel2,
   showHub: showHub,
   play: beginPlay,
+  task: function () { return activeTask; },
+  taskTap: handleTaskTap,
+  jump: tryJump,
+  hold: function (on, px, py) { holding = on; if (on) { holdWorldX = px + camX; lastPX = px; lastPY = py; } },
+  hearts: function () { return { hearts: hearts, hurtT: hurtT, cp: checkpoint.x, cps: checkpoints }; },
+  resetProgress: resetProgress,
   info: function () {
     return {
       running: running, mode: mode, worldW: worldW, viewW: viewW, viewH: viewH,
@@ -130,12 +132,13 @@ window.VT = {
       level: level, butterflies: countButterflies(),
       flakes: countCollected(flakes), pearls: countCollected(pearls),
       moons: countCollected(moons),
-      px: princess.x, py: princess.y,
+      px: princess.x, py: princess.y, hearts: hearts,
       hub: { c: hubPawn.c, r: hubPawn.r, cleared: hubCleared, next: typeof hubNextKind === 'function' ? hubNextKind() : null }
     };
   }
 };
 
+loadProgress();
 resize();
 showHub();
 var hubStart = hubFind('S');

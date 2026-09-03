@@ -94,7 +94,7 @@ function drawUnicorn(c, x, y, s, facing, walkPhase, moving, t) {
   c.translate(0, -bob);
 
   var i;
-  var icy = level === 3;
+  var icy = phaseNow().unicornStyle === 'ice';
   // Takajalat + etujalat
   if (icy) {
     c.strokeStyle = '#1e3c58';

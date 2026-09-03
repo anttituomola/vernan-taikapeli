@@ -289,9 +289,24 @@ function taskStart(t) {
     makeOddProblem(t);
     t.mode = 'input';
     playNote(523, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'minus') {
+    makeMinusProblem(t);
+    t.mode = 'input';
+    playNote(587, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'pattern') {
+    makePatternProblem(t);
+    t.mode = 'input';
+    playNote(740, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'compare') {
+    makeCompareProblem(t);
+    t.mode = 'input';
+    playNote(622, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'rhythm') {
+    makeRhythmProblem(t);
+    t.mode = 'show';
   } else {
     t.seq = [];
-    for (var i = 0; i < 3; i++) t.seq.push(Math.floor(Math.random() * 3));
+    for (var i = 0; i < t.seqLen; i++) t.seq.push(Math.floor(Math.random() * t.orbs));
     t.mode = 'show';
   }
 }
@@ -309,13 +324,17 @@ function taskSolved() {
 function handleTaskTap(px, py) {
   var t = activeTask;
   if (!t || t.mode !== 'input') return;
-  var op = orbPositions(3);
+  if (t.type === 'rhythm') {
+    rhythmTap(t);
+    return;
+  }
+  var op = orbPositions(t.orbs);
   var i, dx, dy;
-  for (i = 0; i < 3; i++) {
+  for (i = 0; i < t.orbs; i++) {
     dx = px - op.xs[i];
     dy = py - op.y;
     if (Math.sqrt(dx * dx + dy * dy) >= op.r * 1.4) continue;
-    if (t.type === 'math' || t.type === 'count') {
+    if (t.type === 'math' || t.type === 'count' || t.type === 'minus') {
       t.litOrb = i;
       t.litT = 0.3;
       if (t.answers[i] === t.correct) {
@@ -327,7 +346,7 @@ function handleTaskTap(px, py) {
       }
       return;
     }
-    if (t.type === 'match' || t.type === 'odd') {
+    if (t.type === 'match' || t.type === 'odd' || t.type === 'pattern' || t.type === 'compare') {
       t.litOrb = i;
       t.litT = 0.3;
       if (i === t.correct) {
@@ -370,7 +389,11 @@ function updateTasks(dt) {
     }
   } else if (activeTask) {
     t = activeTask;
-    if (t.mode === 'show') {
+    if (t.type === 'rhythm' && t.mode === 'show') {
+      rhythmShowUpdate(t, dt);
+    } else if (t.type === 'rhythm' && t.mode === 'input') {
+      rhythmInputUpdate(t, dt);
+    } else if (t.mode === 'show') {
       t.timer += dt;
       if (t.timer >= 0) {
         var stepLen = 0.8;
@@ -485,6 +508,6 @@ function startCelebration() {
     if (rid !== celebrateReturnId) return;
     if (mode !== 'play' || !celebrating) return;
     showHub();
-  }, 2800);
+  }, phaseNow().celebrateMs || 2800);
 }
 

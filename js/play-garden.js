@@ -63,7 +63,7 @@ function tryJump() {
   if (!running || celebrating || puzzleBusy()) return;
   var p = phaseNow();
   if (!p.usesJump) return;
-  if (level === 5) {
+  if (p.jumpKind === 'flap') {
     princess.vy = -viewH * 0.58;
     princess.onGround = false;
     playNote(880, 0, 0.1, 'sine', 0.3);
@@ -85,7 +85,9 @@ function shootWand(px, py) {
   var dy = py - oy;
   var len = Math.sqrt(dx * dx + dy * dy) || 1;
   var sp = viewH * 0.78;
-  sparks.push({ x: ox, y: oy, vx: dx / len * sp, vy: dy / len * sp, age: 0, life: 0.62 });
+  // Kipinän kantama vaiheittain: finaalissa pallot ovat korkealla
+  var life = phaseNow().sparkLife || 0.62;
+  sparks.push({ x: ox, y: oy, vx: dx / len * sp, vy: dy / len * sp, age: 0, life: life });
   playNote(988, 0, 0.12, 'sine', 0.4);
   playNote(1319, 0.05, 0.18, 'triangle', 0.3);
   spawnSparkles(ox, oy, 6, '#e4b8ff');

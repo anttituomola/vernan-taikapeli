@@ -25,7 +25,22 @@ function resize() {
   unicorn.tx *= ratio;
   camX *= ratio;
 
-  // Päivitä olioiden paikat murto-osista
+  // Kaikille vaiheille yhteiset: tehtäväkaaret, portit, tarkistuspisteet
+  var i;
+  for (i = 0; i < gates.length; i++) gates[i].x = gates[i].fx * worldW;
+  for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
+  for (i = 0; i < checkpoints.length; i++) checkpoints[i].x = checkpoints[i].fx * worldW;
+  checkpoint.x *= ratio;
+  unicorn.y = Math.min(Math.max(unicorn.y, groundTop), groundBottom);
+  unicorn.ty = Math.min(Math.max(unicorn.ty, groundTop), groundBottom);
+
+  var p = phaseNow();
+  if (p.resize) p.resize(ratio);
+
+  renderBackground();
+}
+
+function resizeForest(ratio) {
   var i;
   for (i = 0; i < stars.length; i++) {
     stars[i].ax = starDefs[i].fx * worldW;
@@ -33,8 +48,6 @@ function resize() {
     stars[i].ox = 0; stars[i].oy = 0;
     stars[i].px = stars[i].ax; stars[i].py = stars[i].ay;
   }
-  for (i = 0; i < gates.length; i++) gates[i].x = gates[i].fx * worldW;
-  for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   for (i = 0; i < clouds.length; i++) clouds[i].x *= ratio;
   for (i = 0; i < drops.length; i++) drops[i].x *= ratio;
   troll.x *= ratio;
@@ -47,45 +60,49 @@ function resize() {
       bunnies[i].x *= ratio;
     }
   }
-  unicorn.y = Math.min(Math.max(unicorn.y, groundTop), groundBottom);
-  unicorn.ty = Math.min(Math.max(unicorn.ty, groundTop), groundBottom);
+}
 
-  var i2;
-  if (level === 2) {
-    princess.x *= ratio;
-    layoutLevel2();
-    for (i2 = 0; i2 < butterflies.length; i2++) {
-      butterflies[i2].ax = butterflyDefs[i2].fx * worldW;
-      butterflies[i2].ay = groundTop - butterflyDefs[i2].fy * viewH;
-    }
-    for (i2 = 0; i2 < sparks.length; i2++) sparks[i2].x *= ratio;
-  } else if (level === 3) {
-    princess.x *= ratio;
-    for (i2 = 0; i2 < flakes.length; i2++) {
-      flakes[i2].ax = iceDefs[i2].fx * worldW;
-      flakes[i2].ay = groundTop - iceDefs[i2].fy * viewH;
-    }
-    fox.x *= ratio;
-  } else if (level === 4) {
-    princess.x *= ratio;
-    layoutPond();
-    for (i2 = 0; i2 < pearls.length; i2++) {
-      pearls[i2].ax = pondDefs[i2].fx * worldW;
-      pearls[i2].ay = groundTop - pondDefs[i2].fy * viewH;
-    }
-    for (i2 = 0; i2 < sparks.length; i2++) sparks[i2].x *= ratio;
-  } else if (level === 5) {
-    princess.x *= ratio;
-    princess.y = Math.min(princess.y, groundTop);
-    for (i2 = 0; i2 < moons.length; i2++) {
-      moons[i2].ax = skyDefs[i2].fx * worldW;
-      moons[i2].by = groundTop - skyDefs[i2].fy * viewH;
-      moons[i2].ay = moons[i2].by;
-    }
-    sheep.x *= ratio;
+function resizeGarden(ratio) {
+  var i;
+  princess.x *= ratio;
+  layoutLevel2();
+  for (i = 0; i < butterflies.length; i++) {
+    butterflies[i].ax = butterflyDefs[i].fx * worldW;
+    butterflies[i].ay = groundTop - butterflyDefs[i].fy * viewH;
   }
+  for (i = 0; i < sparks.length; i++) sparks[i].x *= ratio;
+}
 
-  renderBackground();
+function resizeIce(ratio) {
+  var i;
+  for (i = 0; i < flakes.length; i++) {
+    flakes[i].ax = iceDefs[i].fx * worldW;
+    flakes[i].ay = groundTop - iceDefs[i].fy * viewH;
+  }
+  fox.x *= ratio;
+}
+
+function resizePond(ratio) {
+  var i;
+  princess.x *= ratio;
+  layoutPond();
+  for (i = 0; i < pearls.length; i++) {
+    pearls[i].ax = pondDefs[i].fx * worldW;
+    pearls[i].ay = groundTop - pondDefs[i].fy * viewH;
+  }
+  for (i = 0; i < sparks.length; i++) sparks[i].x *= ratio;
+}
+
+function resizeSky(ratio) {
+  var i;
+  princess.x *= ratio;
+  princess.y = Math.min(princess.y, groundTop);
+  for (i = 0; i < moons.length; i++) {
+    moons[i].ax = skyDefs[i].fx * worldW;
+    moons[i].by = groundTop - skyDefs[i].fy * viewH;
+    moons[i].ay = moons[i].by;
+  }
+  sheep.x *= ratio;
 }
 
 function renderBackground() {
@@ -98,23 +115,10 @@ function renderBackground() {
   bgCanvas.height = Math.round(viewH * bgScale);
   var b = bgCanvas.getContext('2d');
   b.setTransform(bgScale, 0, 0, bgScale, 0, 0);
-  var w = worldW, h = viewH;
-  if (level === 2) {
-    renderGardenBg(b, w, h);
-    return;
-  }
-  if (level === 3) {
-    renderIceBg(b, w, h);
-    return;
-  }
-  if (level === 4) {
-    renderPondBg(b, w, h);
-    return;
-  }
-  if (level === 5) {
-    renderSkyBg(b, w, h);
-    return;
-  }
+  phaseNow().renderBg(b, worldW, viewH);
+}
+
+function renderForestBg(b, w, h) {
   var horizon = h * 0.68;
   var i, x;
 
