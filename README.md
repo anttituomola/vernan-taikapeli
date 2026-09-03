@@ -81,7 +81,7 @@ palautuvat. Kenttä itse ei ala alusta.
 
 - Sydänten määrä: `HEART_MAX` (progress.js)
 - Pupujen ja kurkkimisajat, peikko, pilvet: play-forest.js / update-draw.js
-- Luola: lepakoiden nopeus `viewW * 0.085`, tippukiven varoitus `0.85` s, kuilujen leveys `caveGround`, valon säde `viewH * 0.72` (play-cave.js)
+- Luola: lepakoiden nopeus `viewW * 0.065`, tippukiven varoitus `1.1` s ja putoamiskiihtyvyys `viewH * 1.15`, kuilujen leveys `caveGround`, valon säde `viewH * 0.72` (play-cave.js)
 - Suo: noidan pudotusväli `3.2 + Math.random() * 1.4`, sammakon loikat `bounces > 3`
 - Silta: vieritysnopeudet `BRIDGE_SEGMENT_SPEEDS`
 - Finaali: kierrokset `BOSS_ROUNDS`, sarjan pituus `3 + boss.round`, salaman väli `3.0 + …`

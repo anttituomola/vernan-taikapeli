@@ -72,9 +72,9 @@ function initCave() {
     stalactites.push({ fx: stalFx[i], x: stalFx[i] * worldW, y: viewH * 0.08, vy: 0, state: 'hang', t: 0 });
   }
   bats = [];
-  bats.push({ zA: 0.22, zB: 0.33, x: worldW * 0.27, baseY: groundTop - viewH * 0.22, y: 0, dir: 1, t: 0, stunT: 0, amp: viewH * 0.10, f: 2.2 });
-  bats.push({ zA: 0.58, zB: 0.70, x: worldW * 0.62, baseY: groundTop - viewH * 0.16, y: 0, dir: -1, t: 1, stunT: 0, amp: viewH * 0.13, f: 1.8 });
-  bats.push({ zA: 0.74, zB: 0.86, x: worldW * 0.80, baseY: groundTop - viewH * 0.28, y: 0, dir: 1, t: 2, stunT: 0, amp: viewH * 0.09, f: 2.6 });
+  bats.push({ zA: 0.22, zB: 0.33, x: worldW * 0.27, baseY: groundTop - viewH * 0.22, y: 0, dir: 1, t: 0, stunT: 0, amp: viewH * 0.08, f: 1.5 });
+  bats.push({ zA: 0.58, zB: 0.70, x: worldW * 0.62, baseY: groundTop - viewH * 0.18, y: 0, dir: -1, t: 1, stunT: 0, amp: viewH * 0.10, f: 1.3 });
+  bats.push({ zA: 0.74, zB: 0.86, x: worldW * 0.80, baseY: groundTop - viewH * 0.28, y: 0, dir: 1, t: 2, stunT: 0, amp: viewH * 0.07, f: 1.8 });
   caveDoor.open = false;
   resetPrincess(viewW * 0.08, groundTop);
   checkpoint.x = princess.x;
@@ -172,18 +172,18 @@ function updateCave(dt) {
     var st = stalactites[i];
     if (puzzleBusy()) continue;
     if (st.state === 'hang') {
-      if (Math.abs(princess.x - st.x) < viewW * 0.05 && princess.y > st.y) {
+      if (Math.abs(princess.x - st.x) < viewW * 0.038 && princess.y > st.y) {
         st.state = 'shake';
         st.t = 0;
         playNote(110, 0, 0.3, 'sawtooth', 0.15);
       }
     } else if (st.state === 'shake') {
       st.t += dt;
-      if (st.t > 0.85) { st.state = 'fall'; st.vy = 0; }
+      if (st.t > 1.1) { st.state = 'fall'; st.vy = 0; }
     } else if (st.state === 'fall') {
-      st.vy += viewH * 1.6 * dt;
+      st.vy += viewH * 1.15 * dt;
       st.y += st.vy * dt;
-      if (Math.abs(st.x - princess.x) < viewH * 0.05 &&
+      if (Math.abs(st.x - princess.x) < viewH * 0.04 &&
           st.y > princess.y - viewH * 0.16 && st.y < princess.y + viewH * 0.02) {
         if (loseHeart()) {
           princess.knockVx = (princess.x < st.x ? -1 : 1) * viewW * 0.25;
@@ -197,7 +197,7 @@ function updateCave(dt) {
       }
     } else if (st.state === 'gone') {
       st.t += dt;
-      if (st.t > 4) { st.state = 'hang'; st.y = viewH * 0.08; }
+      if (st.t > 6) { st.state = 'hang'; st.y = viewH * 0.08; }
     }
   }
 
@@ -211,13 +211,13 @@ function updateCave(dt) {
       continue;
     }
     if (!puzzleBusy()) {
-      bt.x += bt.dir * viewW * 0.085 * dt;
+      bt.x += bt.dir * viewW * 0.065 * dt;
       if (bt.x < bt.zA * worldW) { bt.x = bt.zA * worldW; bt.dir = 1; }
       if (bt.x > bt.zB * worldW) { bt.x = bt.zB * worldW; bt.dir = -1; }
     }
     bt.y = bt.baseY + Math.sin(bt.t * bt.f) * bt.amp;
     var bdx = bt.x - princess.x, bdy = bt.y - (princess.y - viewH * 0.07);
-    if (!celebrating && bdx * bdx + bdy * bdy < viewH * 0.06 * viewH * 0.06) {
+    if (!celebrating && bdx * bdx + bdy * bdy < viewH * 0.052 * viewH * 0.052) {
       if (loseHeart()) {
         princess.knockVx = (bdx > 0 ? -1 : 1) * viewW * 0.3;
         princess.vy = -viewH * 0.3;
@@ -228,7 +228,7 @@ function updateCave(dt) {
   var batTargets = [];
   for (i = 0; i < bats.length; i++) batTargets.push(bats[i]);
   updateSparksAgainst(dt, batTargets, viewH * 0.07, function (bt) {
-    bt.stunT = 3.5;
+    bt.stunT = 5.5;
     spawnSparkles(bt.x, bt.y, 10, '#ffe27a');
     playNote(1200, 0, 0.12, 'sine', 0.3);
   });
