@@ -17,6 +17,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/world.js` — koko, taustojen esirenderöinti
 - `js/draw-actors.js` — tähti, pupu, yksisarvinen
 - `js/fx.js` — kipinät, konfetti, opastenuoli
+- `js/ambient.js` — tunnelmahiukkaset, etualan siluetit ja kentän alkukortti (PHASES: `ambient`, `fg`)
 - `js/flow-hub.js` — karttalabyrintti ja vaiheen käynnistys
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)

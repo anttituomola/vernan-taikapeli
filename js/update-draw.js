@@ -6,6 +6,8 @@ function update(dt) {
   globalT += dt;
   if (hurtFlash > 0) hurtFlash -= dt;
   updateHearts(dt);
+  updateAmbient(dt);
+  if (introT > 0) introT -= dt;
   phaseNow().update(dt);
 }
 
@@ -282,6 +284,11 @@ function updateForest(dt) {
 // ---------- Piirto ----------
 function draw() {
   phaseNow().draw();
+  if (!puzzleBusy()) {
+    drawForeground(ctx);
+    drawAmbient(ctx);
+  }
+  drawIntro(ctx);
   drawHurtFlash(ctx);
 }
 

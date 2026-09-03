@@ -36,6 +36,7 @@ function resize() {
 
   var p = phaseNow();
   if (p.resize) p.resize(ratio);
+  if (mode === 'play') ambientInit(p.ambient);
 
   renderBackground();
 }

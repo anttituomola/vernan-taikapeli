@@ -272,7 +272,11 @@ function drawPrincessFree(c, x, y, s, facing, walkPhase, moving, t) {
   c.arc(0, -s * 45, s * 8.2, Math.PI * 0.95, Math.PI * 2.05);
   c.fill();
   c.fillStyle = '#333';
-  c.beginPath(); c.arc(s * 3, -s * 42, s * 1.2, 0, Math.PI * 2); c.fill();
+  if ((t % 4.1) < 0.14) {
+    c.fillRect(s * 1.8, -s * 42.3, s * 2.4, s * 0.6);
+  } else {
+    c.beginPath(); c.arc(s * 3, -s * 42, s * 1.2, 0, Math.PI * 2); c.fill();
+  }
   c.fillStyle = '#ffd24f';
   c.beginPath();
   c.moveTo(-s * 6, -s * 50);

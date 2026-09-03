@@ -184,9 +184,13 @@ function drawUnicorn(c, x, y, s, facing, walkPhase, moving, t) {
   c.lineTo(s * 48, -s * 92);
   c.lineTo(s * 46, -s * 113);
   c.closePath(); c.fill();
-  // Silmä
+  // Silmä (räpäyttää välillä)
   c.fillStyle = '#333';
-  c.beginPath(); c.arc(s * 44, -s * 84, s * 1.8, 0, Math.PI * 2); c.fill();
+  if (((t + 1.3) % 3.9) < 0.14) {
+    c.fillRect(s * 42.2, -s * 84.5, s * 3.6, s * 0.9);
+  } else {
+    c.beginPath(); c.arc(s * 44, -s * 84, s * 1.8, 0, Math.PI * 2); c.fill();
+  }
   // Harja
   for (i = 0; i < maneColors.length; i++) {
     c.strokeStyle = maneColors[i];
@@ -236,9 +240,13 @@ function drawUnicorn(c, x, y, s, facing, walkPhase, moving, t) {
   c.ellipse ? c.ellipse(-s * 5, -s * 22, s * 2.5, s * 7, 0.3, 0, Math.PI * 2)
             : c.arc(-s * 5, -s * 22, s * 3, 0, Math.PI * 2);
   c.fill();
-  // Silmä ja hymy
+  // Silmä ja hymy (räpäyttää välillä)
   c.fillStyle = '#333';
-  c.beginPath(); c.arc(s * 2, -s * 27, s * 0.9, 0, Math.PI * 2); c.fill();
+  if ((t % 4.3) < 0.14) {
+    c.fillRect(s * 1.1, -s * 27.2, s * 1.8, s * 0.5);
+  } else {
+    c.beginPath(); c.arc(s * 2, -s * 27, s * 0.9, 0, Math.PI * 2); c.fill();
+  }
   c.strokeStyle = '#c0392b';
   c.lineWidth = s * 0.9;
   c.beginPath(); c.arc(s * 1.5, -s * 25, s * 2, 0.2, Math.PI - 0.6); c.stroke();

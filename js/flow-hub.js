@@ -114,6 +114,8 @@ function beginPlay(kind) {
   resize();
   running = true;
   lastTime = 0;
+  ambientInit(PHASES[kind] ? PHASES[kind].ambient : null);
+  startIntro(kind);
   playNote(784, 0, 0.3, 'triangle', 0.4);
   playNote(1047, 0.12, 0.4, 'triangle', 0.4);
 }

@@ -14,6 +14,7 @@ var PHASES = {
   start: {
     level: 1, control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
     next: 'garden', bgColor: '#cfe9ff',
+    ambient: 'butterflies', fg: { kind: 'grass', color: 'rgba(40,110,55,0.7)' },
     init: function () { initGame(); },
     update: function (dt) { updateForest(dt); },
     draw: function () { drawForest(); },
@@ -24,6 +25,7 @@ var PHASES = {
   garden: {
     level: 2, control: 'run', usesJump: true, usesWand: true, usesHearts: false,
     next: 'ice', bgColor: '#1a1448',
+    ambient: 'petals', fg: { kind: 'grass', color: 'rgba(20,60,40,0.75)' },
     init: function () { initLevel2(); },
     update: function (dt) { updateLevel2(dt); },
     draw: function () { drawLevel2(); },
@@ -34,6 +36,7 @@ var PHASES = {
     level: 3, control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
     unicornStyle: 'ice',
     next: 'pond', bgColor: '#3d6ea8',
+    ambient: 'snow', fg: { kind: 'snow', color: 'rgba(255,255,255,0.8)' },
     init: function () { initIce(); },
     update: function (dt) { updateIce(dt); },
     draw: function () { drawIce(); },
@@ -44,6 +47,7 @@ var PHASES = {
   pond: {
     level: 4, control: 'run', usesJump: true, usesWand: true, usesHearts: false,
     next: 'sky', bgColor: '#0a4550',
+    ambient: 'bubbles', fg: { kind: 'reeds', color: 'rgba(20,80,60,0.75)' },
     init: function () { initPond(); },
     update: function (dt) { updatePond(dt); },
     draw: function () { drawPond(); },
@@ -53,6 +57,7 @@ var PHASES = {
   sky: {
     level: 5, control: 'fly', usesJump: true, jumpKind: 'flap', usesWand: false, usesHearts: false,
     next: 'cave', bgColor: '#140832',
+    ambient: 'stars', fg: null,
     init: function () { initSky(); },
     update: function (dt) { updateSky(dt); },
     draw: function () { drawSky(); },
@@ -63,6 +68,7 @@ var PHASES = {
   cave: {
     level: 6, control: 'run', usesJump: true, usesWand: true, usesHearts: true,
     next: 'swamp', bgColor: '#0b0a1e',
+    ambient: 'dust', fg: null,
     init: function () { initCave(); },
     update: function (dt) { updateCave(dt); },
     draw: function () { drawCave(); },
@@ -73,6 +79,7 @@ var PHASES = {
   swamp: {
     level: 7, control: 'ride', usesJump: false, usesWand: false, usesHearts: true,
     next: 'bridge', bgColor: '#12241c',
+    ambient: 'fireflies', fg: { kind: 'reeds', color: 'rgba(20,45,30,0.85)' },
     init: function () { initSwamp(); },
     update: function (dt) { updateSwamp(dt); },
     draw: function () { drawSwamp(); },
@@ -84,6 +91,7 @@ var PHASES = {
   bridge: {
     level: 8, control: 'fly', usesJump: true, jumpKind: 'flap', usesWand: false, usesHearts: true,
     next: null, bgColor: '#2a1f5e',
+    ambient: 'sparkle', fg: null,
     init: function () { initBridge(); },
     update: function (dt) { updateBridge(dt); },
     draw: function () { drawBridge(); },
@@ -95,6 +103,7 @@ var PHASES = {
   finale: {
     level: 9, control: 'run', usesJump: true, usesWand: true, usesHearts: true,
     next: null, bgColor: '#2b1040', hidden: true, sparkLife: 1.0, celebrateMs: 7000,
+    ambient: 'sparkle', fg: null,
     init: function () { initFinale(); },
     update: function (dt) { updateFinale(dt); },
     draw: function () { drawFinale(); },
