@@ -219,43 +219,77 @@ function makeMathProblem(t) {
   t.answers = pickNumberAnswers(t.correct, [t.a, t.b]);
 }
 
+// Laske vain mallin mukaiset: joukossa on myös hämääjiä (eri muoto tai eri väri)
 function makeCountProblem(t) {
-  t.glyph = TASK_GLYPH_KINDS[Math.floor(Math.random() * TASK_GLYPH_KINDS.length)];
-  t.color = Math.floor(Math.random() * TASK_BF_COLORS.length);
-  t.a = 4 + Math.floor(Math.random() * 5);
-  t.correct = t.a;
-  t.answers = pickNumberAnswers(t.correct, []);
+  var target = { kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)], color: randInt(TASK_BF_COLORS.length), variant: 0 };
+  var count = 4 + randInt(5);
+  var extra = 3 + randInt(3);
+  var items = [], i, e;
+  for (i = 0; i < count; i++) items.push(target);
+  for (i = 0; i < extra; i++) {
+    if (Math.random() < 0.5) {
+      e = { kind: TASK_GLYPH_KINDS[otherIndex(TASK_GLYPH_KINDS.indexOf(target.kind), TASK_GLYPH_KINDS.length)], color: target.color, variant: 0 };
+    } else {
+      e = { kind: target.kind, color: otherIndex(target.color, TASK_BF_COLORS.length), variant: 0 };
+    }
+    items.push(e);
+  }
+  t.items = shuffleNums(items);
+  t.prompt = target;
+  t.glyph = target.kind;
+  t.color = target.color;
+  t.a = count;
+  t.correct = count;
+  t.answers = pickNumberAnswers(count, []);
 }
 
 function otherIndex(n, count) {
   return (n + 1 + Math.floor(Math.random() * (count - 1))) % count;
 }
 
+// Etsi samanlainen kuva: malli on 2–3 kuvion ryhmä, väärät eroavat yhdellä yksityiskohdalla
 function makeMatchProblem(t) {
-  var ki = Math.floor(Math.random() * TASK_GLYPH_KINDS.length);
-  var ci = Math.floor(Math.random() * TASK_BF_COLORS.length);
-  var slot = Math.floor(Math.random() * 3);
-  var otherK = otherIndex(ki, TASK_GLYPH_KINDS.length);
-  var otherC = otherIndex(ci, TASK_BF_COLORS.length);
-  t.prompt = { kind: TASK_GLYPH_KINDS[ki], color: ci };
-  t.choices = [null, null, null];
-  t.choices[slot] = { kind: TASK_GLYPH_KINDS[ki], color: ci };
-  t.choices[(slot + 1) % 3] = { kind: TASK_GLYPH_KINDS[ki], color: otherC };
-  t.choices[(slot + 2) % 3] = { kind: TASK_GLYPH_KINDS[otherK], color: ci };
-  t.correct = slot;
+  var n = 2 + randInt(2), i, tries = 0, ok, d, idx, keys, kk;
+  var base = [];
+  for (i = 0; i < n; i++) {
+    base.push({ kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)], color: randInt(TASK_BF_COLORS.length), variant: 0 });
+  }
+  var distract;
+  do {
+    tries++;
+    distract = [];
+    d = cloneItems(base); idx = randInt(n); d[idx].color = otherIndex(d[idx].color, TASK_BF_COLORS.length); distract.push(d);
+    d = cloneItems(base); idx = randInt(n); d[idx].kind = TASK_GLYPH_KINDS[otherIndex(TASK_GLYPH_KINDS.indexOf(d[idx].kind), TASK_GLYPH_KINDS.length)]; distract.push(d);
+    d = cloneItems(base);
+    if (n >= 3 && Math.random() < 0.5) d.pop(); else d.push({ kind: base[0].kind, color: base[0].color, variant: 0 });
+    distract.push(d);
+    keys = {}; keys[groupKey(base)] = true; ok = true;
+    for (i = 0; i < distract.length; i++) { kk = groupKey(distract[i]); if (keys[kk]) ok = false; keys[kk] = true; }
+  } while (!ok && tries < 10);
+  var all = [cloneItems(base), distract[0], distract[1], distract[2]];
+  var order = shuffleNums([0, 1, 2, 3]);
+  t.orbs = 4;
+  t.prompt = { items: base };
+  t.choices = [];
+  for (i = 0; i < 4; i++) t.choices.push({ items: all[order[i]] });
+  t.correct = order.indexOf(0);
 }
 
+// Mikä on erilainen: 5 kuviota, joista yksi eroaa pienellä yksityiskohdalla
+// (sakaroiden/terälehtien määrä, kimallus) tai värillä
 function makeOddProblem(t) {
-  var ki = Math.floor(Math.random() * TASK_GLYPH_KINDS.length);
-  var ci = Math.floor(Math.random() * TASK_BF_COLORS.length);
-  var slot = Math.floor(Math.random() * 3);
-  var diff = Math.random() < 0.5
-    ? { kind: TASK_GLYPH_KINDS[otherIndex(ki, TASK_GLYPH_KINDS.length)], color: ci }
-    : { kind: TASK_GLYPH_KINDS[ki], color: otherIndex(ci, TASK_BF_COLORS.length) };
-  var same = { kind: TASK_GLYPH_KINDS[ki], color: ci };
+  var kind = TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)];
+  var color = randInt(TASK_BF_COLORS.length);
+  var n = 5, i;
+  var slot = randInt(n);
+  var same = { kind: kind, color: color, variant: 0 };
+  var diff = Math.random() < 0.7
+    ? { kind: kind, color: color, variant: 1 }
+    : { kind: kind, color: otherIndex(color, TASK_BF_COLORS.length), variant: 0 };
+  t.orbs = n;
   t.prompt = null;
-  t.choices = [same, same, same];
-  t.choices[slot] = diff;
+  t.choices = [];
+  for (i = 0; i < n; i++) t.choices.push(i === slot ? diff : same);
   t.correct = slot;
 }
 
@@ -273,6 +307,8 @@ function taskStart(t) {
   t.litT = 0;
   t.prompt = null;
   t.choices = null;
+  t.idleT = 0;
+  t.regenT = 0;
   if (t.type === 'math') {
     makeMathProblem(t);
     t.mode = 'input';
@@ -324,55 +360,63 @@ function taskSolved() {
 function handleTaskTap(px, py) {
   var t = activeTask;
   if (!t || t.mode !== 'input') return;
+  t.idleT = 0;
   if (t.type === 'rhythm') {
     rhythmTap(t);
     return;
   }
   var op = orbPositions(t.orbs);
-  var i, dx, dy;
+  var i, dx, dy, rc, hit = -1;
   for (i = 0; i < t.orbs; i++) {
     dx = px - op.xs[i];
     dy = py - op.y;
-    if (Math.sqrt(dx * dx + dy * dy) >= op.r * 1.4) continue;
-    if (t.type === 'math' || t.type === 'count' || t.type === 'minus') {
-      t.litOrb = i;
-      t.litT = 0.3;
-      if (t.answers[i] === t.correct) {
-        playNote(TASK_BF_NOTES[Math.min(i, 2)], 0, 0.3, 'triangle', 0.45);
-        taskSolved();
-      } else {
-        playNote(170, 0, 0.3, 'sawtooth', 0.2);
-        t.shakeT = 0.5;
-      }
-      return;
+    if (Math.sqrt(dx * dx + dy * dy) < op.r * 1.4) { hit = i; break; }
+  }
+  if (hit < 0 && t.type === 'compare') {
+    // Myös laatikko itse on napautettava
+    for (i = 0; i < 2; i++) {
+      rc = compareBoxRect(i, op);
+      if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) { hit = i; break; }
     }
-    if (t.type === 'match' || t.type === 'odd' || t.type === 'pattern' || t.type === 'compare') {
-      t.litOrb = i;
-      t.litT = 0.3;
-      if (i === t.correct) {
-        playNote(TASK_BF_NOTES[Math.min(i, 2)], 0, 0.3, 'triangle', 0.45);
-        taskSolved();
-      } else {
-        playNote(170, 0, 0.3, 'sawtooth', 0.2);
-        t.shakeT = 0.5;
-      }
-      return;
-    }
-    t.litOrb = i;
-    t.litT = 0.35;
-    if (i === t.seq[t.inputIdx]) {
-      playNote(TASK_BF_NOTES[i], 0, 0.3, 'triangle', 0.45);
-      t.inputIdx++;
-      if (t.inputIdx >= t.seq.length) taskSolved();
+  }
+  if (hit < 0) return;
+  i = hit;
+  t.litOrb = i;
+  t.litT = 0.3;
+  if (t.type === 'math' || t.type === 'count' || t.type === 'minus') {
+    if (t.answers[i] === t.correct) {
+      playNote(TASK_BF_NOTES[Math.min(i, 3)], 0, 0.3, 'triangle', 0.45);
+      taskSolved();
     } else {
       playNote(170, 0, 0.3, 'sawtooth', 0.2);
       t.shakeT = 0.5;
-      t.mode = 'show';
-      t.timer = -0.9;
-      t.inputIdx = 0;
-      t.lastShown = -1;
     }
     return;
+  }
+  if (t.type === 'match' || t.type === 'odd' || t.type === 'pattern' || t.type === 'compare') {
+    if (i === t.correct) {
+      playNote(TASK_BF_NOTES[Math.min(i, 3)], 0, 0.3, 'triangle', 0.45);
+      taskSolved();
+    } else {
+      // Väärä: uusi tehtävä arvotaan, jotta arvaamalla ei pääse läpi
+      playNote(170, 0, 0.3, 'sawtooth', 0.2);
+      t.shakeT = 0.5;
+      t.regenT = 0.6;
+    }
+    return;
+  }
+  t.litT = 0.35;
+  if (i === t.seq[t.inputIdx]) {
+    playNote(TASK_BF_NOTES[i], 0, 0.3, 'triangle', 0.45);
+    t.inputIdx++;
+    if (t.inputIdx >= t.seq.length) taskSolved();
+  } else {
+    playNote(170, 0, 0.3, 'sawtooth', 0.2);
+    t.shakeT = 0.5;
+    t.mode = 'show';
+    t.timer = -0.9;
+    t.inputIdx = 0;
+    t.lastShown = -1;
   }
 }
 
@@ -389,6 +433,11 @@ function updateTasks(dt) {
     }
   } else if (activeTask) {
     t = activeTask;
+    if (t.mode === 'input') t.idleT += dt;
+    if (t.regenT > 0) {
+      t.regenT -= dt;
+      if (t.regenT <= 0) regenerateTask(t);
+    }
     if (t.type === 'rhythm' && t.mode === 'show') {
       rhythmShowUpdate(t, dt);
     } else if (t.type === 'rhythm' && t.mode === 'input') {

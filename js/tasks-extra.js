@@ -41,16 +41,20 @@ function makePatternProblem(t) {
 }
 
 // Kummalla puolella on enemmän? Kaksi ryhmää, kaksi valintapalloa.
+// Kummalla puolella on enemmän? Kuviot hajallaan ja ero vain 1–2, jotta pitää laskea.
 function makeCompareProblem(t) {
-  var n1 = 3 + randInt(7);
-  var n2 = n1;
-  while (n2 === n1) n2 = 3 + randInt(7);
+  var n1 = 4 + randInt(6);
+  var delta = 1 + randInt(2);
+  var n2 = Math.random() < 0.5 ? n1 + delta : n1 - delta;
+  if (n2 < 3) n2 = n1 + delta;
+  if (n2 > 10) n2 = n1 - delta;
   t.orbs = 2;
   t.a = n1;
   t.b = n2;
   t.glyph = TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)];
   t.color = randInt(TASK_BF_COLORS.length);
   t.correct = n1 > n2 ? 0 : 1;
+  t.items = [scatterOffsets(n1), scatterOffsets(n2)];
 }
 
 // Rytmi: kuuntele iskut, taputa sama kuvio. Tempo saa heittää, kuvion ei.
@@ -173,21 +177,34 @@ function drawGlyphGroup(c, cx, cy, n, kind, color, gs) {
 
 function drawComparePrompt(c, t, op, shake) {
   var gs = viewH * 0.022;
-  var boxW = viewH * 0.24, boxH = viewH * 0.24;
-  var y = viewH * 0.24;
-  var sides = [t.a, t.b], i;
+  var sides = [t.a, t.b], i, k;
   for (i = 0; i < 2; i++) {
-    var cx = op.xs[i] + shake;
-    c.fillStyle = 'rgba(255,255,255,0.85)';
-    roundRect(c, cx - boxW / 2, y - boxH / 2, boxW, boxH, gs);
+    var rc = compareBoxRect(i, op);
+    var lit = t.litOrb === i && t.litT > 0;
+    c.fillStyle = lit ? '#fff' : 'rgba(255,255,255,0.85)';
+    roundRect(c, rc.x + shake, rc.y, rc.w, rc.h, gs);
     c.fill();
-    drawGlyphGroup(c, cx, y, sides[i], t.glyph, TASK_BF_COLORS[t.color], gs);
+    c.strokeStyle = TASK_BF_COLORS[i];
+    c.lineWidth = viewH * 0.006;
+    c.stroke();
+    var offs = t.items ? t.items[i] : null;
+    for (k = 0; k < sides[i]; k++) {
+      var ox = offs ? offs[k].x : 0, oy = offs ? offs[k].y : 0;
+      drawTaskGlyph(c, t.glyph, rc.x + rc.w / 2 + ox * rc.w * 0.4 + shake, rc.y + rc.h / 2 + oy * rc.h * 0.4, gs, TASK_BF_COLORS[t.color], 0);
+    }
   }
+  // Kysymysmerkki laatikoiden valiin, reunaviivalla jotta erottuu laatikoista
+  c.font = 'bold ' + Math.round(viewH * 0.085) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.lineWidth = viewH * 0.012;
+  c.strokeStyle = '#4a2a6e';
+  c.strokeText('?', viewW / 2 + shake, viewH * 0.24);
+  c.fillStyle = '#ffe27a';
+  c.fillText('?', viewW / 2 + shake, viewH * 0.24);
 }
 
-function drawRhythmOverlay(c, t, shake) {
+function drawRhythmOverlay(c, t, shake, hint) {
   var cx = viewW / 2 + shake;
-  var cy = viewH * 0.52;
+  var cy = viewH * 0.55;
   var r = viewH * 0.13;
   var lit = t.litT > 0;
   var i;
@@ -201,7 +218,7 @@ function drawRhythmOverlay(c, t, shake) {
     var on = t.mode === 'show' ? i <= t.lastShown : i < t.taps.length;
     c.fillStyle = on ? '#ffe27a' : 'rgba(255,255,255,0.35)';
     c.beginPath();
-    c.arc(dx, viewH * 0.22, on ? dotR * 1.3 : dotR, 0, Math.PI * 2);
+    c.arc(dx, viewH * 0.2, on ? dotR * 1.3 : dotR, 0, Math.PI * 2);
     c.fill();
   }
   // Nuotti kertoo: kuuntele
@@ -209,7 +226,7 @@ function drawRhythmOverlay(c, t, shake) {
   c.font = 'bold ' + Math.round(viewH * 0.07) + 'px "Segoe UI Symbol", "Segoe UI", sans-serif';
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  c.fillText('♫', cx, viewH * 0.12);
+  c.fillText('♫', cx, viewH * 0.1);
   // Rumpu
   if (lit) {
     var glow = c.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 1.9);
@@ -227,10 +244,180 @@ function drawRhythmOverlay(c, t, shake) {
   c.strokeStyle = '#fff';
   c.lineWidth = viewH * 0.012;
   c.stroke();
-  // Käsi = taputa tähän (input-vaiheessa)
-  if (t.mode === 'input') {
-    c.fillStyle = '#8a2be2';
-    c.font = 'bold ' + Math.round(r * 0.9) + 'px "Segoe UI Symbol", "Segoe UI", sans-serif';
-    c.fillText('✋', cx, cy + r * 0.05);
+  // Käsi: näytössä taputtaa rumpua jokaisella iskulla, omalla vuorolla pomppii odottaen
+  var handY;
+  if (t.mode === 'show') {
+    handY = cy - r * (lit ? 0.55 : 1.15);
+  } else {
+    handY = cy - r * (1.05 + Math.sin(globalT * 4) * 0.12);
+    if (lit) handY = cy - r * 0.55;
   }
+  drawHand(c, cx + r * 0.15, handY, r * 0.42);
+  if (hint && t.mode === 'input') drawHintArrow(c, cx, cy - r * 2.1);
+}
+
+// ---------- Apurit uusille tehtäville ----------
+function cloneItems(items) {
+  var out = [], i;
+  for (i = 0; i < items.length; i++) out.push({ kind: items[i].kind, color: items[i].color, variant: items[i].variant || 0 });
+  return out;
+}
+function groupKey(items) {
+  var k = [], i;
+  for (i = 0; i < items.length; i++) k.push(items[i].kind + ':' + items[i].color + ':' + (items[i].variant || 0));
+  return k.join('|');
+}
+
+// Hajallaan olevat paikat (-1..1 x -1..1), ei päällekkäin
+function scatterOffsets(n) {
+  var out = [], tries, i, ok, p;
+  while (out.length < n) {
+    tries = 0;
+    do {
+      p = { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2 };
+      ok = true;
+      for (i = 0; i < out.length; i++) {
+        if (Math.abs(out[i].x - p.x) < 0.42 && Math.abs(out[i].y - p.y) < 0.42) { ok = false; break; }
+      }
+      tries++;
+    } while (!ok && tries < 40);
+    out.push(p);
+  }
+  return out;
+}
+
+function compareBoxRect(i, op) {
+  var w = viewH * 0.215, h = viewH * 0.26;
+  return { x: op.xs[i] - w / 2, y: viewH * 0.24 - h / 2, w: w, h: h };
+}
+
+// Rivi pieniä kuvioita keskitettynä (cx, cy); gap = kuvioiden väli
+function drawGlyphRow(c, items, cx, cy, s, gap) {
+  var i, x0 = cx - (items.length - 1) * gap / 2;
+  for (i = 0; i < items.length; i++) {
+    drawTaskGlyph(c, items[i].kind, x0 + i * gap, cy, s, TASK_BF_COLORS[items[i].color], items[i].variant);
+  }
+}
+
+// Puhekupla: malli + "?" (pelaaja ei lue, joten kysymysmerkki kantaa viestin)
+function drawPromptBubble(c, cx, cy, w, h) {
+  c.fillStyle = 'rgba(255,255,255,0.9)';
+  roundRect(c, cx - w / 2, cy - h / 2, w, h, h * 0.3);
+  c.fill();
+  c.beginPath();
+  c.moveTo(cx - h * 0.2, cy + h / 2 - 1);
+  c.lineTo(cx + h * 0.2, cy + h / 2 - 1);
+  c.lineTo(cx, cy + h / 2 + h * 0.28);
+  c.closePath();
+  c.fill();
+}
+
+function drawMatchPrompt(c, t, shake) {
+  var gs = viewH * 0.032;
+  var gap = gs * 2.6;
+  var w = t.prompt.items.length * gap + gs * 3.4;
+  var h = gs * 3.2;
+  var cx = viewW / 2 + shake, cy = viewH * 0.27;
+  drawPromptBubble(c, cx, cy, w, h);
+  drawGlyphRow(c, t.prompt.items, cx - gs * 1.1, cy, gs, gap);
+  c.fillStyle = '#8a2be2';
+  c.font = 'bold ' + Math.round(gs * 2.2) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('?', cx + w / 2 - gs * 1.3, cy + gs * 0.1);
+}
+
+function drawCountPrompt(c, t, shake) {
+  var gs = viewH * 0.026;
+  var gap = gs * 2.3;
+  var n = t.items ? t.items.length : t.a;
+  var cols = 4;
+  var rows = Math.ceil(n / cols);
+  var gridW = (cols - 1) * gap;
+  var gridH = (rows - 1) * gap;
+  var gx0 = viewW / 2 - gridW / 2 + gs * 1.6 + shake;
+  var gy0 = viewH * 0.26 - gridH / 2;
+  var i;
+  // Malli kuplassa ruudukon vasemmalla puolella
+  var bw = gs * 5.2, bh = gs * 3.2;
+  var bx = gx0 - gap - bw / 2 - gs * 0.6, by = viewH * 0.26;
+  drawPromptBubble(c, bx, by, bw, bh);
+  drawTaskGlyph(c, t.prompt.kind, bx - gs * 1.1, by, gs * 1.1, TASK_BF_COLORS[t.prompt.color], 0);
+  c.fillStyle = '#8a2be2';
+  c.font = 'bold ' + Math.round(gs * 2.2) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('?', bx + gs * 1.4, by + gs * 0.1);
+  // Ruudukko
+  c.fillStyle = 'rgba(255,255,255,0.18)';
+  roundRect(c, gx0 - gap * 0.7, gy0 - gap * 0.7, gridW + gap * 1.4, gridH + gap * 1.4, gs);
+  c.fill();
+  for (i = 0; i < n; i++) {
+    var it = t.items ? t.items[i] : t.prompt;
+    drawTaskGlyph(c, it.kind, gx0 + (i % cols) * gap, gy0 + Math.floor(i / cols) * gap, gs, TASK_BF_COLORS[it.color], it.variant);
+  }
+}
+
+// "Etsi erilainen": suurennuslasi + kysymysmerkki
+function drawOddPrompt(c, shake) {
+  var cx = viewW / 2 + shake, cy = viewH * 0.27, s = viewH * 0.04;
+  c.strokeStyle = '#ffe27a';
+  c.lineWidth = s * 0.28;
+  c.lineCap = 'round';
+  c.beginPath(); c.arc(cx - s * 0.3, cy - s * 0.2, s * 0.8, 0, Math.PI * 2); c.stroke();
+  c.beginPath(); c.moveTo(cx + s * 0.28, cy + s * 0.38); c.lineTo(cx + s * 1.0, cy + s * 1.1); c.stroke();
+  c.fillStyle = '#ffe27a';
+  c.font = 'bold ' + Math.round(viewH * 0.09) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('?', cx + s * 2.2, cy);
+}
+
+// Pomppiva nuoli alaspäin
+function drawHintArrow(c, x, y) {
+  var s = viewH * 0.03;
+  var by = y + Math.abs(Math.sin(globalT * 5)) * s * 0.6;
+  c.fillStyle = '#ffe27a';
+  c.beginPath();
+  c.moveTo(x, by + s);
+  c.lineTo(x - s * 0.8, by - s * 0.1);
+  c.lineTo(x - s * 0.3, by - s * 0.1);
+  c.lineTo(x - s * 0.3, by - s * 1.1);
+  c.lineTo(x + s * 0.3, by - s * 1.1);
+  c.lineTo(x + s * 0.3, by - s * 0.1);
+  c.lineTo(x + s * 0.8, by - s * 0.1);
+  c.closePath();
+  c.fill();
+  c.strokeStyle = '#fff';
+  c.lineWidth = Math.max(1.5, s * 0.1);
+  c.stroke();
+}
+
+// Yksinkertainen käsi (kämmen + sormet), osoittaa alaspäin rumpuun
+function drawHand(c, x, y, s) {
+  var i;
+  c.fillStyle = '#ffd9b8';
+  c.strokeStyle = '#d9a37a';
+  c.lineWidth = Math.max(1.5, s * 0.08);
+  roundRect(c, x - s * 0.55, y - s * 0.4, s * 1.1, s * 0.95, s * 0.3);
+  c.fill(); c.stroke();
+  for (i = 0; i < 4; i++) {
+    roundRect(c, x - s * 0.5 + i * s * 0.27, y + s * 0.3, s * 0.22, s * 0.62, s * 0.11);
+    c.fill(); c.stroke();
+  }
+  roundRect(c, x + s * 0.5, y - s * 0.2, s * 0.24, s * 0.6, s * 0.12);
+  c.fill(); c.stroke();
+}
+
+// Väärän vastauksen jälkeen arvotaan uusi tehtävä samasta tyypistä
+function regenerateTask(t) {
+  if (t.type === 'match') makeMatchProblem(t);
+  else if (t.type === 'odd') makeOddProblem(t);
+  else if (t.type === 'pattern') makePatternProblem(t);
+  else if (t.type === 'compare') makeCompareProblem(t);
+  t.litOrb = -1;
+  t.litT = 0;
+  t.idleT = 0;
+  playNote(494, 0, 0.1, 'triangle', 0.25);
+  playNote(659, 0.08, 0.14, 'triangle', 0.25);
 }

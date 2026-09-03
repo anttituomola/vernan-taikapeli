@@ -70,7 +70,8 @@ function makeTask(fx, type, opts) {
     seq: [], inputIdx: 0, litOrb: -1, lastShown: -1,
     seqLen: opts.seqLen || 3, orbs: opts.orbs || 3,
     prompt: null, choices: null, glyph: 'flower',
-    items: null, beats: null, taps: null, inputT: 0
+    items: null, beats: null, taps: null, inputT: 0,
+    idleT: 0, regenT: 0
   };
 }
 var tasks = [];

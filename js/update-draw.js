@@ -479,11 +479,20 @@ function taskArchStyle(type) {
   return { veil: '120,210,255', pillar: '#b8d4ff' };
 }
 
-function drawTaskGlyph(c, kind, x, y, s, color) {
-  var i, a;
+// variant 1 = pieni yksityiskohtaero: 8 terälehteä / 6 sakaraa / kimallus sydämessä
+function drawTaskGlyph(c, kind, x, y, s, color, variant) {
+  var i, a, n, rr;
   c.fillStyle = color;
   if (kind === 'flower') {
-    drawFlower(c, x, y, s * 0.52, color);
+    n = variant ? 8 : 5;
+    for (i = 0; i < n; i++) {
+      a = (i / n) * Math.PI * 2;
+      c.beginPath();
+      c.arc(x + Math.cos(a) * s * 0.52, y + Math.sin(a) * s * 0.52, s * (variant ? 0.3 : 0.42), 0, Math.PI * 2);
+      c.fill();
+    }
+    c.fillStyle = variant ? '#ff7bac' : '#fff3b0';
+    c.beginPath(); c.arc(x, y, s * 0.36, 0, Math.PI * 2); c.fill();
     return;
   }
   if (kind === 'heart') {
@@ -492,14 +501,19 @@ function drawTaskGlyph(c, kind, x, y, s, color) {
     c.bezierCurveTo(x - s * 1.05, y - s * 0.05, x - s * 0.35, y - s * 0.85, x, y - s * 0.22);
     c.bezierCurveTo(x + s * 0.35, y - s * 0.85, x + s * 1.05, y - s * 0.05, x, y + s * 0.52);
     c.fill();
+    if (variant) {
+      c.fillStyle = 'rgba(255,255,255,0.9)';
+      c.beginPath(); c.arc(x - s * 0.32, y - s * 0.28, s * 0.17, 0, Math.PI * 2); c.fill();
+    }
     return;
   }
+  n = variant ? 6 : 5;
   c.save();
   c.translate(x, y);
   c.beginPath();
-  for (i = 0; i < 10; i++) {
-    var rr = (i % 2 === 0) ? s : s * 0.42;
-    a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+  for (i = 0; i < n * 2; i++) {
+    rr = (i % 2 === 0) ? s : s * (variant ? 0.55 : 0.42);
+    a = (i / (n * 2)) * Math.PI * 2 - Math.PI / 2;
     c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
   }
   c.closePath();
@@ -545,6 +559,7 @@ function drawTaskOverlay(c) {
   var t = activeTask;
   var op = orbPositions(t.orbs || 3);
   var shake = t.shakeT > 0 ? Math.sin(globalT * 45) * 10 * t.shakeT : 0;
+  var hint = t.mode === 'input' && t.idleT > 4;
   var i;
   c.fillStyle = 'rgba(40,20,70,0.52)';
   c.fillRect(0, 0, viewW, viewH);
@@ -552,7 +567,7 @@ function drawTaskOverlay(c) {
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   if (t.type === 'rhythm') {
-    drawRhythmOverlay(c, t, shake);
+    drawRhythmOverlay(c, t, shake, hint);
     return;
   }
   if (t.type === 'math' || t.type === 'minus') {
@@ -564,36 +579,11 @@ function drawTaskOverlay(c) {
   } else if (t.type === 'compare') {
     drawComparePrompt(c, t, op, shake);
   } else if (t.type === 'count') {
-    var gs = viewH * 0.028;
-    var gap = gs * 2.35;
-    var cols = t.a > 4 ? 4 : t.a;
-    var rows = Math.ceil(t.a / cols);
-    var gridW = (cols - 1) * gap;
-    var gridH = (rows - 1) * gap;
-    var gx0 = viewW / 2 - gridW / 2 + shake;
-    var gy0 = viewH * 0.28 - gridH / 2;
-    for (i = 0; i < t.a; i++) {
-      drawTaskGlyph(
-        c, t.glyph,
-        gx0 + (i % cols) * gap,
-        gy0 + Math.floor(i / cols) * gap,
-        gs, TASK_BF_COLORS[t.color]
-      );
-    }
+    drawCountPrompt(c, t, shake);
   } else if (t.type === 'match' && t.prompt) {
-    c.fillStyle = 'rgba(255,255,255,0.88)';
-    c.beginPath();
-    c.arc(viewW / 2 + shake, viewH * 0.30, viewH * 0.07, 0, Math.PI * 2);
-    c.fill();
-    drawTaskGlyph(
-      c, t.prompt.kind,
-      viewW / 2 + shake, viewH * 0.30,
-      viewH * 0.042, TASK_BF_COLORS[t.prompt.color]
-    );
+    drawMatchPrompt(c, t, shake);
   } else if (t.type === 'odd') {
-    c.fillStyle = '#ffe27a';
-    c.font = 'bold ' + Math.round(viewH * 0.11) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
-    c.fillText('?', viewW / 2 + shake, viewH * 0.28);
+    drawOddPrompt(c, shake);
   } else if (t.type === 'memory') {
     var dotR = viewH * 0.012;
     for (i = 0; i < t.seq.length; i++) {
@@ -608,15 +598,16 @@ function drawTaskOverlay(c) {
     var lit = t.litOrb === i && (t.mode === 'show' ? true : t.litT > 0);
     var r = op.r * (lit ? 1.16 : 1);
     var x = op.xs[i] + shake;
+    var y = op.y + (hint ? Math.sin(globalT * 6 + i) * viewH * 0.006 : 0);
     if (lit) {
-      var glow = c.createRadialGradient(x, op.y, r * 0.3, x, op.y, r * 2);
+      var glow = c.createRadialGradient(x, y, r * 0.3, x, y, r * 2);
       glow.addColorStop(0, 'rgba(255,255,255,0.5)');
       glow.addColorStop(1, 'rgba(255,255,255,0)');
       c.fillStyle = glow;
-      c.beginPath(); c.arc(x, op.y, r * 2, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.arc(x, y, r * 2, 0, Math.PI * 2); c.fill();
     }
     c.fillStyle = '#fff';
-    c.beginPath(); c.arc(x, op.y, r, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
     c.strokeStyle = TASK_BF_COLORS[i % TASK_BF_COLORS.length];
     c.lineWidth = viewH * 0.008;
     c.stroke();
@@ -624,21 +615,34 @@ function drawTaskOverlay(c) {
       var ans = String(t.answers[i]);
       c.fillStyle = '#8a2be2';
       c.font = 'bold ' + Math.round(r * (ans.length > 1 ? 0.7 : 0.9)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
-      c.fillText(ans, x, op.y + r * 0.08);
-    } else if (t.type === 'match' || t.type === 'odd' || t.type === 'pattern') {
+      c.fillText(ans, x, y + r * 0.08);
+    } else if (t.type === 'match') {
+      var grp = t.choices && t.choices[i];
+      if (grp) drawGlyphRow(c, grp.items, x, y, r * 0.28, r * 0.62);
+    } else if (t.type === 'odd' || t.type === 'pattern') {
       var ch = t.choices && t.choices[i];
-      if (ch) drawTaskGlyph(c, ch.kind, x, op.y, r * 0.5, TASK_BF_COLORS[ch.color]);
+      if (ch) drawTaskGlyph(c, ch.kind, x, y, r * 0.5, TASK_BF_COLORS[ch.color], ch.variant);
     } else if (t.type === 'compare') {
-      // Valintapallo osoittaa ylös omaan ryhmäänsä
       c.fillStyle = '#8a2be2';
       c.beginPath();
-      c.moveTo(x, op.y - r * 0.5);
-      c.lineTo(x + r * 0.42, op.y + r * 0.2);
-      c.lineTo(x - r * 0.42, op.y + r * 0.2);
+      c.moveTo(x, y - r * 0.5);
+      c.lineTo(x + r * 0.42, y + r * 0.2);
+      c.lineTo(x - r * 0.42, y + r * 0.2);
       c.closePath();
       c.fill();
     } else {
-      drawButterfly(c, x, op.y, r * 0.42, globalT + i, TASK_BF_COLORS[i % TASK_BF_COLORS.length]);
+      drawButterfly(c, x, y, r * 0.42, globalT + i, TASK_BF_COLORS[i % TASK_BF_COLORS.length]);
+    }
+  }
+
+  // Vihje: pomppiva nuoli näyttää mihin napautetaan
+  if (hint) {
+    if (t.type === 'compare') {
+      var side = Math.sin(globalT * 2) > 0 ? 1 : 0;
+      drawHintArrow(c, op.xs[side] + shake, viewH * 0.24 - viewH * 0.17);
+    } else {
+      var k = Math.floor(globalT * 1.5) % t.orbs;
+      drawHintArrow(c, op.xs[k] + shake, op.y - op.r * 1.75);
     }
   }
 }

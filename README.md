@@ -79,6 +79,30 @@ palautuvat. Kenttä itse ei ala alusta.
 - Rytmitehtävä: kuuntele iskut, taputa sama kuvio mihin tahansa ruudulla.
   Tempo saa heittää, kuvion pitää täsmätä.
 
+## Tehtävät
+
+Tehtäväkaaret pysäyttävät hahmon ja avaavat tien, kun tehtävä on ratkaistu.
+Pelaaja ei lue, joten malli näytetään puhekuplassa ja kysymysmerkki kertoo
+mitä kysytään. Jos mitään ei tapahdu 4 sekuntiin, pomppiva nuoli näyttää
+mihin napautetaan.
+
+- **Lasku / vähennys** — a + b tai a − b, kolme numerovaihtoehtoa
+- **Laske** — montako mallin mukaista kuviota joukossa on; joukossa on myös
+  hämääjiä (eri väri tai eri muoto)
+- **Samanlainen** — malli on 2–3 kuvion ryhmä; 4 vaihtoehdosta väärät eroavat
+  yhdellä yksityiskohdalla (yhden väri, yhden muoto tai lukumäärä)
+- **Erilainen** — 5 kuviota, joista yksi eroaa: useimmiten pieni yksityiskohta
+  (5 vs 6 sakaraa, 5 vs 8 terälehteä, kimallus sydämessä), joskus väri
+- **Kuviosarja** — mikä tulee seuraavaksi (ABAB, AABB, ABC…)
+- **Kummalla enemmän** — kaksi laatikkoa, kuviot hajallaan ja ero vain 1–2;
+  napauta laatikkoa tai sen alla olevaa palloa
+- **Muisti** — Simon: katso värit, toista (pituus ja värimäärä säädettävissä)
+- **Rytmi** — käsi taputtaa rumpua iskujen tahdissa; toista sama kuvio
+
+Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän) väärä
+vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
+väärästä vastauksesta tulee vain ravistus.
+
 ## Vaikeuden säätö
 
 - Sydänten määrä: `HEART_MAX` (progress.js)
