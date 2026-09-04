@@ -483,6 +483,9 @@ function taskArchStyle(type) {
   if (type === 'pattern') return { veil: '120,220,200', pillar: '#a6e6d8' };
   if (type === 'odd') return { veil: '190,150,255', pillar: '#d0b8f8' };
   if (type === 'rhythm') return { veil: '255,120,150', pillar: '#f5a8bc' };
+  if (type === 'shadow') return { veil: '90,90,140', pillar: '#b8b4d8' };
+  if (type === 'puzzle') return { veil: '255,200,120', pillar: '#f5d3a0' };
+  if (type === 'pairs') return { veil: '160,120,255', pillar: '#c9b8f8' };
   return { veil: '120,210,255', pillar: '#b8d4ff' };
 }
 
@@ -575,6 +578,14 @@ function drawTaskOverlay(c) {
   c.textBaseline = 'middle';
   if (t.type === 'rhythm') {
     drawRhythmOverlay(c, t, shake, hint);
+    return;
+  }
+  if (taskUsesDrag(t)) {
+    drawDragTaskOverlay(c, t, shake, hint);
+    return;
+  }
+  if (t.type === 'pairs') {
+    drawPairsOverlay(c, t, shake, hint);
     return;
   }
   if (t.type === 'math' || t.type === 'minus') {

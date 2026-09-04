@@ -54,6 +54,13 @@ function platformerStep(dt, opts) {
       princess.vy = 0;
       princess.onGround = true;
       if (pl.kind === 'mover') princess.carrier = pl;
+      if (pl.kind === 'bounce') {
+        // Pomppiva taso heittää korkeammalle kuin oma hyppy
+        princess.vy = -viewH * 1.15;
+        princess.onGround = false;
+        princess.coyote = 0;
+        if (opts.onBounce) opts.onBounce(pl);
+      }
     }
   }
   if (opts.fallY !== undefined && princess.y > opts.fallY) {

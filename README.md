@@ -25,11 +25,14 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/platformer.js` — jaettu tasohyppelyfysiikka (liikkuvat tasot, kantaminen)
 - `js/play-cave.js`, `play-swamp.js`, `play-bridge.js` — vaiheet 6–8
 - `js/play-finale.js` — linnan finaali
+- `js/tasks-drag.js` — raahaustehtävät (muoto varjoon, täydennä kuva) ja muistipeli
+- `js/play-beach.js`, `play-candy.js`, `play-tower.js` — maailma 2 (vaiheet 10–12)
 - `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
 
 **Uusi vaihe** = tiedosto `js/play-….js`, rivi `PHASES`-olioon (phases.js),
-huone `HUB_ROOMS`-karttaan ja kirjain `HUB_MAP`iin sekä `HUB_ORDER`iin.
+huone `HUB_ROOMS`-karttaan ja kirjain `HUB_MAP`iin sekä `HUB_ORDER`iin
+(maailmassa 2 vastaavat `HUB_MAP2`, `HUB_ROOMS2`, `HUB_ORDER2`).
 Silmukka, syöte ja koko kulkevat `PHASES`-koukkujen kautta, joten muuta
 koodia ei tarvitse muokata.
 
@@ -65,6 +68,23 @@ tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.
   Väärä pallo heittää sammakon. Sitten kolme pupua vapautetaan häkeistä
   tehtävillä, ja kaikki ystävät juhlivat.
 
+### Maailma 2
+
+Kun finaali on läpäisty, linnan viereen ilmestyy vene: linnan napautus vie
+kartan toiselle sivulle. Veneellä (**B**) pääsee takaisin. Uudet huoneet
+painottavat raahaustehtäviä.
+
+- **Rannikko** ♥ — ratsastus rannalla: simpukat napataan, ravut saksivat
+  polulla, ja aalto huuhtoo polun alaosan vaahtovaroituksen jälkeen — pysy
+  polun yläreunassa. Tehtävät: muoto varjoon, lasku, parit.
+- **Karkkilaakso** ♥ — tasohyppely: vaahtokarkkitasot, joista pinkit
+  pomputtavat korkealle (korkeat karkit vaativat pompun), kuulakarkit
+  vierivät maassa (hyppää yli), limonadikuilut. Tehtävät: täydennä kuva,
+  muoto varjoon.
+- **Arvoitusten torni** ♥ — neljä tehtäväovea peräkkäin (parit 4 paria,
+  täydennä kuva, muoto varjoon, muisti 4/4), jalokivet hyllyillä ja heiluvat
+  kattokruunut, joiden alta kuljetaan kun ne ovat sivulla.
+
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
@@ -73,9 +93,10 @@ palautuvat. Kenttä itse ei ala alusta.
 
 ## Ohjaus
 
-- Metsä, jää ja suo: pidä sormea pohjassa ratsastaaksesi, napauta kerätäksesi.
-- Puutarha, lampi, luola ja finaali: pidä pohjassa juostaksesi, **↑** hyppää,
-  lyhyt napautus ampuu sauvalla.
+- Metsä, jää, suo ja rannikko: pidä sormea pohjassa ratsastaaksesi, napauta kerätäksesi.
+- Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
+  juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
+- Raahaustehtävät: paina palaa, vedä ja päästä irti kohteen päällä.
 - Taivas ja silta: pidä pohjassa lentääksesi sormea kohti, **↑** on siivenisku.
 - Rytmitehtävä: kuuntele iskut, taputa sama kuvio mihin tahansa ruudulla.
   Tempo saa heittää, kuvion pitää täsmätä.
@@ -99,6 +120,11 @@ mihin napautetaan.
   napauta laatikkoa tai sen alla olevaa palloa
 - **Muisti** — Simon: katso värit, toista (pituus ja värimäärä säädettävissä)
 - **Rytmi** — käsi taputtaa rumpua iskujen tahdissa; toista sama kuvio
+- **Muoto varjoon** (raahaus) — 4 muotoa alhaalla, varjot sekaisin ylhäällä;
+  raahaa jokainen omaan varjoonsa. Väärään varjoon pudotettu palaa alas.
+- **Täydennä kuva** (raahaus) — 3×3 ruudukko, jossa rivi määrää muodon ja
+  sarake värin; raahaa puuttuva pala kolmesta ehdokkaasta koloon
+- **Parit** — muistipeli: käännä kaksi korttia kerrallaan, parit jäävät auki
 
 Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän) väärä
 vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
@@ -114,6 +140,10 @@ väärästä vastauksesta tulee vain ravistus.
 - Finaali: kierrokset `BOSS_ROUNDS`, sarjan pituus `2 + boss.round`, näytön tahti `stepLen = 0.9`, pallojen väli `viewH * 0.22` (play-finale.js)
 - Rytmin sallittu heitto: `tol = Math.max(0.15, want * 0.32)` (tasks-extra.js)
 - Muistiloitsun pituus ja pallot: `makeTask(fx, 'memory', { seqLen, orbs })`
+- Parien määrä: `makeTask(fx, 'pairs', { pairs })`
+- Rannikko: aallon väli `6 + Math.random() * 3`, rapujen nopeus `viewW * 0.06`
+- Karkkilaakso: pompun voima `viewH * 1.15` (platformer.js), kuulakarkkien nopeus `viewW * 0.07`
+- Torni: kattokruunujen heilunta `speed: 1.1`, kulma `0.55`
 
 ## Tekniikka
 

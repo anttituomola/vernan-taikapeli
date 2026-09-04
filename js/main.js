@@ -30,6 +30,7 @@ function eventPos(e) {
 function pointerDown(e) {
   e.preventDefault();
   var p = eventPos(e);
+  lastPX = p.x; lastPY = p.y;
   if (mode === 'hub') {
     handleHubTap(p.x, p.y);
     return;
@@ -49,6 +50,12 @@ function pointerDown(e) {
 }
 function pointerMove(e) {
   if (e.touches) e.preventDefault();
+  if (dragPiece) {
+    var dp = eventPos(e);
+    lastPX = dp.x; lastPY = dp.y;
+    taskDragMove(dp.x, dp.y);
+    return;
+  }
   if (mode === 'hub' || !holding) return;
   var p = eventPos(e);
   lastPX = p.x; lastPY = p.y;
@@ -58,6 +65,11 @@ function pointerMove(e) {
 }
 function pointerUp(e) {
   if (e && e.touches && e.touches.length > 0) return;
+  if (dragPiece) {
+    taskDrop(lastPX, lastPY);
+    holding = false;
+    return;
+  }
   if (mode === 'play' && phaseNow().usesWand && !puzzleBusy() && holding && !holdMoved && (globalT - holdStartG) < 0.22) {
     shootWand(lastPX, lastPY);
   }
@@ -122,6 +134,10 @@ window.VT = {
   jump: tryJump,
   hold: function (on, px, py) { holding = on; if (on) { holdWorldX = px + camX; lastPX = px; lastPY = py; } },
   hearts: function () { return { hearts: hearts, hurtT: hurtT, cp: checkpoint.x, cps: checkpoints }; },
+  drag: function (px, py) { var t = activeTask; if (t && taskUsesDrag(t)) return taskDragStart(t, px, py); return false; },
+  dragMove: taskDragMove,
+  drop: taskDrop,
+  world: function (w) { if (w) hubEnterWorld(w); return hubWorld; },
   resetProgress: resetProgress,
   info: function () {
     return {

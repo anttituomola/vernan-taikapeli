@@ -68,7 +68,7 @@ function makeTask(fx, type, opts) {
     timer: 0, shakeT: 0, litT: 0,
     a: 1, b: 1, answers: [2, 1, 3], correct: 2,
     seq: [], inputIdx: 0, litOrb: -1, lastShown: -1,
-    seqLen: opts.seqLen || 3, orbs: opts.orbs || 3,
+    seqLen: opts.seqLen || 3, orbs: opts.orbs || 3, pairs: opts.pairs || 3,
     prompt: null, choices: null, glyph: 'flower',
     items: null, beats: null, taps: null, inputT: 0,
     idleT: 0, regenT: 0
@@ -184,6 +184,33 @@ var HUB_ROOMS = {
   'g': { kind: 'bridge', name: 'Sateenkaarisilta', color: '#ff8fc0' }
 };
 var HUB_ORDER = ['start', 'garden', 'ice', 'pond', 'sky', 'cave', 'swamp', 'bridge'];
+
+// Maailma 2 avautuu linnasta, kun finaali on läpäisty. B = vene takaisin maailmaan 1.
+var HUB_MAP2 = [
+  '###########',
+  '#B.......h#',
+  '#########.#',
+  '#j........#',
+  '#.#########',
+  '#........k#',
+  '###########'
+];
+var HUB_ROOMS2 = {
+  'h': { kind: 'beach', name: 'Rannikko', color: '#ffcf6b' },
+  'j': { kind: 'candy', name: 'Karkkilaakso', color: '#ff8fd0' },
+  'k': { kind: 'tower', name: 'Arvoitusten torni', color: '#9b7bff' }
+};
+var HUB_ORDER2 = ['beach', 'candy', 'tower'];
+var hubWorld = 1;
+function hubMap() { return hubWorld === 2 ? HUB_MAP2 : HUB_MAP; }
+function hubRooms() { return hubWorld === 2 ? HUB_ROOMS2 : HUB_ROOMS; }
+function hubOrder() { return hubWorld === 2 ? HUB_ORDER2 : HUB_ORDER; }
+function hubRoomByKind(kind) {
+  var ch;
+  for (ch in HUB_ROOMS) if (HUB_ROOMS[ch].kind === kind) return HUB_ROOMS[ch];
+  for (ch in HUB_ROOMS2) if (HUB_ROOMS2[ch].kind === kind) return HUB_ROOMS2[ch];
+  return null;
+}
 var hubCleared = {};
 var hubPlaying = null;
 var hubApproach = null;

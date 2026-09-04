@@ -100,6 +100,40 @@ var PHASES = {
     renderBg: function (b, w, h) { renderBridgeBg(b, w, h); },
     respawn: function () { respawnBridge(); }
   },
+  beach: {
+    level: 10, control: 'ride', usesJump: false, usesWand: false, usesHearts: true,
+    next: 'candy', bgColor: '#7fd0ff',
+    ambient: 'sparkle', fg: { kind: 'snow', color: 'rgba(235,205,140,0.85)' },
+    init: function () { initBeach(); },
+    update: function (dt) { updateBeach(dt); },
+    draw: function () { drawBeach(); },
+    tap: function (x, y) { handleBeachTap(x, y); },
+    resize: function (ratio) { resizeBeach(ratio); },
+    renderBg: function (b, w, h) { renderBeachBg(b, w, h); },
+    respawn: function () { respawnBeach(); }
+  },
+  candy: {
+    level: 11, control: 'run', usesJump: true, usesWand: false, usesHearts: true,
+    next: 'tower', bgColor: '#ffd9ec',
+    ambient: 'petals', fg: { kind: 'grass', color: 'rgba(200,80,140,0.6)' },
+    init: function () { initCandy(); },
+    update: function (dt) { updateCandy(dt); },
+    draw: function () { drawCandy_(); },
+    resize: function (ratio) { resizeCandy(ratio); },
+    renderBg: function (b, w, h) { renderCandyBg(b, w, h); },
+    respawn: function () { respawnCandy(); }
+  },
+  tower: {
+    level: 12, control: 'run', usesJump: true, usesWand: false, usesHearts: true,
+    next: null, bgColor: '#241c48',
+    ambient: 'dust', fg: null,
+    init: function () { initTower(); },
+    update: function (dt) { updateTower(dt); },
+    draw: function () { drawTower(); },
+    resize: function (ratio) { resizeTower(ratio); },
+    renderBg: function (b, w, h) { renderTowerBg(b, w, h); },
+    respawn: function () { respawnTower(); }
+  },
   finale: {
     level: 9, control: 'run', usesJump: true, usesWand: true, usesHearts: true,
     next: null, bgColor: '#2b1040', hidden: true, sparkLife: 1.0, celebrateMs: 7000,

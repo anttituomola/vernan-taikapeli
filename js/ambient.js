@@ -265,8 +265,7 @@ function startIntro(kind) {
 function drawIntro(c) {
   if (introT <= 0 || !introKind || mode !== 'play') return;
   var a = Math.min(1, introT / 0.45);
-  var room = null, ch;
-  for (ch in HUB_ROOMS) { if (HUB_ROOMS[ch].kind === introKind) room = HUB_ROOMS[ch]; }
+  var room = hubRoomByKind(introKind);
   var cx = viewW / 2, cy = viewH * 0.46;
   var s = viewH * 0.17 * (1 + (1 - a) * 0.25);
   c.fillStyle = 'rgba(30,10,50,' + (0.45 * a) + ')';

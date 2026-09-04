@@ -89,16 +89,18 @@ function markPhaseCleared() {
 
 function hubNextKind() {
   var i;
-  for (i = 0; i < HUB_ORDER.length; i++) {
-    if (!hubCleared[HUB_ORDER[i]]) return HUB_ORDER[i];
+  var ord = hubOrder();
+  for (i = 0; i < ord.length; i++) {
+    if (!hubCleared[ord[i]]) return ord[i];
   }
   return null;
 }
 
 function hubFindByKind(kind) {
   var ch;
-  for (ch in HUB_ROOMS) {
-    if (HUB_ROOMS[ch].kind === kind) return hubFind(ch);
+  var rooms = hubRooms();
+  for (ch in rooms) {
+    if (rooms[ch].kind === kind) return hubFind(ch);
   }
   return null;
 }
@@ -150,23 +152,25 @@ function hubWalkable(ch) {
 }
 
 function hubAt(c, r) {
-  if (r < 0 || r >= HUB_MAP.length) return '#';
-  if (c < 0 || c >= HUB_MAP[r].length) return '#';
-  return HUB_MAP[r].charAt(c);
+  var m = hubMap();
+  if (r < 0 || r >= m.length) return '#';
+  if (c < 0 || c >= m[r].length) return '#';
+  return m[r].charAt(c);
 }
 
 function hubFind(ch) {
   var r, c;
-  for (r = 0; r < HUB_MAP.length; r++) {
-    c = HUB_MAP[r].indexOf(ch);
+  var m = hubMap();
+  for (r = 0; r < m.length; r++) {
+    c = m[r].indexOf(ch);
     if (c >= 0) return { c: c, r: r };
   }
   return { c: 1, r: 1 };
 }
 
 function hubLayout() {
-  var rows = HUB_MAP.length;
-  var cols = HUB_MAP[0].length;
+  var rows = hubMap().length;
+  var cols = hubMap()[0].length;
   var top = viewH * 0.15;
   var bot = viewH * 0.03;
   var cell = Math.min((viewW * 0.92) / cols, (viewH - top - bot) / rows);
@@ -190,7 +194,7 @@ function hubPixelCell(px, py, lay) {
 }
 
 function hubIsGate(ch) {
-  var room = HUB_ROOMS[ch];
+  var room = hubRooms()[ch];
   return !!(room && room.kind && !hubCleared[room.kind]);
 }
 
@@ -232,9 +236,10 @@ function hubBfs(sc, sr, tc, tr) {
 
 function hubBfsToNearestGate(sc, sr) {
   var best = [], bestLen = 1e9, i, pos, p;
-  for (i = 0; i < HUB_ORDER.length; i++) {
-    if (hubCleared[HUB_ORDER[i]]) continue;
-    pos = hubFindByKind(HUB_ORDER[i]);
+  var ord = hubOrder();
+  for (i = 0; i < ord.length; i++) {
+    if (hubCleared[ord[i]]) continue;
+    pos = hubFindByKind(ord[i]);
     if (!pos) continue;
     p = hubBfs(sc, sr, pos.c, pos.r);
     if (p.length > 0 && p.length < bestLen) {
@@ -253,7 +258,11 @@ function hubRoute(sc, sr, tc, tr) {
 }
 
 function hubArrive(ch) {
-  var room = HUB_ROOMS[ch];
+  var room = hubRooms()[ch];
+  if (ch === 'B') {
+    hubEnterWorld(1);
+    return;
+  }
   if (room) {
     if (room.kind && hubCleared[room.kind]) return;
     if (room.kind) {
@@ -266,9 +275,14 @@ function hubArrive(ch) {
     return;
   }
   if (ch === 'G') {
-    // Linna: finaali aukeaa, kun kaikki huoneet on läpäisty
+    // Linna: finaali aukeaa, kun kaikki huoneet on läpäisty; sen jälkeen linnasta
+    // lähtee vene maailmaan 2
     if (!hubNextKind() && !finaleDone) {
       beginPlay('finale');
+      return;
+    }
+    if (finaleDone) {
+      hubEnterWorld(2);
       return;
     }
     hubToast.kind = 'castle';
@@ -393,6 +407,23 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath();
     c.arc(x - s * 0.04, y - s * 0.06, s * 0.06, 0, Math.PI * 2);
     c.fill();
+  } else if (kind === 'beach') {
+    drawShell(c, x, y, s * 0.16, '#ffd6e8');
+  } else if (kind === 'candy') {
+    c.strokeStyle = '#fff';
+    c.lineWidth = Math.max(2, s * 0.04);
+    c.beginPath(); c.moveTo(x, y + s * 0.02); c.lineTo(x, y + s * 0.24); c.stroke();
+    c.fillStyle = '#ff5f7e';
+    c.beginPath(); c.arc(x, y - s * 0.06, s * 0.15, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.8)';
+    c.beginPath(); c.arc(x, y - s * 0.06, s * 0.08, 0, Math.PI * 1.5); c.stroke();
+  } else if (kind === 'tower') {
+    c.fillStyle = '#c9b8e0';
+    c.fillRect(x - s * 0.1, y - s * 0.12, s * 0.2, s * 0.32);
+    c.fillStyle = '#8a5cb8';
+    c.beginPath(); c.moveTo(x - s * 0.14, y - s * 0.12); c.lineTo(x + s * 0.14, y - s * 0.12); c.lineTo(x, y - s * 0.3); c.closePath(); c.fill();
+    c.fillStyle = '#ffe27a';
+    c.fillRect(x - s * 0.03, y + s * 0.02, s * 0.06, s * 0.08);
   } else if (kind === 'bridge') {
     var cols = ['#ff5f7e', '#ffe94f', '#5fa8ff'];
     c.lineWidth = Math.max(2, s * 0.05);
@@ -431,8 +462,10 @@ function drawHub() {
       ch = hubAt(c, r);
       x = lay.ox + (c + 0.5) * s;
       y = lay.oy + (r + 0.5) * s;
-      room = HUB_ROOMS[ch];
-      if (ch === 'G') {
+      room = hubRooms()[ch];
+      if (ch === 'B') {
+        drawBoat(ctx, x, y + s * 0.15, s * 0.9);
+      } else if (ch === 'G') {
         var castleReady = !nextKind && !finaleDone;
         if (castleReady || finaleDone) {
           var gr = ctx.createRadialGradient(x, y, s * 0.1, x, y, s * 0.9);
@@ -443,7 +476,8 @@ function drawHub() {
         }
         drawCastle(ctx, x, y + s * 0.42, s * 1.05);
         if (finaleDone) drawStar(ctx, x, y - s * 0.55, s * 0.16, globalT * 0.5, 0.9);
-        if (castleReady) drawHintArrow(ctx, x, y - s * 1.1);
+        if (castleReady || (finaleDone && !hubWorld2Done())) drawHintArrow(ctx, x, y - s * 1.1);
+        if (finaleDone) drawBoat(ctx, x + s * 0.75, y + s * 0.3, s * 0.55);
       } else if (room) {
         drawHubMedallion(ctx, room, x, y, s, !!(room.kind && hubCleared[room.kind]), room.kind === nextKind);
       }
@@ -501,6 +535,11 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  if (hubWorld === 2) {
+    if (r <= 2) return 'beach';
+    if (r <= 4) return 'candy';
+    return 'tower';
+  }
   if (r <= 2) return 'forest';
   if (r <= 4) return 'garden';
   if (r <= 6) return 'ice';
@@ -516,7 +555,10 @@ var HUB_TILE_COLORS = {
   pond: ['#5fc7d8', '#4fb8cc'],
   cave: ['#4a3f7a', '#3f3568'],
   meadow: ['#8fd97a', '#7fcc6c'],
-  swamp: ['#3e6e4a', '#356240']
+  swamp: ['#3e6e4a', '#356240'],
+  beach: ['#f3dfae', '#e9d09a'],
+  candy: ['#ffb3d9', '#ffc4e2'],
+  tower: ['#4a3f7a', '#3f3568']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
@@ -580,6 +622,19 @@ function drawHubTile(b, band, x, y, s, c, r) {
         b.beginPath(); b.arc(cx, y + s * 0.75, s * (0.28 - i * 0.05), Math.PI, 0); b.stroke();
       }
     }
+  } else if (band === 'beach') {
+    b.strokeStyle = 'rgba(90,170,210,0.6)';
+    b.lineWidth = Math.max(1, s * 0.04);
+    b.beginPath(); b.moveTo(x + s * 0.1, y + s * 0.3 + rnd * s * 0.2); b.quadraticCurveTo(x + s * 0.5, y + s * 0.2 + rnd * s * 0.2, x + s * 0.9, y + s * 0.3 + rnd * s * 0.2); b.stroke();
+    if (rnd2 < 0.5) drawShell(b, cx + (rnd - 0.5) * s * 0.4, y + s * 0.72, s * 0.12, rnd < 0.5 ? '#ffd6e8' : '#ffe9b8');
+    else if (rnd2 < 0.75) drawPalm(b, cx, y + s * 0.95, s * 0.5);
+  } else if (band === 'candy') {
+    drawLollipopTree(b, x + s * 0.3, y + s * 0.95, s * 0.4, CANDY_COLORS[Math.floor(rnd * CANDY_COLORS.length)]);
+    if (rnd2 < 0.5) drawMushroomTile(b, x + s * 0.7, y + s * 0.9, s * 0.18);
+  } else if (band === 'tower') {
+    b.fillStyle = '#5a4f8f';
+    b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, y + s * 0.85, s * 0.22, Math.PI, 0); b.fill();
+    if (rnd2 < 0.5) drawGem(b, cx + (rnd - 0.5) * s * 0.4, cy, s * 0.14, GEM_COLORS[Math.floor(rnd * GEM_COLORS.length)]);
   } else {
     b.strokeStyle = '#8bbf6a';
     b.lineWidth = Math.max(1, s * 0.05);
@@ -615,7 +670,7 @@ function drawCottage(b, x, baseY, s) {
 }
 
 function renderHubBg(lay) {
-  var key = viewW + 'x' + viewH;
+  var key = viewW + 'x' + viewH + '|' + hubWorld;
   if (hubBgKey === key) return;
   hubBgKey = key;
   hubBgCanvas.width = Math.round(viewW * DPR);
@@ -702,9 +757,11 @@ function renderHubBg(lay) {
   }
   b.restore();
 
-  // Mökki alussa
-  var st = hubFind('S');
-  drawCottage(b, lay.ox + (st.c + 0.5) * s, lay.oy + (st.r + 0.5) * s + s * 0.38, s * 0.9);
+  // Mökki alussa (vain maailmassa 1)
+  if (hubWorld === 1) {
+    var st = hubFind('S');
+    drawCottage(b, lay.ox + (st.c + 0.5) * s, lay.oy + (st.r + 0.5) * s + s * 0.38, s * 0.9);
+  }
 }
 
 function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
@@ -729,4 +786,56 @@ function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
   c.globalAlpha = 1;
   if (isCleared) drawStar(c, x + rad * 0.72, y - rad * 0.72, s * 0.13, 0, 0.9);
   if (isNext) drawHintArrow(c, x, y - rad * 2.2);
+}
+
+// ---------- Maailma 2 ----------
+function hubWorld2Done() {
+  var i;
+  for (i = 0; i < HUB_ORDER2.length; i++) if (!hubCleared[HUB_ORDER2[i]]) return false;
+  return true;
+}
+
+// Vaihto kartan sivujen välillä: 2 = vene linnasta rannikolle, 1 = takaisin linnalle
+function hubEnterWorld(w) {
+  var pos;
+  hubWorld = w;
+  hubBgKey = '';
+  hubPawn.path = [];
+  hubApproach = null;
+  pos = w === 2 ? hubFind('B') : hubFind('G');
+  hubPawn.c = pos.c;
+  hubPawn.r = pos.r;
+  var lay = hubLayout();
+  var cpos = hubCenter(pos.c, pos.r, lay);
+  hubPawn.x = cpos.x;
+  hubPawn.y = cpos.y;
+  playNote(523, 0, 0.15, 'triangle', 0.35);
+  playNote(659, 0.1, 0.15, 'triangle', 0.35);
+  playNote(784, 0.2, 0.3, 'triangle', 0.4);
+}
+
+function drawBoat(c, x, y, s) {
+  c.fillStyle = '#8a5a30';
+  c.beginPath();
+  c.moveTo(x - s * 0.5, y);
+  c.quadraticCurveTo(x, y + s * 0.45, x + s * 0.5, y);
+  c.lineTo(x + s * 0.42, y - s * 0.12);
+  c.lineTo(x - s * 0.42, y - s * 0.12);
+  c.closePath();
+  c.fill();
+  c.strokeStyle = '#5a3a1e';
+  c.lineWidth = Math.max(1.5, s * 0.05);
+  c.beginPath(); c.moveTo(x, y - s * 0.12); c.lineTo(x, y - s * 0.75); c.stroke();
+  c.fillStyle = '#ff7bac';
+  c.beginPath();
+  c.moveTo(x + s * 0.03, y - s * 0.72);
+  c.lineTo(x + s * 0.42, y - s * 0.3);
+  c.lineTo(x + s * 0.03, y - s * 0.2);
+  c.closePath();
+  c.fill();
+  c.fillStyle = 'rgba(120,200,240,0.5)';
+  c.beginPath();
+  if (c.ellipse) c.ellipse(x, y + s * 0.08, s * 0.7, s * 0.1, 0, 0, Math.PI * 2);
+  else c.arc(x, y + s * 0.08, s * 0.4, 0, Math.PI * 2);
+  c.fill();
 }

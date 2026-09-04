@@ -340,6 +340,18 @@ function taskStart(t) {
   } else if (t.type === 'rhythm') {
     makeRhythmProblem(t);
     t.mode = 'show';
+  } else if (t.type === 'shadow') {
+    makeShadowProblem(t);
+    t.mode = 'input';
+    playNote(698, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'puzzle') {
+    makePuzzleProblem(t);
+    t.mode = 'input';
+    playNote(784, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'pairs') {
+    makePairsProblem(t);
+    t.mode = 'input';
+    playNote(659, 0, 0.2, 'triangle', 0.35);
   } else {
     t.seq = [];
     for (var i = 0; i < t.seqLen; i++) t.seq.push(Math.floor(Math.random() * t.orbs));
@@ -349,6 +361,7 @@ function taskStart(t) {
 
 function taskSolved() {
   var t = activeTask;
+  dragPiece = null;
   t.mode = 'opening';
   t.timer = 0;
   var notes = [523, 659, 784, 1047];
@@ -363,6 +376,14 @@ function handleTaskTap(px, py) {
   t.idleT = 0;
   if (t.type === 'rhythm') {
     rhythmTap(t);
+    return;
+  }
+  if (taskUsesDrag(t)) {
+    taskDragStart(t, px, py);
+    return;
+  }
+  if (t.type === 'pairs') {
+    pairsTap(t, px, py);
     return;
   }
   var op = orbPositions(t.orbs);
@@ -434,6 +455,7 @@ function updateTasks(dt) {
   } else if (activeTask) {
     t = activeTask;
     if (t.mode === 'input') t.idleT += dt;
+    if (t.type === 'pairs' && t.mode === 'input') pairsUpdate(t, dt);
     if (t.regenT > 0) {
       t.regenT -= dt;
       if (t.regenT <= 0) regenerateTask(t);
