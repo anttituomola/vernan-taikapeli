@@ -61,9 +61,9 @@ tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.
   Lopussa jäljellä olevat renkaat leijuvat prinsessan ulottuville.
   Tehtävä: kummalla puolella on enemmän.
 - **Linna (finaali)** ♥ — Myrskynoidan suojapallot välähtävät järjestyksessä;
-  ammu ne sauvalla samassa järjestyksessä (3 kierrosta, sarja pitenee 3→5).
-  Salamat pakottavat liikkumaan, väärä pallo heittää sammakon. Sitten
-  kolme pupua vapautetaan häkeistä tehtävillä, ja kaikki ystävät juhlivat.
+  ammu ne sauvalla samassa järjestyksessä (3 kierrosta, sarja pitenee 2→4).
+  Väärä pallo heittää sammakon. Sitten kolme pupua vapautetaan häkeistä
+  tehtävillä, ja kaikki ystävät juhlivat.
 
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
@@ -111,7 +111,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Luola: lepakoiden nopeus `viewW * 0.065`, tippukiven varoitus `1.1` s ja putoamiskiihtyvyys `viewH * 1.15`, kuilujen leveys `caveGround`, valon säde `viewH * 0.72` (play-cave.js)
 - Suo: noidan pudotusväli `3.2 + Math.random() * 1.4`, sammakon loikat `bounces > 3`
 - Silta: vieritysnopeudet `BRIDGE_SEGMENT_SPEEDS`
-- Finaali: kierrokset `BOSS_ROUNDS`, sarjan pituus `3 + boss.round`, salaman väli `3.0 + …`
+- Finaali: kierrokset `BOSS_ROUNDS`, sarjan pituus `2 + boss.round`, näytön tahti `stepLen = 0.9`, pallojen väli `viewH * 0.22` (play-finale.js)
 - Rytmin sallittu heitto: `tol = Math.max(0.15, want * 0.32)` (tasks-extra.js)
 - Muistiloitsun pituus ja pallot: `makeTask(fx, 'memory', { seqLen, orbs })`
 

@@ -2,14 +2,14 @@
 
 // Linnan finaali: Myrskynoita on vienyt puput linnan saliin.
 // 1) Noita: suojapallot välähtävät järjestyksessä — ammu ne sauvalla samassa
-//    järjestyksessä (3 kierrosta, sarja pitenee). Salamat pakottavat liikkumaan.
+//    järjestyksessä (3 kierrosta, sarja pitenee 2→4). Väärä pallo heittää sammakon.
 // 2) Häkit: kolme pupua vapautuu tehtävillä.
 // 3) Juhla kaikkien ystävien kanssa.
 
 var finale = { phase: 'boss', t: 0, arenaW: 0 };
 var boss = {
   x: 0, y: 0, dir: 1, t: 0, round: 0, mode: 'show', seq: [], showIdx: -1, timer: 0,
-  litOrb: -1, litT: 0, inputIdx: 0, shakeT: 0, boltT: 3, bolt: null, gone: 0
+  litOrb: -1, litT: 0, inputIdx: 0, shakeT: 0, boltT: 3, bolt: null, gone: 0, moveT: 0
 };
 var BOSS_ORBS = 3;
 var BOSS_ROUNDS = 3;
@@ -34,6 +34,7 @@ function initFinale() {
   boss.y = viewH * 0.3;
   boss.dir = 1;
   boss.t = 0;
+  boss.moveT = 0;
   boss.round = 0;
   boss.boltT = 3.5;
   boss.bolt = null;
@@ -72,7 +73,7 @@ function bossStartSequence() {
   var i;
   boss.mode = 'show';
   boss.seq = [];
-  for (i = 0; i < 3 + boss.round; i++) boss.seq.push(Math.floor(Math.random() * BOSS_ORBS));
+  for (i = 0; i < 2 + boss.round; i++) boss.seq.push(Math.floor(Math.random() * BOSS_ORBS));
   boss.showIdx = -1;
   boss.timer = -0.8;
   boss.litOrb = -1;
@@ -80,11 +81,12 @@ function bossStartSequence() {
 }
 
 function bossOrbPos(i) {
-  // Hidas kiertoliike, jotta sauvan kipinä ehtii osua tähdättyyn palloon
-  var a = boss.t * 0.45 + i * Math.PI * 2 / BOSS_ORBS;
+  // Pallot leijuvat kiinteissä paikoissa vierekkäin ja keinuvat vain pystysuunnassa:
+  // ne eivät koskaan risteä, joten jokaiseen on aina oma ampumalinja alhaalta,
+  // ja lapsi voi muistaa loitsun paikkoina (vasen, keski, oikea).
   return {
-    x: boss.x + Math.cos(a) * viewH * 0.16,
-    y: boss.y + Math.sin(a) * viewH * 0.08 + viewH * 0.02
+    x: boss.x + (i - (BOSS_ORBS - 1) / 2) * viewH * 0.22,
+    y: boss.y + viewH * 0.035 + Math.sin(boss.t * 1.5 + i * 2.1) * viewH * 0.012
   };
 }
 
@@ -155,13 +157,15 @@ function updateFinale(dt) {
   // Noita
   boss.t += dt;
   if (finale.phase === 'boss') {
-    boss.x = finale.arenaW * 0.5 + Math.sin(boss.t * 0.5) * finale.arenaW * 0.15;
-    boss.dir = Math.cos(boss.t * 0.5) > 0 ? 1 : -1;
+    // Noita leijuu paikallaan, kun on pelaajan vuoro ampua -> palloihin on helppo tähdätä
+    if (boss.mode !== 'input') boss.moveT += dt;
+    boss.x = finale.arenaW * 0.5 + Math.sin(boss.moveT * 0.3) * finale.arenaW * 0.15;
+    boss.dir = Math.cos(boss.moveT * 0.3) > 0 ? 1 : -1;
     boss.y = viewH * 0.3 + Math.sin(boss.t * 1.7) * viewH * 0.02;
     if (boss.mode === 'show') {
       boss.timer += dt;
       if (boss.timer >= 0) {
-        var stepLen = 0.75;
+        var stepLen = 0.9;
         var step = Math.floor(boss.timer / stepLen);
         if (step < boss.seq.length) {
           var inStep = boss.timer - step * stepLen;
@@ -189,29 +193,8 @@ function updateFinale(dt) {
     if (boss.litT > 0) boss.litT -= dt;
     if (boss.shakeT > 0) boss.shakeT -= dt;
 
-    // Salama: varoitus maassa, sitten isku. Väistä juoksemalla.
-    if (boss.mode === 'show' || boss.mode === 'input') {
-      boss.boltT -= dt;
-      if (boss.boltT <= 0 && !boss.bolt) {
-        boss.bolt = { x: princess.x, t: 0 };
-        boss.boltT = 3.0 + Math.random() * 1.2;
-        playNote(120, 0, 0.3, 'sawtooth', 0.15);
-      }
-    }
-    if (boss.bolt) {
-      boss.bolt.t += dt;
-      var boltX = boss.bolt.x;
-      if (boss.bolt.t > 0.85 && boss.bolt.t < 1.1) {
-        if (Math.abs(princess.x - boltX) < viewH * 0.07 && princess.y > groundTop - viewH * 0.12) {
-          // loseHeart voi palauttaa lyhdylle ja nollata salaman (respawnFinale)
-          if (loseHeart()) {
-            princess.knockVx = (princess.x < boltX ? -1 : 1) * viewW * 0.2;
-            spawnSparkles(princess.x, princess.y - viewH * 0.08, 12, '#ffe94f');
-          }
-        }
-      }
-      if (boss.bolt && boss.bolt.t > 1.1) boss.bolt = null;
-    }
+    // Salamat on poistettu testipalautteen perusteella: pomo haastaa vain
+    // loitsulla, ja väärästä pallosta seuraa sammakko.
 
     // Sauvan kipinät osuvat palloihin
     var targets = [];
@@ -219,7 +202,7 @@ function updateFinale(dt) {
       var op = bossOrbPos(i);
       targets.push({ x: op.x, y: op.y, idx: i });
     }
-    updateSparksAgainst(dt, targets, viewH * 0.065, function (tg) { bossOrbHit(tg.idx); });
+    updateSparksAgainst(dt, targets, viewH * 0.07, function (tg) { bossOrbHit(tg.idx); });
   } else {
     if (boss.mode === 'gone') {
       boss.gone += dt;
@@ -390,7 +373,7 @@ function drawBoss(c) {
     c.strokeStyle = 'rgba(200,160,255,' + (0.35 - (i - boss.round) * 0.08) + ')';
     c.lineWidth = viewH * 0.006;
     c.beginPath();
-    if (c.ellipse) c.ellipse(x, y + viewH * 0.02, viewH * (0.19 + (i - boss.round) * 0.03), viewH * (0.11 + (i - boss.round) * 0.02), 0, 0, Math.PI * 2);
+    if (c.ellipse) c.ellipse(x, y + viewH * 0.02, viewH * (0.26 + (i - boss.round) * 0.03), viewH * (0.075 + (i - boss.round) * 0.02), 0, 0, Math.PI * 2);
     else c.arc(x, y, viewH * 0.15, 0, Math.PI * 2);
     c.stroke();
   }
@@ -513,7 +496,6 @@ function drawFriend(c, fr) {
 function drawFinale() {
   var i;
   if (!drawWorldBg()) return;
-  drawBolt(ctx);
   if (finale.phase !== 'boss') {
     for (i = 0; i < tasks.length; i++) drawCage(ctx, tasks[i], i);
     for (i = 0; i < finaleBunnies.length; i++) {
