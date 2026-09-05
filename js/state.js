@@ -12,7 +12,7 @@ var worldW = 0;             // maailman leveys
 var groundTop = 0, groundBottom = 0;
 
 var running = false;
-var mode = 'hub';          // 'hub' = karttalabyrintti, 'play' = pelivaihe
+var mode = 'hub';          // 'sea' = saaristokartta, 'hub' = saaren sokkelo, 'play' = pelivaihe
 var celebrating = false;
 var celebrateT = 0;
 var celebrateReturnId = 0;
@@ -160,7 +160,7 @@ var lastPX = 0, lastPY = 0;
 // Seikkailut 1 2 b c d ovat portteja: niistä on kuljettava, jotta tie jatkuu.
 var HUB_MAP = [
   '#############',
-  '#S.........1#',
+  '#B.........1#',
   '###########.#',
   '#2..........#',
   '#.###########',
@@ -185,7 +185,7 @@ var HUB_ROOMS = {
 };
 var HUB_ORDER = ['start', 'garden', 'ice', 'pond', 'sky', 'cave', 'swamp', 'bridge'];
 
-// Maailma 2 avautuu linnasta, kun finaali on läpäisty. B = vene takaisin maailmaan 1.
+// Maailma 2 = toinen saari (avautuu, kun linnan finaali on läpäisty). B = satama saaristokartalle.
 var HUB_MAP2 = [
   '###########',
   '#B.......h#',

@@ -6,10 +6,12 @@
 // ---------- Tallennus ----------
 var PROGRESS_KEY = 'vt_progress_v1';
 var finaleDone = false;
+var rainbowShown = 0;   // montako sateenkaaren väriä on jo paljastettu saaristokartalla
+var lastIsland = 1;     // viimeksi vierailtu saari (maailma)
 
 function saveProgress() {
   try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone }));
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland }));
   } catch (e) { /* yksityinen tila tms: pelataan ilman tallennusta */ }
 }
 
@@ -20,12 +22,16 @@ function loadProgress() {
     var d = JSON.parse(raw);
     if (d && d.cleared && typeof d.cleared === 'object') hubCleared = d.cleared;
     finaleDone = !!(d && d.finaleDone);
+    rainbowShown = (d && d.rainbowShown) | 0;
+    lastIsland = ((d && d.lastIsland) | 0) || 1;
   } catch (e) { /* rikkinäinen tallennus: aloitetaan alusta */ }
 }
 
 function resetProgress() {
   hubCleared = {};
   finaleDone = false;
+  rainbowShown = 0;
+  lastIsland = 1;
   saveProgress();
 }
 

@@ -6,7 +6,10 @@ function loop(ts) {
   if (!lastTime) lastTime = ts;
   var dt = Math.min((ts - lastTime) / 1000, 0.05);
   lastTime = ts;
-  if (mode === 'hub') {
+  if (mode === 'sea') {
+    updateSea(dt);
+    drawSea();
+  } else if (mode === 'hub') {
     updateHub(dt);
     drawHub();
   } else if (running) {
@@ -57,6 +60,10 @@ function pointerDown(e) {
   holdTouchId = newTouch ? newTouch.identifier : null;
   var p = eventPos(e, holdTouchId);
   lastPX = p.x; lastPY = p.y;
+  if (mode === 'sea') {
+    handleSeaTap(p.x, p.y);
+    return;
+  }
   if (mode === 'hub') {
     handleHubTap(p.x, p.y);
     return;
@@ -85,7 +92,7 @@ function pointerMove(e) {
     taskDragMove(p.x, p.y);
     return;
   }
-  if (mode === 'hub' || !holding) return;
+  if (mode !== 'play' || !holding) return;
   lastPX = p.x; lastPY = p.y;
   if (Math.abs(p.x - holdSX) + Math.abs(p.y - holdSY) > 22) holdMoved = true;
   if (phaseNow().control === 'ride') setWalkTarget(p.x, p.y);
@@ -169,7 +176,15 @@ window.VT = {
   drag: function (px, py) { var t = activeTask; if (t && taskUsesDrag(t)) return taskDragStart(t, px, py); return false; },
   dragMove: taskDragMove,
   drop: taskDrop,
-  world: function (w) { if (w) hubEnterWorld(w); return hubWorld; },
+  world: function (w) { if (w) hubEnterIsland(w); return hubWorld; },
+  sea: showSea,
+  seaTap: handleSeaTap,
+  seaTick: function (dt) { updateSea(dt); drawSea(); },
+  boat: seaBoat,
+  islands: ISLANDS,
+  islandPos: seaIslandPos,
+  reveal: function () { return seaReveal; },
+  rainbow: function () { return { earned: rainbowEarned(), shown: rainbowShown }; },
   offer: function () { return hubOffer; },
   down: pointerDown,
   move: pointerMove,
@@ -196,9 +211,7 @@ window.VT = {
 };
 
 loadProgress();
+hubWorld = lastIsland;
 resize();
-showHub();
-var hubStart = hubFind('S');
-hubPawn.c = hubStart.c;
-hubPawn.r = hubStart.r;
+showSea();
 requestAnimationFrame(loop);

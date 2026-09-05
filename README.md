@@ -18,7 +18,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/draw-actors.js` — tähti, pupu, yksisarvinen
 - `js/fx.js` — kipinät, konfetti, opastenuoli
 - `js/ambient.js` — tunnelmahiukkaset, etualan siluetit ja kentän alkukortti (PHASES: `ambient`, `fg`)
-- `js/flow-hub.js` — karttalabyrintti ja vaiheen käynnistys
+- `js/flow-sea.js` — saaristokartta (ylin navigaatio), saaret ja sateenkaari
+- `js/flow-hub.js` — saaren karttalabyrintti ja vaiheen käynnistys
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)
 - `js/play-garden.js` … `play-sky.js` — vaiheet 2–5
@@ -33,6 +34,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 **Uusi vaihe** = tiedosto `js/play-….js`, rivi `PHASES`-olioon (phases.js),
 huone `HUB_ROOMS`-karttaan ja kirjain `HUB_MAP`iin sekä `HUB_ORDER`iin
 (maailmassa 2 vastaavat `HUB_MAP2`, `HUB_ROOMS2`, `HUB_ORDER2`).
+**Uusi saari** = rivi `ISLANDS`-taulukkoon (flow-sea.js: sijainti, vartijahuone
+`finaleKind`, koristeet) ja oma sokkelo `hubMap()/hubRooms()/hubOrder()`-valintoihin.
 Silmukka, syöte ja koko kulkevat `PHASES`-koukkujen kautta, joten muuta
 koodia ei tarvitse muokata.
 
@@ -44,7 +47,19 @@ konsolista `VT.resetProgress()`.
 
 ## Kartta
 
-Aloitus on labyrintti. Huoneet ovat portteja: jokainen on läpäistävä, jotta
+Peli alkaa **saaristokartalta**: saaret ovat maailmoja, ja vene kulkee niiden
+välillä. Saaren napautus purjehduttaa veneen sinne ja avaa saaren
+labyrintin; labyrintin satamaruutu (**B**) palauttaa saaristoon. Seuraava saari
+aukeaa, kun edellisen saaren vartijahuone on läpäisty (Linnasaari: finaali,
+Karkkisaari: Arvoitusten torni). Sumuinen saari kartan reunassa vihjaa
+tulevista maailmoista.
+
+**Tarina:** Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle. Jokaisen
+saaren vartija palauttaa yhden värin, ja saaristokartan sateenkaari täyttyy
+väri kerrallaan (paljastus animoituu, kun kartalle palataan). Seitsemän väriä
+= tilaa seitsemälle saarelle.
+
+Linnasaaren labyrintissä huoneet ovat portteja: jokainen on läpäistävä, jotta
 tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.
 
 **Uusinta:** läpäisty huone on kulkukelpoinen, joten sen voi ohittaa
@@ -74,11 +89,10 @@ ja ↻ (finaali uudestaan).
   Väärä pallo heittää sammakon. Sitten kolme pupua vapautetaan häkeistä
   tehtävillä, ja kaikki ystävät juhlivat.
 
-### Maailma 2
+### Karkkisaari (maailma 2)
 
-Kun finaali on läpäisty, linnan viereen ilmestyy vene: linnan napautus vie
-kartan toiselle sivulle. Veneellä (**B**) pääsee takaisin. Uudet huoneet
-painottavat raahaustehtäviä.
+Aukeaa, kun linnan finaali on läpäisty. Huoneet painottavat raahaustehtäviä;
+Arvoitusten torni on saaren vartija.
 
 - **Rannikko** ♥ — ratsastus rannalla: simpukat napataan, ravut saksivat
   polulla, ja aalto huuhtoo polun alaosan vaahtovaroituksen jälkeen — pysy

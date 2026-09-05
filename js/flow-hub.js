@@ -261,7 +261,8 @@ function hubRoute(sc, sr, tc, tr) {
 function hubArrive(ch) {
   var room = hubRooms()[ch];
   if (ch === 'B') {
-    hubEnterWorld(1);
+    // Satama: vene vie saaristokartalle
+    showSea();
     return;
   }
   if (room) {
@@ -280,14 +281,14 @@ function hubArrive(ch) {
     return;
   }
   if (ch === 'G') {
-    // Linna: finaali aukeaa, kun kaikki huoneet on läpäisty; sen jälkeen linnasta
-    // lähtee vene maailmaan 2
+    // Linna: finaali aukeaa, kun kaikki huoneet on läpäisty; sen jälkeen sen voi
+    // pelata uudestaan. Seuraavalle saarelle mennään satamasta (B).
     if (!hubNextKind() && !finaleDone) {
       beginPlay('finale');
       return;
     }
     if (finaleDone) {
-      hubOfferShow([{ act: 'boat' }, { act: 'replay', kind: 'finale' }]);
+      hubOfferShow([{ act: 'replay', kind: 'finale' }]);
       return;
     }
     hubToast.kind = 'castle';
@@ -477,7 +478,8 @@ function drawHub() {
       y = lay.oy + (r + 0.5) * s;
       room = hubRooms()[ch];
       if (ch === 'B') {
-        drawBoat(ctx, x, y + s * 0.15, s * 0.9);
+        drawHarbor(ctx, x, y, s);
+        if (seaHarborHint()) drawHintArrow(ctx, x, y - s * 0.95);
       } else if (ch === 'G') {
         var castleReady = !nextKind && !finaleDone;
         if (castleReady || finaleDone) {
@@ -489,8 +491,7 @@ function drawHub() {
         }
         drawCastle(ctx, x, y + s * 0.42, s * 1.05);
         if (finaleDone) drawStar(ctx, x, y - s * 0.55, s * 0.16, globalT * 0.5, 0.9);
-        if (castleReady || (finaleDone && !hubWorld2Done())) drawHintArrow(ctx, x, y - s * 1.1);
-        if (finaleDone) drawBoat(ctx, x + s * 0.75, y + s * 0.3, s * 0.55);
+        if (castleReady) drawHintArrow(ctx, x, y - s * 1.1);
       } else if (room) {
         drawHubMedallion(ctx, room, x, y, s, !!(room.kind && hubCleared[room.kind]), room.kind === nextKind);
       }
@@ -758,7 +759,7 @@ function renderHubBg(lay) {
   for (r = 0; r < lay.rows; r++) {
     for (c = 0; c < lay.cols; c++) {
       ch = hubAt(c, r);
-      if (!hubWalkable(ch) || HUB_ROOMS[ch] || ch === 'G' || ch === 'S') continue;
+      if (!hubWalkable(ch) || hubRooms()[ch] || ch === 'G' || ch === 'B') continue;
       cx = lay.ox + (c + 0.5) * s;
       cy = lay.oy + (r + 0.5) * s;
       for (i = 0; i < 3; i++) {
@@ -772,10 +773,10 @@ function renderHubBg(lay) {
   }
   b.restore();
 
-  // Mökki alussa (vain maailmassa 1)
+  // Mökki sataman vieressä (vain maailmassa 1)
   if (hubWorld === 1) {
-    var st = hubFind('S');
-    drawCottage(b, lay.ox + (st.c + 0.5) * s, lay.oy + (st.r + 0.5) * s + s * 0.38, s * 0.9);
+    var st = hubFind('B');
+    drawCottage(b, lay.ox + (st.c + 1.5) * s, lay.oy + (st.r - 0.5) * s + s * 0.42, s * 0.85);
   }
 }
 
@@ -839,10 +840,6 @@ function hubOfferHit(px, py, lay) {
 }
 
 function hubOfferAct(item) {
-  if (item.act === 'boat') {
-    hubEnterWorld(2);
-    return;
-  }
   if (item.act === 'replay') {
     hubApproach = null;
     beginPlay(item.kind);
@@ -928,31 +925,39 @@ function drawReplayArrow(c, x, y, r) {
   c.lineCap = 'butt';
 }
 
-// ---------- Maailma 2 ----------
-function hubWorld2Done() {
-  var i;
-  for (i = 0; i < HUB_ORDER2.length; i++) if (!hubCleared[HUB_ORDER2[i]]) return false;
-  return true;
-}
-
-// Vaihto kartan sivujen välillä: 2 = vene linnasta rannikolle, 1 = takaisin linnalle
-function hubEnterWorld(w) {
-  var pos;
+// ---------- Saaren vaihto ----------
+// Saaristokartalta saaren sokkeloon: nappula aloittaa satamasta (B)
+function hubEnterIsland(w) {
+  var pos, lay, cpos;
   hubWorld = w;
   hubBgKey = '';
-  hubPawn.path = [];
+  hubPlaying = null;
   hubApproach = null;
-  hubOffer = null;
-  pos = w === 2 ? hubFind('B') : hubFind('G');
+  lastIsland = w;
+  saveProgress();
+  showHub();
+  pos = hubFind('B');
   hubPawn.c = pos.c;
   hubPawn.r = pos.r;
-  var lay = hubLayout();
-  var cpos = hubCenter(pos.c, pos.r, lay);
+  hubPawn.facing = 1;
+  lay = hubLayout();
+  cpos = hubCenter(pos.c, pos.r, lay);
   hubPawn.x = cpos.x;
   hubPawn.y = cpos.y;
   playNote(523, 0, 0.15, 'triangle', 0.35);
   playNote(659, 0.1, 0.15, 'triangle', 0.35);
   playNote(784, 0.2, 0.3, 'triangle', 0.4);
+}
+
+// Satama: laituri ja vene
+function drawHarbor(c, x, y, s) {
+  var i;
+  c.fillStyle = 'rgba(120,200,240,0.55)';
+  c.beginPath(); c.arc(x, y + s * 0.2, s * 0.48, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#a97a4a';
+  for (i = 0; i < 3; i++) c.fillRect(x - s * 0.42 + i * s * 0.3, y - s * 0.02, s * 0.24, s * 0.1);
+  c.fillRect(x - s * 0.44, y - s * 0.03, s * 0.9, s * 0.05);
+  drawBoat(c, x, y + s * 0.22, s * 0.7);
 }
 
 function drawBoat(c, x, y, s) {
