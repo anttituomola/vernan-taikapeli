@@ -454,6 +454,31 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     drawStar(c, x + s * 0.1, y - s * 0.17, s * 0.07, 0, 0);
   } else if (kind === 'pen') {
     drawPenGlyph(c, x, y + s * 0.02, s * 0.3, '#ffffff');
+  } else if (kind === 'rain') {
+    c.fillStyle = '#e8e6f2';
+    cloudShape(c, x, y - s * 0.08, s * 0.08);
+    c.fillStyle = '#5a4560';
+    for (i = -1; i <= 1; i++) { c.beginPath(); c.arc(x + i * s * 0.09, y + s * 0.14 + Math.abs(i) * s * 0.03, s * 0.035, 0, Math.PI * 2); c.fill(); }
+  } else if (kind === 'bunnybridge') {
+    drawBunny(c, x, y + s * 0.02, s * 0.2, 0, 0, true);
+  } else if (kind === 'scribble') {
+    c.strokeStyle = '#2e2440';
+    c.lineWidth = Math.max(2, s * 0.05);
+    c.lineCap = 'round';
+    for (i = 0; i < 6; i++) {
+      a = i * 1.1;
+      c.beginPath();
+      c.moveTo(x + Math.cos(a) * s * 0.2, y + Math.sin(a) * s * 0.16);
+      c.quadraticCurveTo(x + Math.cos(a + 1.5) * s * 0.26, y + Math.sin(a + 1.5) * s * 0.22, x + Math.cos(a + 2.6) * s * 0.2, y + Math.sin(a + 2.6) * s * 0.16);
+      c.stroke();
+    }
+    c.lineCap = 'butt';
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(x - s * 0.06, y - s * 0.03, s * 0.045, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x + s * 0.06, y - s * 0.03, s * 0.045, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#222';
+    c.beginPath(); c.arc(x - s * 0.06, y - s * 0.03, s * 0.02, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x + s * 0.06, y - s * 0.03, s * 0.02, 0, Math.PI * 2); c.fill();
   } else if (kind === 'moon') {
     c.fillStyle = '#fff1a8';
     c.beginPath(); c.arc(x, y, s * 0.17, 0, Math.PI * 2); c.fill();

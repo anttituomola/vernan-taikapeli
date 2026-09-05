@@ -10,7 +10,7 @@ var ISLANDS = [
   { world: 1, name: 'Linnasaari', fx: 0.24, fy: 0.70, size: 1.0, finaleKind: 'finale', deco: 'castle' },
   { world: 2, name: 'Karkkisaari', fx: 0.55, fy: 0.58, size: 0.82, finaleKind: 'tower', deco: ['beach', 'candy', 'tower'] },
   { world: 3, name: 'Kuutamosaari', fx: 0.84, fy: 0.76, size: 0.82, finaleKind: 'moon', deco: ['reef', 'nightwood', 'clouds'] },
-  { world: 4, name: 'Taikakynän saari', fx: 0.90, fy: 0.47, size: 0.6, finaleKind: 'pen', deco: ['pen'] }
+  { world: 4, name: 'Taikakynän saari', fx: 0.90, fy: 0.47, size: 0.62, finaleKind: 'scribble', deco: ['pen', 'rain', 'bunnybridge'] }
 ];
 // Sumuiset saaret vihjaavat tulevista maailmoista
 var SEA_FOG = [{ fx: 0.10, fy: 0.45, size: 0.45 }];

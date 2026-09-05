@@ -220,18 +220,23 @@ var HUB_ROOMS3 = {
 };
 var HUB_ORDER3 = ['reef', 'nightwood', 'clouds', 'moon'];
 
-// Maailma 4 = Taikakynän saari (prototyyppi: yksi piirtokenttä, joka on myös vartija)
+// Maailma 4 = Taikakynän saari: piirtokentät, Sotkumörkö (t) on saaren vartija
 var HUB_MAP4 = [
-  '#########',
-  '#B......#',
-  '#######.#',
-  '#q......#',
-  '#########'
+  '###########',
+  '#B.......q#',
+  '#########.#',
+  '#r........#',
+  '#.#########',
+  '#s.......t#',
+  '###########'
 ];
 var HUB_ROOMS4 = {
-  'q': { kind: 'pen', name: 'Taikakynä', color: '#8a4dff' }
+  'q': { kind: 'pen', name: 'Taikakynä', color: '#8a4dff' },
+  'r': { kind: 'rain', name: 'Sadesuoja', color: '#6f8fc8' },
+  's': { kind: 'bunnybridge', name: 'Pupusilta', color: '#ff8fc0' },
+  't': { kind: 'scribble', name: 'Sotkumörkö', color: '#5a4a7a' }
 };
-var HUB_ORDER4 = ['pen'];
+var HUB_ORDER4 = ['pen', 'rain', 'bunnybridge', 'scribble'];
 var HUB_WORLDS = {
   1: { map: HUB_MAP, rooms: HUB_ROOMS, order: HUB_ORDER },
   2: { map: HUB_MAP2, rooms: HUB_ROOMS2, order: HUB_ORDER2 },

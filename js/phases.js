@@ -182,7 +182,7 @@ var PHASES = {
   },
   pen: {
     level: 17, control: 'draw', usesJump: false, usesWand: false, usesHearts: true,
-    next: null, bgColor: '#fdf6e3',
+    next: 'rain', bgColor: '#fdf6e3',
     ambient: 'sparkle', fg: null,
     init: function () { initPen(); },
     update: function (dt) { updatePen(dt); },
@@ -191,6 +191,42 @@ var PHASES = {
     resize: function (ratio) { resizePen(ratio); },
     renderBg: function (b, w, h) { renderPenBg(b, w, h); },
     respawn: function () { respawnPen(); }
+  },
+  rain: {
+    level: 18, control: 'draw', usesJump: false, usesWand: false, usesHearts: true,
+    next: 'bunnybridge', bgColor: '#e9eef7',
+    ambient: null, fg: null,
+    init: function () { initRain(); },
+    update: function (dt) { updateRain(dt); },
+    draw: function () { drawRain(); },
+    tap: function (x, y) { penStart(x, y); },
+    resize: function (ratio) { resizeRain(ratio); },
+    renderBg: function (b, w, h) { renderRainBg(b, w, h); },
+    respawn: function () { respawnRain(); }
+  },
+  bunnybridge: {
+    level: 19, control: 'draw', usesJump: false, usesWand: false, usesHearts: true,
+    next: 'scribble', bgColor: '#f3f7e8',
+    ambient: 'butterflies', fg: null,
+    init: function () { initBunnyBridge(); },
+    update: function (dt) { updateBunnyBridge(dt); },
+    draw: function () { drawBunnyBridge(); },
+    tap: function (x, y) { penStart(x, y); },
+    resize: function (ratio) { resizeBunnyBridge(ratio); },
+    renderBg: function (b, w, h) { renderBunnyBridgeBg(b, w, h); },
+    respawn: function () { respawnBunnyBridge(); }
+  },
+  scribble: {
+    level: 20, control: 'draw', usesJump: false, usesWand: false, usesHearts: true,
+    next: null, bgColor: '#f2ecf7', celebrateMs: 5000,
+    ambient: 'dust', fg: null,
+    init: function () { initScribble(); },
+    update: function (dt) { updateScribble(dt); },
+    draw: function () { drawScribble(); },
+    tap: function (x, y) { penStart(x, y); },
+    resize: function (ratio) { resizeScribble(ratio); },
+    renderBg: function (b, w, h) { renderScribbleBg(b, w, h); },
+    respawn: function () { respawnScribble(); }
   },
   finale: {
     level: 9, control: 'run', usesJump: true, usesWand: true, usesHearts: true,

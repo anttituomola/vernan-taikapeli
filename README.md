@@ -30,7 +30,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/tasks-drag.js` — raahaustehtävät (muoto varjoon, täydennä kuva) ja muistipeli
 - `js/play-beach.js`, `play-candy.js`, `play-tower.js` — maailma 2 (vaiheet 10–12)
 - `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-moon.js` — maailma 3 (vaiheet 13–16)
-- `js/play-pen.js` — Taikakynä (maailma 4, piirto-ohjauksen prototyyppi, vaihe 17)
+- `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
+- `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4 (vaiheet 17–20)
 - `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
 
@@ -128,9 +129,11 @@ Aukeaa, kun Arvoitusten torni on läpäisty. Kuun vartija on saaren vartija.
   Kuunkivet kerätään kiviltä, ja kuun kasvot heräävät tehtävä kerrallaan.
   Ovi aukeaa, kun kaikki tehtävät ja kivet on tehty.
 
-### Taikakynän saari (maailma 4, prototyyppi)
+### Taikakynän saari (maailma 4)
 
-Aukeaa, kun Kuun vartija on läpäisty. Yksi kenttä, joka on samalla saaren vartija.
+Aukeaa, kun Kuun vartija on läpäisty. Kaikissa kentissä ohjaus on sama: pidä
+pohjassa kävelläksesi, kynänappi ottaa kynän käteen, kynä kädessä piirretään.
+Sotkumörkö on saaren vartija.
 
 - **Taikakynä** ♥ — uusi verbi: **piirtäminen**. Pidä pohjassa kävelläksesi
   sormea kohti kuten muualla (myös taaksepäin); rotkon reunalle prinsessa
@@ -142,6 +145,18 @@ Aukeaa, kun Kuun vartija on läpäisty. Yksi kenttä, joka on samalla saaren var
   haihtuvat 8 sekunnissa. Mustepullot täyttävät musteen ja avaavat lopun
   taulukehyksen. Ympyrä myrskypilven ympärille vangitsee sen kuplaan 6
   sekunniksi. Tehtävät: muoto varjoon, kuvio.
+- **Sadesuoja** ♥ — sadealueilla taivaalta tippuu mustetahroja prinsessan
+  lähelle. Piirretty viiva pään päällä toimii sateenvarjona: tahra läiskähtää
+  viivaan. Sama muste sillaksi ja suojaksi. Tehtävät: laske, samanlainen.
+- **Pupusilta** ♥ — kolme pupua on saarekkeilla rotkojen takana. Ne kävelevät
+  piirrettyjä viivoja pitkin prinsessan luo, kun tämä on lähellä, ja seuraavat
+  häntä sen jälkeen. Kaikki kolme pupukoloon. Pudonnut pupu palaa
+  saarekkeelleen ilman sydänmenetystä. Tehtävät: parit 3, erilainen.
+- **Sotkumörkö** ♥ — vartija. Kolme porttia näyttää muodon (ympyrä, kolmio,
+  neliö): piirrä sama muoto kynä kädessä, ja portti aukeaa; väärä muoto
+  tärisyttää porttia. Mörkö heittää tahroja, jotka leijuvat hetken ja putoavat:
+  ympyrä leijuvan tahran ympärille vangitsee sen. Lopuksi salama (siksak)
+  rauhoittaa mörön ja avaa oven. Tehtävät: kuvio.
 
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
@@ -226,6 +241,9 @@ väärästä vastauksesta tulee vain ravistus.
 - Pilvipolku: haihtumisaika `PUFF_STAND = 0.7`, paluu `PUFF_BACK = 2.5`, myrskypallot `viewW * 0.07`
 - Kuun vartija: tähtien väli `1.8 + Math.random() * 0.9`, varoitus `0.9` s, putoamiskiihtyvyys `viewH * 1.3`
 - Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js)
+- Sadesuoja: tahrojen väli `0.8 + Math.random() * 0.6`, alueet `rainZones`
+- Pupusilta: pupun nopeus `viewW * 0.14`, lähtöetäisyys `viewW * 0.45`
+- Sotkumörkö: heittoväli `2.4 + Math.random() * 1.2`, leijunta `1.2` s, muodontunnistus `penClassify` (pen-core.js: kulma `0.87` rad, pyöreys `0.13`)
 - Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.16`, kynän automaattinen esiinotto reunalla `penAutoT > 0.6`
 
 ## Tekniikka
