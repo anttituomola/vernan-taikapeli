@@ -288,6 +288,7 @@ function draw() {
     drawForeground(ctx);
     drawAmbient(ctx);
   }
+  drawStarGain(ctx);
   drawIntro(ctx);
   drawHurtFlash(ctx);
 }

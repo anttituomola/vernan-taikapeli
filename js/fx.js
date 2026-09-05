@@ -105,7 +105,6 @@ function drawCelebrateLayer() {
   var i;
   if (!celebrating) return;
   drawRainbow(ctx);
-  drawStarGain(ctx);
   for (i = 0; i < confetti.length; i++) {
     var cf = confetti[i];
     ctx.save();
