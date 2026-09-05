@@ -107,7 +107,7 @@ function pointerMove(e) {
   if (mode !== 'play' || !holding) return;
   lastPX = p.x; lastPY = p.y;
   if (Math.abs(p.x - holdSX) + Math.abs(p.y - holdSY) > 22) holdMoved = true;
-  if (phaseNow().control === 'draw') { penMove(p.x, p.y); return; }
+  if (phaseNow().control === 'draw' && penMode) { penMove(p.x, p.y); return; }
   if (phaseNow().control === 'ride') setWalkTarget(p.x, p.y);
   else holdWorldX = p.x + camX;
 }
@@ -127,7 +127,7 @@ function pointerUp(e) {
     holding = false;
     return;
   }
-  if (mode === 'play' && phaseNow().control === 'draw' && holding) penEnd();
+  if (mode === 'play' && phaseNow().control === 'draw' && penMode && holding) penEnd();
   if (mode === 'play' && phaseNow().usesWand && !puzzleBusy() && holding && !holdMoved && (globalT - holdStartG) < 0.22) {
     shootWand(lastPX, lastPY);
   }
@@ -169,6 +169,14 @@ function jumpPress(e) {
 }
 document.getElementById('jumpBtn').addEventListener('touchstart', jumpPress, { passive: false });
 document.getElementById('jumpBtn').addEventListener('mousedown', jumpPress);
+
+function penPress(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  penToggle();
+}
+document.getElementById('penBtn').addEventListener('touchstart', penPress, { passive: false });
+document.getElementById('penBtn').addEventListener('mousedown', penPress);
 
 document.getElementById('muteBtn').addEventListener('click', function () {
   muted = !muted;
@@ -217,6 +225,7 @@ window.VT = {
   homeState: function () { return { stars: starCoins, items: homeItems, bunnies: homeBunnies, drag: homeDrag, cells: homeShopCells() }; },
   pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, clouds: penClouds, drops: penDrops, frame: penFrame }; },
   penStart: penStart,
+  penMode: function (on) { if (on !== undefined) penSetMode(on); return penMode; },
   penMove: penMove,
   penEnd: penEnd,
   down: pointerDown,

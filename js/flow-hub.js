@@ -113,6 +113,7 @@ function beginPlay(kind) {
   document.getElementById('muteBtn').style.display = 'block';
   document.getElementById('karttaBtn').style.display = 'block';
   document.getElementById('seaBtn').style.display = 'none';
+  document.getElementById('penBtn').style.display = 'none';
   skipTo(kind);
   resize();
   running = true;
@@ -133,6 +134,7 @@ function showHub() {
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';
   document.getElementById('jumpBtn').style.display = 'none';
+  document.getElementById('penBtn').style.display = 'none';
   document.getElementById('karttaBtn').style.display = 'none';
   document.getElementById('seaBtn').style.display = 'block';
   document.getElementById('muteBtn').style.display = 'block';

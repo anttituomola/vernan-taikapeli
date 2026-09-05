@@ -46,7 +46,7 @@ function homeItemSize() {
 }
 
 function showHome() {
-  var i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'seaBtn'];
+  var i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'penBtn', 'seaBtn'];
   mode = 'home';
   running = false;
   holding = false;

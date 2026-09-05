@@ -132,14 +132,16 @@ Aukeaa, kun Arvoitusten torni on läpäisty. Kuun vartija on saaren vartija.
 
 Aukeaa, kun Kuun vartija on läpäisty. Yksi kenttä, joka on samalla saaren vartija.
 
-- **Taikakynä** ♥ — uusi verbi: **piirtäminen**. Prinsessa kävelee itsekseen ja
-  pysähtyy rotkon reunalle (hetken päästä hän näyttää kynä-ajatuskuplan). Piirrä
-  sormella silta tai ramppi, niin hän kävelee sitä pitkin; liian jyrkkää viivaa
-  hän ei kiipeä. Muste (palkki ylhäällä) kuluu viivan pituuden mukaan ja palautuu
-  ajan kanssa; viivat haihtuvat 8 sekunnissa. Mustetipat täyttävät musteen ja
-  avaavat lopun taulukehyksen. Ympyrä myrskypilven ympärille vangitsee sen
-  kuplaan 6 sekunniksi. Napautus prinsessaan kääntää kulkusuunnan.
-  Tehtävät: muoto varjoon, kuvio.
+- **Taikakynä** ♥ — uusi verbi: **piirtäminen**. Pidä pohjassa kävelläksesi
+  sormea kohti kuten muualla (myös taaksepäin); rotkon reunalle prinsessa
+  pysähtyy. Kynänappi (hyppynapin paikalla) ottaa kynän käteen: nappi hehkuu ja
+  kynä leijuu prinsessan vierellä. Reunaa vasten pusertaminen ottaa kynän esiin
+  itsestään. Kynä kädessä sormella piirretään silta tai ramppi, jota pitkin hän
+  kävelee, kun kynä laitetaan pois; liian jyrkkää viivaa hän ei kiipeä. Muste
+  (palkki ylhäällä) kuluu viivan pituuden mukaan ja palautuu ajan kanssa; viivat
+  haihtuvat 8 sekunnissa. Mustetipat täyttävät musteen ja avaavat lopun
+  taulukehyksen. Ympyrä myrskypilven ympärille vangitsee sen kuplaan 6
+  sekunniksi. Tehtävät: muoto varjoon, kuvio.
 
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
@@ -170,7 +172,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   tahansa toisella sormella mihin tahansa hyppää. Vasen alakulma napin
   ympärillä (27 vmin) hyppää sekin, vaikka napista osuisi ohi.
 - Raahaustehtävät: paina palaa, vedä ja päästä irti kohteen päällä.
-- Taikakynä: piirrä sormella mihin tahansa; napauta prinsessaa kääntääksesi.
+- Taikakynä: pidä pohjassa kävelläksesi; kynänappi ottaa kynän käteen, jolloin
+  sormella piirretään.
 - Taivas ja silta: pidä pohjassa lentääksesi sormea kohti, **↑** on siivenisku.
 - Rytmitehtävä: kuuntele iskut, taputa sama kuvio mihin tahansa ruudulla.
   Tempo saa heittää, kuvion pitää täsmätä.
@@ -223,7 +226,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Pilvipolku: haihtumisaika `PUFF_STAND = 0.7`, paluu `PUFF_BACK = 2.5`, myrskypallot `viewW * 0.07`
 - Kuun vartija: tähtien väli `1.8 + Math.random() * 0.9`, varoitus `0.9` s, putoamiskiihtyvyys `viewH * 1.3`
 - Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js)
-- Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.11`
+- Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.16`, kynän automaattinen esiinotto reunalla `penAutoT > 0.6`
 
 ## Tekniikka
 

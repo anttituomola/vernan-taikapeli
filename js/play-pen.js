@@ -1,10 +1,11 @@
 'use strict';
 
-// Taikakynä (prototyyppi): prinsessa kävelee itsekseen ja pysähtyy rotkon
-// reunalle. Pelaaja piirtää sormella siltoja ja ramppeja, joita pitkin hän
-// kulkee. Muste on rajallinen ja palautuu ajan kanssa; viivat haihtuvat.
-// Ympyrä myrskypilven ympärille vangitsee sen kuplaan. Napautus prinsessaan
-// kääntää kulkusuunnan. Sydämet käytössä.
+// Taikakynä (prototyyppi): pohjassa pitäminen kävelyttää prinsessaa sormea
+// kohti kuten muissa kentissä; rotkon reunalle hän pysähtyy. Kynänappi ottaa
+// kynän käteen (myös automaattisesti, kun reunaa vasten pusertaa), ja silloin
+// sormella piirretään siltoja ja ramppeja, joita pitkin hän kulkee. Muste on
+// rajallinen ja palautuu ajan kanssa; viivat haihtuvat. Ympyrä myrskypilven
+// ympärille vangitsee sen kuplaan. Sydämet käytössä.
 
 var PEN_DROPS = 8;
 var penDrops = [];
@@ -14,6 +15,7 @@ var penClouds = [];
 var penCur = null;     // parhaillaan piirrettävä viiva
 var penInk = 0, penInkMax = 0;
 var penWait = false, penWaitT = 0, penStun = 0, penDir = 1;
+var penMode = false, penAutoT = 0;   // kynä kädessä / reunaa vasten pusertamisen aika
 var penGround = [[0.0, 0.14], [0.19, 0.34], [0.40, 0.55], [0.60, 0.74], [0.80, 1.0]];
 var penRaised = { 2: 0.22 };   // segmentti 2 on korkea tasanne (osuus viewH:sta)
 var penFrame = { fx: 0.96, x: 0, open: false };
@@ -46,6 +48,10 @@ function initPen() {
   var i;
   setupRunLevel(17, '#fdf6e3');
   document.getElementById('jumpBtn').style.display = 'none';
+  document.getElementById('penBtn').style.display = 'block';
+  document.getElementById('penBtn').className = '';
+  penMode = false;
+  penAutoT = 0;
   penDrops = [];
   for (i = 0; i < PEN_DROPS; i++) penDrops.push({ ax: 0, ay: 0, collected: false, phase: Math.random() * Math.PI * 2 });
   penClouds = [];
@@ -117,8 +123,26 @@ function resizePen(ratio) {
 }
 
 // ---------- Kynä ----------
-function penStart(px, py) {
+function penSetMode(on) {
+  penMode = !!on;
+  penCur = null;
+  document.getElementById('penBtn').className = penMode ? 'on' : '';
+  if (penMode) {
+    spawnSparkles(princess.x, princess.y - viewH * 0.25, 8, '#c9a0ff');
+    playNote(880, 0, 0.08, 'sine', 0.25);
+    playNote(1175, 0.06, 0.12, 'sine', 0.25);
+  } else {
+    playNote(660, 0, 0.08, 'triangle', 0.22);
+  }
+}
+
+function penToggle() {
   if (!running || celebrating || puzzleBusy()) return;
+  penSetMode(!penMode);
+}
+
+function penStart(px, py) {
+  if (!running || celebrating || puzzleBusy() || !penMode) return;
   penCur = { pts: [{ x: px + camX, y: py }], age: 0, len: 0 };
 }
 
@@ -142,16 +166,7 @@ function penEnd() {
   penCur = null;
   if (!s) return;
   if (s.len < viewH * 0.02) {
-    // Napautus: prinsessaan osuva kääntää suunnan
-    var dx = s.pts[0].x - princess.x, dy = s.pts[0].y - (princess.y - viewH * 0.1);
-    if (dx * dx + dy * dy < viewH * 0.13 * viewH * 0.13 && running && !celebrating && !puzzleBusy()) {
-      penDir = -penDir;
-      princess.facing = penDir;
-      penWait = false;
-      spawnSparkles(princess.x, princess.y - viewH * 0.2, 8, '#ffe27a');
-      playNote(440, 0, 0.08, 'triangle', 0.25);
-      playNote(554, 0.06, 0.1, 'triangle', 0.25);
-    }
+    // Pelkkä napautus: ei viivaa, muste takaisin
     penInk = Math.min(penInkMax, penInk + s.len);
     return;
   }
@@ -249,8 +264,18 @@ function penStep(dt) {
     return;
   }
   if (penStun > 0) return;
-  var nx = princess.x + penDir * viewW * 0.11 * dt;
-  if (nx < pw) { nx = pw; penDir = 1; princess.facing = 1; }
+  // Kävely: pidä pohjassa, prinsessa kulkee sormea kohti (kuten muissa kentissä)
+  var dxh = holdWorldX - princess.x;
+  var walking = holding && !penMode && Math.abs(dxh) > 10;
+  if (!walking) {
+    if (penWait) penWaitT += dt;
+    penAutoT = 0;
+    return;
+  }
+  penDir = dxh > 0 ? 1 : -1;
+  princess.facing = penDir;
+  var nx = princess.x + penDir * Math.min(viewW * 0.16 * dt, Math.abs(dxh));
+  if (nx < pw) nx = pw;
   if (nx > worldW - pw) nx = worldW - pw;
   cands = penSurfaces(nx);
   best = null;
@@ -279,9 +304,11 @@ function penStep(dt) {
     penWait = false;
     return;
   }
-  // Rotko tai liian jyrkkä viiva: odota
+  // Rotko: pysähdy reunalle; reunaa vasten pusertaminen ottaa kynän esiin
   if (!penWait) { penWait = true; penWaitT = 0; }
   penWaitT += dt;
+  penAutoT += dt;
+  if (!penMode && penAutoT > 0.6) penSetMode(true);
 }
 
 function penFell() {
@@ -561,7 +588,7 @@ function drawPenFrameGlow(c) {
 }
 
 function drawPenWaitHint(c) {
-  if (!penWait || penWaitT < 1.2 || celebrating || puzzleBusy()) return;
+  if (!penWait || penMode || penWaitT < 1.2 || celebrating || puzzleBusy()) return;
   var x = princess.x - camX + viewH * 0.09, y = princess.y - viewH * 0.36 + Math.sin(globalT * 3) * viewH * 0.01, s = viewH * 0.045;
   c.fillStyle = 'rgba(255,255,255,0.92)';
   c.beginPath(); c.arc(x, y, s, 0, Math.PI * 2); c.fill();
@@ -588,10 +615,12 @@ function drawPen() {
   }
   for (i = 0; i < penClouds.length; i++) drawPenCloud(ctx, penClouds[i]);
   for (i = 0; i < penBubbles.length; i++) drawPenBubble(ctx, penBubbles[i]);
-  var moving = princess.onGround && !penWait && penStun <= 0 && !puzzleBusy() && !celebrating;
+  var moving = princess.onGround && holding && !penMode && !penWait && penStun <= 0 && !puzzleBusy() && !celebrating && Math.abs(holdWorldX - princess.x) > 10;
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
   drawPrincessFree(ctx, princess.x - camX, princess.y, viewH / 520, princess.facing, princess.walkPhase, moving, globalT);
   ctx.globalAlpha = 1;
+  // Kynä kädessä: kynä leijuu prinsessan vierellä
+  if (penMode && !celebrating) drawPenGlyph(ctx, princess.x - camX + princess.facing * viewH * 0.07, princess.y - viewH * 0.24 + Math.sin(globalT * 3) * viewH * 0.008, viewH * 0.04);
   drawPenWaitHint(ctx);
   drawParticlesLayer(ctx);
   if (penFrame.open && !celebrating) drawEdgeArrow(ctx, penFrame.x);

@@ -118,3 +118,25 @@ html, body {
     display: none;
   }
   #jumpBtn:active { transform: translateY(0.8vmin); box-shadow: 0 0.4vmin 0 #2a9a4c; }
+  /* Kynänappi (Taikakynä): sama paikka kuin hyppynapilla, hehkuu kun kynä on kädessä */
+  #penBtn {
+    position: fixed;
+    left: 2.5vmin; bottom: 4vmin;
+    width: 16vmin; height: 16vmin;
+    border-radius: 50%;
+    border: 0.8vmin solid #fff;
+    background: radial-gradient(circle at 35% 30%, #d9b8ff, #8a4dff);
+    color: #fff;
+    font-size: 7vmin;
+    box-shadow: 0 1.2vmin 0 #5a2ea8;
+    cursor: pointer;
+    z-index: 5;
+    display: none;
+    padding: 0;
+    line-height: 1;
+  }
+  #penBtn.on {
+    border-color: #ffe27a;
+    background: radial-gradient(circle at 35% 30%, #fff0b3, #ffb300);
+    box-shadow: 0 1.2vmin 0 #b87a00, 0 0 3vmin #ffe27a;
+  }
