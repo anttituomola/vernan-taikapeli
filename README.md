@@ -30,6 +30,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/tasks-drag.js` — raahaustehtävät (muoto varjoon, täydennä kuva) ja muistipeli
 - `js/play-beach.js`, `play-candy.js`, `play-tower.js` — maailma 2 (vaiheet 10–12)
 - `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-moon.js` — maailma 3 (vaiheet 13–16)
+- `js/tasks-mix.js` — värien sekoitus: 'mix'-tehtävä ja Taikakeittiön pata
+- `js/play-herd.js`, `play-kitchen.js` — maailma 5 (vaiheet 21–22)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4 (vaiheet 17–20)
 - `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
@@ -158,6 +160,23 @@ Sotkumörkö on saaren vartija.
   ympyrä leijuvan tahran ympärille vangitsee sen. Lopuksi salama (siksak)
   rauhoittaa mörön ja avaa oven. Tehtävät: kuvio.
 
+### Hoivasaari (maailma 5)
+
+Aukeaa, kun Sotkumörkö on rauhoitettu. Molemmat kentät ovat kiireettömiä: ei
+sydämiä. Taikakeittiö on saaren vartija.
+
+- **Pupupaimen** — ratsastus niityllä. Kolme pupua alussa liittyy laumaan, kun
+  yksisarvinen tulee lähelle, ja seuraa perässä. Pöllön huuto ja syöksy
+  pelästyttävät lähellä olevat puput pensaisiin piiloon (korvat ja huutomerkki
+  näkyvät); napautus kutsuu pupun takaisin. Kaikki kolme pupukoloon. Nuoli
+  näyttää piilossa olevan pupun tai kolon. Tehtävät: lue sana (2 tavua), laske.
+- **Taikakeittiö** — ei liikkumista. Pupuasiakas tilaa kuplassa värillisen
+  juoman; kaada hyllyn pulloista (punainen, keltainen, sininen) pataan. Perusväri
+  on yksi kaato, sekoitus kaksi: punainen + keltainen = oranssi, keltainen +
+  sininen = vihreä, punainen + sininen = violetti. Väärä sekoitus pöhähtää
+  harmaaksi ja tyhjenee. Kuusi tilausta: ensin kaksi perusväriä, sitten neljä
+  sekoitusta.
+
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
@@ -217,6 +236,10 @@ kartalla (seuraava huone, linna).
 - **Täydennä kuva** (raahaus) — 3×3 ruudukko, jossa rivi määrää muodon ja
   sarake värin; raahaa puuttuva pala kolmesta ehdokkaasta koloon
 - **Parit** — muistipeli: käännä kaksi korttia kerrallaan, parit jäävät auki
+- **Sekoita väri** — kohdepullo kuplassa ja kolme pulloa (punainen, keltainen,
+  sininen); kaada pataan värit, joista kohde syntyy. Väärä sekoitus pöhähtää ja
+  tyhjenee. Käytössä puutarhassa (perus- ja sekavärit) ja Pilvipolulla (vain
+  sekavärit, `{ mixLevel: 2 }`).
 - **Lue sana** — sana TIKKUKIRJAIMIN tavuviivoilla (esim. KUK-KA) ja viisi
   kuvaa, joista yksi on sana. Sanan napautus lukee sen: tavut korostuvat ja
   soivat vuorotellen. Väärä kuva himmenee ja sana luetaan uudestaan; sana ei
@@ -238,6 +261,8 @@ väärästä vastauksesta tulee vain ravistus.
 - Rytmin sallittu heitto: `tol = Math.max(0.15, want * 0.32)` (tasks-extra.js)
 - Muistiloitsun pituus ja pallot: `makeTask(fx, 'memory', { seqLen, orbs })`
 - Parien määrä: `makeTask(fx, 'pairs', { pairs })`
+- Sekoita väri: värit `MIX_COLORS` (tasks-mix.js), vaikeus `{ mixLevel }`; Taikakeittiön tilausmäärä `K_ORDERS`
+- Pupupaimen: pöllön varoitus `1.2` s, pelästymissäde `viewW * 0.35`, pupun nopeus `viewW * 0.26`
 - Lue sana: sanat `WORD_LIST` (tasks-extra.js), tavujen enimmäismäärä `makeTask(fx, 'word', { maxSyl })`, tavun kesto `WORD_SYL_T`
 - Rannikko: aallon väli `6 + Math.random() * 3`, rapujen nopeus `viewW * 0.06`
 - Karkkilaakso: pompun voima `viewH * 1.15` (platformer.js), kuulakarkkien nopeus `viewW * 0.07`

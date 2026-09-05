@@ -228,6 +228,30 @@ var PHASES = {
     renderBg: function (b, w, h) { renderScribbleBg(b, w, h); },
     respawn: function () { respawnScribble(); }
   },
+  herd: {
+    level: 21, control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
+    next: 'kitchen', bgColor: '#c9f0ff',
+    ambient: 'butterflies', fg: { kind: 'grass', color: 'rgba(60,140,60,0.7)' },
+    init: function () { initHerd(); },
+    update: function (dt) { updateHerd(dt); },
+    draw: function () { drawHerd(); },
+    tap: function (x, y) { handleHerdTap(x, y); },
+    resize: function (ratio) { resizeHerd(ratio); },
+    renderBg: function (b, w, h) { renderHerdBg(b, w, h); },
+    respawn: function () { respawnHerd(); }
+  },
+  kitchen: {
+    level: 22, control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+    next: null, bgColor: '#f7e6d2', celebrateMs: 4000,
+    ambient: 'sparkle', fg: null,
+    init: function () { initKitchen(); },
+    update: function (dt) { updateKitchen(dt); },
+    draw: function () { drawKitchen(); },
+    tap: function (x, y) { handleKitchenTap(x, y); },
+    resize: function (ratio) { resizeKitchen(ratio); },
+    renderBg: function (b, w, h) { renderKitchenBg(b, w, h); },
+    respawn: function () { respawnKitchen(); }
+  },
   finale: {
     level: 9, control: 'run', usesJump: true, usesWand: true, usesHearts: true,
     next: null, bgColor: '#2b1040', hidden: true, sparkLife: 1.0, celebrateMs: 7000,

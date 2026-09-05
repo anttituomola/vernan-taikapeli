@@ -454,6 +454,12 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     drawStar(c, x + s * 0.1, y - s * 0.17, s * 0.07, 0, 0);
   } else if (kind === 'pen') {
     drawPenGlyph(c, x, y + s * 0.02, s * 0.3, '#ffffff');
+  } else if (kind === 'herd') {
+    drawBunny(c, x - s * 0.06, y + s * 0.04, s * 0.17, 0, 0, true);
+    c.fillStyle = '#ff5f7e';
+    drawHeartShape(c, x + s * 0.14, y - s * 0.14, s * 0.06, true);
+  } else if (kind === 'kitchen') {
+    drawCauldron(c, x, y + s * 0.06, s * 0.16, '#5fd36b', false, 0, false);
   } else if (kind === 'rain') {
     c.fillStyle = '#e8e6f2';
     cloudShape(c, x, y - s * 0.08, s * 0.08);
@@ -598,6 +604,7 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  if (hubWorld === 5) return 'meadow';
   if (hubWorld === 4) return 'paper';
   if (hubWorld === 3) {
     if (r <= 2) return 'reef';

@@ -72,7 +72,8 @@ function makeTask(fx, type, opts) {
     prompt: null, choices: null, glyph: 'flower',
     items: null, beats: null, taps: null, inputT: 0,
     regenT: 0,
-    word: null, sayT: -1, maxSyl: opts.maxSyl || 3
+    word: null, sayT: -1, maxSyl: opts.maxSyl || 3,
+    mix: null, mixLevel: opts.mixLevel || 1
   };
 }
 var tasks = [];
@@ -238,11 +239,26 @@ var HUB_ROOMS4 = {
   't': { kind: 'scribble', name: 'Sotkumörkö', color: '#5a4a7a' }
 };
 var HUB_ORDER4 = ['pen', 'rain', 'bunnybridge', 'scribble'];
+
+// Maailma 5 = Hoivasaari: pupupaimen ja taikakeittiö (vartija)
+var HUB_MAP5 = [
+  '#########',
+  '#B......#',
+  '#######.#',
+  '#u.....v#',
+  '#########'
+];
+var HUB_ROOMS5 = {
+  'u': { kind: 'herd', name: 'Pupupaimen', color: '#8fd97a' },
+  'v': { kind: 'kitchen', name: 'Taikakeittiö', color: '#ff9f3a' }
+};
+var HUB_ORDER5 = ['herd', 'kitchen'];
 var HUB_WORLDS = {
   1: { map: HUB_MAP, rooms: HUB_ROOMS, order: HUB_ORDER },
   2: { map: HUB_MAP2, rooms: HUB_ROOMS2, order: HUB_ORDER2 },
   3: { map: HUB_MAP3, rooms: HUB_ROOMS3, order: HUB_ORDER3 },
-  4: { map: HUB_MAP4, rooms: HUB_ROOMS4, order: HUB_ORDER4 }
+  4: { map: HUB_MAP4, rooms: HUB_ROOMS4, order: HUB_ORDER4 },
+  5: { map: HUB_MAP5, rooms: HUB_ROOMS5, order: HUB_ORDER5 }
 };
 var hubWorld = 1;
 function hubMap() { return (HUB_WORLDS[hubWorld] || HUB_WORLDS[1]).map; }

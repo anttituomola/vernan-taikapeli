@@ -328,6 +328,10 @@ function taskStart(t) {
     makeWordProblem(t);
     t.mode = 'input';
     wordSay(t);
+  } else if (t.type === 'mix') {
+    makeMixProblem(t);
+    t.mode = 'input';
+    playNote(523, 0, 0.2, 'triangle', 0.35);
   } else if (t.type === 'minus') {
     makeMinusProblem(t);
     t.mode = 'input';
@@ -421,6 +425,10 @@ function handleTaskTap(px, py) {
     }
     return;
   }
+  if (t.type === 'mix') {
+    mixTaskTap(t, i);
+    return;
+  }
   if (t.type === 'word') {
     if (i === t.correct) {
       playNote(TASK_BF_NOTES[Math.min(i, 3)], 0, 0.3, 'triangle', 0.45);
@@ -475,6 +483,7 @@ function updateTasks(dt) {
   } else if (activeTask) {
     t = activeTask;
     if (t.type === 'pairs' && t.mode === 'input') pairsUpdate(t, dt);
+    if (t.type === 'mix') updateMixTask(t, dt);
     if (t.type === 'word' && t.sayT >= 0) {
       t.sayT += dt;
       if (t.sayT > wordSyllables(t).length * WORD_SYL_T + 0.3) t.sayT = -1;

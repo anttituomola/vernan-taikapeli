@@ -488,6 +488,7 @@ function taskArchStyle(type) {
   if (type === 'puzzle') return { veil: '255,200,120', pillar: '#f5d3a0' };
   if (type === 'pairs') return { veil: '160,120,255', pillar: '#c9b8f8' };
   if (type === 'word') return { veil: '255,235,140', pillar: '#f3e2a0' };
+  if (type === 'mix') return { veil: '255,160,90', pillar: '#f5c9a0' };
   return { veil: '120,210,255', pillar: '#b8d4ff' };
 }
 
@@ -605,6 +606,8 @@ function drawTaskOverlay(c) {
     drawOddPrompt(c, shake);
   } else if (t.type === 'word') {
     drawWordPrompt(c, t, shake);
+  } else if (t.type === 'mix') {
+    drawMixOverlay(c, t, shake);
   } else if (t.type === 'memory') {
     var dotR = viewH * 0.012;
     for (i = 0; i < t.seq.length; i++) {
@@ -643,6 +646,11 @@ function drawTaskOverlay(c) {
     } else if (t.type === 'odd' || t.type === 'pattern') {
       var ch = t.choices && t.choices[i];
       if (ch) drawTaskGlyph(c, ch.kind, x, y, r * 0.5, TASK_BF_COLORS[ch.color], ch.variant);
+    } else if (t.type === 'mix') {
+      var used = t.mix && t.mix.pour.indexOf(MIX_PRIMARY[i]) >= 0;
+      if (used) c.globalAlpha = 0.45;
+      drawPotionBottle(c, x, y + r * 0.1, r * 0.34, MIX_COLORS[MIX_PRIMARY[i]]);
+      c.globalAlpha = 1;
     } else if (t.type === 'word') {
       var wc = t.choices && t.choices[i];
       if (wc) {
