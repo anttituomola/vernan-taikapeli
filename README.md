@@ -102,6 +102,9 @@ palautuvat. Kenttä itse ei ala alusta.
 - Metsä, jää, suo ja rannikko: pidä sormea pohjassa ratsastaaksesi, napauta kerätäksesi.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
+- Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
+  tahansa toisella sormella mihin tahansa hyppää. Vasen alakulma napin
+  ympärillä (27 vmin) hyppää sekin, vaikka napista osuisi ohi.
 - Raahaustehtävät: paina palaa, vedä ja päästä irti kohteen päällä.
 - Taivas ja silta: pidä pohjassa lentääksesi sormea kohti, **↑** on siivenisku.
 - Rytmitehtävä: kuuntele iskut, taputa sama kuvio mihin tahansa ruudulla.

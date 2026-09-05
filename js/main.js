@@ -21,15 +21,41 @@ window.addEventListener('resize', function () {
   resize();
 });
 
-function eventPos(e) {
-  if (e.touches && e.touches.length > 0) {
-    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+// Kosketukset: ohjaussormi (juoksu/raahaus) tunnistetaan tunnisteesta, jotta toinen
+// sormi (hyppy) ei siirrä sen paikkaa eikä sen nosto lopeta juoksua
+var holdTouchId = null;
+function touchById(list, id) {
+  var i;
+  if (!list || id === null || id === undefined) return null;
+  for (i = 0; i < list.length; i++) if (list[i].identifier === id) return list[i];
+  return null;
+}
+function eventPos(e, id) {
+  var t = null;
+  if (e.touches) {
+    t = touchById(e.touches, id);
+    if (!t && e.changedTouches && e.changedTouches.length > 0) t = e.changedTouches[0];
+    if (!t && e.touches.length > 0) t = e.touches[0];
   }
+  if (t) return { x: t.clientX, y: t.clientY };
   return { x: e.clientX, y: e.clientY };
+}
+// Hyppyalue: vasen alakulma hyppynapin ympäriltä hyppää, vaikka napista osuisi ohi
+function inJumpZone(px, py) {
+  var vmin = Math.min(viewW, viewH) / 100;
+  return px < vmin * 27 && py > viewH - vmin * 27;
 }
 function pointerDown(e) {
   e.preventDefault();
-  var p = eventPos(e);
+  var newTouch = e.changedTouches && e.changedTouches.length > 0 ? e.changedTouches[0] : null;
+  if (e.touches && e.touches.length > 1 && holdTouchId !== null) {
+    // Toinen sormi, kun ohjaussormi on yhä ruudulla: juostessa hyppy mihin tahansa
+    // tähtäämättä; tehtävän (esim. raahauksen) aikana toinen sormi ei tee mitään
+    if (mode === 'play' && holding && !taskActive()) tryJump();
+    return;
+  }
+  holdTouchId = newTouch ? newTouch.identifier : null;
+  var p = eventPos(e, holdTouchId);
   lastPX = p.x; lastPY = p.y;
   if (mode === 'hub') {
     handleHubTap(p.x, p.y);
@@ -39,8 +65,11 @@ function pointerDown(e) {
     handleTaskTap(p.x, p.y);
     return;
   }
+  if (phaseNow().usesJump && inJumpZone(p.x, p.y)) {
+    tryJump();
+    return;
+  }
   holding = true;
-  lastPX = p.x; lastPY = p.y;
   holdSX = p.x; holdSY = p.y;
   holdStartG = globalT;
   holdMoved = false;
@@ -50,21 +79,24 @@ function pointerDown(e) {
 }
 function pointerMove(e) {
   if (e.touches) e.preventDefault();
+  var p = eventPos(e, holdTouchId);
   if (dragPiece) {
-    var dp = eventPos(e);
-    lastPX = dp.x; lastPY = dp.y;
-    taskDragMove(dp.x, dp.y);
+    lastPX = p.x; lastPY = p.y;
+    taskDragMove(p.x, p.y);
     return;
   }
   if (mode === 'hub' || !holding) return;
-  var p = eventPos(e);
   lastPX = p.x; lastPY = p.y;
   if (Math.abs(p.x - holdSX) + Math.abs(p.y - holdSY) > 22) holdMoved = true;
   if (phaseNow().control === 'ride') setWalkTarget(p.x, p.y);
   else holdWorldX = p.x + camX;
 }
 function pointerUp(e) {
-  if (e && e.touches && e.touches.length > 0) return;
+  if (e && e.touches && e.touches.length > 0) {
+    // Ruudulle jäi sormia: vain ohjaussormen nosto lasketaan
+    if (!touchById(e.changedTouches, holdTouchId)) return;
+  }
+  holdTouchId = null;
   if (dragPiece) {
     taskDrop(lastPX, lastPY);
     holding = false;
@@ -139,6 +171,10 @@ window.VT = {
   drop: taskDrop,
   world: function (w) { if (w) hubEnterWorld(w); return hubWorld; },
   offer: function () { return hubOffer; },
+  down: pointerDown,
+  move: pointerMove,
+  up: pointerUp,
+  holding: function () { return { holding: holding, id: holdTouchId, wx: holdWorldX }; },
   hubTap: handleHubTap,
   hubPawn: hubPawn,
   hubLayout: hubLayout,
