@@ -705,12 +705,11 @@ function drawHubTile(b, band, x, y, s, c, r) {
     cloudShape(b, cx + (rnd - 0.5) * s * 0.3, y + s * 0.62, s * 0.11);
     if (rnd2 < 0.45) drawStar(b, x + s * 0.75, y + s * 0.28, s * 0.07, 0, 0);
   } else if (band === 'paper') {
-    b.strokeStyle = 'rgba(120,100,160,0.45)';
-    b.lineWidth = Math.max(1, s * 0.03);
-    if (rnd < 0.35) { b.beginPath(); b.arc(cx + (rnd2 - 0.5) * s * 0.3, cy, s * 0.14, 0, Math.PI * 1.7); b.stroke(); }
+    // Valmiiksi väritettyjä tarroja, ei jäljennettäviä ääriviivoja
+    if (rnd < 0.35) { b.fillStyle = '#ff7bac'; drawHeartShape(b, cx + (rnd2 - 0.5) * s * 0.3, cy, s * 0.09, true); }
     else if (rnd < 0.6) drawStar(b, cx + (rnd2 - 0.5) * s * 0.4, cy, s * 0.1, 0, 0);
-    else if (rnd < 0.8) { b.beginPath(); b.moveTo(x + s * 0.2, y + s * 0.7); b.quadraticCurveTo(x + s * 0.5, y + s * 0.2, x + s * 0.8, y + s * 0.7); b.stroke(); }
-    else drawInkDrop(b, cx, cy, s * 0.1);
+    else if (rnd < 0.8) { b.fillStyle = 'rgba(255,255,255,0.9)'; cloudShape(b, cx, cy + s * 0.05, s * 0.08); }
+    else drawInkBottle(b, cx, cy, s * 0.09);
   } else if (band === 'moon') {
     b.fillStyle = 'rgba(200,200,240,0.25)';
     b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, cy + (rnd2 - 0.5) * s * 0.4, s * 0.16, 0, Math.PI * 2); b.fill();

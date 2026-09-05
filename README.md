@@ -139,7 +139,7 @@ Aukeaa, kun Kuun vartija on läpäisty. Yksi kenttä, joka on samalla saaren var
   itsestään. Kynä kädessä sormella piirretään silta tai ramppi, jota pitkin hän
   kävelee, kun kynä laitetaan pois; liian jyrkkää viivaa hän ei kiipeä. Muste
   (palkki ylhäällä) kuluu viivan pituuden mukaan ja palautuu ajan kanssa; viivat
-  haihtuvat 8 sekunnissa. Mustetipat täyttävät musteen ja avaavat lopun
+  haihtuvat 8 sekunnissa. Mustepullot täyttävät musteen ja avaavat lopun
   taulukehyksen. Ympyrä myrskypilven ympärille vangitsee sen kuplaan 6
   sekunniksi. Tehtävät: muoto varjoon, kuvio.
 

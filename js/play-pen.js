@@ -402,35 +402,36 @@ function updatePen(dt) {
 
 // ---------- Piirto ----------
 function renderPenBg(b, w, h) {
+  // Piirustuspaperi: kaikki maisema on valmiiksi väritettyä, jotta mikään ei näytä
+  // jäljennettävältä ääriviivalta. Ainoat viivat kentässä ovat pelaajan piirtämiä.
   var i, x, seg, y;
   b.fillStyle = '#fdf6e3';
   b.fillRect(0, 0, w, h);
-  // Ruutupaperi
-  b.strokeStyle = 'rgba(120,100,160,0.08)';
+  b.strokeStyle = 'rgba(120,100,160,0.06)';
   b.lineWidth = 1;
   for (y = 0; y < h; y += h * 0.06) { b.beginPath(); b.moveTo(0, y); b.lineTo(w, y); b.stroke(); }
   for (x = 0; x < w; x += h * 0.06) { b.beginPath(); b.moveTo(x, 0); b.lineTo(x, h); b.stroke(); }
-  // Lyijykynäaurinko ja -pilvet
-  b.strokeStyle = '#7a6a8a';
-  b.lineWidth = Math.max(1.5, h * 0.004);
-  b.beginPath(); b.arc(w * 0.08, h * 0.16, h * 0.06, 0, Math.PI * 2); b.stroke();
-  for (i = 0; i < 8; i++) {
-    var a = i * Math.PI / 4;
-    b.beginPath(); b.moveTo(w * 0.08 + Math.cos(a) * h * 0.075, h * 0.16 + Math.sin(a) * h * 0.075); b.lineTo(w * 0.08 + Math.cos(a) * h * 0.1, h * 0.16 + Math.sin(a) * h * 0.1); b.stroke();
-  }
-  b.fillStyle = 'rgba(255,255,255,0.6)';
-  for (i = 0; i < 9; i++) {
-    x = w * (0.1 + i * 0.105);
-    y = h * (0.12 + (i % 3) * 0.08);
-    cloudShape(b, x, y, h * 0.028);
-    b.beginPath();
-    b.arc(x, y, h * 0.034, 0, Math.PI * 2); b.arc(x + h * 0.04, y + h * 0.006, h * 0.025, 0, Math.PI * 2); b.arc(x - h * 0.04, y + h * 0.007, h * 0.024, 0, Math.PI * 2);
-    b.stroke();
-  }
-  // Kukkulat viivoina
+  // Aurinko
+  var sg = b.createRadialGradient(w * 0.08, h * 0.16, h * 0.02, w * 0.08, h * 0.16, h * 0.14);
+  sg.addColorStop(0, 'rgba(255,226,122,0.7)');
+  sg.addColorStop(1, 'rgba(255,226,122,0)');
+  b.fillStyle = sg;
+  b.beginPath(); b.arc(w * 0.08, h * 0.16, h * 0.14, 0, Math.PI * 2); b.fill();
+  b.fillStyle = '#ffe27a';
+  b.beginPath(); b.arc(w * 0.08, h * 0.16, h * 0.06, 0, Math.PI * 2); b.fill();
+  // Pilvet
+  b.fillStyle = 'rgba(255,255,255,0.9)';
+  for (i = 0; i < 9; i++) cloudShape(b, w * (0.1 + i * 0.105), h * (0.12 + (i % 3) * 0.08), h * 0.028);
+  // Pastellikukkulat kahdessa kerroksessa
+  b.fillStyle = '#dcedc9';
   for (i = 0; i < 10; i++) {
     x = w * (i / 9);
-    b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.12 + (i % 3) * 0.04), Math.PI * 1.1, Math.PI * 1.9); b.stroke();
+    b.beginPath(); b.arc(x, groundTop + h * 0.03, h * (0.13 + (i % 3) * 0.04), Math.PI, 0); b.fill();
+  }
+  b.fillStyle = '#c8e3b0';
+  for (i = 0; i < 12; i++) {
+    x = w * (0.04 + i * 0.085);
+    b.beginPath(); b.arc(x, groundTop + h * 0.03, h * (0.07 + (i % 2) * 0.03), Math.PI, 0); b.fill();
   }
   // Rotkot: revitty paperi
   b.fillStyle = '#e4d8bd';
@@ -447,15 +448,15 @@ function drawPaperGround(b, x, y, w, h) {
   var i;
   b.fillStyle = '#f6ead0';
   b.fillRect(x, y, w, h - y);
-  b.strokeStyle = '#7a6a8a';
-  b.lineWidth = Math.max(1.5, h * 0.004);
-  b.beginPath(); b.moveTo(x, y); b.lineTo(x + w, y); b.stroke();
-  b.beginPath(); b.moveTo(x, y); b.lineTo(x, h); b.moveTo(x + w, y); b.lineTo(x + w, h); b.stroke();
-  b.strokeStyle = 'rgba(120,100,160,0.25)';
+  b.fillStyle = '#bfe0a3';
+  b.fillRect(x, y - h * 0.008, w, h * 0.022);
+  b.fillStyle = 'rgba(160,130,90,0.28)';
   for (i = 0; i < w / (h * 0.05); i++) {
-    var hx = x + h * 0.02 + i * h * 0.05;
-    b.beginPath(); b.moveTo(hx, y + h * 0.02); b.lineTo(hx + h * 0.025, y + h * 0.06); b.stroke();
+    b.beginPath(); b.arc(x + h * 0.025 + i * h * 0.05, y + h * 0.05 + (i % 3) * h * 0.02, h * 0.005, 0, Math.PI * 2); b.fill();
   }
+  b.strokeStyle = 'rgba(120,100,160,0.35)';
+  b.lineWidth = Math.max(1.5, h * 0.003);
+  b.beginPath(); b.moveTo(x, y); b.lineTo(x, h); b.moveTo(x + w, y); b.lineTo(x + w, h); b.stroke();
 }
 
 function drawPenFrame(b, x, baseY, h) {
@@ -483,17 +484,27 @@ function drawPenGlyph(c, x, y, s, color) {
   c.restore();
 }
 
-function drawInkDrop(c, x, y, s) {
-  c.fillStyle = '#8a4dff';
-  c.beginPath();
-  c.moveTo(x, y - s * 1.1);
-  c.quadraticCurveTo(x + s * 0.9, y + s * 0.1, x + s * 0.55, y + s * 0.6);
-  c.arc(x, y + s * 0.4, s * 0.62, Math.PI * 0.2, Math.PI * 0.8);
-  c.quadraticCurveTo(x - s * 0.9, y + s * 0.1, x, y - s * 1.1);
-  c.closePath();
+function drawInkBottle(c, x, y, s) {
+  // Pieni mustepullo: lasi, violetti muste, korkki ja pehmeä hehku
+  var g = c.createRadialGradient(x, y, s * 0.2, x, y, s * 1.9);
+  g.addColorStop(0, 'rgba(201,160,255,0.45)');
+  g.addColorStop(1, 'rgba(201,160,255,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(x, y, s * 1.9, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#e9ddff';
+  roundRect(c, x - s * 0.8, y - s * 0.5, s * 1.6, s * 1.4, s * 0.35);
   c.fill();
-  c.fillStyle = 'rgba(255,255,255,0.6)';
-  c.beginPath(); c.arc(x - s * 0.2, y + s * 0.25, s * 0.18, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#8a4dff';
+  roundRect(c, x - s * 0.66, y - s * 0.05, s * 1.32, s * 0.82, s * 0.3);
+  c.fill();
+  c.fillStyle = '#e9ddff';
+  c.fillRect(x - s * 0.35, y - s * 0.95, s * 0.7, s * 0.5);
+  c.fillStyle = '#a9743f';
+  roundRect(c, x - s * 0.42, y - s * 1.25, s * 0.84, s * 0.4, s * 0.12);
+  c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.7)';
+  roundRect(c, x - s * 0.6, y - s * 0.3, s * 0.22, s * 0.8, s * 0.1);
+  c.fill();
 }
 
 function drawPenStroke(c, s, alpha, live) {
@@ -621,7 +632,7 @@ function drawPen() {
   drawPenFrameGlow(ctx);
   for (i = 0; i < penDrops.length; i++) {
     if (penDrops[i].collected) continue;
-    drawInkDrop(ctx, penDrops[i].ax - camX, penDrops[i].ay + Math.sin(penDrops[i].phase) * viewH * 0.012, viewH * 0.022);
+    drawInkBottle(ctx, penDrops[i].ax - camX, penDrops[i].ay + Math.sin(penDrops[i].phase) * viewH * 0.012, viewH * 0.024);
   }
   for (i = 0; i < penClouds.length; i++) drawPenCloud(ctx, penClouds[i]);
   for (i = 0; i < penBubbles.length; i++) drawPenBubble(ctx, penBubbles[i]);
@@ -636,7 +647,7 @@ function drawPen() {
   if (penFrame.open && !celebrating) drawEdgeArrow(ctx, penFrame.x);
   drawCelebrateLayer();
   drawPickupHud(ctx, PEN_DROPS, function (i2) { return penDrops[i2] && penDrops[i2].collected; },
-    function (c, x, y, s2) { drawInkDrop(c, x, y - s2 * 0.2, s2 * 0.8); });
+    function (c, x, y, s2) { drawInkBottle(c, x, y, s2 * 0.75); });
   drawHearts(ctx);
   drawPenInk(ctx);
   drawTaskOverlay(ctx);
