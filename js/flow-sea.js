@@ -204,6 +204,7 @@ function drawSea() {
   // Vene ja ratsastajat
   var bob = Math.sin(globalT * 2.5) * viewH * 0.005;
   drawBoatWithRider(ctx, seaBoat.x, seaBoat.y + bob, viewH * 0.1, seaBoat.facing, seaBoat.moving);
+  drawStarBalance(ctx, viewH * 0.03, viewH * 0.065);
 
   if (seaReveal) drawRevealSparkles(ctx);
 

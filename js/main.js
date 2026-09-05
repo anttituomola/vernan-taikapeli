@@ -9,6 +9,9 @@ function loop(ts) {
   if (mode === 'sea') {
     updateSea(dt);
     drawSea();
+  } else if (mode === 'home') {
+    updateHome(dt);
+    drawHome();
   } else if (mode === 'hub') {
     updateHub(dt);
     drawHub();
@@ -64,6 +67,10 @@ function pointerDown(e) {
     handleSeaTap(p.x, p.y);
     return;
   }
+  if (mode === 'home') {
+    handleHomeTap(p.x, p.y);
+    return;
+  }
   if (mode === 'hub') {
     handleHubTap(p.x, p.y);
     return;
@@ -87,6 +94,11 @@ function pointerDown(e) {
 function pointerMove(e) {
   if (e.touches) e.preventDefault();
   var p = eventPos(e, holdTouchId);
+  if (mode === 'home') {
+    lastPX = p.x; lastPY = p.y;
+    homeMove(p.x, p.y);
+    return;
+  }
   if (dragPiece) {
     lastPX = p.x; lastPY = p.y;
     taskDragMove(p.x, p.y);
@@ -105,6 +117,11 @@ function pointerUp(e) {
     if (!touchById(e.changedTouches, holdTouchId)) return;
   }
   holdTouchId = null;
+  if (mode === 'home') {
+    homeUp();
+    holding = false;
+    return;
+  }
   if (dragPiece) {
     taskDrop(lastPX, lastPY);
     holding = false;
@@ -193,6 +210,11 @@ window.VT = {
   reveal: function () { return seaReveal; },
   rainbow: function () { return { earned: rainbowEarned(), shown: rainbowShown }; },
   offer: function () { return hubOffer; },
+  home: showHome,
+  homeTap: handleHomeTap,
+  homeMove: homeMove,
+  homeUp: homeUp,
+  homeState: function () { return { stars: starCoins, items: homeItems, bunnies: homeBunnies, drag: homeDrag, cells: homeShopCells() }; },
   pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, clouds: penClouds, drops: penDrops, frame: penFrame }; },
   penStart: penStart,
   penMove: penMove,

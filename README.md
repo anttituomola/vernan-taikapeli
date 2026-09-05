@@ -20,6 +20,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/ambient.js` — tunnelmahiukkaset, etualan siluetit ja kentän alkukortti (PHASES: `ambient`, `fg`)
 - `js/flow-sea.js` — saaristokartta (ylin navigaatio), saaret ja sateenkaari
 - `js/flow-hub.js` — saaren karttalabyrintti ja vaiheen käynnistys
+- `js/flow-home.js` — linnan sisustus (tähtikauppa, raahaus, puput)
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)
 - `js/play-garden.js` … `play-sky.js` — vaiheet 2–5
@@ -144,6 +145,18 @@ Aukeaa, kun Kuun vartija on läpäisty. Yksi kenttä, joka on samalla saaren var
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
 
+### Linnan sisustus
+
+Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
+säilyivät täysinä; juhlassa näkyy "+n". Tähtisaldo näkyy kartoilla vasemmalla
+ylhäällä. Linnasaaren linnan napautus avaa kuplan, jossa on ovi (sisustus) ja
+finaali. Sisustushuoneessa oikean reunan kaupasta ostetaan huonekaluja tähdillä
+(hinta tähtinä kortissa), ostettu tavara ilmestyy huoneeseen ja sen voi raahata
+minne vain (seinätavarat seinälle, lattiatavarat lattialle). Napautus tavaraan
+tekee jotain: lamppu syttyy, soittorasia soittaa, pallo pyörii. Puput reagoivat:
+peti nukuttaa, porkkanakulho syöttää, pallon kanssa leikitään. Sisustus tallentuu.
+Vanha tallennus saa 2 tähteä jokaisesta jo läpäistystä kentästä.
+
 **Kartta**-nappi (🏠) palauttaa kentästä saaren labyrinttiin, ja labyrintin
 **vene**-nappi (⛵ vasemmassa yläkulmassa) palauttaa saaristokartalle. Samaan
 paikkaan pääsee myös kävelemällä satamaruutuun.
@@ -209,6 +222,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Kuutamometsä: kiiltomadon valoaika `GLOW_ON = 1.5` jaksosta `GLOW_CYCLE = 2.9`, pöllön varoitus `1.2` s, syöksyn nopeus `dt * 1.3`
 - Pilvipolku: haihtumisaika `PUFF_STAND = 0.7`, paluu `PUFF_BACK = 2.5`, myrskypallot `viewW * 0.07`
 - Kuun vartija: tähtien väli `1.8 + Math.random() * 0.9`, varoitus `0.9` s, putoamiskiihtyvyys `viewH * 1.3`
+- Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js)
 - Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.11`
 
 ## Tekniikka

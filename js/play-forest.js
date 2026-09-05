@@ -565,6 +565,7 @@ function startCelebration() {
   unicorn.tx = unicorn.x;
   princess.vx = 0;
   markPhaseCleared();
+  awardStars();
   document.getElementById('jumpBtn').style.display = 'none';
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';

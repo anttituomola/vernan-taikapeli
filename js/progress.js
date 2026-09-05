@@ -8,10 +8,13 @@ var PROGRESS_KEY = 'vt_progress_v1';
 var finaleDone = false;
 var rainbowShown = 0;   // montako sateenkaaren väriä on jo paljastettu saaristokartalla
 var lastIsland = 1;     // viimeksi vierailtu saari (maailma)
+var starCoins = 0;      // kentistä kerätyt tähdet (sisustuksen valuutta); 'stars' on metsän tähtitaulukko
+var homeItems = [];     // linnaan ostetut huonekalut: { id, fx, fy, on }
+var starGain = { n: 0, until: 0 };  // juhlassa näytettävä "+n"
 
 function saveProgress() {
   try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland }));
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland, stars: starCoins, home: homeItems }));
   } catch (e) { /* yksityinen tila tms: pelataan ilman tallennusta */ }
 }
 
@@ -24,6 +27,15 @@ function loadProgress() {
     finaleDone = !!(d && d.finaleDone);
     rainbowShown = (d && d.rainbowShown) | 0;
     lastIsland = ((d && d.lastIsland) | 0) || 1;
+    if (d && d.stars !== undefined) {
+      starCoins = d.stars | 0;
+    } else {
+      // Vanha tallennus: 2 tähteä jokaisesta jo läpäistystä kentästä
+      var k, n = 0;
+      for (k in hubCleared) if (hubCleared[k]) n++;
+      starCoins = n * 2;
+    }
+    homeItems = (d && d.home && d.home.length !== undefined) ? d.home : [];
   } catch (e) { /* rikkinäinen tallennus: aloitetaan alusta */ }
 }
 
@@ -32,7 +44,36 @@ function resetProgress() {
   finaleDone = false;
   rainbowShown = 0;
   lastIsland = 1;
+  starCoins = 0;
+  homeItems = [];
   saveProgress();
+}
+
+// Kentän läpäisy antaa 2 tähteä, +1 jos sydämet säilyivät täysinä
+function awardStars() {
+  var n = 2 + (heartsOn() && hearts === HEART_MAX ? 1 : 0);
+  starCoins += n;
+  starGain.n = n;
+  starGain.until = globalT + 3.2;
+  saveProgress();
+}
+
+function drawStarGain(c) {
+  if (globalT >= starGain.until) return;
+  var left = starGain.until - globalT, a = Math.min(1, left);
+  var s = viewH * 0.04, y = viewH * 0.2 - (3.2 - left) * viewH * 0.015, x = viewW / 2, i;
+  c.globalAlpha = a;
+  c.fillStyle = 'rgba(255,255,255,0.8)';
+  roundRect(c, x - s * 3.2, y - s * 1.1, s * 6.4, s * 2.2, s);
+  c.fill();
+  c.fillStyle = '#7a3cb8';
+  c.font = 'bold ' + Math.round(s * 1.5) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.textAlign = 'left';
+  c.textBaseline = 'middle';
+  c.fillText('+' + starGain.n, x - s * 2.6, y + s * 0.05);
+  for (i = 0; i < starGain.n; i++) drawStar(c, x + s * 0.2 + i * s * 1.5, y, s * 0.6, globalT * 2, 0.5);
+  c.textBaseline = 'alphabetic';
+  c.globalAlpha = 1;
 }
 
 // ---------- Sydämet ----------
