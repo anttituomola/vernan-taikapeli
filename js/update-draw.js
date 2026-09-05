@@ -569,7 +569,6 @@ function drawTaskOverlay(c) {
   var t = activeTask;
   var op = orbPositions(t.orbs || 3);
   var shake = t.shakeT > 0 ? Math.sin(globalT * 45) * 10 * t.shakeT : 0;
-  var hint = t.mode === 'input' && t.idleT > 4;
   var i;
   c.fillStyle = 'rgba(40,20,70,0.52)';
   c.fillRect(0, 0, viewW, viewH);
@@ -577,15 +576,15 @@ function drawTaskOverlay(c) {
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   if (t.type === 'rhythm') {
-    drawRhythmOverlay(c, t, shake, hint);
+    drawRhythmOverlay(c, t, shake);
     return;
   }
   if (taskUsesDrag(t)) {
-    drawDragTaskOverlay(c, t, shake, hint);
+    drawDragTaskOverlay(c, t, shake);
     return;
   }
   if (t.type === 'pairs') {
-    drawPairsOverlay(c, t, shake, hint);
+    drawPairsOverlay(c, t, shake);
     return;
   }
   if (t.type === 'math' || t.type === 'minus') {
@@ -616,7 +615,7 @@ function drawTaskOverlay(c) {
     var lit = t.litOrb === i && (t.mode === 'show' ? true : t.litT > 0);
     var r = op.r * (lit ? 1.16 : 1);
     var x = op.xs[i] + shake;
-    var y = op.y + (hint ? Math.sin(globalT * 6 + i) * viewH * 0.006 : 0);
+    var y = op.y;
     if (lit) {
       var glow = c.createRadialGradient(x, y, r * 0.3, x, y, r * 2);
       glow.addColorStop(0, 'rgba(255,255,255,0.5)');
@@ -650,17 +649,6 @@ function drawTaskOverlay(c) {
       c.fill();
     } else {
       drawButterfly(c, x, y, r * 0.42, globalT + i, TASK_BF_COLORS[i % TASK_BF_COLORS.length]);
-    }
-  }
-
-  // Vihje: pomppiva nuoli näyttää mihin napautetaan
-  if (hint) {
-    if (t.type === 'compare') {
-      var side = Math.sin(globalT * 2) > 0 ? 1 : 0;
-      drawHintArrow(c, op.xs[side] + shake, viewH * 0.24 - viewH * 0.17);
-    } else {
-      var k = Math.floor(globalT * 1.5) % t.orbs;
-      drawHintArrow(c, op.xs[k] + shake, op.y - op.r * 1.75);
     }
   }
 }

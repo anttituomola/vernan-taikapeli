@@ -175,7 +175,6 @@ function taskDragStart(t, px, py) {
   best.ox = best.x - px;
   best.oy = best.y - py;
   dragPiece = { task: t, piece: best };
-  t.idleT = 0;
   playNote(660, 0, 0.06, 'sine', 0.2);
   return true;
 }
@@ -222,7 +221,7 @@ function drawTile(c, x, y, cell, fill) {
   c.fill();
 }
 
-function drawDragTaskOverlay(c, t, shake, hint) {
+function drawDragTaskOverlay(c, t, shake) {
   var i, p, tg, rc;
   if (t.type === 'shadow') {
     // Varjot ylhäällä
@@ -272,11 +271,6 @@ function drawDragTaskOverlay(c, t, shake, hint) {
     p = t.pieces[i];
     if (p.dragging) drawPiece(c, t, p, 0);
   }
-  if (hint) {
-    for (i = 0; i < t.pieces.length; i++) {
-      if (!t.pieces[i].placed) { drawHintArrow(c, t.pieces[i].x + shake, t.pieces[i].y - viewH * 0.11); break; }
-    }
-  }
 }
 
 function drawPiece(c, t, p, shake) {
@@ -301,7 +295,7 @@ function drawPiece(c, t, p, shake) {
   drawShape(c, p.kind, p.x + shake, p.y, s, TASK_BF_COLORS[p.color], 0);
 }
 
-function drawPairsOverlay(c, t, shake, hint) {
+function drawPairsOverlay(c, t, shake) {
   var i, rc, card;
   for (i = 0; i < t.cards.length; i++) {
     rc = pairsCardRect(t, i);
@@ -331,11 +325,6 @@ function drawPairsOverlay(c, t, shake, hint) {
       c.lineWidth = Math.max(2, rc.w * 0.04);
       c.stroke();
       drawStar(c, x + rc.w / 2, y + rc.h / 2, rc.w * 0.18, 0, 0);
-    }
-  }
-  if (hint) {
-    for (i = 0; i < t.cards.length; i++) {
-      if (!t.cards[i].matched && !t.cards[i].face) { rc = pairsCardRect(t, i); drawHintArrow(c, rc.x + rc.w / 2 + shake, rc.y - viewH * 0.06); break; }
     }
   }
 }

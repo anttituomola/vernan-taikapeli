@@ -202,7 +202,7 @@ function drawComparePrompt(c, t, op, shake) {
   c.fillText('?', viewW / 2 + shake, viewH * 0.24);
 }
 
-function drawRhythmOverlay(c, t, shake, hint) {
+function drawRhythmOverlay(c, t, shake) {
   var cx = viewW / 2 + shake;
   var cy = viewH * 0.55;
   var r = viewH * 0.13;
@@ -253,7 +253,6 @@ function drawRhythmOverlay(c, t, shake, hint) {
     if (lit) handY = cy - r * 0.55;
   }
   drawHand(c, cx + r * 0.15, handY, r * 0.42);
-  if (hint && t.mode === 'input') drawHintArrow(c, cx, cy - r * 2.1);
 }
 
 // ---------- Apurit uusille tehtäville ----------
@@ -374,6 +373,7 @@ function drawOddPrompt(c, shake) {
 }
 
 // Pomppiva nuoli alaspäin
+// Pomppiva nuoli: käytössä vain kartalla (seuraava huone, linna)
 function drawHintArrow(c, x, y) {
   var s = viewH * 0.03;
   var by = y + Math.abs(Math.sin(globalT * 5)) * s * 0.6;
@@ -417,7 +417,6 @@ function regenerateTask(t) {
   else if (t.type === 'compare') makeCompareProblem(t);
   t.litOrb = -1;
   t.litT = 0;
-  t.idleT = 0;
   playNote(494, 0, 0.1, 'triangle', 0.25);
   playNote(659, 0.08, 0.14, 'triangle', 0.25);
 }

@@ -307,7 +307,6 @@ function taskStart(t) {
   t.litT = 0;
   t.prompt = null;
   t.choices = null;
-  t.idleT = 0;
   t.regenT = 0;
   if (t.type === 'math') {
     makeMathProblem(t);
@@ -373,7 +372,6 @@ function taskSolved() {
 function handleTaskTap(px, py) {
   var t = activeTask;
   if (!t || t.mode !== 'input') return;
-  t.idleT = 0;
   if (t.type === 'rhythm') {
     rhythmTap(t);
     return;
@@ -454,7 +452,6 @@ function updateTasks(dt) {
     }
   } else if (activeTask) {
     t = activeTask;
-    if (t.mode === 'input') t.idleT += dt;
     if (t.type === 'pairs' && t.mode === 'input') pairsUpdate(t, dt);
     if (t.regenT > 0) {
       t.regenT -= dt;

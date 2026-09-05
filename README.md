@@ -111,8 +111,8 @@ palautuvat. Kenttä itse ei ala alusta.
 
 Tehtäväkaaret pysäyttävät hahmon ja avaavat tien, kun tehtävä on ratkaistu.
 Pelaaja ei lue, joten malli näytetään puhekuplassa ja kysymysmerkki kertoo
-mitä kysytään. Jos mitään ei tapahdu 4 sekuntiin, pomppiva nuoli näyttää
-mihin napautetaan.
+mitä kysytään. Tehtävissä ei ole vihjenuolia; pomppiva nuoli on käytössä vain
+kartalla (seuraava huone, linna).
 
 - **Lasku / vähennys** — a + b tai a − b, kolme numerovaihtoehtoa
 - **Laske** — montako mallin mukaista kuviota joukossa on; joukossa on myös

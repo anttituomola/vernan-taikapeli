@@ -71,7 +71,7 @@ function makeTask(fx, type, opts) {
     seqLen: opts.seqLen || 3, orbs: opts.orbs || 3, pairs: opts.pairs || 3,
     prompt: null, choices: null, glyph: 'flower',
     items: null, beats: null, taps: null, inputT: 0,
-    idleT: 0, regenT: 0
+    regenT: 0
   };
 }
 var tasks = [];
