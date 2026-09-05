@@ -46,7 +46,7 @@ function initNightwood() {
   activeGate = null;
   activeTask = null;
   heartsReset();
-  tasks = [makeTask(0.35, 'memory', { seqLen: 4, orbs: 4 }), makeTask(0.68, 'odd')];
+  tasks = [makeTask(0.35, 'memory', { seqLen: 4, orbs: 4 }), makeTask(0.68, 'word', { maxSyl: 2 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.42, 0.74]);
   glowBugs = [];

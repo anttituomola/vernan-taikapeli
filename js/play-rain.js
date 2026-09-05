@@ -39,7 +39,7 @@ function initRain() {
   rainBlots = [];
   rainT = 1.5;
   layoutRain();
-  tasks = [makeTask(0.36, 'count'), makeTask(0.64, 'match')];
+  tasks = [makeTask(0.36, 'count'), makeTask(0.64, 'word', { maxSyl: 3 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.46, 0.72]);
   rainGate.open = false;

@@ -106,7 +106,7 @@ Arvoitusten torni on saaren vartija.
   vierivät maassa (hyppää yli), limonadikuilut. Tehtävät: täydennä kuva,
   muoto varjoon.
 - **Arvoitusten torni** ♥ — neljä tehtäväovea peräkkäin (parit 4 paria,
-  täydennä kuva, muoto varjoon, muisti 4/4), jalokivet hyllyillä ja heiluvat
+  täydennä kuva, lue sana, muisti 4/4), jalokivet hyllyillä ja heiluvat
   kattokruunut, joiden alta kuljetaan kun ne ovat sivulla.
 
 ### Kuutamosaari (maailma 3)
@@ -217,6 +217,11 @@ kartalla (seuraava huone, linna).
 - **Täydennä kuva** (raahaus) — 3×3 ruudukko, jossa rivi määrää muodon ja
   sarake värin; raahaa puuttuva pala kolmesta ehdokkaasta koloon
 - **Parit** — muistipeli: käännä kaksi korttia kerrallaan, parit jäävät auki
+- **Lue sana** — sana TIKKUKIRJAIMIN tavuviivoilla (esim. KUK-KA) ja viisi
+  kuvaa, joista yksi on sana. Sanan napautus lukee sen: tavut korostuvat ja
+  soivat vuorotellen. Väärä kuva himmenee ja sana luetaan uudestaan; sana ei
+  vaihdu, jotta sen voi tavata loppuun. Käytössä lammessa, Kuutamometsässä
+  (2 tavua), Sadesuojassa, Pupusillalla ja tornissa (3 tavua).
 
 Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän) väärä
 vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
@@ -233,6 +238,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Rytmin sallittu heitto: `tol = Math.max(0.15, want * 0.32)` (tasks-extra.js)
 - Muistiloitsun pituus ja pallot: `makeTask(fx, 'memory', { seqLen, orbs })`
 - Parien määrä: `makeTask(fx, 'pairs', { pairs })`
+- Lue sana: sanat `WORD_LIST` (tasks-extra.js), tavujen enimmäismäärä `makeTask(fx, 'word', { maxSyl })`, tavun kesto `WORD_SYL_T`
 - Rannikko: aallon väli `6 + Math.random() * 3`, rapujen nopeus `viewW * 0.06`
 - Karkkilaakso: pompun voima `viewH * 1.15` (platformer.js), kuulakarkkien nopeus `viewW * 0.07`
 - Torni: kattokruunujen heilunta `speed: 1.1`, kulma `0.55`

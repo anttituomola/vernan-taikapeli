@@ -420,3 +420,209 @@ function regenerateTask(t) {
   playNote(494, 0, 0.1, 'triangle', 0.25);
   playNote(659, 0.08, 0.14, 'triangle', 0.25);
 }
+
+// ---------- Lue sana ----------
+// Sana näytetään tikkukirjaimin tavuviivoilla; alla 5 kuvaa, joista yksi on sana.
+// Sanan napautus "lukee" sen: tavut korostuvat vuorotellen ja soivat nuotteina.
+var WORD_LIST = [
+  { w: 'KUK-KA', icon: 'flower' }, { w: 'TÄH-TI', icon: 'star' }, { w: 'SY-DÄN', icon: 'heart' },
+  { w: 'KUU', icon: 'moon' }, { w: 'PU-PU', icon: 'bunny' }, { w: 'LIN-NA', icon: 'castle' },
+  { w: 'PIL-VI', icon: 'cloud' }, { w: 'AU-RIN-KO', icon: 'sun' }, { w: 'SIM-PUK-KA', icon: 'shell' },
+  { w: 'TI-MANT-TI', icon: 'gem' }, { w: 'SIE-NI', icon: 'mushroom' }, { w: 'PUU', icon: 'tree' },
+  { w: 'TA-LO', icon: 'house' }, { w: 'VE-NE', icon: 'boat' }, { w: 'KY-NÄ', icon: 'pen' },
+  { w: 'KA-LA', icon: 'fish' }, { w: 'PAL-LO', icon: 'ball' }, { w: 'KRUU-NU', icon: 'crown' },
+  { w: 'KARK-KI', icon: 'candy' }, { w: 'LU-MI', icon: 'snow' }, { w: 'O-ME-NA', icon: 'apple' },
+  { w: 'KIR-JA', icon: 'book' }, { w: 'A-VAIN', icon: 'key' }, { w: 'PER-HO-NEN', icon: 'butterfly' },
+  { w: 'SA-TEEN-KAA-RI', icon: 'rainbow' }
+];
+var WORD_SYL_T = 0.5;
+
+function wordSyllables(t) {
+  return t.word ? t.word.w.split('-') : [];
+}
+
+function makeWordProblem(t) {
+  var pool = [], i, k, tmp;
+  for (i = 0; i < WORD_LIST.length; i++) if (WORD_LIST[i].w.split('-').length <= t.maxSyl) pool.push(WORD_LIST[i]);
+  if (pool.length < 5) pool = WORD_LIST.slice();
+  for (i = pool.length - 1; i > 0; i--) { k = randInt(i + 1); tmp = pool[i]; pool[i] = pool[k]; pool[k] = tmp; }
+  var slot = randInt(5);
+  t.word = pool[slot];
+  t.orbs = 5;
+  t.prompt = null;
+  t.choices = [];
+  for (i = 0; i < 5; i++) t.choices.push({ icon: pool[i].icon, wrong: false });
+  t.correct = slot;
+  t.sayT = -1;
+}
+
+// Tavut soivat peräkkäin ja korostuvat piirrossa
+function wordSay(t) {
+  var syl = wordSyllables(t), k;
+  t.sayT = 0;
+  for (k = 0; k < syl.length; k++) playNote(392 + k * 70, k * WORD_SYL_T, 0.32, 'triangle', 0.3);
+}
+
+function wordFont(c) {
+  c.font = 'bold ' + Math.round(viewH * 0.085) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+}
+
+function wordPromptRect(c, t) {
+  wordFont(c);
+  var w = c.measureText(t.word ? t.word.w : '').width + viewH * 0.16;
+  var h = viewH * 0.15;
+  return { x: viewW / 2 - w / 2, y: viewH * 0.24 - h / 2, w: w, h: h };
+}
+
+function drawWordPrompt(c, t, shake) {
+  var rc = wordPromptRect(c, t), syl = wordSyllables(t), i, x, tw;
+  var cx = viewW / 2 + shake, cy = viewH * 0.24;
+  var sayIdx = t.sayT >= 0 ? Math.floor(t.sayT / WORD_SYL_T) : -1;
+  drawPromptBubble(c, cx, cy, rc.w, rc.h);
+  wordFont(c);
+  c.textAlign = 'left';
+  c.textBaseline = 'middle';
+  var full = t.word ? t.word.w : '';
+  tw = c.measureText(full).width;
+  x = cx - tw / 2;
+  for (i = 0; i < syl.length; i++) {
+    c.fillStyle = i === sayIdx ? '#ff5f7e' : '#8a2be2';
+    c.fillText(syl[i], x, cy + viewH * 0.005);
+    x += c.measureText(syl[i]).width;
+    if (i < syl.length - 1) {
+      c.fillStyle = '#c9a0ff';
+      c.fillText('-', x, cy + viewH * 0.005);
+      x += c.measureText('-').width;
+    }
+  }
+  c.textAlign = 'center';
+  c.textBaseline = 'alphabetic';
+  // Pieni kaiutin: napauta kuullaksesi
+  var sx = rc.x + rc.w - viewH * 0.05, sy = cy;
+  c.fillStyle = '#8a2be2';
+  c.beginPath(); c.moveTo(sx - viewH * 0.02, sy - viewH * 0.012); c.lineTo(sx - viewH * 0.005, sy - viewH * 0.012); c.lineTo(sx + viewH * 0.012, sy - viewH * 0.028); c.lineTo(sx + viewH * 0.012, sy + viewH * 0.028); c.lineTo(sx - viewH * 0.005, sy + viewH * 0.012); c.lineTo(sx - viewH * 0.02, sy + viewH * 0.012); c.closePath(); c.fill();
+  c.strokeStyle = '#8a2be2';
+  c.lineWidth = Math.max(1.5, viewH * 0.004);
+  c.beginPath(); c.arc(sx + viewH * 0.014, sy, viewH * 0.026, -0.7, 0.7); c.stroke();
+}
+
+// Kuvat sanoille: piirretään valkoisen pallon sisään, r = pallon säde
+function drawWordIcon(c, id, x, y, r) {
+  var s = r * 0.62, i;
+  if (id === 'flower') {
+    drawFlower(c, x, y, s * 0.5, '#ff7bac');
+  } else if (id === 'star') {
+    drawStar(c, x, y, s, 0, 0);
+  } else if (id === 'heart') {
+    c.fillStyle = '#ff5f7e';
+    drawHeartShape(c, x, y, s * 0.9, true);
+  } else if (id === 'moon') {
+    c.fillStyle = '#ffd24f';
+    c.beginPath(); c.arc(x, y, s, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(x + s * 0.45, y - s * 0.15, s * 0.8, 0, Math.PI * 2); c.fill();
+  } else if (id === 'bunny') {
+    drawBunny(c, x, y + s * 0.55, s * 0.95, 0, 0, true);
+  } else if (id === 'castle') {
+    drawCastle(c, x, y + s * 0.9, s * 2.0);
+  } else if (id === 'cloud') {
+    c.fillStyle = '#bfe6ff';
+    cloudShape(c, x, y, s * 0.5);
+  } else if (id === 'sun') {
+    c.strokeStyle = '#ffb300';
+    c.lineWidth = Math.max(2, s * 0.14);
+    c.lineCap = 'round';
+    for (i = 0; i < 8; i++) {
+      var a = i * Math.PI / 4;
+      c.beginPath(); c.moveTo(x + Math.cos(a) * s * 0.85, y + Math.sin(a) * s * 0.85); c.lineTo(x + Math.cos(a) * s * 1.2, y + Math.sin(a) * s * 1.2); c.stroke();
+    }
+    c.lineCap = 'butt';
+    c.fillStyle = '#ffe27a';
+    c.beginPath(); c.arc(x, y, s * 0.65, 0, Math.PI * 2); c.fill();
+  } else if (id === 'shell') {
+    drawShell(c, x, y, s * 0.9, '#ffd6e8');
+  } else if (id === 'gem') {
+    drawGem(c, x, y, s * 1.0, '#5fa8ff');
+  } else if (id === 'mushroom') {
+    drawMushroomTile(c, x, y + s * 0.8, s * 1.4);
+  } else if (id === 'tree') {
+    drawTree(c, x, y + s * 1.05, s * 1.1);
+  } else if (id === 'house') {
+    drawCottage(c, x, y + s * 0.8, s * 1.8);
+  } else if (id === 'boat') {
+    drawBoat(c, x, y + s * 0.35, s * 1.8);
+  } else if (id === 'pen') {
+    drawPenGlyph(c, x, y, s * 1.6, '#8a4dff');
+  } else if (id === 'fish') {
+    c.fillStyle = '#ffb347';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x - s * 0.1, y, s * 0.75, s * 0.45, 0, 0, Math.PI * 2);
+    else c.arc(x - s * 0.1, y, s * 0.55, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.moveTo(x + s * 0.55, y); c.lineTo(x + s * 1.05, y - s * 0.4); c.lineTo(x + s * 1.05, y + s * 0.4); c.closePath(); c.fill();
+    c.fillStyle = '#fff';
+    c.beginPath(); c.arc(x - s * 0.45, y - s * 0.1, s * 0.14, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#222';
+    c.beginPath(); c.arc(x - s * 0.45, y - s * 0.1, s * 0.07, 0, Math.PI * 2); c.fill();
+  } else if (id === 'ball') {
+    c.fillStyle = '#ff5f7e';
+    c.beginPath(); c.arc(x, y, s * 0.8, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#5fa8ff';
+    c.beginPath(); c.arc(x, y, s * 0.8, -0.5, 0.5); c.lineTo(x, y); c.closePath(); c.fill();
+    c.beginPath(); c.arc(x, y, s * 0.8, Math.PI - 0.5, Math.PI + 0.5); c.lineTo(x, y); c.closePath(); c.fill();
+    c.fillStyle = '#ffe94f';
+    c.beginPath(); c.arc(x, y, s * 0.3, 0, Math.PI * 2); c.fill();
+  } else if (id === 'crown') {
+    c.fillStyle = '#ffd24f';
+    c.beginPath();
+    c.moveTo(x - s * 0.9, y + s * 0.6); c.lineTo(x - s * 0.9, y - s * 0.4); c.lineTo(x - s * 0.45, y); c.lineTo(x, y - s * 0.7);
+    c.lineTo(x + s * 0.45, y); c.lineTo(x + s * 0.9, y - s * 0.4); c.lineTo(x + s * 0.9, y + s * 0.6);
+    c.closePath(); c.fill();
+    c.fillStyle = '#ff5f7e';
+    c.beginPath(); c.arc(x, y + s * 0.25, s * 0.14, 0, Math.PI * 2); c.fill();
+  } else if (id === 'candy') {
+    drawCandy(c, x, y - s * 0.35, s * 0.75, '#ff5f7e', 0);
+  } else if (id === 'snow') {
+    // Valkoinen hiutale näkyy vain sinisen kiekon päällä
+    c.fillStyle = '#7fd4ff';
+    c.beginPath(); c.arc(x, y, s * 1.05, 0, Math.PI * 2); c.fill();
+    drawSnowflake(c, x, y, s * 0.85);
+  } else if (id === 'apple') {
+    c.fillStyle = '#ff4f5e';
+    c.beginPath(); c.arc(x - s * 0.3, y + s * 0.1, s * 0.6, 0, Math.PI * 2); c.arc(x + s * 0.3, y + s * 0.1, s * 0.6, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#7a4a22';
+    c.fillRect(x - s * 0.06, y - s * 0.75, s * 0.12, s * 0.35);
+    c.fillStyle = '#4fb356';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x + s * 0.3, y - s * 0.6, s * 0.3, s * 0.14, -0.6, 0, Math.PI * 2);
+    else c.arc(x + s * 0.3, y - s * 0.6, s * 0.16, 0, Math.PI * 2);
+    c.fill();
+  } else if (id === 'book') {
+    c.fillStyle = '#5fa8ff';
+    roundRect(c, x - s * 0.75, y - s * 0.6, s * 1.5, s * 1.2, s * 0.1);
+    c.fill();
+    c.fillStyle = '#fff';
+    c.fillRect(x - s * 0.6, y - s * 0.45, s * 1.2, s * 0.95);
+    c.fillStyle = '#5fa8ff';
+    c.fillRect(x - s * 0.04, y - s * 0.6, s * 0.08, s * 1.2);
+    c.fillStyle = '#c9a0ff';
+    for (i = 0; i < 3; i++) { c.fillRect(x - s * 0.5, y - s * 0.3 + i * s * 0.25, s * 0.35, s * 0.06); c.fillRect(x + s * 0.15, y - s * 0.3 + i * s * 0.25, s * 0.35, s * 0.06); }
+  } else if (id === 'key') {
+    c.strokeStyle = '#ffb300';
+    c.lineWidth = Math.max(3, s * 0.22);
+    c.lineCap = 'round';
+    c.beginPath(); c.arc(x - s * 0.45, y, s * 0.35, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.moveTo(x - s * 0.1, y); c.lineTo(x + s * 0.9, y); c.stroke();
+    c.beginPath(); c.moveTo(x + s * 0.55, y); c.lineTo(x + s * 0.55, y + s * 0.35); c.moveTo(x + s * 0.85, y); c.lineTo(x + s * 0.85, y + s * 0.35); c.stroke();
+    c.lineCap = 'butt';
+  } else if (id === 'butterfly') {
+    drawButterfly(c, x, y, s * 0.85, globalT, '#c9a0ff');
+  } else if (id === 'rainbow') {
+    var cols = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'];
+    c.lineWidth = Math.max(2, s * 0.16);
+    for (i = 0; i < cols.length; i++) {
+      c.strokeStyle = cols[i];
+      c.beginPath(); c.arc(x, y + s * 0.4, s * (1.0 - i * 0.14), Math.PI, 0); c.stroke();
+    }
+  }
+}

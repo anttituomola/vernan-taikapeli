@@ -32,7 +32,7 @@ function initTower() {
   tasks = [
     makeTask(0.20, 'pairs', { pairs: 4 }),
     makeTask(0.44, 'puzzle'),
-    makeTask(0.66, 'shadow'),
+    makeTask(0.66, 'word', { maxSyl: 3 }),
     makeTask(0.88, 'memory', { seqLen: 4, orbs: 4 })
   ];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;

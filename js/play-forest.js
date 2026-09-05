@@ -324,6 +324,10 @@ function taskStart(t) {
     makeOddProblem(t);
     t.mode = 'input';
     playNote(523, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'word') {
+    makeWordProblem(t);
+    t.mode = 'input';
+    wordSay(t);
   } else if (t.type === 'minus') {
     makeMinusProblem(t);
     t.mode = 'input';
@@ -386,6 +390,11 @@ function handleTaskTap(px, py) {
   }
   var op = orbPositions(t.orbs);
   var i, dx, dy, rc, hit = -1;
+  if (t.type === 'word') {
+    // Sanan napautus lukee sen ääneen tavu kerrallaan
+    rc = wordPromptRect(ctx, t);
+    if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) { wordSay(t); return; }
+  }
   for (i = 0; i < t.orbs; i++) {
     dx = px - op.xs[i];
     dy = py - op.y;
@@ -409,6 +418,19 @@ function handleTaskTap(px, py) {
     } else {
       playNote(170, 0, 0.3, 'sawtooth', 0.2);
       t.shakeT = 0.5;
+    }
+    return;
+  }
+  if (t.type === 'word') {
+    if (i === t.correct) {
+      playNote(TASK_BF_NOTES[Math.min(i, 3)], 0, 0.3, 'triangle', 0.45);
+      taskSolved();
+    } else {
+      // Väärä kuva himmenee; sana pysyy samana ja luetaan uudestaan
+      playNote(170, 0, 0.3, 'sawtooth', 0.2);
+      t.shakeT = 0.5;
+      if (t.choices && t.choices[i]) t.choices[i].wrong = true;
+      wordSay(t);
     }
     return;
   }
@@ -453,6 +475,10 @@ function updateTasks(dt) {
   } else if (activeTask) {
     t = activeTask;
     if (t.type === 'pairs' && t.mode === 'input') pairsUpdate(t, dt);
+    if (t.type === 'word' && t.sayT >= 0) {
+      t.sayT += dt;
+      if (t.sayT > wordSyllables(t).length * WORD_SYL_T + 0.3) t.sayT = -1;
+    }
     if (t.regenT > 0) {
       t.regenT -= dt;
       if (t.regenT <= 0) regenerateTask(t);

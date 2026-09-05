@@ -28,7 +28,7 @@ function initPond() {
   camX = 0;
   gates = [];
   activeGate = null;
-  tasks = [makeTask(0.32, 'math'), makeTask(0.72, 'match')];
+  tasks = [makeTask(0.32, 'math'), makeTask(0.72, 'word', { maxSyl: 2 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   activeTask = null;
   layoutPond();

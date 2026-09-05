@@ -43,7 +43,7 @@ function initBunnyBridge() {
   }
   layoutBunnyBridge();
   for (i = 0; i < bbBunnies.length; i++) bbBunnies[i].x = bbIsletX(i);
-  tasks = [makeTask(0.33, 'pairs', { pairs: 3 }), makeTask(0.62, 'odd')];
+  tasks = [makeTask(0.33, 'pairs', { pairs: 3 }), makeTask(0.62, 'word', { maxSyl: 3 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.30, 0.60]);
   resetPrincess(viewW * 0.06, groundTop);

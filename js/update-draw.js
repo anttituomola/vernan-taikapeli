@@ -487,6 +487,7 @@ function taskArchStyle(type) {
   if (type === 'shadow') return { veil: '90,90,140', pillar: '#b8b4d8' };
   if (type === 'puzzle') return { veil: '255,200,120', pillar: '#f5d3a0' };
   if (type === 'pairs') return { veil: '160,120,255', pillar: '#c9b8f8' };
+  if (type === 'word') return { veil: '255,235,140', pillar: '#f3e2a0' };
   return { veil: '120,210,255', pillar: '#b8d4ff' };
 }
 
@@ -602,6 +603,8 @@ function drawTaskOverlay(c) {
     drawMatchPrompt(c, t, shake);
   } else if (t.type === 'odd') {
     drawOddPrompt(c, shake);
+  } else if (t.type === 'word') {
+    drawWordPrompt(c, t, shake);
   } else if (t.type === 'memory') {
     var dotR = viewH * 0.012;
     for (i = 0; i < t.seq.length; i++) {
@@ -640,6 +643,13 @@ function drawTaskOverlay(c) {
     } else if (t.type === 'odd' || t.type === 'pattern') {
       var ch = t.choices && t.choices[i];
       if (ch) drawTaskGlyph(c, ch.kind, x, y, r * 0.5, TASK_BF_COLORS[ch.color], ch.variant);
+    } else if (t.type === 'word') {
+      var wc = t.choices && t.choices[i];
+      if (wc) {
+        if (wc.wrong) c.globalAlpha = 0.3;
+        drawWordIcon(c, wc.icon, x, y, r);
+        c.globalAlpha = 1;
+      }
     } else if (t.type === 'compare') {
       c.fillStyle = '#8a2be2';
       c.beginPath();
