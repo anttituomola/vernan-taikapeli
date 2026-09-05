@@ -263,6 +263,16 @@ function penStep(dt) {
     }
     return;
   }
+  // Onko jalkojen alla yhä pintaa? Haihtunut silta pudottaa, vaikka seisoisi paikallaan
+  var here = penSurfaces(princess.x), supported = false;
+  for (i = 0; i < here.length; i++) {
+    if (here[i].slope <= PEN_SLOPE && Math.abs(here[i].y - princess.y) <= viewH * 0.02) { supported = true; break; }
+  }
+  if (!supported) {
+    princess.onGround = false;
+    princess.vy = 0;
+    return;
+  }
   if (penStun > 0) return;
   // Kävely: pidä pohjassa, prinsessa kulkee sormea kohti (kuten muissa kentissä)
   var dxh = holdWorldX - princess.x;
