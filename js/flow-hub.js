@@ -137,6 +137,7 @@ function showHub() {
   document.body.style.background = '#ffd6ec';
   lastTime = 0;
   hubPawn.path = [];
+  hubOffer = null;
   if (hubPlaying && !hubCleared[hubPlaying] && hubApproach) {
     pos = hubFindByKind(hubPlaying);
     if (pos && hubPawn.c === pos.c && hubPawn.r === pos.r) {
@@ -264,7 +265,11 @@ function hubArrive(ch) {
     return;
   }
   if (room) {
-    if (room.kind && hubCleared[room.kind]) return;
+    if (room.kind && hubCleared[room.kind]) {
+      // Läpäisty huone: tarjoa uusintaa puhekuplassa; muualle napautus ohittaa
+      hubOfferShow([{ act: 'replay', kind: room.kind }]);
+      return;
+    }
     if (room.kind) {
       beginPlay(room.kind);
       return;
@@ -282,7 +287,7 @@ function hubArrive(ch) {
       return;
     }
     if (finaleDone) {
-      hubEnterWorld(2);
+      hubOfferShow([{ act: 'boat' }, { act: 'replay', kind: 'finale' }]);
       return;
     }
     hubToast.kind = 'castle';
@@ -297,6 +302,14 @@ function handleHubTap(px, py) {
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   var lay = hubLayout();
+  if (hubOffer) {
+    var hit = hubOfferHit(px, py, lay);
+    hubOffer = null;
+    if (hit) {
+      hubOfferAct(hit);
+      return;
+    }
+  }
   var cell = hubPixelCell(px, py, lay);
   if (!cell || !hubWalkable(hubAt(cell.c, cell.r))) return;
   if (cell.c === hubPawn.c && cell.r === hubPawn.r && hubPawn.path.length === 0) {
@@ -505,6 +518,8 @@ function drawHub() {
   else ctx.arc(hubPawn.x, hubPawn.y + lay.cell * 0.4, lay.cell * 0.2, 0, Math.PI * 2);
   ctx.fill();
   drawUnicorn(ctx, hubPawn.x, hubPawn.y + lay.cell * 0.4, us, hubPawn.facing, hubPawn.walkPhase, moving, globalT);
+
+  if (hubOffer) drawHubOffer(ctx, lay);
 
   if (hubToast.t > 0 && hubToast.kind) {
     ctx.globalAlpha = Math.min(1, hubToast.t * 2);
@@ -788,6 +803,131 @@ function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
   if (isNext) drawHintArrow(c, x, y - rad * 2.2);
 }
 
+// ---------- Uusintakupla ----------
+// Kun nappula saapuu läpäistyyn huoneeseen (tai linnaan finaalin jälkeen), yksisarvinen
+// "ehdottaa" puhekuplassa: ↻ pelaa uudestaan, vene = maailma 2. Muualle napautus sulkee kuplan
+// ja nappula lähtee matkaan, eli läpäistyn huoneen voi aina ohittaa.
+function hubOfferShow(items) {
+  hubOffer = { c: hubPawn.c, r: hubPawn.r, items: items, t: 0 };
+  playNote(784, 0, 0.1, 'triangle', 0.3);
+  playNote(1047, 0.08, 0.16, 'triangle', 0.3);
+}
+
+function hubOfferButtons(lay) {
+  var res = [], i;
+  if (!hubOffer) return res;
+  var s = lay.cell;
+  var rad = Math.max(s * 0.7, viewH * 0.055);
+  var base = hubCenter(hubOffer.c, hubOffer.r, lay);
+  var dir = hubOffer.c > lay.cols / 2 ? -1 : 1;
+  var cx = base.x + dir * (s * 0.95 + rad);
+  var cy = base.y - s * 0.3;
+  for (i = 0; i < hubOffer.items.length; i++) {
+    res.push({ x: cx + dir * i * rad * 2.3, y: cy, rad: rad, item: hubOffer.items[i], dir: dir, base: base });
+  }
+  return res;
+}
+
+function hubOfferHit(px, py, lay) {
+  var bs = hubOfferButtons(lay), i, dx, dy;
+  for (i = 0; i < bs.length; i++) {
+    dx = px - bs[i].x;
+    dy = py - bs[i].y;
+    if (dx * dx + dy * dy <= bs[i].rad * bs[i].rad * 1.35) return bs[i].item;
+  }
+  return null;
+}
+
+function hubOfferAct(item) {
+  if (item.act === 'boat') {
+    hubEnterWorld(2);
+    return;
+  }
+  if (item.act === 'replay') {
+    hubApproach = null;
+    beginPlay(item.kind);
+  }
+}
+
+function drawHubOffer(c, lay) {
+  var bs = hubOfferButtons(lay), i, b;
+  if (bs.length === 0) return;
+  var rad = bs[0].rad;
+  var pad = rad * 1.18;
+  var minX = 1e9, maxX = -1e9;
+  for (i = 0; i < bs.length; i++) {
+    minX = Math.min(minX, bs[i].x);
+    maxX = Math.max(maxX, bs[i].x);
+  }
+  var bx = minX - pad, by = bs[0].y - pad, bw = maxX - minX + pad * 2, bh = pad * 2;
+  var tailX = bs[0].dir > 0 ? bx : bx + bw;
+  var tipX = bs[0].base.x + bs[0].dir * lay.cell * 0.3;
+  var tipY = bs[0].base.y + lay.cell * 0.05;
+  // Puhekuplan varjo, pohja ja häntä nappulaa kohti
+  c.fillStyle = 'rgba(0,0,0,0.22)';
+  roundRect(c, bx + rad * 0.06, by + rad * 0.1, bw, bh, pad * 0.5);
+  c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.96)';
+  roundRect(c, bx, by, bw, bh, pad * 0.5);
+  c.fill();
+  c.beginPath();
+  c.moveTo(tailX, by + bh * 0.42);
+  c.lineTo(tailX, by + bh * 0.78);
+  c.lineTo(tipX, tipY);
+  c.closePath();
+  c.fill();
+  c.strokeStyle = '#f5b3d2';
+  c.lineWidth = Math.max(2, rad * 0.08);
+  roundRect(c, bx, by, bw, bh, pad * 0.5);
+  c.stroke();
+
+  for (i = 0; i < bs.length; i++) {
+    b = bs[i];
+    var pr = b.rad * 0.86 * (1 + Math.sin(globalT * 4 + i) * 0.03);
+    var col = '#8a4dff', ring = '#6b2ed1';
+    if (b.item.act === 'boat') { col = '#4fa3ff'; ring = '#2c6fc4'; }
+    else if (b.item.kind !== 'finale') {
+      var room = hubRoomByKind(b.item.kind);
+      if (room) col = room.color;
+      ring = 'rgba(0,0,0,0.25)';
+    }
+    c.fillStyle = ring;
+    c.beginPath(); c.arc(b.x, b.y + pr * 0.12, pr, 0, Math.PI * 2); c.fill();
+    c.fillStyle = col;
+    c.beginPath(); c.arc(b.x, b.y, pr, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.3)';
+    c.beginPath(); c.arc(b.x - pr * 0.3, b.y - pr * 0.35, pr * 0.28, 0, Math.PI * 2); c.fill();
+    if (b.item.act === 'boat') {
+      drawBoat(c, b.x, b.y + pr * 0.3, pr * 1.25);
+    } else {
+      drawReplayArrow(c, b.x, b.y, pr * 0.55);
+      if (b.item.kind === 'finale') drawStar(c, b.x, b.y, pr * 0.16, globalT, 0);
+    }
+  }
+}
+
+// Pyöreä "uudestaan"-nuoli ↻
+function drawReplayArrow(c, x, y, r) {
+  var a1 = Math.PI * 0.2, a2 = Math.PI * 1.7;
+  c.strokeStyle = '#fff';
+  c.lineCap = 'round';
+  c.lineWidth = Math.max(2.5, r * 0.32);
+  c.beginPath();
+  c.arc(x, y, r, a1, a2);
+  c.stroke();
+  var ex = x + Math.cos(a2) * r, ey = y + Math.sin(a2) * r;
+  var tx = -Math.sin(a2), ty = Math.cos(a2);
+  var hs = r * 0.62;
+  c.fillStyle = '#fff';
+  c.beginPath();
+  c.moveTo(ex + tx * hs * 0.9, ey + ty * hs * 0.9);
+  c.lineTo(ex - ty * hs * 0.75, ey + tx * hs * 0.75);
+  c.lineTo(ex + ty * hs * 0.75, ey - tx * hs * 0.75);
+  c.closePath();
+  c.fill();
+  c.lineCap = 'butt';
+}
+
 // ---------- Maailma 2 ----------
 function hubWorld2Done() {
   var i;
@@ -802,6 +942,7 @@ function hubEnterWorld(w) {
   hubBgKey = '';
   hubPawn.path = [];
   hubApproach = null;
+  hubOffer = null;
   pos = w === 2 ? hubFind('B') : hubFind('G');
   hubPawn.c = pos.c;
   hubPawn.r = pos.r;

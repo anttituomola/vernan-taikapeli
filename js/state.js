@@ -216,4 +216,6 @@ var hubPlaying = null;
 var hubApproach = null;
 var hubPawn = { c: 1, r: 1, x: 0, y: 0, facing: 1, walkPhase: 0, path: [] };
 var hubToast = { kind: '', t: 0 };
+// Puhekupla läpäistyn huoneen tai linnan kohdalla: { c, r, items: [{ act: 'replay'|'boat', kind }] }
+var hubOffer = null;
 

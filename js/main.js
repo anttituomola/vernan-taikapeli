@@ -138,6 +138,11 @@ window.VT = {
   dragMove: taskDragMove,
   drop: taskDrop,
   world: function (w) { if (w) hubEnterWorld(w); return hubWorld; },
+  offer: function () { return hubOffer; },
+  hubTap: handleHubTap,
+  hubPawn: hubPawn,
+  hubLayout: hubLayout,
+  offerButtons: function () { return hubOfferButtons(hubLayout()); },
   resetProgress: resetProgress,
   info: function () {
     return {

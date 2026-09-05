@@ -47,6 +47,12 @@ konsolista `VT.resetProgress()`.
 Aloitus on labyrintti. Huoneet ovat portteja: jokainen on läpäistävä, jotta
 tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.
 
+**Uusinta:** läpäisty huone on kulkukelpoinen, joten sen voi ohittaa
+napauttamalla sen ohi. Kun nappula pysähtyy läpäistyyn huoneeseen, yksisarvinen
+ehdottaa puhekuplassa ↻-nappia: napautus pelaa kentän uudestaan, muualle
+napautus sulkee kuplan. Linnassa finaalin jälkeen kuplassa on vene (maailma 2)
+ja ↻ (finaali uudestaan).
+
 - **Metsä** — tähdet, puput, peikko, väriloitsut, laskutehtävä
 - **Puutarha** — hyppy, perhoset, pöllö, lasku + muisti
 - **Jää** — liukas ratsastus, hiutaleet, kettu, lumipallot
