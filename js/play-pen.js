@@ -1,13 +1,13 @@
 'use strict';
 
-// Taikakynä: saaren ensimmäinen kenttä. Pohjassa pitäminen kävelyttää prinsessaa
-// sormea kohti; rotkon reunalle hän pysähtyy. Kynänappi ottaa kynän käteen, ja
-// silloin piirretään siltoja ja ramppeja. Ympyrä myrskypilven ympärille vangitsee
-// sen kuplaan. Mustepullot täyttävät musteen. Sydämet käytössä. Ydin: pen-core.js.
+// Taikakynä: saaren ensimmäinen kenttä, rauhallinen harjoituskenttä ilman
+// vihollisia. Pohjassa pitäminen kävelyttää prinsessaa sormea kohti; rotkon
+// reunalle hän pysähtyy. Kynänappi ottaa kynän käteen, ja silloin piirretään
+// siltoja ja ramppeja. Mustepullot täyttävät musteen. Sydämet käytössä vain
+// rotkoon putoamisessa. Ydin: pen-core.js.
 
 var PEN_BOTTLES = 8;
 var penBottles = [];
-var penClouds = [];
 var penGround = [[0.0, 0.14], [0.19, 0.34], [0.40, 0.55], [0.60, 0.74], [0.80, 1.0]];
 var penRaised = { 2: 0.22 };   // segmentti 2 on korkea tasanne (osuus viewH:sta)
 var penFrame = { fx: 0.96, x: 0, open: false };
@@ -15,7 +15,6 @@ var penBottleDefs = [
   { fx: 0.07, fy: 0.10 }, { fx: 0.165, fy: 0.40 }, { fx: 0.26, fy: 0.12 }, { fx: 0.37, fy: 0.30 },
   { fx: 0.47, fy: 0.36 }, { fx: 0.575, fy: 0.12 }, { fx: 0.67, fy: 0.44 }, { fx: 0.90, fy: 0.12 }
 ];
-var penCloudDefs = [{ zA: 0.21, zB: 0.33, fx: 0.27 }, { zA: 0.61, zB: 0.73, fx: 0.67 }];
 
 function penSegY(i) {
   return groundTop - (penRaised[i] || 0) * viewH;
@@ -39,13 +38,8 @@ function initPen() {
   var i;
   setupRunLevel(17, '#fdf6e3');
   penCoreReset();
-  penHooks.bubbleTargets = function () { return penClouds; };
   penBottles = [];
   for (i = 0; i < PEN_BOTTLES; i++) penBottles.push({ ax: 0, ay: 0, collected: false, phase: Math.random() * Math.PI * 2 });
-  penClouds = [];
-  for (i = 0; i < penCloudDefs.length; i++) {
-    penClouds.push({ zA: penCloudDefs[i].zA, zB: penCloudDefs[i].zB, x: penCloudDefs[i].fx * worldW, y: groundTop - viewH * 0.13, dir: 1, bubbleT: 0, t: i });
-  }
   layoutPen();
   tasks = [makeTask(0.30, 'shadow'), makeTask(0.66, 'pattern')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
@@ -72,7 +66,6 @@ function resizePen(ratio) {
   var i;
   princess.x *= ratio;
   layoutPen();
-  for (i = 0; i < penClouds.length; i++) { penClouds[i].x *= ratio; penClouds[i].y = groundTop - viewH * 0.13; }
   penCoreResize(ratio);
 }
 
@@ -110,27 +103,6 @@ function updatePen(dt) {
   updateTasks(dt);
   var busy = puzzleBusy();
   penCoreUpdate(dt);
-
-  // Myrskypilvet liikkuvat pään korkeudella; kuplassa oleva ei liiku eikä satuta
-  for (i = 0; i < penClouds.length; i++) {
-    var cl = penClouds[i];
-    cl.t += dt;
-    if (cl.bubbleT > 0) { cl.bubbleT -= dt; continue; }
-    if (!busy && !celebrating) {
-      cl.x += cl.dir * viewW * 0.05 * dt;
-      if (cl.x < cl.zA * worldW) { cl.x = cl.zA * worldW; cl.dir = 1; }
-      if (cl.x > cl.zB * worldW) { cl.x = cl.zB * worldW; cl.dir = -1; }
-    }
-    var cdx = cl.x - princess.x, cdy = cl.y - (princess.y - viewH * 0.1);
-    if (!celebrating && cdx * cdx + cdy * cdy < viewH * 0.075 * viewH * 0.075) {
-      if (loseHeart()) {
-        penStun = 0.8;
-        princess.x = Math.max(viewH * 0.05, princess.x - penDir * viewW * 0.04);
-        spawnSparkles(princess.x, princess.y - viewH * 0.1, 10, '#9aa0b8');
-      }
-    }
-  }
-
   if (!busy && !celebrating) penPrincessStep(dt, { onFall: penFell });
   blockPrincessAtTasks();
 
@@ -169,32 +141,6 @@ function drawPenFrame(b, x, baseY, h) {
   b.fillRect(x - h * 0.01, baseY - h * 0.05, h * 0.02, h * 0.05);
 }
 
-function drawPenCloud(c, cl) {
-  var x = cl.x - camX, y = cl.y, r = viewH * 0.04;
-  if (x < -r * 4 || x > viewW + r * 4) return;
-  var bubbled = cl.bubbleT > 0;
-  c.fillStyle = bubbled ? '#c9c4dc' : '#7d7a99';
-  cloudShape(c, x, y, r * 0.55);
-  c.strokeStyle = '#4a4560';
-  c.lineWidth = Math.max(1.5, r * 0.08);
-  c.beginPath(); c.arc(x, y, r * 0.66, 0, Math.PI * 2); c.stroke();
-  c.fillStyle = '#fff';
-  c.beginPath(); c.arc(x - r * 0.28, y - r * 0.1, r * 0.16, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + r * 0.28, y - r * 0.1, r * 0.16, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#222';
-  c.beginPath(); c.arc(x - r * 0.28, y - r * 0.1, r * 0.07, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + r * 0.28, y - r * 0.1, r * 0.07, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#222';
-  c.lineWidth = Math.max(1.5, r * 0.07);
-  c.beginPath();
-  if (bubbled) c.arc(x, y + r * 0.15, r * 0.22, 0.2, Math.PI - 0.2);
-  else c.arc(x, y + r * 0.45, r * 0.22, Math.PI + 0.3, Math.PI * 2 - 0.3);
-  c.stroke();
-  if (!bubbled) {
-    c.fillStyle = '#ffe94f';
-    c.beginPath(); c.moveTo(x - r * 0.1, y + r * 0.5); c.lineTo(x + r * 0.15, y + r * 0.5); c.lineTo(x, y + r * 1.0); c.closePath(); c.fill();
-  }
-}
 
 function drawPenFrameGlow(c) {
   var x = penFrame.x - camX, h = viewH;
@@ -231,7 +177,6 @@ function drawPen() {
     if (penBottles[i].collected) continue;
     drawInkBottle(ctx, penBottles[i].ax - camX, penBottles[i].ay + Math.sin(penBottles[i].phase) * viewH * 0.012, viewH * 0.024);
   }
-  for (i = 0; i < penClouds.length; i++) drawPenCloud(ctx, penClouds[i]);
   drawPenBubblesLayer(ctx);
   drawPenPrincess(ctx);
   drawParticlesLayer(ctx);

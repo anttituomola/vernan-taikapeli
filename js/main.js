@@ -223,7 +223,7 @@ window.VT = {
   homeMove: homeMove,
   homeUp: homeUp,
   homeState: function () { return { stars: starCoins, items: homeItems, bunnies: homeBunnies, drag: homeDrag, cells: homeShopCells() }; },
-  pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, clouds: penClouds, drops: penDrops, frame: penFrame }; },
+  pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, mode: penMode, bottles: penBottles, frame: penFrame }; },
   penStart: penStart,
   penMode: function (on) { if (on !== undefined) penSetMode(on); return penMode; },
   penMove: penMove,

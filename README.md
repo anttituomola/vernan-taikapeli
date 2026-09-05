@@ -143,8 +143,8 @@ Sotkumörkö on saaren vartija.
   kävelee, kun kynä laitetaan pois; liian jyrkkää viivaa hän ei kiipeä. Muste
   (palkki ylhäällä) kuluu viivan pituuden mukaan ja palautuu ajan kanssa; viivat
   haihtuvat 8 sekunnissa. Mustepullot täyttävät musteen ja avaavat lopun
-  taulukehyksen. Ympyrä myrskypilven ympärille vangitsee sen kuplaan 6
-  sekunniksi. Tehtävät: muoto varjoon, kuvio.
+  taulukehyksen. Kentässä ei ole vihollisia: se on rauhallinen harjoituskenttä,
+  jossa sydämen vie vain rotkoon putoaminen. Tehtävät: muoto varjoon, kuvio.
 - **Sadesuoja** ♥ — sadealueilla taivaalta tippuu mustetahroja prinsessan
   lähelle. Piirretty viiva pään päällä toimii sateenvarjona: tahra läiskähtää
   viivaan. Sama muste sillaksi ja suojaksi. Tehtävät: laske, samanlainen.
