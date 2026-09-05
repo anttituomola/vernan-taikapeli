@@ -95,6 +95,7 @@ function pointerMove(e) {
   if (mode !== 'play' || !holding) return;
   lastPX = p.x; lastPY = p.y;
   if (Math.abs(p.x - holdSX) + Math.abs(p.y - holdSY) > 22) holdMoved = true;
+  if (phaseNow().control === 'draw') { penMove(p.x, p.y); return; }
   if (phaseNow().control === 'ride') setWalkTarget(p.x, p.y);
   else holdWorldX = p.x + camX;
 }
@@ -109,6 +110,7 @@ function pointerUp(e) {
     holding = false;
     return;
   }
+  if (mode === 'play' && phaseNow().control === 'draw' && holding) penEnd();
   if (mode === 'play' && phaseNow().usesWand && !puzzleBusy() && holding && !holdMoved && (globalT - holdStartG) < 0.22) {
     shootWand(lastPX, lastPY);
   }
@@ -191,6 +193,10 @@ window.VT = {
   reveal: function () { return seaReveal; },
   rainbow: function () { return { earned: rainbowEarned(), shown: rainbowShown }; },
   offer: function () { return hubOffer; },
+  pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, clouds: penClouds, drops: penDrops, frame: penFrame }; },
+  penStart: penStart,
+  penMove: penMove,
+  penEnd: penEnd,
   down: pointerDown,
   move: pointerMove,
   up: pointerUp,

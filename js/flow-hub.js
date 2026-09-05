@@ -458,6 +458,8 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.fillStyle = '#ffffff';
     cloudShape(c, x, y + s * 0.05, s * 0.08);
     drawStar(c, x + s * 0.1, y - s * 0.17, s * 0.07, 0, 0);
+  } else if (kind === 'pen') {
+    drawPenGlyph(c, x, y + s * 0.02, s * 0.3, '#ffffff');
   } else if (kind === 'moon') {
     c.fillStyle = '#fff1a8';
     c.beginPath(); c.arc(x, y, s * 0.17, 0, Math.PI * 2); c.fill();
@@ -576,6 +578,7 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  if (hubWorld === 4) return 'paper';
   if (hubWorld === 3) {
     if (r <= 2) return 'reef';
     if (r <= 4) return 'nightwood';
@@ -608,7 +611,8 @@ var HUB_TILE_COLORS = {
   reef: ['#3aa7d9', '#3399cc'],
   nightwood: ['#232a5e', '#1e2454'],
   clouds: ['#c9dcff', '#bcd2fb'],
-  moon: ['#3a3560', '#332e58']
+  moon: ['#3a3560', '#332e58'],
+  paper: ['#fbf1d8', '#f5e8c8']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
@@ -705,6 +709,13 @@ function drawHubTile(b, band, x, y, s, c, r) {
     b.fillStyle = 'rgba(255,255,255,0.92)';
     cloudShape(b, cx + (rnd - 0.5) * s * 0.3, y + s * 0.62, s * 0.11);
     if (rnd2 < 0.45) drawStar(b, x + s * 0.75, y + s * 0.28, s * 0.07, 0, 0);
+  } else if (band === 'paper') {
+    b.strokeStyle = 'rgba(120,100,160,0.45)';
+    b.lineWidth = Math.max(1, s * 0.03);
+    if (rnd < 0.35) { b.beginPath(); b.arc(cx + (rnd2 - 0.5) * s * 0.3, cy, s * 0.14, 0, Math.PI * 1.7); b.stroke(); }
+    else if (rnd < 0.6) drawStar(b, cx + (rnd2 - 0.5) * s * 0.4, cy, s * 0.1, 0, 0);
+    else if (rnd < 0.8) { b.beginPath(); b.moveTo(x + s * 0.2, y + s * 0.7); b.quadraticCurveTo(x + s * 0.5, y + s * 0.2, x + s * 0.8, y + s * 0.7); b.stroke(); }
+    else drawInkDrop(b, cx, cy, s * 0.1);
   } else if (band === 'moon') {
     b.fillStyle = 'rgba(200,200,240,0.25)';
     b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, cy + (rnd2 - 0.5) * s * 0.4, s * 0.16, 0, Math.PI * 2); b.fill();

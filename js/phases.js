@@ -180,6 +180,18 @@ var PHASES = {
     renderBg: function (b, w, h) { renderMoonBg(b, w, h); },
     respawn: function () { respawnMoon(); }
   },
+  pen: {
+    level: 17, control: 'draw', usesJump: false, usesWand: false, usesHearts: true,
+    next: null, bgColor: '#fdf6e3',
+    ambient: 'sparkle', fg: null,
+    init: function () { initPen(); },
+    update: function (dt) { updatePen(dt); },
+    draw: function () { drawPen(); },
+    tap: function (x, y) { penStart(x, y); },
+    resize: function (ratio) { resizePen(ratio); },
+    renderBg: function (b, w, h) { renderPenBg(b, w, h); },
+    respawn: function () { respawnPen(); }
+  },
   finale: {
     level: 9, control: 'run', usesJump: true, usesWand: true, usesHearts: true,
     next: null, bgColor: '#2b1040', hidden: true, sparkLife: 1.0, celebrateMs: 7000,

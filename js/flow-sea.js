@@ -9,10 +9,11 @@
 var ISLANDS = [
   { world: 1, name: 'Linnasaari', fx: 0.24, fy: 0.70, size: 1.0, finaleKind: 'finale', deco: 'castle' },
   { world: 2, name: 'Karkkisaari', fx: 0.55, fy: 0.58, size: 0.82, finaleKind: 'tower', deco: ['beach', 'candy', 'tower'] },
-  { world: 3, name: 'Kuutamosaari', fx: 0.84, fy: 0.76, size: 0.82, finaleKind: 'moon', deco: ['reef', 'nightwood', 'clouds'] }
+  { world: 3, name: 'Kuutamosaari', fx: 0.84, fy: 0.76, size: 0.82, finaleKind: 'moon', deco: ['reef', 'nightwood', 'clouds'] },
+  { world: 4, name: 'Taikakynän saari', fx: 0.90, fy: 0.47, size: 0.6, finaleKind: 'pen', deco: ['pen'] }
 ];
 // Sumuiset saaret vihjaavat tulevista maailmoista
-var SEA_FOG = [{ fx: 0.89, fy: 0.47, size: 0.5 }];
+var SEA_FOG = [{ fx: 0.10, fy: 0.45, size: 0.45 }];
 var RAINBOW_COLORS = ['#ff5a5a', '#ff9f3a', '#ffe14d', '#5fd36b', '#4aa8ff', '#6f5cff', '#c46bff'];
 
 var seaBoat = { x: 0, y: 0, island: 1, target: null, facing: 1, moving: false };
@@ -326,7 +327,7 @@ function drawIsland(b, isl, foggy) {
     drawFlower(b, p.x - p.r * 0.3, p.y + p.r * 0.45, p.r * 0.08, '#ff7bac');
     drawFlower(b, p.x + p.r * 0.35, p.y + p.r * 0.5, p.r * 0.08, '#ffe27a');
   } else if (isl.deco && isl.deco.length) {
-    xs = [-0.6, 0.02, 0.64];
+    xs = isl.deco.length === 1 ? [0.02] : [-0.6, 0.02, 0.64];
     for (k = 0; k < isl.deco.length && k < 3; k++) {
       drawHubRoomIcon(b, isl.deco[k], p.x + xs[k] * p.r, p.y - p.r * 0.1 + (k === 1 ? -p.r * 0.22 : p.r * 0.08), p.r * 1.9);
     }

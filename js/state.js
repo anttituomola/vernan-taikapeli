@@ -219,10 +219,24 @@ var HUB_ROOMS3 = {
   'p': { kind: 'moon', name: 'Kuun vartija', color: '#6b5fb0' }
 };
 var HUB_ORDER3 = ['reef', 'nightwood', 'clouds', 'moon'];
+
+// Maailma 4 = Taikakynän saari (prototyyppi: yksi piirtokenttä, joka on myös vartija)
+var HUB_MAP4 = [
+  '#########',
+  '#B......#',
+  '#######.#',
+  '#q......#',
+  '#########'
+];
+var HUB_ROOMS4 = {
+  'q': { kind: 'pen', name: 'Taikakynä', color: '#8a4dff' }
+};
+var HUB_ORDER4 = ['pen'];
 var HUB_WORLDS = {
   1: { map: HUB_MAP, rooms: HUB_ROOMS, order: HUB_ORDER },
   2: { map: HUB_MAP2, rooms: HUB_ROOMS2, order: HUB_ORDER2 },
-  3: { map: HUB_MAP3, rooms: HUB_ROOMS3, order: HUB_ORDER3 }
+  3: { map: HUB_MAP3, rooms: HUB_ROOMS3, order: HUB_ORDER3 },
+  4: { map: HUB_MAP4, rooms: HUB_ROOMS4, order: HUB_ORDER4 }
 };
 var hubWorld = 1;
 function hubMap() { return (HUB_WORLDS[hubWorld] || HUB_WORLDS[1]).map; }
