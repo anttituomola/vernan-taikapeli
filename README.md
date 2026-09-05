@@ -130,7 +130,9 @@ Aukeaa, kun Arvoitusten torni on läpäisty. Kuun vartija on saaren vartija.
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
 
-**Kartta**-nappi palauttaa labyrinttiin.
+**Kartta**-nappi (🏠) palauttaa kentästä saaren labyrinttiin, ja labyrintin
+**vene**-nappi (⛵ vasemmassa yläkulmassa) palauttaa saaristokartalle. Samaan
+paikkaan pääsee myös kävelemällä satamaruutuun.
 
 ## Ohjaus
 

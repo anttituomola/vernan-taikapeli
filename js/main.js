@@ -129,6 +129,11 @@ document.getElementById('karttaBtn').addEventListener('click', function () {
   showHub();
 });
 
+// Vene-nappi: saaren sokkelosta takaisin saaristokartalle
+document.getElementById('seaBtn').addEventListener('click', function () {
+  if (mode === 'hub') showSea();
+});
+
 document.getElementById('replayBtn').addEventListener('click', function () {
   phaseNow().init();
 });

@@ -36,7 +36,8 @@ html, body {
     text-align: center;
     letter-spacing: 0.04em;
   }
-  #karttaBtn {
+  /* Kartta-nappi (kentästä saaren sokkeloon) ja vene-nappi (sokkelosta merelle) */
+  #karttaBtn, #seaBtn {
     position: fixed;
     top: 1.5vmin; left: 1.5vmin;
     display: none;

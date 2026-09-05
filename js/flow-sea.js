@@ -64,7 +64,7 @@ function seaHarbor(isl) {
 }
 
 function showSea() {
-  var isl, h, i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'karttaBtn'];
+  var isl, h, i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'karttaBtn', 'seaBtn'];
   mode = 'sea';
   running = false;
   holding = false;
