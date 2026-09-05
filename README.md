@@ -28,12 +28,13 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-finale.js` — linnan finaali
 - `js/tasks-drag.js` — raahaustehtävät (muoto varjoon, täydennä kuva) ja muistipeli
 - `js/play-beach.js`, `play-candy.js`, `play-tower.js` — maailma 2 (vaiheet 10–12)
+- `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-moon.js` — maailma 3 (vaiheet 13–16)
 - `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
 
 **Uusi vaihe** = tiedosto `js/play-….js`, rivi `PHASES`-olioon (phases.js),
 huone `HUB_ROOMS`-karttaan ja kirjain `HUB_MAP`iin sekä `HUB_ORDER`iin
-(maailmassa 2 vastaavat `HUB_MAP2`, `HUB_ROOMS2`, `HUB_ORDER2`).
+(maailmat 2 ja 3: `HUB_MAP2/3`, `HUB_ROOMS2/3`, `HUB_ORDER2/3`, kootaan `HUB_WORLDS`-olioon).
 **Uusi saari** = rivi `ISLANDS`-taulukkoon (flow-sea.js: sijainti, vartijahuone
 `finaleKind`, koristeet) ja oma sokkelo `hubMap()/hubRooms()/hubOrder()`-valintoihin.
 Silmukka, syöte ja koko kulkevat `PHASES`-koukkujen kautta, joten muuta
@@ -105,6 +106,26 @@ Arvoitusten torni on saaren vartija.
   täydennä kuva, muoto varjoon, muisti 4/4), jalokivet hyllyillä ja heiluvat
   kattokruunut, joiden alta kuljetaan kun ne ovat sivulla.
 
+### Kuutamosaari (maailma 3)
+
+Aukeaa, kun Arvoitusten torni on läpäisty. Kuun vartija on saaren vartija.
+
+- **Merenpohja** ♥ — uinti: pidä pohjassa uidaksesi sormea kohti, **↑** potkaisee
+  ylös. Helmet simpukoista, meduusat pistävät (kelluvat ylös–alas), virtaukset
+  työntävät sivulle. Arkku aukeaa, kun helmet on kerätty. Tehtävät: parit 4,
+  laske.
+- **Kuutamometsä** ♥ — ratsastus yössä: kiiltomadot vilkkuvat ja ne saa kiinni
+  vain loistaessa (ajoitus). Pöllö huhuilee ja silmät hehkuvat 1,2 s, sitten se
+  syöksyy kohtaan jossa olit — siirry pois. Tehtävät: muisti 4/4, erilainen.
+- **Pilvipolku** ♥ — tasohyppely pilvillä: haihtuvat pilvet katoavat 0,7 s
+  seisomisen jälkeen (palaavat 2,5 s), pinkit pilvet pomputtavat, myrskypallot
+  vierivät (hyppää yli), kuiluista putoaa taivaaseen. Tehtävät: täydennä kuva,
+  vertaa.
+- **Kuun vartija** ♥ — neljä tehtäväporttia (rytmi, muoto varjoon, vähennys,
+  muisti 5/4). Tähtiä putoaa: hehku maassa varoittaa 0,9 s ennen osumaa.
+  Kuunkivet kerätään kiviltä, ja kuun kasvot heräävät tehtävä kerrallaan.
+  Ovi aukeaa, kun kaikki tehtävät ja kivet on tehty.
+
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
@@ -167,6 +188,10 @@ väärästä vastauksesta tulee vain ravistus.
 - Rannikko: aallon väli `6 + Math.random() * 3`, rapujen nopeus `viewW * 0.06`
 - Karkkilaakso: pompun voima `viewH * 1.15` (platformer.js), kuulakarkkien nopeus `viewW * 0.07`
 - Torni: kattokruunujen heilunta `speed: 1.1`, kulma `0.55`
+- Merenpohja: meduusojen nopeus/amplitudi `jellyDefs`, virtauksen voima `viewW * 0.35`, uinnin kiihtyvyys `viewW * 0.42` / `viewH * 0.55`
+- Kuutamometsä: kiiltomadon valoaika `GLOW_ON = 1.5` jaksosta `GLOW_CYCLE = 2.9`, pöllön varoitus `1.2` s, syöksyn nopeus `dt * 1.3`
+- Pilvipolku: haihtumisaika `PUFF_STAND = 0.7`, paluu `PUFF_BACK = 2.5`, myrskypallot `viewW * 0.07`
+- Kuun vartija: tähtien väli `1.8 + Math.random() * 0.9`, varoitus `0.9` s, putoamiskiihtyvyys `viewH * 1.3`
 
 ## Tekniikka
 

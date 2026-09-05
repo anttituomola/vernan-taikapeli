@@ -201,14 +201,39 @@ var HUB_ROOMS2 = {
   'k': { kind: 'tower', name: 'Arvoitusten torni', color: '#9b7bff' }
 };
 var HUB_ORDER2 = ['beach', 'candy', 'tower'];
+
+// Maailma 3 = Kuutamosaari. Kuun vartija (p) on saaren vartijahuone.
+var HUB_MAP3 = [
+  '###########',
+  '#B.......m#',
+  '#########.#',
+  '#n........#',
+  '#.#########',
+  '#o.......p#',
+  '###########'
+];
+var HUB_ROOMS3 = {
+  'm': { kind: 'reef', name: 'Merenpohja', color: '#2f9fd6' },
+  'n': { kind: 'nightwood', name: 'Kuutamometsä', color: '#3b3f8c' },
+  'o': { kind: 'clouds', name: 'Pilvipolku', color: '#a9c8ff' },
+  'p': { kind: 'moon', name: 'Kuun vartija', color: '#6b5fb0' }
+};
+var HUB_ORDER3 = ['reef', 'nightwood', 'clouds', 'moon'];
+var HUB_WORLDS = {
+  1: { map: HUB_MAP, rooms: HUB_ROOMS, order: HUB_ORDER },
+  2: { map: HUB_MAP2, rooms: HUB_ROOMS2, order: HUB_ORDER2 },
+  3: { map: HUB_MAP3, rooms: HUB_ROOMS3, order: HUB_ORDER3 }
+};
 var hubWorld = 1;
-function hubMap() { return hubWorld === 2 ? HUB_MAP2 : HUB_MAP; }
-function hubRooms() { return hubWorld === 2 ? HUB_ROOMS2 : HUB_ROOMS; }
-function hubOrder() { return hubWorld === 2 ? HUB_ORDER2 : HUB_ORDER; }
+function hubMap() { return (HUB_WORLDS[hubWorld] || HUB_WORLDS[1]).map; }
+function hubRooms() { return (HUB_WORLDS[hubWorld] || HUB_WORLDS[1]).rooms; }
+function hubOrder() { return (HUB_WORLDS[hubWorld] || HUB_WORLDS[1]).order; }
 function hubRoomByKind(kind) {
-  var ch;
-  for (ch in HUB_ROOMS) if (HUB_ROOMS[ch].kind === kind) return HUB_ROOMS[ch];
-  for (ch in HUB_ROOMS2) if (HUB_ROOMS2[ch].kind === kind) return HUB_ROOMS2[ch];
+  var w, ch, rooms;
+  for (w in HUB_WORLDS) {
+    rooms = HUB_WORLDS[w].rooms;
+    for (ch in rooms) if (rooms[ch].kind === kind) return rooms[ch];
+  }
   return null;
 }
 var hubCleared = {};

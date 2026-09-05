@@ -438,6 +438,29 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath(); c.moveTo(x - s * 0.14, y - s * 0.12); c.lineTo(x + s * 0.14, y - s * 0.12); c.lineTo(x, y - s * 0.3); c.closePath(); c.fill();
     c.fillStyle = '#ffe27a';
     c.fillRect(x - s * 0.03, y + s * 0.02, s * 0.06, s * 0.08);
+  } else if (kind === 'reef') {
+    drawReefPearl(c, x, y, s * 0.13);
+  } else if (kind === 'nightwood') {
+    var ng = c.createRadialGradient(x, y, s * 0.02, x, y, s * 0.2);
+    ng.addColorStop(0, 'rgba(230,255,150,0.95)');
+    ng.addColorStop(1, 'rgba(230,255,150,0)');
+    c.fillStyle = ng;
+    c.beginPath(); c.arc(x, y, s * 0.2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#e8ff7a';
+    c.beginPath(); c.arc(x, y + s * 0.02, s * 0.07, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.85)';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.arc(x - s * 0.08, y - s * 0.05, s * 0.07, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+    c.beginPath(); c.arc(x + s * 0.08, y - s * 0.05, s * 0.07, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+  } else if (kind === 'clouds') {
+    c.fillStyle = '#ffffff';
+    cloudShape(c, x, y + s * 0.05, s * 0.08);
+    drawStar(c, x + s * 0.1, y - s * 0.17, s * 0.07, 0, 0);
+  } else if (kind === 'moon') {
+    c.fillStyle = '#fff1a8';
+    c.beginPath(); c.arc(x, y, s * 0.17, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#6b5fb0';
+    c.beginPath(); c.arc(x + s * 0.07, y - s * 0.03, s * 0.14, 0, Math.PI * 2); c.fill();
   } else if (kind === 'bridge') {
     var cols = ['#ff5f7e', '#ffe94f', '#5fa8ff'];
     c.lineWidth = Math.max(2, s * 0.05);
@@ -551,6 +574,11 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  if (hubWorld === 3) {
+    if (r <= 2) return 'reef';
+    if (r <= 4) return 'nightwood';
+    return c >= 8 ? 'moon' : 'clouds';
+  }
   if (hubWorld === 2) {
     if (r <= 2) return 'beach';
     if (r <= 4) return 'candy';
@@ -574,7 +602,11 @@ var HUB_TILE_COLORS = {
   swamp: ['#3e6e4a', '#356240'],
   beach: ['#f3dfae', '#e9d09a'],
   candy: ['#ffb3d9', '#ffc4e2'],
-  tower: ['#4a3f7a', '#3f3568']
+  tower: ['#4a3f7a', '#3f3568'],
+  reef: ['#3aa7d9', '#3399cc'],
+  nightwood: ['#232a5e', '#1e2454'],
+  clouds: ['#c9dcff', '#bcd2fb'],
+  moon: ['#3a3560', '#332e58']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
@@ -651,6 +683,30 @@ function drawHubTile(b, band, x, y, s, c, r) {
     b.fillStyle = '#5a4f8f';
     b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, y + s * 0.85, s * 0.22, Math.PI, 0); b.fill();
     if (rnd2 < 0.5) drawGem(b, cx + (rnd - 0.5) * s * 0.4, cy, s * 0.14, GEM_COLORS[Math.floor(rnd * GEM_COLORS.length)]);
+  } else if (band === 'reef') {
+    b.strokeStyle = 'rgba(255,255,255,0.35)';
+    b.lineWidth = Math.max(1, s * 0.04);
+    b.beginPath(); b.moveTo(x + s * 0.1, y + s * 0.35 + rnd * s * 0.2); b.quadraticCurveTo(x + s * 0.5, y + s * 0.25 + rnd * s * 0.2, x + s * 0.9, y + s * 0.35 + rnd * s * 0.2); b.stroke();
+    if (rnd2 < 0.4) drawReefPearl(b, cx + (rnd - 0.5) * s * 0.4, y + s * 0.7, s * 0.09);
+    else if (rnd2 < 0.7) drawKelp(b, cx + (rnd - 0.5) * s * 0.3, y + s * 0.95, s * 0.55);
+    else if (rnd2 < 0.85) drawCoral(b, cx, y + s * 0.95, s * 0.3, rnd < 0.5 ? '#ff7a9c' : '#ffb46b');
+  } else if (band === 'nightwood') {
+    drawPine(b, cx + (rnd - 0.5) * s * 0.3, y + s * 0.95, s * 0.65, rnd2 < 0.5 ? '#16204a' : '#0e1538');
+    if (rnd2 < 0.45) {
+      var fg2 = b.createRadialGradient(x + s * 0.72, y + s * 0.35, s * 0.01, x + s * 0.72, y + s * 0.35, s * 0.14);
+      fg2.addColorStop(0, 'rgba(230,255,150,0.95)');
+      fg2.addColorStop(1, 'rgba(230,255,150,0)');
+      b.fillStyle = fg2;
+      b.beginPath(); b.arc(x + s * 0.72, y + s * 0.35, s * 0.14, 0, Math.PI * 2); b.fill();
+    }
+  } else if (band === 'clouds') {
+    b.fillStyle = 'rgba(255,255,255,0.92)';
+    cloudShape(b, cx + (rnd - 0.5) * s * 0.3, y + s * 0.62, s * 0.11);
+    if (rnd2 < 0.45) drawStar(b, x + s * 0.75, y + s * 0.28, s * 0.07, 0, 0);
+  } else if (band === 'moon') {
+    b.fillStyle = 'rgba(200,200,240,0.25)';
+    b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, cy + (rnd2 - 0.5) * s * 0.4, s * 0.16, 0, Math.PI * 2); b.fill();
+    if (rnd2 < 0.5) drawMoonStone(b, cx + (rnd - 0.5) * s * 0.4, y + s * 0.7, s * 0.1);
   } else {
     b.strokeStyle = '#8bbf6a';
     b.lineWidth = Math.max(1, s * 0.05);
