@@ -225,7 +225,13 @@ haluamaasi kohtaan, niin tähdet veloitetaan. Kaupan päälle palautettu tavara
 peruu oston. Liian kallis kortti ravistaa. Kauppa on sivutettu, sivua
 vaihdetaan alareunan nuolista. Tavarat ovat siinä huoneessa, johon ne on
 tuotu, ja niitä voi raahata minne vain (seinätavarat seinälle, lattiatavarat
-lattialle). Napautus tavaraan tekee
+lattialle). **Siirto ja varasto:** tavara raahataan **ovelle**, niin se muuttaa
+toiseen huoneeseen (ilmestyy sen oven viereen); tavara raahataan **kaupan
+päälle**, niin se menee varastoon, ja sen kortissa näkyy laatikko. Varastosta
+tavaran saa takaisin raahaamalla kortista huoneeseen ilmaiseksi.
+**Maalit ja rusetit** ovat kaupan viimeisellä sivulla, ilmaisia: maalipurkki
+raahataan seinälle tai lattialle, ja pinta vaihtaa väriä (huoneittain, myös
+lattialista); rusetti raahataan pupun päähän. Maalit ja rusetit tallentuvat. Napautus tavaraan tekee
 jotain: lamppu ja valosarja syttyvät, soittorasia ja piano soittavat, kello
 lyö, pallo pyörii, keinuhevonen keinuu, arkku aukeaa, kakun kynttilä sammuu,
 akvaarion kalat säntäävät, teekannu höyryää. Puput reagoivat: peti nukuttaa
@@ -322,7 +328,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Kuutamometsä: kiiltomadon valoaika `GLOW_ON = 1.5` jaksosta `GLOW_CYCLE = 2.9`, pöllön varoitus `1.2` s, syöksyn nopeus `dt * 1.3`
 - Pilvipolku: haihtumisaika `PUFF_STAND = 0.7`, paluu `PUFF_BACK = 2.5`, myrskypallot `viewW * 0.07`
 - Kuun vartija: tähtien väli `1.8 + Math.random() * 0.9`, varoitus `0.9` s, putoamiskiihtyvyys `viewH * 1.3`
-- Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js), kaupan sivukoko `HOME_SHOP_PAGE`, huoneet `HOME_ROOMS`
+- Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js), kaupan sivukoko `HOME_SHOP_PAGE`, huoneet `HOME_ROOMS`, maalit `HOME_PAINTS`, rusetit `HOME_BOWS`
 - Sadesuoja: tahrojen väli `0.8 + Math.random() * 0.6`, alueet `rainZones`
 - Pupusilta: pupun nopeus `viewW * 0.14`, lähtöetäisyys `viewW * 0.45`
 - Sotkumörkö: heittoväli `2.4 + Math.random() * 1.2`, leijunta `1.2` s, muodontunnistus `penClassify` (pen-core.js: kulma `0.87` rad, pyöreys `0.13`)

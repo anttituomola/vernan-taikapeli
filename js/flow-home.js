@@ -35,6 +35,20 @@ var HOME_ITEMS = [
 // Huoneet: 0 = sali (ovi oikealla), 1 = tornihuone (ovi vasemmalla)
 var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }];
 var HOME_SHOP_PAGE = 10;
+// Maalit: purkki raahataan seinälle (wall-liuku) tai lattialle (floor-liuku). Ilmaisia.
+var HOME_PAINTS = [
+  { id: 'lilac', pot: '#c9a0ff', wall: ['#f3e9ff', '#e2d2f5'], floor: ['#e2b98a', '#c48f5c'] },
+  { id: 'pink', pot: '#ff7bac', wall: ['#ffe6f2', '#ffc4dd'], floor: ['#f2c6d8', '#d99ab5'] },
+  { id: 'sky', pot: '#5fa8ff', wall: ['#e6f4ff', '#bfe0ff'], floor: ['#b9d4ee', '#8fb3d9'] },
+  { id: 'mint', pot: '#6fd66f', wall: ['#e8fff0', '#bff0d0'], floor: ['#c8e6c0', '#9ccc94'] },
+  { id: 'sun', pot: '#ffd24f', wall: ['#fff7d6', '#ffe7a0'], floor: ['#f0d59a', '#d9b26a'] },
+  { id: 'night', pot: '#3a3a8a', wall: ['#2d2a6a', '#4a3f8a'], floor: ['#a9a6c8', '#7a7898'] },
+  { id: 'wood', pot: '#a9743f', wall: ['#f7ead2', '#e6cfa8'], floor: ['#c98b4a', '#8a5a30'] }
+];
+var HOME_BOWS = ['#ff7bac', '#5fa8ff', '#ffd24f'];
+function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 } }; }
+var homeDecor = homeDecorDefault();   // huoneen seinä- ja lattiamaali (indeksi HOME_PAINTS)
+var homeBows = [-1, -1, -1];          // pupujen rusetit (indeksi HOME_BOWS, -1 = ei)
 var homeRoomIdx = 0;
 var homeShopPage = 0;
 var homeBunnies = [];
@@ -61,9 +75,13 @@ function homeHas(id) {
   for (i = 0; i < homeItems.length; i++) if (homeItems[i].id === id) return homeItems[i];
   return null;
 }
-// Tavara tässä huoneessa (vanhat tallennukset: huone puuttuu = sali)
+// Tavara tässä huoneessa (vanhat tallennukset: huone puuttuu = sali; -1 = varastossa)
 function homeItemRoom(it) {
-  return it.room || 0;
+  return it.room === undefined ? 0 : it.room;
+}
+function homeStored(id) {
+  var it = homeHas(id);
+  return it && homeItemRoom(it) === -1 ? it : null;
 }
 function homeHasHere(id) {
   var it = homeHas(id);
@@ -96,7 +114,7 @@ function showHome() {
   document.body.style.background = '#e8dcf5';
   lastTime = 0;
   if (homeBunnies.length === 0) {
-    for (i = 0; i < 3; i++) homeBunnies.push({ fx: 0.15 + i * 0.2, fy: 0.72 + (i % 2) * 0.12, tx: 0, ty: 0, hop: 0, earT: i, state: 'wander', timer: 1 + i, moving: false });
+    for (i = 0; i < 3; i++) homeBunnies.push({ fx: 0.15 + i * 0.2, fy: 0.72 + (i % 2) * 0.12, tx: 0, ty: 0, hop: 0, earT: i, state: 'wander', timer: 1 + i, moving: false, bow: homeBows[i] });
     for (i = 0; i < 3; i++) { homeBunnies[i].tx = homeBunnies[i].fx; homeBunnies[i].ty = homeBunnies[i].fy; }
   }
   if (homeFish.length === 0) {
@@ -125,24 +143,35 @@ function homeGoRoom(idx) {
 }
 
 // ---------- Kauppa ----------
+// Viimeinen sivu on maalit ja rusetit
 function homeShopPages() {
-  return Math.ceil(HOME_ITEMS.length / HOME_SHOP_PAGE);
+  return Math.ceil(HOME_ITEMS.length / HOME_SHOP_PAGE) + 1;
+}
+function homeShopIsPaintPage() {
+  return homeShopPage === homeShopPages() - 1;
 }
 
+// Kortit: { def } huonekalu, { paint } maalipurkki tai { bow } rusetti
 function homeShopCells() {
   var s = homeShopBox(), cells = [], i, k, cols = 2, rows = HOME_SHOP_PAGE / cols;
   var pad = viewH * 0.012;
   var cw = (s.w - pad * (cols + 1)) / cols;
   var ch = (s.h - s.head - s.foot - pad * (rows + 1)) / rows;
+  var cellAt = function (k, extra) {
+    extra.x = s.x + pad + (k % cols) * (cw + pad);
+    extra.y = s.y + s.head + pad + Math.floor(k / cols) * (ch + pad);
+    extra.w = cw;
+    extra.h = ch;
+    return extra;
+  };
+  if (homeShopIsPaintPage()) {
+    for (i = 0; i < HOME_PAINTS.length && i < HOME_SHOP_PAGE; i++) cells.push(cellAt(i, { paint: i }));
+    for (k = 0; k < HOME_BOWS.length && i + k < HOME_SHOP_PAGE; k++) cells.push(cellAt(i + k, { bow: k }));
+    return cells;
+  }
   var start = homeShopPage * HOME_SHOP_PAGE;
   for (i = start; i < HOME_ITEMS.length && i < start + HOME_SHOP_PAGE; i++) {
-    k = i - start;
-    cells.push({
-      def: HOME_ITEMS[i],
-      x: s.x + pad + (k % cols) * (cw + pad),
-      y: s.y + s.head + pad + Math.floor(k / cols) * (ch + pad),
-      w: cw, h: ch
-    });
+    cells.push(cellAt(i - start, { def: HOME_ITEMS[i] }));
   }
   return cells;
 }
@@ -158,7 +187,28 @@ function homeShopArrows() {
 
 // Osto raahaamalla: kortista nostetaan haamutavara, joka ostetaan, kun se
 // päästetään irti huoneen puolella. Kaupan päälle palautettu peruu oston.
-function homeShopPick(def, px, py) {
+// Varastoitu (kauppaan palautettu) tavara nostetaan samasta kortista ilmaiseksi.
+// Maalipurkki ja rusetti nostetaan samalla tavalla (ilmaisia).
+function homeShopPick(cell, px, py) {
+  var def = cell.def, it;
+  if (cell.paint !== undefined) {
+    homeDrag = { ghost: true, paint: cell.paint, gx: px, gy: py, dx: 0, dy: 0, sx: px, sy: py, moved: false };
+    playNote(660, 0, 0.06, 'sine', 0.2);
+    return;
+  }
+  if (cell.bow !== undefined) {
+    homeDrag = { ghost: true, bow: cell.bow, gx: px, gy: py, dx: 0, dy: 0, sx: px, sy: py, moved: false };
+    playNote(660, 0, 0.06, 'sine', 0.2);
+    return;
+  }
+  it = homeStored(def.id);
+  if (it) {
+    it.fx = px / viewW;
+    it.fy = py / viewH;
+    homeDrag = { item: it, ghost: true, def: def, existing: true, dx: 0, dy: 0, sx: px, sy: py, moved: false };
+    playNote(660, 0, 0.06, 'sine', 0.2);
+    return;
+  }
   if (homeHas(def.id)) {
     playNote(440, 0, 0.08, 'triangle', 0.15);
     return;
@@ -169,14 +219,80 @@ function homeShopPick(def, px, py) {
     playNote(196, 0, 0.2, 'triangle', 0.25);
     return;
   }
-  var it = { id: def.id, fx: px / viewW, fy: py / viewH, on: def.id !== 'chest', phase: 0, room: homeRoomIdx };
+  it = { id: def.id, fx: px / viewW, fy: py / viewH, on: def.id !== 'chest', phase: 0, room: homeRoomIdx };
   homeDrag = { item: it, ghost: true, def: def, dx: 0, dy: 0, sx: px, sy: py, moved: false };
   playNote(660, 0, 0.06, 'sine', 0.2);
 }
 
+// Tavara varastoon: pois huoneesta, kortti kaupassa näyttää sen odottavana
+function homeStore(it) {
+  it.room = -1;
+  it.roll = 0;
+  saveProgress();
+  var s = homeShopBox();
+  spawnSparkles(s.x + s.w / 2, viewH * 0.5, 14, '#c9a0ff');
+  playNote(523, 0, 0.1, 'triangle', 0.25);
+  playNote(392, 0.1, 0.15, 'triangle', 0.25);
+}
+
+// Tavara toiseen huoneeseen oven kautta: ilmestyy toisen huoneen oven viereen
+function homeMoveToOtherRoom(it) {
+  var def = homeItemDef(it.id), room = homeRoom(), s = homeItemSize();
+  var other = homeRoomIdx === 0 ? 1 : 0;
+  it.room = other;
+  it.roll = 0;
+  // Toisen huoneen ovi on vastakkaisella laidalla: sali -> torni vasempaan laitaan, torni -> sali oikeaan
+  it.fx = (other === 1 ? room.x0 + s * 1.3 : room.x1 - s * 1.6) / viewW;
+  if (def && def.kind === 'wall') it.fy = 0.3;
+  else it.fy = Math.min(Math.max(it.fy, (room.floorY + s * 0.05) / viewH), room.bottom / viewH);
+  saveProgress();
+  var dr = homeDoorRect();
+  spawnSparkles(dr.x + dr.w / 2, dr.y + dr.h * 0.4, 16, '#ffe27a');
+  playNote(523, 0, 0.1, 'triangle', 0.25);
+  playNote(659, 0.1, 0.1, 'triangle', 0.25);
+  playNote(784, 0.2, 0.2, 'triangle', 0.25);
+}
+
+// Maali seinälle tai lattialle; tausta piirretään uudelleen
+function homePaint(idx, py) {
+  var room = homeRoom(), d = homeDecor[homeRoomIdx];
+  if (py < room.floorY) d.wall = idx; else d.floor = idx;
+  homeBgKey = '';
+  saveProgress();
+  spawnSparkles(homeDrag ? homeDrag.gx : viewW * 0.3, py, 22, HOME_PAINTS[idx].pot);
+  playNote(660, 0, 0.1, 'sine', 0.25);
+  playNote(880, 0.08, 0.12, 'sine', 0.25);
+  playNote(1175, 0.16, 0.25, 'sine', 0.25);
+}
+
+function homeBowTo(bowIdx, px, py) {
+  var i, b, best = -1, bd = 1e9, dx, dy, d;
+  for (i = 0; i < homeBunnies.length; i++) {
+    b = homeBunnies[i];
+    dx = px - b.fx * viewW;
+    dy = py - (b.fy * viewH - viewH * 0.05);
+    d = Math.sqrt(dx * dx + dy * dy);
+    if (d < viewH * 0.12 && d < bd) { bd = d; best = i; }
+  }
+  if (best < 0) return false;
+  homeBunnies[best].bow = bowIdx;
+  homeBows[best] = bowIdx;
+  homeBunnies[best].hop = 1;
+  saveProgress();
+  spawnSparkles(homeBunnies[best].fx * viewW, homeBunnies[best].fy * viewH - viewH * 0.1, 14, HOME_BOWS[bowIdx]);
+  playNote(1200, 0, 0.08, 'sine', 0.25);
+  playNote(1500, 0.07, 0.12, 'sine', 0.25);
+  return true;
+}
+
 function homeBuy(def, it) {
-  starCoins -= def.price;
-  homeItems.push(it);
+  if (homeItemRoom(it) === -1) {
+    // Varastosta takaisin: ei veloitusta
+    it.room = homeRoomIdx;
+  } else {
+    starCoins -= def.price;
+    homeItems.push(it);
+  }
   saveProgress();
   spawnSparkles(it.fx * viewW, it.fy * viewH - homeItemSize() * 0.4, 18, '#ffe27a');
   playNote(784, 0, 0.12, 'sine', 0.35);
@@ -203,7 +319,7 @@ function handleHomeTap(px, py) {
     cells = homeShopCells();
     for (i = 0; i < cells.length; i++) {
       c = cells[i];
-      if (px >= c.x && px <= c.x + c.w && py >= c.y && py <= c.y + c.h) { homeShopPick(c.def, px, py); return; }
+      if (px >= c.x && px <= c.x + c.w && py >= c.y && py <= c.y + c.h) { homeShopPick(c, px, py); return; }
     }
     return;
   }
@@ -239,18 +355,35 @@ function handleHomeTap(px, py) {
   }
 }
 
-// Onko haamutavara vielä kaupan puolella (kaupan yläpuolella = ei ostoa vielä)
+// Onko raahattava kaupan puolella (haamu: ei ostoa vielä; oma tavara: varastoon)
+function homeDragX() {
+  if (!homeDrag) return 0;
+  return homeDrag.item ? homeDrag.item.fx * viewW : homeDrag.gx;
+}
 function homeGhostInShop() {
-  return !!(homeDrag && homeDrag.ghost && homeDrag.item.fx * viewW >= homeShopBox().x - homeItemSize() * 0.3);
+  return !!(homeDrag && homeDragX() >= homeShopBox().x - homeItemSize() * 0.3);
+}
+// Onko raahattava tavara oven päällä (siirto toiseen huoneeseen)
+function homeDragOnDoor() {
+  if (!homeDrag || !homeDrag.item) return false;
+  var dr = homeDoorRect(), x = homeDrag.item.fx * viewW, y = homeDrag.item.fy * viewH;
+  var def = homeItemDef(homeDrag.item.id);
+  if (def && def.kind !== 'wall') y -= homeItemSize() * 0.4;
+  return x >= dr.x - dr.w * 0.2 && x <= dr.x + dr.w * 1.2 && y >= dr.y - dr.h * 0.1 && y <= dr.y + dr.h * 1.1;
 }
 
 function homeMove(px, py) {
   if (!homeDrag) return;
-  var it = homeDrag.item, def = homeItemDef(it.id), room = homeRoom(), s = homeItemSize();
   if (Math.abs(px - homeDrag.sx) + Math.abs(py - homeDrag.sy) > 12) homeDrag.moved = true;
+  if (homeDrag.paint !== undefined || homeDrag.bow !== undefined) {
+    homeDrag.gx = px;
+    homeDrag.gy = py;
+    return;
+  }
+  var it = homeDrag.item, def = homeItemDef(it.id), room = homeRoom(), s = homeItemSize();
   var x = px - homeDrag.dx, y = py - homeDrag.dy;
-  if (homeDrag.ghost && x >= homeShopBox().x - s * 0.3) {
-    // Kaupan päällä haamu seuraa sormea vapaasti
+  if (x >= homeShopBox().x - s * 0.3) {
+    // Kaupan päällä raahattava seuraa sormea vapaasti (haamu: ei ostoa; oma: varastoon)
     it.fx = x / viewW;
     it.fy = y / viewH;
     return;
@@ -266,11 +399,23 @@ function homeUp() {
   if (!homeDrag) return;
   var it = homeDrag.item;
   var moved = homeDrag.moved;
+  var inShop = homeGhostInShop(), onDoor = homeDragOnDoor(), def = homeDrag.def;
+  if (homeDrag.paint !== undefined) {
+    var pi = homeDrag.paint, gy = homeDrag.gy;
+    if (!inShop) homePaint(pi, gy);
+    else playNote(330, 0, 0.1, 'triangle', 0.2);
+    homeDrag = null;
+    return;
+  }
+  if (homeDrag.bow !== undefined) {
+    if (inShop || !homeBowTo(homeDrag.bow, homeDrag.gx, homeDrag.gy)) playNote(330, 0, 0.1, 'triangle', 0.2);
+    homeDrag = null;
+    return;
+  }
   if (homeDrag.ghost) {
-    var inShop = homeGhostInShop(), def = homeDrag.def;
     homeDrag = null;
     if (inShop) {
-      // Peruttu: tavara palaa kortille
+      // Peruttu: tavara palaa kortille (varastoitu pysyy varastossa)
       playNote(330, 0, 0.1, 'triangle', 0.2);
       return;
     }
@@ -278,6 +423,14 @@ function homeUp() {
     return;
   }
   homeDrag = null;
+  if (inShop) {
+    homeStore(it);
+    return;
+  }
+  if (onDoor && moved) {
+    homeMoveToOtherRoom(it);
+    return;
+  }
   if (moved) {
     saveProgress();
     playNote(330, 0, 0.08, 'triangle', 0.2);
@@ -470,11 +623,15 @@ function drawHome() {
     roundRect(ctx, r.x, r.y, r.w, r.h, viewH * 0.02);
     ctx.stroke();
   }
-  // Oven hehku ja vihje, kunnes toisessa huoneessa on jotain
+  // Oma tavara kaupan päällä: piirretään kaupan päälle haaleana laatikon kanssa (varastoon)
+  var toShop = homeDrag && homeDrag.item && !homeDrag.ghost && homeGhostInShop();
+  // Oven hehku (voimakkaampi, kun tavaraa raahataan: sen voi viedä ovesta) ja
+  // vihje, kunnes toisessa huoneessa on jotain
   var dr = homeDoorRect(), otherHas = false;
-  for (i = 0; i < homeItems.length; i++) if (homeItemRoom(homeItems[i]) !== homeRoomIdx) otherHas = true;
+  for (i = 0; i < homeItems.length; i++) if (homeItemRoom(homeItems[i]) === (homeRoomIdx === 0 ? 1 : 0)) otherHas = true;
+  var dragging = !!(homeDrag && homeDrag.item && !homeDrag.ghost);
   var dg = ctx.createRadialGradient(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 0.2, dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3);
-  dg.addColorStop(0, 'rgba(255,240,180,' + (0.25 + Math.sin(globalT * 3) * 0.1) + ')');
+  dg.addColorStop(0, 'rgba(255,240,180,' + ((dragging ? (homeDragOnDoor() ? 0.8 : 0.5) : 0.25) + Math.sin(globalT * 3) * 0.1) + ')');
   dg.addColorStop(1, 'rgba(255,240,180,0)');
   ctx.fillStyle = dg;
   ctx.beginPath(); ctx.arc(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3, 0, Math.PI * 2); ctx.fill();
@@ -483,20 +640,84 @@ function drawHome() {
   drawParticlesLayerAbs(ctx);
   drawHomeShop(ctx);
   if (homeDrag && homeDrag.ghost) drawHomeGhost(ctx);
+  if (toShop) {
+    var ti = homeDrag.item, ts = homeItemSize(), tx = ti.fx * viewW, ty = ti.fy * viewH;
+    ctx.globalAlpha = 0.6;
+    drawHomeItem(ctx, ti, tx, ty, ts * 0.8);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#c98b4a';
+    roundRect(ctx, tx - ts * 0.35, ty + ts * 0.1, ts * 0.7, ts * 0.25, ts * 0.05);
+    ctx.fill();
+    ctx.fillStyle = '#a9743f';
+    ctx.fillRect(tx - ts * 0.4, ty + ts * 0.08, ts * 0.8, ts * 0.06);
+  }
 }
 
-// Kaupasta raahattava tavara: haalea kaupan päällä, kirkas huoneen puolella,
-// hinta tähtinä alla
+// Kaupasta raahattava: tavara (haalea kaupan päällä, kirkas huoneen puolella,
+// hinta tähtinä alla), maalipurkki tai rusetti
 function drawHomeGhost(c) {
-  var it = homeDrag.item, def = homeDrag.def, s = homeItemSize(), x = it.fx * viewW, y = it.fy * viewH, k;
-  var inShop = homeGhostInShop();
+  var s = homeItemSize(), k, inShop = homeGhostInShop();
+  if (homeDrag.paint !== undefined) {
+    var pc = HOME_PAINTS[homeDrag.paint].pot;
+    c.globalAlpha = inShop ? 0.6 : 1;
+    drawPaintPot(c, homeDrag.gx, homeDrag.gy - s * 0.2, s * 0.32, pc);
+    if (!inShop) {
+      // Maalitippa näyttää kohteen: seinä vai lattia
+      c.fillStyle = pc;
+      c.beginPath(); c.arc(homeDrag.gx, homeDrag.gy + s * 0.25 + Math.sin(globalT * 6) * s * 0.03, s * 0.09, 0, Math.PI * 2); c.fill();
+    }
+    c.globalAlpha = 1;
+    return;
+  }
+  if (homeDrag.bow !== undefined) {
+    c.globalAlpha = inShop ? 0.6 : 1;
+    drawBow(c, homeDrag.gx, homeDrag.gy - s * 0.1, s * 0.3, HOME_BOWS[homeDrag.bow]);
+    c.globalAlpha = 1;
+    return;
+  }
+  var it = homeDrag.item, def = homeDrag.def, x = it.fx * viewW, y = it.fy * viewH;
   c.globalAlpha = inShop ? 0.55 : 0.92;
   c.fillStyle = 'rgba(255,255,255,0.35)';
   c.beginPath(); c.arc(x, y - (def.kind === 'wall' ? 0 : s * 0.45), s * 0.85, 0, Math.PI * 2); c.fill();
   drawHomeItem(c, it, x, y, s);
   c.globalAlpha = 1;
+  if (homeDrag.existing) return;
   var ps = viewH * 0.016;
   for (k = 0; k < def.price; k++) drawStar(c, x + (k - (def.price - 1) / 2) * ps * 2.3, y + s * 0.2, ps, 0, 0);
+}
+
+function drawPaintPot(c, x, y, s, color) {
+  c.fillStyle = '#c9c4d8';
+  c.beginPath(); c.moveTo(x - s * 0.9, y - s * 0.5); c.lineTo(x + s * 0.9, y - s * 0.5); c.lineTo(x + s * 0.75, y + s * 0.9); c.lineTo(x - s * 0.75, y + s * 0.9); c.closePath(); c.fill();
+  c.fillStyle = color;
+  c.beginPath();
+  if (c.ellipse) c.ellipse(x, y - s * 0.5, s * 0.9, s * 0.3, 0, 0, Math.PI * 2);
+  else c.arc(x, y - s * 0.5, s * 0.6, 0, Math.PI * 2);
+  c.fill();
+  c.beginPath(); c.moveTo(x + s * 0.3, y - s * 0.4); c.quadraticCurveTo(x + s * 0.55, y + s * 0.2, x + s * 0.4, y + s * 0.4); c.quadraticCurveTo(x + s * 0.2, y + s * 0.2, x + s * 0.3, y - s * 0.4); c.fill();
+  c.strokeStyle = '#8a8298';
+  c.lineWidth = Math.max(1.5, s * 0.1);
+  c.beginPath(); c.arc(x, y - s * 0.6, s * 0.7, Math.PI * 1.1, Math.PI * 1.9); c.stroke();
+  // Pensseli
+  c.strokeStyle = '#a9743f';
+  c.lineWidth = Math.max(2, s * 0.14);
+  c.beginPath(); c.moveTo(x - s * 0.5, y - s * 0.4); c.lineTo(x - s * 1.0, y - s * 1.4); c.stroke();
+  c.fillStyle = color;
+  c.beginPath(); c.arc(x - s * 0.5, y - s * 0.4, s * 0.2, 0, Math.PI * 2); c.fill();
+}
+
+function drawBow(c, x, y, s, color) {
+  c.fillStyle = color;
+  c.beginPath();
+  if (c.ellipse) { c.ellipse(x - s * 0.55, y, s * 0.55, s * 0.36, -0.25, 0, Math.PI * 2); c.ellipse(x + s * 0.55, y, s * 0.55, s * 0.36, 0.25, 0, Math.PI * 2); }
+  else { c.arc(x - s * 0.5, y, s * 0.4, 0, Math.PI * 2); c.arc(x + s * 0.5, y, s * 0.4, 0, Math.PI * 2); }
+  c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.4)';
+  c.beginPath(); c.arc(x - s * 0.6, y - s * 0.1, s * 0.15, 0, Math.PI * 2); c.arc(x + s * 0.6, y - s * 0.1, s * 0.15, 0, Math.PI * 2); c.fill();
+  c.fillStyle = color;
+  c.beginPath(); c.arc(x, y, s * 0.22, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(0,0,0,0.15)';
+  c.beginPath(); c.arc(x, y, s * 0.22, 0, Math.PI * 2); c.fill();
 }
 
 function drawParticlesLayerAbs(c) {
@@ -561,10 +782,23 @@ function drawHomeShop(c) {
   c.stroke();
   drawStarBalance(c, s.x + viewH * 0.02, s.y + s.head * 0.5);
   for (i = 0; i < cells.length; i++) {
-    var cell = cells[i], def = cell.def, owned = !!homeHas(def.id), afford = starCoins >= def.price;
+    var cell = cells[i], def = cell.def, isz = Math.min(cell.w, cell.h) * 0.62;
+    if (!def) {
+      // Maalipurkki tai rusetti: aina saatavilla, ilmainen
+      var liftP = !!(homeDrag && ((cell.paint !== undefined && homeDrag.paint === cell.paint) || (cell.bow !== undefined && homeDrag.bow === cell.bow)));
+      c.fillStyle = '#ffffff';
+      roundRect(c, cell.x, cell.y, cell.w, cell.h, viewH * 0.015);
+      c.fill();
+      c.globalAlpha = liftP ? 0.3 : 1;
+      if (cell.paint !== undefined) drawPaintPot(c, cell.x + cell.w / 2, cell.y + cell.h * 0.55, isz * 0.5, HOME_PAINTS[cell.paint].pot);
+      else drawBow(c, cell.x + cell.w / 2, cell.y + cell.h * 0.5, isz * 0.45, HOME_BOWS[cell.bow]);
+      c.globalAlpha = 1;
+      continue;
+    }
+    var stored = !!homeStored(def.id), owned = !!homeHas(def.id) && !stored, afford = starCoins >= def.price;
     var lifting = !!(homeDrag && homeDrag.ghost && homeDrag.def === def);
     var shake = homeShake.id === def.id && homeShake.t > 0 ? Math.sin(globalT * 50) * viewH * 0.006 : 0;
-    c.fillStyle = owned ? 'rgba(200,190,220,0.35)' : (afford ? '#ffffff' : 'rgba(255,255,255,0.55)');
+    c.fillStyle = owned ? 'rgba(200,190,220,0.35)' : (stored ? '#fff0f7' : (afford ? '#ffffff' : 'rgba(255,255,255,0.55)'));
     roundRect(c, cell.x + shake, cell.y, cell.w, cell.h, viewH * 0.015);
     c.fill();
     if (lifting) {
@@ -574,11 +808,19 @@ function drawHomeShop(c) {
       c.stroke();
       c.setLineDash([]);
     }
-    c.globalAlpha = owned ? 0.35 : (lifting ? 0.25 : (afford ? 1 : 0.5));
-    var isz = Math.min(cell.w, cell.h) * 0.62;
+    if (stored) {
+      // Varastolaatikko kortin alareunassa
+      c.fillStyle = '#c98b4a';
+      roundRect(c, cell.x + cell.w * 0.2, cell.y + cell.h * 0.74, cell.w * 0.6, cell.h * 0.2, viewH * 0.006);
+      c.fill();
+      c.fillStyle = '#a9743f';
+      c.fillRect(cell.x + cell.w * 0.17, cell.y + cell.h * 0.72, cell.w * 0.66, cell.h * 0.05);
+    }
+    c.globalAlpha = owned ? 0.35 : (lifting ? 0.25 : ((afford || stored) ? 1 : 0.5));
     var fake = { id: def.id, fx: 0, fy: 0, on: true, phase: 0 };
-    drawHomeItem(c, fake, cell.x + cell.w / 2 + shake, cell.y + cell.h * (def.kind === 'wall' ? 0.42 : 0.68), isz);
+    drawHomeItem(c, fake, cell.x + cell.w / 2 + shake, cell.y + cell.h * (def.kind === 'wall' ? 0.42 : (stored ? 0.62 : 0.68)), isz * (stored ? 0.85 : 1));
     c.globalAlpha = 1;
+    if (stored) continue;
     if (owned) {
       c.strokeStyle = '#4fb356';
       c.lineWidth = Math.max(2, viewH * 0.008);
@@ -614,6 +856,7 @@ function drawHomeBunny(c, b) {
   else c.arc(x, y, s * 0.5, 0, Math.PI * 2);
   c.fill();
   drawBunny(c, x, y, s, b.hop * viewH * 0.02, b.earT, false);
+  if (b.bow >= 0) drawBow(c, x, y - b.hop * viewH * 0.02 - s * 1.45, s * 0.3, HOME_BOWS[b.bow]);
   if (b.state === 'sleep') {
     c.fillStyle = 'rgba(120,80,160,0.8)';
     c.font = Math.round(s * 0.7) + 'px sans-serif';
@@ -1019,7 +1262,9 @@ function drawHomeItem(c, it, x, y, s) {
 }
 
 function renderHomeBg() {
-  var key = viewW + 'x' + viewH + '|' + homeRoomIdx;
+  var dec = homeDecor[homeRoomIdx] || homeDecorDefault()[homeRoomIdx];
+  var wallP = HOME_PAINTS[dec.wall] || HOME_PAINTS[0], floorP = HOME_PAINTS[dec.floor] || HOME_PAINTS[0];
+  var key = viewW + 'x' + viewH + '|' + homeRoomIdx + '|' + wallP.id + '|' + floorP.id;
   if (homeBgKey === key) return;
   homeBgKey = key;
   homeBgCanvas.width = Math.round(viewW * DPR);
@@ -1027,12 +1272,12 @@ function renderHomeBg() {
   var b = homeBgCanvas.getContext('2d');
   b.setTransform(DPR, 0, 0, DPR, 0, 0);
   var room = homeRoom(), w = viewW, h = viewH, i, k, x, y, tower = homeRoomIdx === 1;
-  b.fillStyle = tower ? '#2a2450' : '#e8dcf5';
+  b.fillStyle = wallP.wall[1];
   b.fillRect(0, 0, w, h);
-  // Seinä tapetilla (sali: sydämet, torni: tähtitaivas)
+  // Seinä maalilla ja tapetilla (sali: sydämet, torni: tähtitaivas)
   var wall = b.createLinearGradient(0, 0, 0, room.floorY);
-  wall.addColorStop(0, tower ? '#2d2a6a' : '#f3e9ff');
-  wall.addColorStop(1, tower ? '#4a3f8a' : '#e2d2f5');
+  wall.addColorStop(0, wallP.wall[0]);
+  wall.addColorStop(1, wallP.wall[1]);
   b.fillStyle = wall;
   b.fillRect(0, 0, room.x1 + h * 0.02, room.floorY);
   if (tower) {
@@ -1091,15 +1336,15 @@ function renderHomeBg() {
     b.fillRect(wx - h * 0.006, wy - wh / 2, h * 0.012, wh);
     b.fillRect(wx - ww / 2, wy - h * 0.006, ww, h * 0.012);
   }
-  // Lattialista ja lattia (torni: kivilaatat)
-  b.fillStyle = tower ? '#6b6490' : '#c9a0ff';
+  // Lattialista (seinämaalin sävy) ja lattia (lattiamaali)
+  b.fillStyle = wallP.pot;
   b.fillRect(0, room.floorY - h * 0.03, room.x1 + h * 0.02, h * 0.03);
   var floor = b.createLinearGradient(0, room.floorY, 0, h);
-  floor.addColorStop(0, tower ? '#a9a6c8' : '#e2b98a');
-  floor.addColorStop(1, tower ? '#7a7898' : '#c48f5c');
+  floor.addColorStop(0, floorP.floor[0]);
+  floor.addColorStop(1, floorP.floor[1]);
   b.fillStyle = floor;
   b.fillRect(0, room.floorY, room.x1 + h * 0.02, h - room.floorY);
-  b.strokeStyle = tower ? 'rgba(40,30,80,0.3)' : 'rgba(120,70,30,0.25)';
+  b.strokeStyle = 'rgba(40,30,60,0.22)';
   b.lineWidth = 2;
   for (y = room.floorY + h * 0.06; y < h; y += h * 0.07) { b.beginPath(); b.moveTo(0, y); b.lineTo(room.x1 + h * 0.02, y); b.stroke(); }
   for (i = 0; i < 12; i++) {
