@@ -1,8 +1,10 @@
 'use strict';
 
-// Linnan sisustus: maaliton huone, jossa kentistä kerätyillä tähdillä ostetaan
-// huonekaluja ja raahataan ne paikoilleen. Puput reagoivat tavaroihin (peti,
-// porkkanat, pallo). Avataan linnan puhekuplasta (Linnasaari).
+// Linnan sisustus: maaliton huoneisto, jossa kentistä kerätyillä tähdillä ostetaan
+// huonekaluja ja raahataan ne paikoilleen. Kaksi huonetta (sali ja tornihuone),
+// joiden välillä kuljetaan ovesta. Kauppa on sivutettu (nuolet alareunassa).
+// Puput reagoivat tavaroihin (peti, porkkanat, pallo, nalle, kakku, trampoliini).
+// Avataan linnan puhekuplasta (Linnasaari).
 
 var HOME_ITEMS = [
   { id: 'rug', price: 2, kind: 'floor' },
@@ -16,12 +18,30 @@ var HOME_ITEMS = [
   { id: 'mirror', price: 3, kind: 'wall' },
   { id: 'table', price: 4, kind: 'floor' },
   { id: 'shelf', price: 4, kind: 'floor' },
-  { id: 'musicbox', price: 4, kind: 'floor' }
+  { id: 'musicbox', price: 4, kind: 'floor' },
+  { id: 'teddy', price: 2, kind: 'floor' },
+  { id: 'vase', price: 2, kind: 'floor' },
+  { id: 'clock', price: 3, kind: 'wall' },
+  { id: 'lights', price: 3, kind: 'wall' },
+  { id: 'cake', price: 3, kind: 'floor' },
+  { id: 'teaset', price: 3, kind: 'floor' },
+  { id: 'sofa', price: 4, kind: 'floor' },
+  { id: 'rockinghorse', price: 4, kind: 'floor' },
+  { id: 'chest', price: 4, kind: 'floor' },
+  { id: 'trampoline', price: 5, kind: 'floor' },
+  { id: 'aquarium', price: 5, kind: 'floor' },
+  { id: 'piano', price: 5, kind: 'floor' }
 ];
+// Huoneet: 0 = sali (ovi oikealla), 1 = tornihuone (ovi vasemmalla)
+var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }];
+var HOME_SHOP_PAGE = 10;
+var homeRoomIdx = 0;
+var homeShopPage = 0;
 var homeBunnies = [];
 var homeDrag = null;        // { item, dx, dy, sx, sy, moved }
 var homeShake = { id: '', t: 0 };
-var homeNotes = [];         // soittorasian nuotit
+var homeNotes = [];         // soittorasian ja pianon nuotit
+var homeFish = [];          // akvaarion kalat { fx, fy, dir, sp }
 var homeBgCanvas = document.createElement('canvas');
 var homeBgKey = '';
 
@@ -29,7 +49,7 @@ function homeRoom() {
   return { x0: viewH * 0.02, x1: viewW * 0.735, wallTop: viewH * 0.03, floorY: viewH * 0.6, bottom: viewH * 0.97 };
 }
 function homeShopBox() {
-  return { x: viewW * 0.755, y: viewH * 0.03, w: viewW * 0.235, h: viewH * 0.94, head: viewH * 0.11 };
+  return { x: viewW * 0.755, y: viewH * 0.03, w: viewW * 0.235, h: viewH * 0.94, head: viewH * 0.11, foot: viewH * 0.085 };
 }
 function homeItemDef(id) {
   var i;
@@ -41,8 +61,22 @@ function homeHas(id) {
   for (i = 0; i < homeItems.length; i++) if (homeItems[i].id === id) return homeItems[i];
   return null;
 }
+// Tavara tässä huoneessa (vanhat tallennukset: huone puuttuu = sali)
+function homeItemRoom(it) {
+  return it.room || 0;
+}
+function homeHasHere(id) {
+  var it = homeHas(id);
+  return it && homeItemRoom(it) === homeRoomIdx ? it : null;
+}
 function homeItemSize() {
   return viewH * 0.13;
+}
+// Ovi: salissa oikeassa reunassa, tornihuoneessa vasemmassa
+function homeDoorRect() {
+  var room = homeRoom(), h = viewH;
+  if (homeRoomIdx === 0) return { x: room.x1 - h * 0.13, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3 };
+  return { x: room.x0 + h * 0.01, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3 };
 }
 
 function showHome() {
@@ -53,6 +87,8 @@ function showHome() {
   celebrating = false;
   hubOffer = null;
   homeDrag = null;
+  homeRoomIdx = 0;
+  homeBgKey = '';
   document.getElementById('hubChrome').style.display = 'none';
   for (i = 0; i < ids.length; i++) document.getElementById(ids[i]).style.display = 'none';
   document.getElementById('karttaBtn').style.display = 'block';
@@ -63,25 +99,61 @@ function showHome() {
     for (i = 0; i < 3; i++) homeBunnies.push({ fx: 0.15 + i * 0.2, fy: 0.72 + (i % 2) * 0.12, tx: 0, ty: 0, hop: 0, earT: i, state: 'wander', timer: 1 + i, moving: false });
     for (i = 0; i < 3; i++) { homeBunnies[i].tx = homeBunnies[i].fx; homeBunnies[i].ty = homeBunnies[i].fy; }
   }
+  if (homeFish.length === 0) {
+    for (i = 0; i < 3; i++) homeFish.push({ fx: (i - 1) * 0.25, fy: (i % 2) * 0.2 - 0.1, dir: i % 2 ? -1 : 1, sp: 0.25 + i * 0.08, dart: 0 });
+  }
   playNote(523, 0, 0.15, 'triangle', 0.3);
   playNote(659, 0.1, 0.2, 'triangle', 0.3);
 }
 
+function homeGoRoom(idx) {
+  var i, b;
+  homeRoomIdx = idx;
+  homeBgKey = '';
+  homeDrag = null;
+  // Puput tulevat perässä ovesta
+  for (i = 0; i < homeBunnies.length; i++) {
+    b = homeBunnies[i];
+    b.fx = idx === 0 ? 0.62 - i * 0.04 : 0.1 + i * 0.04;
+    b.fy = 0.75 + (i % 2) * 0.1;
+    b.timer = 0.3 + i * 0.3;
+    b.hop = 1;
+  }
+  spawnSparkles(homeDoorRect().x + homeDoorRect().w / 2, homeRoom().floorY - viewH * 0.15, 12, '#ffe27a');
+  playNote(392, 0, 0.1, 'triangle', 0.25);
+  playNote(523, 0.1, 0.15, 'triangle', 0.25);
+}
+
 // ---------- Kauppa ----------
+function homeShopPages() {
+  return Math.ceil(HOME_ITEMS.length / HOME_SHOP_PAGE);
+}
+
 function homeShopCells() {
-  var s = homeShopBox(), cells = [], i, cols = 2, rows = Math.ceil(HOME_ITEMS.length / cols);
+  var s = homeShopBox(), cells = [], i, k, cols = 2, rows = HOME_SHOP_PAGE / cols;
   var pad = viewH * 0.012;
   var cw = (s.w - pad * (cols + 1)) / cols;
-  var ch = (s.h - s.head - pad * (rows + 1)) / rows;
-  for (i = 0; i < HOME_ITEMS.length; i++) {
+  var ch = (s.h - s.head - s.foot - pad * (rows + 1)) / rows;
+  var start = homeShopPage * HOME_SHOP_PAGE;
+  for (i = start; i < HOME_ITEMS.length && i < start + HOME_SHOP_PAGE; i++) {
+    k = i - start;
     cells.push({
       def: HOME_ITEMS[i],
-      x: s.x + pad + (i % cols) * (cw + pad),
-      y: s.y + s.head + pad + Math.floor(i / cols) * (ch + pad),
+      x: s.x + pad + (k % cols) * (cw + pad),
+      y: s.y + s.head + pad + Math.floor(k / cols) * (ch + pad),
       w: cw, h: ch
     });
   }
   return cells;
+}
+
+// Sivunuolet kaupan alareunassa: { prev, next } (kumpikin { x, y, r } tai null)
+function homeShopArrows() {
+  var s = homeShopBox(), r = s.foot * 0.36, y = s.y + s.h - s.foot * 0.5;
+  return {
+    prev: homeShopPage > 0 ? { x: s.x + s.w * 0.25, y: y, r: r } : null,
+    next: homeShopPage < homeShopPages() - 1 ? { x: s.x + s.w * 0.75, y: y, r: r } : null
+  };
 }
 
 function homeBuy(def) {
@@ -94,13 +166,13 @@ function homeBuy(def) {
     return;
   }
   starCoins -= def.price;
-  var it = { id: def.id, fx: 0.38, fy: def.kind === 'wall' ? 0.3 : 0.8, on: true, phase: 0 };
+  var it = { id: def.id, fx: 0.38, fy: def.kind === 'wall' ? 0.3 : 0.8, on: def.id !== 'chest', phase: 0, room: homeRoomIdx };
   // Sijoita tyhjään kohtaan: siirrä oikealle, jos paikalla on jo jotain
   var k;
   for (k = 0; k < 6; k++) {
     var busy = false, j;
     for (j = 0; j < homeItems.length; j++) {
-      if (homeItems[j].id !== it.id && Math.abs(homeItems[j].fx - it.fx) < 0.08 && Math.abs(homeItems[j].fy - it.fy) < 0.12) busy = true;
+      if (homeItemRoom(homeItems[j]) === homeRoomIdx && homeItems[j].id !== it.id && Math.abs(homeItems[j].fx - it.fx) < 0.08 && Math.abs(homeItems[j].fy - it.fy) < 0.12) busy = true;
     }
     if (!busy) break;
     it.fx += 0.1;
@@ -122,11 +194,14 @@ function homeItemRect(it) {
 }
 
 function handleHomeTap(px, py) {
-  var i, cells, c, r;
+  var i, cells, c, r, ar, dx, dy;
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   var shop = homeShopBox();
   if (px >= shop.x) {
+    ar = homeShopArrows();
+    if (ar.prev) { dx = px - ar.prev.x; dy = py - ar.prev.y; if (dx * dx + dy * dy < ar.prev.r * ar.prev.r * 2) { homeShopPage--; playNote(660, 0, 0.08, 'sine', 0.25); return; } }
+    if (ar.next) { dx = px - ar.next.x; dy = py - ar.next.y; if (dx * dx + dy * dy < ar.next.r * ar.next.r * 2) { homeShopPage++; playNote(784, 0, 0.08, 'sine', 0.25); return; } }
     cells = homeShopCells();
     for (i = 0; i < cells.length; i++) {
       c = cells[i];
@@ -136,6 +211,7 @@ function handleHomeTap(px, py) {
   }
   // Päällimmäinen tavara sormen alla (viimeksi lisätty on päällimmäinen)
   for (i = homeItems.length - 1; i >= 0; i--) {
+    if (homeItemRoom(homeItems[i]) !== homeRoomIdx) continue;
     r = homeItemRect(homeItems[i]);
     if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
       homeDrag = { item: homeItems[i], dx: px - homeItems[i].fx * viewW, dy: py - homeItems[i].fy * viewH, sx: px, sy: py, moved: false };
@@ -157,6 +233,11 @@ function handleHomeTap(px, py) {
       playNote(1500 + i * 100, 0.07, 0.1, 'sine', 0.2);
       return;
     }
+  }
+  // Ovi: toiseen huoneeseen
+  r = homeDoorRect();
+  if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
+    homeGoRoom(homeRoomIdx === 0 ? 1 : 0);
   }
 }
 
@@ -186,23 +267,68 @@ function homeUp() {
   homeItemTap(it);
 }
 
-function homeItemTap(it) {
+function homeSpawnNotes(x, y, n) {
   var i;
+  for (i = 0; i < n; i++) homeNotes.push({ x: x + (Math.random() - 0.5) * viewH * 0.05, y: y, vy: -viewH * (0.12 + Math.random() * 0.08), age: 0, life: 1.4 + i * 0.15, c: i % 3 });
+}
+
+function homeItemTap(it) {
+  var i, s = homeItemSize(), x = it.fx * viewW, y = it.fy * viewH;
   it.phase = 1;
-  if (it.id === 'lamp') {
+  if (it.id === 'lamp' || it.id === 'lights') {
     it.on = !it.on;
     playNote(it.on ? 880 : 440, 0, 0.1, 'sine', 0.25);
   } else if (it.id === 'musicbox') {
     var mel = [523, 659, 784, 659, 880, 784, 1047];
     for (i = 0; i < mel.length; i++) playNote(mel[i], i * 0.18, 0.22, 'sine', 0.28);
-    for (i = 0; i < 7; i++) homeNotes.push({ x: it.fx * viewW + (Math.random() - 0.5) * viewH * 0.05, y: it.fy * viewH - homeItemSize() * 0.6, vy: -viewH * (0.12 + Math.random() * 0.08), age: 0, life: 1.4 + i * 0.15, c: i % 3 });
+    homeSpawnNotes(x, y - s * 0.6, 7);
+  } else if (it.id === 'piano') {
+    var scale = [523, 587, 659, 784, 880, 1047], tune = [];
+    for (i = 0; i < 6; i++) tune.push(scale[randInt(scale.length)]);
+    tune.push(1047);
+    for (i = 0; i < tune.length; i++) playNote(tune[i], i * 0.16, 0.25, 'triangle', 0.3);
+    homeSpawnNotes(x, y - s * 0.9, 7);
+    it.keysT = 1.2;
+  } else if (it.id === 'clock') {
+    for (i = 0; i < 3; i++) { playNote(1047, i * 0.35, 0.3, 'sine', 0.25); playNote(784, i * 0.35 + 0.05, 0.3, 'sine', 0.15); }
+    it.swingT = 1.2;
   } else if (it.id === 'ball') {
     it.roll = (it.roll || 0) + (Math.random() < 0.5 ? -1 : 1) * viewW * 0.18;
     playNote(392, 0, 0.1, 'triangle', 0.25);
+  } else if (it.id === 'rockinghorse') {
+    it.rockT = 2.4;
+    playNote(440, 0, 0.1, 'triangle', 0.2);
+    playNote(392, 0.3, 0.1, 'triangle', 0.2);
+  } else if (it.id === 'chest') {
+    it.on = !it.on;
+    playNote(it.on ? 660 : 330, 0, 0.15, 'triangle', 0.3);
+    if (it.on) { playNote(1047, 0.15, 0.3, 'sine', 0.3); spawnSparkles(x, y - s * 0.5, 16, '#ffd24f'); }
+  } else if (it.id === 'cake') {
+    it.on = !it.on;
+    playNote(it.on ? 784 : 262, 0, 0.15, 'sine', 0.25);
+    if (!it.on) spawnSparkles(x, y - s * 0.7, 8, '#c9c9c9');
+  } else if (it.id === 'aquarium') {
+    for (i = 0; i < homeFish.length; i++) homeFish[i].dart = 1;
+    playNote(880, 0, 0.08, 'sine', 0.2);
+    playNote(1175, 0.06, 0.1, 'sine', 0.2);
+  } else if (it.id === 'teaset') {
+    it.steamT = 2.0;
+    playNote(660, 0, 0.12, 'sine', 0.2);
+    playNote(560, 0.15, 0.2, 'sine', 0.2);
+  } else if (it.id === 'teddy') {
+    playNote(900, 0, 0.1, 'square', 0.08);
+    playNote(1100, 0.1, 0.12, 'square', 0.08);
+  } else if (it.id === 'trampoline') {
+    it.bounceT = 1;
+    playNote(330, 0, 0.1, 'sine', 0.25);
+    playNote(660, 0.1, 0.2, 'sine', 0.25);
+  } else if (it.id === 'vase') {
+    it.spinT = 1.5;
+    playNote(988, 0, 0.1, 'sine', 0.2);
   } else {
     playNote(660, 0, 0.08, 'triangle', 0.2);
   }
-  spawnSparkles(it.fx * viewW, it.fy * viewH - homeItemSize() * 0.5, 6, '#ffe27a');
+  spawnSparkles(x, y - s * 0.5, 6, '#ffe27a');
 }
 
 // ---------- Päivitys ----------
@@ -213,6 +339,12 @@ function updateHome(dt) {
   for (i = 0; i < homeItems.length; i++) {
     it = homeItems[i];
     if (it.phase > 0) it.phase = Math.max(0, it.phase - dt * 3);
+    if (it.keysT > 0) it.keysT -= dt;
+    if (it.swingT > 0) it.swingT -= dt;
+    if (it.rockT > 0) it.rockT -= dt;
+    if (it.steamT > 0) it.steamT -= dt;
+    if (it.spinT > 0) it.spinT -= dt;
+    if (it.bounceT > 0) it.bounceT = Math.max(0, it.bounceT - dt * 2);
     if (it.roll) {
       var nx = it.fx * viewW + it.roll * dt;
       nx = Math.min(Math.max(nx, room.x0 + homeItemSize() * 0.5), room.x1 - homeItemSize() * 0.5);
@@ -228,17 +360,31 @@ function updateHome(dt) {
     homeNotes[i].x += Math.sin(homeNotes[i].age * 5 + i) * viewH * 0.02 * dt;
     if (homeNotes[i].age > homeNotes[i].life) homeNotes.splice(i, 1);
   }
+  // Akvaarion kalat uivat edestakaisin (suhteellisina koordinaatteina -0.35..0.35)
+  for (i = 0; i < homeFish.length; i++) {
+    var f = homeFish[i];
+    if (f.dart > 0) f.dart -= dt;
+    f.fx += f.dir * f.sp * (f.dart > 0 ? 3 : 1) * dt;
+    if (f.fx > 0.32) { f.fx = 0.32; f.dir = -1; }
+    if (f.fx < -0.32) { f.fx = -0.32; f.dir = 1; }
+    f.fy = Math.sin(globalT * (1 + i * 0.3) + i) * 0.12;
+  }
 
-  // Puput: peti nukuttaa, porkkanat syöttävät, pallo houkuttaa leikkiin, muuten vaellus
-  var bed = homeHas('bed'), carrots = homeHas('carrots'), ball = homeHas('ball');
+  // Puput: peti nukuttaa, porkkanat syöttävät, pallo houkuttaa leikkiin; nalle,
+  // kakku ja trampoliini toimivat varavaihtoehtoina. Muuten vaellus.
+  var bed = homeHasHere('bed'), carrots = homeHasHere('carrots'), ball = homeHasHere('ball');
+  var teddy = homeHasHere('teddy'), cake = homeHasHere('cake'), tramp = homeHasHere('trampoline');
   for (i = 0; i < homeBunnies.length; i++) {
     b = homeBunnies[i];
     b.earT += dt * (b.state === 'eat' ? 12 : 3);
     b.timer -= dt;
     var want = 'wander', target = null;
     if (i === 0 && bed) { want = 'sleep'; target = { fx: bed.fx, fy: bed.fy - 0.005 }; }
+    else if (i === 0 && teddy) { want = 'hug'; target = { fx: teddy.fx + 0.035, fy: teddy.fy }; }
     else if (i === 1 && carrots) { want = 'eat'; target = { fx: carrots.fx + 0.045, fy: carrots.fy }; }
+    else if (i === 1 && cake) { want = 'eat'; target = { fx: cake.fx + 0.045, fy: cake.fy }; }
     else if (i === 2 && ball) { want = 'play'; target = { fx: ball.fx + (b.side || -1) * 0.05, fy: ball.fy }; }
+    else if (i === 2 && tramp) { want = 'bounce'; target = { fx: tramp.fx, fy: tramp.fy - 0.01 }; }
     if (want !== 'wander') {
       b.tx = target.fx; b.ty = target.fy;
     } else if (b.timer <= 0) {
@@ -257,8 +403,13 @@ function updateHome(dt) {
       b.hop = Math.abs(Math.sin(globalT * 9 + i));
     } else {
       b.moving = false;
-      b.hop = Math.max(0, b.hop - dt * 4);
       b.state = want;
+      if (want === 'bounce') {
+        b.hop = Math.abs(Math.sin(globalT * 5)) * 2.4;
+        if (tramp && Math.sin(globalT * 5) > 0.97) tramp.bounceT = 1;
+      } else {
+        b.hop = Math.max(0, b.hop - dt * 4);
+      }
       if (want === 'play' && b.timer <= 0) {
         b.timer = 1.2 + Math.random();
         b.side = -(b.side || -1);
@@ -278,10 +429,11 @@ function drawHome() {
   ctx.clearRect(0, 0, viewW, viewH);
   ctx.drawImage(homeBgCanvas, 0, 0, homeBgCanvas.width, homeBgCanvas.height, 0, 0, viewW, viewH);
 
-  // Seinätavarat, sitten lattiatavarat ja puput y-järjestyksessä
+  // Seinätavarat, sitten lattiatavarat ja puput y-järjestyksessä (vain tämä huone)
   var order = [];
   for (i = 0; i < homeItems.length; i++) {
     it = homeItems[i];
+    if (homeItemRoom(it) !== homeRoomIdx || !homeItemDef(it.id)) continue;
     if (homeItemDef(it.id).kind === 'wall') drawHomeItem(ctx, it, it.fx * viewW, it.fy * viewH, homeItemSize());
     else order.push({ y: it.fy * viewH, item: it });
   }
@@ -298,6 +450,15 @@ function drawHome() {
     roundRect(ctx, r.x, r.y, r.w, r.h, viewH * 0.02);
     ctx.stroke();
   }
+  // Oven hehku ja vihje, kunnes toisessa huoneessa on jotain
+  var dr = homeDoorRect(), otherHas = false;
+  for (i = 0; i < homeItems.length; i++) if (homeItemRoom(homeItems[i]) !== homeRoomIdx) otherHas = true;
+  var dg = ctx.createRadialGradient(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 0.2, dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3);
+  dg.addColorStop(0, 'rgba(255,240,180,' + (0.25 + Math.sin(globalT * 3) * 0.1) + ')');
+  dg.addColorStop(1, 'rgba(255,240,180,0)');
+  ctx.fillStyle = dg;
+  ctx.beginPath(); ctx.arc(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3, 0, Math.PI * 2); ctx.fill();
+  if (!otherHas && homeRoomIdx === 0) drawHintArrow(ctx, dr.x + dr.w / 2, dr.y - viewH * 0.06);
   for (i = 0; i < homeNotes.length; i++) drawNote(ctx, homeNotes[i]);
   drawParticlesLayerAbs(ctx);
   drawHomeShop(ctx);
@@ -337,6 +498,18 @@ function drawStarBalance(c, x, y) {
   c.textAlign = 'left';
   c.fillText(txt, x + s * 2.6, y + s * 0.05);
   c.textBaseline = 'alphabetic';
+}
+
+function drawShopArrow(c, a, dir) {
+  c.fillStyle = '#c9a0ff';
+  c.beginPath(); c.arc(a.x, a.y, a.r, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#fff';
+  c.beginPath();
+  c.moveTo(a.x + dir * a.r * 0.45, a.y);
+  c.lineTo(a.x - dir * a.r * 0.25, a.y - a.r * 0.45);
+  c.lineTo(a.x - dir * a.r * 0.25, a.y + a.r * 0.45);
+  c.closePath();
+  c.fill();
 }
 
 function drawHomeShop(c) {
@@ -380,6 +553,14 @@ function drawHomeShop(c) {
       }
     }
   }
+  // Sivunuolet ja sivupisteet
+  var ar = homeShopArrows(), n = homeShopPages(), fy = s.y + s.h - s.foot * 0.5;
+  if (ar.prev) drawShopArrow(c, ar.prev, -1);
+  if (ar.next) drawShopArrow(c, ar.next, 1);
+  for (i = 0; i < n; i++) {
+    c.fillStyle = i === homeShopPage ? '#8a4dff' : 'rgba(138,77,255,0.3)';
+    c.beginPath(); c.arc(s.x + s.w / 2 + (i - (n - 1) / 2) * s.foot * 0.3, fy, s.foot * 0.08, 0, Math.PI * 2); c.fill();
+  }
 }
 
 function drawHomeBunny(c, b) {
@@ -399,12 +580,15 @@ function drawHomeBunny(c, b) {
   } else if (b.state === 'eat') {
     c.fillStyle = '#ff8a3d';
     c.fillRect(x - s * 0.1, y - s * 1.05, s * 0.2 + Math.sin(globalT * 12) * s * 0.05, s * 0.12);
+  } else if (b.state === 'hug') {
+    c.fillStyle = '#ff5f7e';
+    drawHeartShape(c, x + s * 0.6, y - s * 2.1 - Math.sin(globalT * 3) * s * 0.1, s * 0.22, true);
   }
 }
 
 // Huonekalut: lattiatavaroilla (x, y) on jalkojen keskikohta, seinätavaroilla keskipiste
 function drawHomeItem(c, it, x, y, s) {
-  var i, bump = it.phase ? Math.sin(it.phase * Math.PI) * s * 0.06 : 0;
+  var i, k, bump = it.phase ? Math.sin(it.phase * Math.PI) * s * 0.06 : 0;
   y -= bump;
   if (it.id === 'rug') {
     var rcols = ['#ff7bac', '#c9a0ff', '#ffd24f'];
@@ -527,7 +711,6 @@ function drawHomeItem(c, it, x, y, s) {
     c.fillStyle = '#8a5a30';
     c.fillRect(x - s * 0.4, y - s * 1.0, s * 0.8, s * 1.0);
     var bcols = ['#ff5f7e', '#ffb84f', '#6fd66f', '#5fa8ff', '#b678ff'];
-    var k;
     for (k = 0; k < 3; k++) {
       c.fillStyle = '#c98b4a';
       c.fillRect(x - s * 0.36, y - s * 0.3 - k * s * 0.3, s * 0.72, s * 0.04);
@@ -548,73 +731,354 @@ function drawHomeItem(c, it, x, y, s) {
     c.fillStyle = '#ff7bac';
     c.beginPath(); c.arc(x, y - s * 0.62, s * 0.1, 0, Math.PI * 2); c.fill();
     c.fillRect(x - s * 0.02, y - s * 0.55, s * 0.04, s * 0.15);
+  } else if (it.id === 'teddy') {
+    c.fillStyle = '#c98b4a';
+    c.beginPath(); c.arc(x - s * 0.28, y - s * 0.12, s * 0.12, 0, Math.PI * 2); c.arc(x + s * 0.28, y - s * 0.12, s * 0.12, 0, Math.PI * 2); c.fill();
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y - s * 0.3, s * 0.26, s * 0.3, 0, 0, Math.PI * 2);
+    else c.arc(x, y - s * 0.3, s * 0.28, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.arc(x - s * 0.2, y - s * 0.75, s * 0.1, 0, Math.PI * 2); c.arc(x + s * 0.2, y - s * 0.75, s * 0.1, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x, y - s * 0.66, s * 0.22, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#e8b880';
+    c.beginPath(); c.arc(x, y - s * 0.34, s * 0.16, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x, y - s * 0.6, s * 0.08, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#333';
+    c.beginPath(); c.arc(x - s * 0.07, y - s * 0.7, s * 0.025, 0, Math.PI * 2); c.arc(x + s * 0.07, y - s * 0.7, s * 0.025, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x, y - s * 0.62, s * 0.025, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#ff5f7e';
+    c.beginPath(); c.moveTo(x - s * 0.09, y - s * 0.5); c.lineTo(x + s * 0.09, y - s * 0.5); c.lineTo(x, y - s * 0.44); c.closePath(); c.fill();
+  } else if (it.id === 'vase') {
+    var spin = it.spinT > 0 ? it.spinT * 8 : 0;
+    c.fillStyle = '#7fd4ff';
+    c.beginPath(); c.moveTo(x - s * 0.14, y - s * 0.5); c.quadraticCurveTo(x - s * 0.3, y - s * 0.2, x - s * 0.18, y); c.lineTo(x + s * 0.18, y); c.quadraticCurveTo(x + s * 0.3, y - s * 0.2, x + s * 0.14, y - s * 0.5); c.closePath(); c.fill();
+    c.strokeStyle = '#4fb356';
+    c.lineWidth = Math.max(1.5, s * 0.035);
+    var vcols = ['#ff7bac', '#ffd24f', '#c9a0ff'];
+    for (i = -1; i <= 1; i++) {
+      var a = i * 0.45 + Math.sin(spin + i) * 0.12;
+      c.beginPath(); c.moveTo(x, y - s * 0.45); c.lineTo(x + Math.sin(a) * s * 0.35, y - s * 0.45 - Math.cos(a) * s * 0.35); c.stroke();
+      drawFlower(c, x + Math.sin(a) * s * 0.35, y - s * 0.45 - Math.cos(a) * s * 0.35, s * 0.06, vcols[i + 1]);
+    }
+  } else if (it.id === 'clock') {
+    var sw = it.swingT > 0 ? Math.sin(globalT * 14) * 0.3 : Math.sin(globalT * 3) * 0.25;
+    c.fillStyle = '#8a5a30';
+    roundRect(c, x - s * 0.24, y - s * 0.45, s * 0.48, s * 0.9, s * 0.08);
+    c.fill();
+    c.fillStyle = '#fff6d8';
+    c.beginPath(); c.arc(x, y - s * 0.18, s * 0.18, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#3a3346';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x, y - s * 0.18); c.lineTo(x, y - s * 0.32); c.moveTo(x, y - s * 0.18); c.lineTo(x + Math.cos(globalT * 0.5) * s * 0.1, y - s * 0.18 + Math.sin(globalT * 0.5) * s * 0.1); c.stroke();
+    // Heiluri
+    c.strokeStyle = '#ffd24f';
+    c.lineWidth = Math.max(1.5, s * 0.025);
+    c.beginPath(); c.moveTo(x, y + s * 0.02); c.lineTo(x + Math.sin(sw) * s * 0.28, y + s * 0.02 + Math.cos(sw) * s * 0.32); c.stroke();
+    c.fillStyle = '#ffd24f';
+    c.beginPath(); c.arc(x + Math.sin(sw) * s * 0.28, y + s * 0.02 + Math.cos(sw) * s * 0.32, s * 0.06, 0, Math.PI * 2); c.fill();
+  } else if (it.id === 'lights') {
+    // Valosarja: naru ja lamput vilkkuvat
+    var lcols = ['#ff5f7e', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'];
+    c.strokeStyle = '#5a4a3a';
+    c.lineWidth = Math.max(1.5, s * 0.025);
+    c.beginPath(); c.moveTo(x - s * 0.6, y - s * 0.2); c.quadraticCurveTo(x, y + s * 0.15, x + s * 0.6, y - s * 0.2); c.stroke();
+    for (i = 0; i < 5; i++) {
+      var t = (i + 0.5) / 5, lx = x - s * 0.6 + t * s * 1.2, ly = y - s * 0.2 + Math.sin(t * Math.PI) * s * 0.17;
+      var on = it.on && Math.sin(globalT * 4 + i * 1.3) > -0.3;
+      if (on) {
+        var gg = c.createRadialGradient(lx, ly + s * 0.08, s * 0.02, lx, ly + s * 0.08, s * 0.18);
+        gg.addColorStop(0, lcols[i]);
+        gg.addColorStop(1, 'rgba(255,255,255,0)');
+        c.fillStyle = gg;
+        c.globalAlpha = 0.6;
+        c.beginPath(); c.arc(lx, ly + s * 0.08, s * 0.18, 0, Math.PI * 2); c.fill();
+        c.globalAlpha = 1;
+      }
+      c.fillStyle = on ? lcols[i] : '#8a8298';
+      c.beginPath(); c.arc(lx, ly + s * 0.08, s * 0.055, 0, Math.PI * 2); c.fill();
+    }
+  } else if (it.id === 'cake') {
+    c.fillStyle = '#ffffff';
+    roundRect(c, x - s * 0.4, y - s * 0.08, s * 0.8, s * 0.08, s * 0.03);
+    c.fill();
+    c.fillStyle = '#ff9ec6';
+    roundRect(c, x - s * 0.32, y - s * 0.34, s * 0.64, s * 0.28, s * 0.06);
+    c.fill();
+    c.fillStyle = '#ffd6ec';
+    roundRect(c, x - s * 0.24, y - s * 0.52, s * 0.48, s * 0.2, s * 0.06);
+    c.fill();
+    c.fillStyle = '#ff5f7e';
+    for (i = -1; i <= 1; i++) { c.beginPath(); c.arc(x + i * s * 0.16, y - s * 0.52, s * 0.045, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = '#7fd4ff';
+    c.fillRect(x - s * 0.025, y - s * 0.7, s * 0.05, s * 0.18);
+    if (it.on) {
+      c.fillStyle = '#ffb347';
+      c.beginPath();
+      if (c.ellipse) c.ellipse(x, y - s * 0.76 + Math.sin(globalT * 12) * s * 0.01, s * 0.035, s * 0.06, 0, 0, Math.PI * 2);
+      else c.arc(x, y - s * 0.76, s * 0.04, 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (it.id === 'teaset') {
+    c.fillStyle = '#a9743f';
+    roundRect(c, x - s * 0.5, y - s * 0.34, s, s * 0.08, s * 0.03);
+    c.fill();
+    c.fillRect(x - s * 0.42, y - s * 0.26, s * 0.06, s * 0.26);
+    c.fillRect(x + s * 0.36, y - s * 0.26, s * 0.06, s * 0.26);
+    c.fillStyle = '#c9a0ff';
+    c.beginPath(); c.arc(x - s * 0.12, y - s * 0.5, s * 0.16, 0, Math.PI * 2); c.fill();
+    c.fillRect(x - s * 0.2, y - s * 0.7, s * 0.16, s * 0.08);
+    c.strokeStyle = '#c9a0ff';
+    c.lineWidth = Math.max(1.5, s * 0.04);
+    c.beginPath(); c.moveTo(x + s * 0.02, y - s * 0.55); c.lineTo(x + s * 0.14, y - s * 0.62); c.stroke();
+    c.fillStyle = '#ff7bac';
+    roundRect(c, x + s * 0.2, y - s * 0.5, s * 0.16, s * 0.14, s * 0.04);
+    c.fill();
+    if (it.steamT > 0) {
+      c.strokeStyle = 'rgba(255,255,255,' + Math.min(1, it.steamT) * 0.8 + ')';
+      c.lineWidth = Math.max(1.5, s * 0.03);
+      for (i = -1; i <= 1; i++) {
+        c.beginPath(); c.moveTo(x - s * 0.12 + i * s * 0.07, y - s * 0.72); c.quadraticCurveTo(x - s * 0.12 + i * s * 0.07 + Math.sin(globalT * 5 + i) * s * 0.06, y - s * 0.9, x - s * 0.12 + i * s * 0.07, y - s * 1.05); c.stroke();
+      }
+    }
+  } else if (it.id === 'sofa') {
+    c.fillStyle = '#8a4dff';
+    roundRect(c, x - s * 0.55, y - s * 0.62, s * 1.1, s * 0.34, s * 0.1);
+    c.fill();
+    c.fillStyle = '#c9a0ff';
+    roundRect(c, x - s * 0.5, y - s * 0.34, s, s * 0.26, s * 0.08);
+    c.fill();
+    c.fillStyle = '#8a4dff';
+    roundRect(c, x - s * 0.6, y - s * 0.42, s * 0.14, s * 0.4, s * 0.06);
+    c.fill();
+    roundRect(c, x + s * 0.46, y - s * 0.42, s * 0.14, s * 0.4, s * 0.06);
+    c.fill();
+    c.fillStyle = '#ffd24f';
+    roundRect(c, x - s * 0.36, y - s * 0.56, s * 0.28, s * 0.22, s * 0.05);
+    c.fill();
+    c.fillStyle = '#5a3a1e';
+    c.fillRect(x - s * 0.45, y - s * 0.08, s * 0.08, s * 0.08);
+    c.fillRect(x + s * 0.37, y - s * 0.08, s * 0.08, s * 0.08);
+  } else if (it.id === 'rockinghorse') {
+    var rk = it.rockT > 0 ? Math.sin(globalT * 6) * 0.22 * Math.min(1, it.rockT) : 0;
+    c.save();
+    c.translate(x, y - s * 0.05);
+    c.rotate(rk);
+    c.strokeStyle = '#a9743f';
+    c.lineWidth = Math.max(2, s * 0.06);
+    c.beginPath(); c.arc(0, -s * 0.5, s * 0.55, Math.PI * 0.2, Math.PI * 0.8); c.stroke();
+    c.fillStyle = '#a9743f';
+    c.fillRect(-s * 0.28, -s * 0.45, s * 0.08, s * 0.4);
+    c.fillRect(s * 0.2, -s * 0.45, s * 0.08, s * 0.4);
+    c.fillStyle = '#fff';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(0, -s * 0.5, s * 0.36, s * 0.16, 0, 0, Math.PI * 2);
+    else c.arc(0, -s * 0.5, s * 0.25, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.moveTo(s * 0.22, -s * 0.58); c.lineTo(s * 0.34, -s * 0.9); c.lineTo(s * 0.48, -s * 0.85); c.lineTo(s * 0.4, -s * 0.55); c.closePath(); c.fill();
+    c.fillStyle = '#ff7bac';
+    roundRect(c, -s * 0.12, -s * 0.66, s * 0.24, s * 0.1, s * 0.03);
+    c.fill();
+    c.fillStyle = '#ffd24f';
+    c.beginPath(); c.moveTo(s * 0.36, -s * 0.9); c.lineTo(s * 0.4, -s * 1.02); c.lineTo(s * 0.44, -s * 0.9); c.closePath(); c.fill();
+    c.strokeStyle = '#ff7bac';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(s * 0.3, -s * 0.85); c.lineTo(s * 0.2, -s * 0.7); c.stroke();
+    c.fillStyle = '#333';
+    c.beginPath(); c.arc(s * 0.4, -s * 0.82, s * 0.02, 0, Math.PI * 2); c.fill();
+    c.restore();
+  } else if (it.id === 'chest') {
+    c.fillStyle = '#8a5a30';
+    roundRect(c, x - s * 0.4, y - s * 0.34, s * 0.8, s * 0.34, s * 0.05);
+    c.fill();
+    c.fillStyle = '#ffd24f';
+    c.fillRect(x - s * 0.4, y - s * 0.2, s * 0.8, s * 0.04);
+    if (it.on) {
+      var gcols = ['#ff5f7e', '#5fa8ff', '#6fd66f', '#ffe94f'];
+      for (i = 0; i < 4; i++) drawGem(c, x - s * 0.24 + i * s * 0.16, y - s * 0.4 - (i % 2) * s * 0.06, s * 0.09, gcols[i]);
+      c.fillStyle = '#5a3416';
+      roundRect(c, x - s * 0.42, y - s * 0.8, s * 0.84, s * 0.22, s * 0.08);
+      c.fill();
+      drawStar(c, x + s * 0.3, y - s * 0.6, s * 0.07, globalT * 2, 0.7);
+    } else {
+      c.fillStyle = '#5a3416';
+      roundRect(c, x - s * 0.42, y - s * 0.52, s * 0.84, s * 0.22, s * 0.08);
+      c.fill();
+      c.fillStyle = '#ffd24f';
+      c.fillRect(x - s * 0.05, y - s * 0.36, s * 0.1, s * 0.12);
+    }
+  } else if (it.id === 'trampoline') {
+    var dip = it.bounceT ? Math.sin(it.bounceT * Math.PI) * s * 0.06 : 0;
+    c.fillStyle = '#5a4a6e';
+    c.fillRect(x - s * 0.45, y - s * 0.3, s * 0.06, s * 0.3);
+    c.fillRect(x + s * 0.39, y - s * 0.3, s * 0.06, s * 0.3);
+    c.fillRect(x - s * 0.15, y - s * 0.3, s * 0.05, s * 0.3);
+    c.fillRect(x + s * 0.1, y - s * 0.3, s * 0.05, s * 0.3);
+    c.fillStyle = '#5fa8ff';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y - s * 0.32 + dip, s * 0.55, s * 0.1, 0, 0, Math.PI * 2);
+    else c.arc(x, y - s * 0.32, s * 0.3, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = '#3a3346';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.stroke();
+    c.fillStyle = '#ffe94f';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y - s * 0.32 + dip, s * 0.4, s * 0.06, 0, 0, Math.PI * 2);
+    else c.arc(x, y - s * 0.32, s * 0.2, 0, Math.PI * 2);
+    c.fill();
+  } else if (it.id === 'aquarium') {
+    c.fillStyle = '#a9743f';
+    roundRect(c, x - s * 0.5, y - s * 0.32, s, s * 0.32, s * 0.04);
+    c.fill();
+    c.fillStyle = 'rgba(120,200,255,0.75)';
+    roundRect(c, x - s * 0.44, y - s * 0.9, s * 0.88, s * 0.58, s * 0.05);
+    c.fill();
+    c.fillStyle = '#e8d5a3';
+    c.fillRect(x - s * 0.42, y - s * 0.42, s * 0.84, s * 0.08);
+    c.strokeStyle = '#2f9a6a';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x - s * 0.3, y - s * 0.42); c.quadraticCurveTo(x - s * 0.36 + Math.sin(globalT * 2) * s * 0.03, y - s * 0.62, x - s * 0.3, y - s * 0.8); c.stroke();
+    var fcols = ['#ffb347', '#ff5f7e', '#ffe94f'];
+    for (i = 0; i < homeFish.length; i++) {
+      var f = homeFish[i], fx = x + f.fx * s, fy = y - s * 0.62 + f.fy * s;
+      c.fillStyle = fcols[i % 3];
+      c.beginPath();
+      if (c.ellipse) c.ellipse(fx, fy, s * 0.07, s * 0.04, 0, 0, Math.PI * 2);
+      else c.arc(fx, fy, s * 0.05, 0, Math.PI * 2);
+      c.fill();
+      c.beginPath(); c.moveTo(fx - f.dir * s * 0.06, fy); c.lineTo(fx - f.dir * s * 0.12, fy - s * 0.04); c.lineTo(fx - f.dir * s * 0.12, fy + s * 0.04); c.closePath(); c.fill();
+    }
+    c.fillStyle = 'rgba(255,255,255,0.5)';
+    c.beginPath(); c.arc(x + s * 0.3, y - s * 0.55 - ((globalT * 0.4 + 0.3) % 1) * s * 0.3, s * 0.02, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.6)';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    roundRect(c, x - s * 0.44, y - s * 0.9, s * 0.88, s * 0.58, s * 0.05);
+    c.stroke();
+  } else if (it.id === 'piano') {
+    c.fillStyle = '#3a3346';
+    roundRect(c, x - s * 0.55, y - s * 0.95, s * 1.1, s * 0.6, s * 0.06);
+    c.fill();
+    c.fillRect(x - s * 0.5, y - s * 0.35, s * 0.08, s * 0.35);
+    c.fillRect(x + s * 0.42, y - s * 0.35, s * 0.08, s * 0.35);
+    c.fillStyle = '#fff';
+    c.fillRect(x - s * 0.48, y - s * 0.42, s * 0.96, s * 0.14);
+    c.fillStyle = '#222';
+    for (i = 0; i < 7; i++) {
+      var press = it.keysT > 0 && Math.sin(globalT * 12 + i * 2) > 0.6;
+      c.fillRect(x - s * 0.42 + i * s * 0.13, y - s * 0.42, s * 0.05, press ? s * 0.06 : s * 0.08);
+    }
+    c.fillStyle = '#ffd24f';
+    roundRect(c, x - s * 0.25, y - s * 0.86, s * 0.5, s * 0.16, s * 0.03);
+    c.fill();
+    c.fillStyle = '#ff7bac';
+    c.beginPath(); c.arc(x + s * 0.38, y - s * 1.0, s * 0.06, 0, Math.PI * 2); c.fill();
   }
 }
 
 function renderHomeBg() {
-  var key = viewW + 'x' + viewH;
+  var key = viewW + 'x' + viewH + '|' + homeRoomIdx;
   if (homeBgKey === key) return;
   homeBgKey = key;
   homeBgCanvas.width = Math.round(viewW * DPR);
   homeBgCanvas.height = Math.round(viewH * DPR);
   var b = homeBgCanvas.getContext('2d');
   b.setTransform(DPR, 0, 0, DPR, 0, 0);
-  var room = homeRoom(), w = viewW, h = viewH, i, k, x, y;
-  b.fillStyle = '#e8dcf5';
+  var room = homeRoom(), w = viewW, h = viewH, i, k, x, y, tower = homeRoomIdx === 1;
+  b.fillStyle = tower ? '#2a2450' : '#e8dcf5';
   b.fillRect(0, 0, w, h);
-  // Seinä tapetilla
+  // Seinä tapetilla (sali: sydämet, torni: tähtitaivas)
   var wall = b.createLinearGradient(0, 0, 0, room.floorY);
-  wall.addColorStop(0, '#f3e9ff');
-  wall.addColorStop(1, '#e2d2f5');
+  wall.addColorStop(0, tower ? '#2d2a6a' : '#f3e9ff');
+  wall.addColorStop(1, tower ? '#4a3f8a' : '#e2d2f5');
   b.fillStyle = wall;
   b.fillRect(0, 0, room.x1 + h * 0.02, room.floorY);
-  b.fillStyle = 'rgba(255,255,255,0.35)';
-  for (i = 0; i < 14; i++) {
-    for (k = 0; k < 7; k++) {
-      x = h * 0.06 + i * h * 0.11 + (k % 2) * h * 0.055;
-      y = h * 0.06 + k * h * 0.085;
-      if (y > room.floorY - h * 0.08) continue;
-      drawHeartShape(b, x, y, h * 0.012, true);
+  if (tower) {
+    for (i = 0; i < 60; i++) {
+      x = (i * 173.7) % (room.x1 + h * 0.02);
+      y = (i * 97.3) % (room.floorY - h * 0.05);
+      b.fillStyle = 'rgba(255,255,255,' + (0.35 + (i % 4) * 0.15) + ')';
+      b.beginPath(); b.arc(x, y, 1 + (i % 3) * 0.7, 0, Math.PI * 2); b.fill();
+    }
+    for (i = 0; i < 5; i++) drawStar(b, h * 0.1 + i * h * 0.22, h * 0.08 + (i % 2) * h * 0.06, h * 0.012, i, 0);
+  } else {
+    b.fillStyle = 'rgba(255,255,255,0.35)';
+    for (i = 0; i < 14; i++) {
+      for (k = 0; k < 7; k++) {
+        x = h * 0.06 + i * h * 0.11 + (k % 2) * h * 0.055;
+        y = h * 0.06 + k * h * 0.085;
+        if (y > room.floorY - h * 0.08) continue;
+        drawHeartShape(b, x, y, h * 0.012, true);
+      }
     }
   }
-  // Ikkuna
-  var wx = room.x1 * 0.22, wy = room.floorY * 0.42, ww = h * 0.2, wh = h * 0.26;
-  b.fillStyle = '#a9743f';
-  roundRect(b, wx - ww / 2 - h * 0.012, wy - wh / 2 - h * 0.012, ww + h * 0.024, wh + h * 0.024, h * 0.02);
-  b.fill();
-  var sky = b.createLinearGradient(0, wy - wh / 2, 0, wy + wh / 2);
-  sky.addColorStop(0, '#8fd0ff');
-  sky.addColorStop(1, '#dff3ff');
-  b.fillStyle = sky;
-  roundRect(b, wx - ww / 2, wy - wh / 2, ww, wh, h * 0.015);
-  b.fill();
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  cloudShape(b, wx - ww * 0.2, wy - wh * 0.2, h * 0.014);
-  cloudShape(b, wx + ww * 0.25, wy + wh * 0.05, h * 0.011);
-  b.fillStyle = '#7fcf68';
-  b.beginPath(); b.arc(wx, wy + wh * 0.62, ww * 0.6, Math.PI, 0); b.fill();
-  b.fillStyle = '#a9743f';
-  b.fillRect(wx - h * 0.006, wy - wh / 2, h * 0.012, wh);
-  b.fillRect(wx - ww / 2, wy - h * 0.006, ww, h * 0.012);
-  // Lattialista ja lattia
-  b.fillStyle = '#c9a0ff';
+  // Ikkuna: salissa neliö ja päivä, tornissa pyöreä ja kuu
+  var wx = tower ? room.x1 * 0.7 : room.x1 * 0.22, wy = room.floorY * 0.42, ww = h * 0.2, wh = h * 0.26;
+  if (tower) {
+    b.fillStyle = '#8a8298';
+    b.beginPath(); b.arc(wx, wy, ww * 0.62, 0, Math.PI * 2); b.fill();
+    var night = b.createRadialGradient(wx, wy, ww * 0.1, wx, wy, ww * 0.55);
+    night.addColorStop(0, '#2a3a78');
+    night.addColorStop(1, '#0b1030');
+    b.fillStyle = night;
+    b.beginPath(); b.arc(wx, wy, ww * 0.55, 0, Math.PI * 2); b.fill();
+    b.fillStyle = '#fff6c8';
+    b.beginPath(); b.arc(wx + ww * 0.15, wy - ww * 0.12, ww * 0.16, 0, Math.PI * 2); b.fill();
+    b.fillStyle = '#0b1030';
+    b.beginPath(); b.arc(wx + ww * 0.23, wy - ww * 0.16, ww * 0.13, 0, Math.PI * 2); b.fill();
+    for (i = 0; i < 6; i++) drawStar(b, wx - ww * 0.3 + (i % 3) * ww * 0.22, wy + ww * 0.1 + Math.floor(i / 3) * ww * 0.22, ww * 0.03, i, 0);
+    b.strokeStyle = '#8a8298';
+    b.lineWidth = h * 0.01;
+    b.beginPath(); b.moveTo(wx, wy - ww * 0.55); b.lineTo(wx, wy + ww * 0.55); b.moveTo(wx - ww * 0.55, wy); b.lineTo(wx + ww * 0.55, wy); b.stroke();
+  } else {
+    b.fillStyle = '#a9743f';
+    roundRect(b, wx - ww / 2 - h * 0.012, wy - wh / 2 - h * 0.012, ww + h * 0.024, wh + h * 0.024, h * 0.02);
+    b.fill();
+    var sky = b.createLinearGradient(0, wy - wh / 2, 0, wy + wh / 2);
+    sky.addColorStop(0, '#8fd0ff');
+    sky.addColorStop(1, '#dff3ff');
+    b.fillStyle = sky;
+    roundRect(b, wx - ww / 2, wy - wh / 2, ww, wh, h * 0.015);
+    b.fill();
+    b.fillStyle = 'rgba(255,255,255,0.9)';
+    cloudShape(b, wx - ww * 0.2, wy - wh * 0.2, h * 0.014);
+    cloudShape(b, wx + ww * 0.25, wy + wh * 0.05, h * 0.011);
+    b.fillStyle = '#7fcf68';
+    b.beginPath(); b.arc(wx, wy + wh * 0.62, ww * 0.6, Math.PI, 0); b.fill();
+    b.fillStyle = '#a9743f';
+    b.fillRect(wx - h * 0.006, wy - wh / 2, h * 0.012, wh);
+    b.fillRect(wx - ww / 2, wy - h * 0.006, ww, h * 0.012);
+  }
+  // Lattialista ja lattia (torni: kivilaatat)
+  b.fillStyle = tower ? '#6b6490' : '#c9a0ff';
   b.fillRect(0, room.floorY - h * 0.03, room.x1 + h * 0.02, h * 0.03);
   var floor = b.createLinearGradient(0, room.floorY, 0, h);
-  floor.addColorStop(0, '#e2b98a');
-  floor.addColorStop(1, '#c48f5c');
+  floor.addColorStop(0, tower ? '#a9a6c8' : '#e2b98a');
+  floor.addColorStop(1, tower ? '#7a7898' : '#c48f5c');
   b.fillStyle = floor;
   b.fillRect(0, room.floorY, room.x1 + h * 0.02, h - room.floorY);
-  b.strokeStyle = 'rgba(120,70,30,0.25)';
+  b.strokeStyle = tower ? 'rgba(40,30,80,0.3)' : 'rgba(120,70,30,0.25)';
   b.lineWidth = 2;
   for (y = room.floorY + h * 0.06; y < h; y += h * 0.07) { b.beginPath(); b.moveTo(0, y); b.lineTo(room.x1 + h * 0.02, y); b.stroke(); }
   for (i = 0; i < 12; i++) {
     x = i * h * 0.16 + (i % 2) * h * 0.08;
     b.beginPath(); b.moveTo(x, room.floorY); b.lineTo(x - h * 0.06, h); b.stroke();
   }
-  // Ovi oikeassa reunassa huoneen ja kaupan välissä
+  // Ovi: salissa oikealla (torniin), tornissa vasemmalla (saliin)
+  var dr = homeDoorRect();
   b.fillStyle = '#8a5a30';
-  roundRect(b, room.x1 - h * 0.13, room.floorY - h * 0.3, h * 0.12, h * 0.3, h * 0.03);
+  roundRect(b, dr.x, dr.y, dr.w, dr.h, h * 0.03);
   b.fill();
   b.fillStyle = '#ffd24f';
-  b.beginPath(); b.arc(room.x1 - h * 0.04, room.floorY - h * 0.14, h * 0.01, 0, Math.PI * 2); b.fill();
+  b.beginPath(); b.arc(homeRoomIdx === 0 ? dr.x + dr.w * 0.75 : dr.x + dr.w * 0.25, dr.y + dr.h * 0.53, h * 0.01, 0, Math.PI * 2); b.fill();
+  // Kyltti oven yllä: portaat torniin / sydän saliin
+  b.fillStyle = '#fff6d8';
+  roundRect(b, dr.x + dr.w * 0.1, dr.y - h * 0.07, dr.w * 0.8, h * 0.05, h * 0.01);
+  b.fill();
+  if (homeRoomIdx === 0) {
+    b.fillStyle = '#8a5cb8';
+    for (i = 0; i < 3; i++) b.fillRect(dr.x + dr.w * 0.25 + i * dr.w * 0.17, dr.y - h * 0.03 - i * h * 0.01, dr.w * 0.17, h * 0.01 * (i + 1));
+  } else {
+    b.fillStyle = '#ff5f7e';
+    drawHeartShape(b, dr.x + dr.w / 2, dr.y - h * 0.045, h * 0.012, true);
+  }
 }

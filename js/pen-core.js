@@ -10,7 +10,7 @@ var penStrokes = [];   // { pts: [{x, y}], age, len }
 var penBubbles = [];   // { x, y, r, age }
 var penCur = null;     // parhaillaan piirrettävä viiva
 var penInk = 0, penInkMax = 0;
-var penMode = false, penAutoT = 0;
+var penMode = false;
 var penWait = false, penWaitT = 0, penStun = 0, penDir = 1;
 var penHooks = { onStroke: null, bubbleTargets: null };
 var PEN_LIFE = 8, PEN_BUBBLE = 6, PEN_STEP = 0.07, PEN_SLOPE = 1.4, PEN_DROP = 0.4;
@@ -22,7 +22,6 @@ function penCoreReset() {
   penInkMax = viewW * 1.6;
   penInk = penInkMax;
   penMode = false;
-  penAutoT = 0;
   penWait = false;
   penWaitT = 0;
   penStun = 0;
@@ -332,8 +331,9 @@ function penWalkerStep(a, dt, opts) {
   return 'wait';
 }
 
-// Prinsessa: pohjassa pitäminen kävelyttää sormea kohti; reunalla tai seinällä
-// pusertaminen ottaa kynän esiin. opts = { onFall, wallX }
+// Prinsessa: pohjassa pitäminen kävelyttää sormea kohti; reunalla hän pysähtyy
+// odottamaan. Kynä otetaan esiin vain kynänapista (ei automaattisesti), jotta
+// pelaaja hallitsee kynän itse. opts = { onFall, wallX }
 function penPrincessStep(dt, opts) {
   opts = opts || {};
   if (penStun > 0) penStun -= dt;
@@ -344,15 +344,11 @@ function penPrincessStep(dt, opts) {
     princess.walkPhase += dt * 10;
     penWait = false;
     penWaitT = 0;
-    penAutoT = 0;
   } else if (r === 'wait') {
     if (!penWait) { penWait = true; penWaitT = 0; }
     penWaitT += dt;
-    penAutoT += dt;
-    if (!penMode && penAutoT > 0.6) penSetMode(true);
   } else {
     if (penWait) penWaitT += dt;
-    penAutoT = 0;
     if (r === 'air') penWait = false;
   }
   return r;

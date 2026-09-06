@@ -142,8 +142,9 @@ Sotkumörkö on saaren vartija.
 - **Taikakynä** ♥ — uusi verbi: **piirtäminen**. Pidä pohjassa kävelläksesi
   sormea kohti kuten muualla (myös taaksepäin); rotkon reunalle prinsessa
   pysähtyy. Kynänappi (hyppynapin paikalla) ottaa kynän käteen: nappi hehkuu ja
-  kynä leijuu prinsessan vierellä. Reunaa vasten pusertaminen ottaa kynän esiin
-  itsestään. Kynä kädessä sormella piirretään silta tai ramppi, jota pitkin hän
+  kynä leijuu prinsessan vierellä. Kynä otetaan esiin ja laitetaan pois vain
+  napista, ei koskaan itsestään; reunalla odottava prinsessa näyttää pienen
+  kynävihjeen. Kynä kädessä sormella piirretään silta tai ramppi, jota pitkin hän
   kävelee, kun kynä laitetaan pois; liian jyrkkää viivaa hän ei kiipeä. Muste
   (palkki ylhäällä) kuluu viivan pituuden mukaan ja palautuu ajan kanssa; viivat
   haihtuvat 8 sekunnissa. Mustepullot täyttävät musteen ja avaavat lopun
@@ -215,12 +216,19 @@ palautuvat. Kenttä itse ei ala alusta.
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
 säilyivät täysinä; juhlassa näkyy "+n". Tähtisaldo näkyy kartoilla vasemmalla
 ylhäällä. Linnasaaren linnan napautus avaa kuplan, jossa on ovi (sisustus) ja
-finaali. Sisustushuoneessa oikean reunan kaupasta ostetaan huonekaluja tähdillä
-(hinta tähtinä kortissa), ostettu tavara ilmestyy huoneeseen ja sen voi raahata
-minne vain (seinätavarat seinälle, lattiatavarat lattialle). Napautus tavaraan
-tekee jotain: lamppu syttyy, soittorasia soittaa, pallo pyörii. Puput reagoivat:
-peti nukuttaa, porkkanakulho syöttää, pallon kanssa leikitään. Sisustus tallentuu.
-Vanha tallennus saa 2 tähteä jokaisesta jo läpäistystä kentästä.
+finaali. Huoneistossa on kaksi huonetta: **sali** (sydäntapetti, ikkuna) ja
+**tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia). Huoneiden välillä
+kuljetaan ovesta (salissa oikealla, tornissa vasemmalla); puput tulevat perässä.
+Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa);
+kauppa on sivutettu, sivua vaihdetaan alareunan nuolista. Ostettu tavara
+ilmestyy siihen huoneeseen, jossa ollaan, ja sen voi raahata minne vain
+(seinätavarat seinälle, lattiatavarat lattialle). Napautus tavaraan tekee
+jotain: lamppu ja valosarja syttyvät, soittorasia ja piano soittavat, kello
+lyö, pallo pyörii, keinuhevonen keinuu, arkku aukeaa, kakun kynttilä sammuu,
+akvaarion kalat säntäävät, teekannu höyryää. Puput reagoivat: peti nukuttaa
+(tai nalle halataan), porkkanakulho tai kakku syöttää, pallon kanssa leikitään
+(tai trampoliinilla pompitaan). Sisustus tallentuu. Vanha tallennus saa 2
+tähteä jokaisesta jo läpäistystä kentästä, ja sen tavarat ovat salissa.
 
 **Kartta**-nappi (🏠) palauttaa kentästä saaren labyrinttiin, ja labyrintin
 **vene**-nappi (⛵ vasemmassa yläkulmassa) palauttaa saaristokartalle. Samaan
@@ -311,7 +319,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Kuutamometsä: kiiltomadon valoaika `GLOW_ON = 1.5` jaksosta `GLOW_CYCLE = 2.9`, pöllön varoitus `1.2` s, syöksyn nopeus `dt * 1.3`
 - Pilvipolku: haihtumisaika `PUFF_STAND = 0.7`, paluu `PUFF_BACK = 2.5`, myrskypallot `viewW * 0.07`
 - Kuun vartija: tähtien väli `1.8 + Math.random() * 0.9`, varoitus `0.9` s, putoamiskiihtyvyys `viewH * 1.3`
-- Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js)
+- Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js), kaupan sivukoko `HOME_SHOP_PAGE`, huoneet `HOME_ROOMS`
 - Sadesuoja: tahrojen väli `0.8 + Math.random() * 0.6`, alueet `rainZones`
 - Pupusilta: pupun nopeus `viewW * 0.14`, lähtöetäisyys `viewW * 0.45`
 - Sotkumörkö: heittoväli `2.4 + Math.random() * 1.2`, leijunta `1.2` s, muodontunnistus `penClassify` (pen-core.js: kulma `0.87` rad, pyöreys `0.13`)
@@ -319,7 +327,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Koski: kaistat `RAP_LANE_DEFS` (suunta, nopeus, tukin pituus, kilpikonna), kilpikonnan jakso `TURTLE_CYCLE/TURTLE_UP/TURTLE_WARN`, hypyn kesto `RAP_HOP_T`, laskeutumisen sallima `rowH * 0.3`
 - Majakka: palikoita `LH_BLOCKS`, heilunnan nopeus `1.3 + stack * 0.1`, tarvittava päällekkäisyys `bw * 0.45` (lamppu `0.3`)
 - Tuulenhuippu: puuskan vaiheet `WIND_WARN = 1.0` / `WIND_BLOW = 1.3`, tyyni `sumWindCalm()`, työntö `viewW * 0.15` (ilmassa ×1.6), suojaetäisyys kivestä `viewW * 0.08`, alueet `sumWindDefs`
-- Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.16`, kynän automaattinen esiinotto reunalla `penAutoT > 0.6`
+- Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.16`
 
 ## Tekniikka
 
