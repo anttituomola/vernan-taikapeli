@@ -47,6 +47,12 @@ var HOME_PAINTS = [
 ];
 var HOME_BOWS = ['#ff7bac', '#5fa8ff', '#ffd24f'];
 function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 } }; }
+// Onko #rrggbb-väri vaalea (tapettikuvion sävyn valintaan)
+function homeColorIsLight(hex) {
+  var n = parseInt(hex.slice(1), 16);
+  var r = (n >> 16) & 255, g = (n >> 8) & 255, bl = n & 255;
+  return (r * 0.299 + g * 0.587 + bl * 0.114) > 150;
+}
 var homeDecor = homeDecorDefault();   // huoneen seinä- ja lattiamaali (indeksi HOME_PAINTS)
 var homeBows = [-1, -1, -1];          // pupujen rusetit (indeksi HOME_BOWS, -1 = ei)
 var homeRoomIdx = 0;
@@ -1281,11 +1287,13 @@ function renderHomeBg() {
   b.fillStyle = wall;
   b.fillRect(0, 0, room.x1 + h * 0.02, room.floorY);
   if (tower) {
+    // Tähtitapetti: vaalealla seinällä tummat tähdet, tummalla valkoiset
+    var light = homeColorIsLight(wallP.wall[0]);
     for (i = 0; i < 60; i++) {
       x = (i * 173.7) % (room.x1 + h * 0.02);
       y = (i * 97.3) % (room.floorY - h * 0.05);
-      b.fillStyle = 'rgba(255,255,255,' + (0.35 + (i % 4) * 0.15) + ')';
-      b.beginPath(); b.arc(x, y, 1 + (i % 3) * 0.7, 0, Math.PI * 2); b.fill();
+      b.fillStyle = light ? 'rgba(90,60,140,' + (0.3 + (i % 4) * 0.12) + ')' : 'rgba(255,255,255,' + (0.35 + (i % 4) * 0.15) + ')';
+      b.beginPath(); b.arc(x, y, (light ? 1.4 : 1) + (i % 3) * 0.7, 0, Math.PI * 2); b.fill();
     }
     for (i = 0; i < 5; i++) drawStar(b, h * 0.1 + i * h * 0.22, h * 0.08 + (i % 2) * h * 0.06, h * 0.012, i, 0);
   } else {
