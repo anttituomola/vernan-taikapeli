@@ -375,6 +375,18 @@ function taskStart(t) {
     makeDotsProblem(t);
     t.mode = 'input';
     playNote(523, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'wordpick') {
+    makeWordPickProblem(t);
+    t.mode = 'input';
+    wordSay(t);
+  } else if (t.type === 'build') {
+    makeBuildProblem(t);
+    t.mode = 'input';
+    wordSay(t);
+  } else if (t.type === 'letter') {
+    makeLetterProblem(t);
+    t.mode = 'input';
+    playNote(659, 0, 0.2, 'triangle', 0.35);
   } else {
     t.seq = [];
     for (var i = 0; i < t.seqLen; i++) t.seq.push(Math.floor(Math.random() * t.orbs));
@@ -416,12 +428,21 @@ function handleTaskTap(px, py) {
     dotsTap(t, px, py);
     return;
   }
+  if (t.type === 'wordpick') {
+    wordPickTap(t, px, py);
+    return;
+  }
   var op = orbPositions(t.orbs);
   var i, dx, dy, rc, hit = -1;
   if (t.type === 'word') {
     // Sanan napautus lukee sen ääneen tavu kerrallaan
     rc = wordPromptRect(ctx, t);
     if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) { wordSay(t); return; }
+  }
+  if (t.type === 'letter') {
+    // Kirjaimen napautus soittaa sen
+    rc = letterPromptRect();
+    if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) { t.sayT = 0; playNote(523, 0, 0.35, 'triangle', 0.3); return; }
   }
   for (i = 0; i < t.orbs; i++) {
     dx = px - op.xs[i];
@@ -451,6 +472,10 @@ function handleTaskTap(px, py) {
   }
   if (t.type === 'mix') {
     mixTaskTap(t, i);
+    return;
+  }
+  if (t.type === 'letter') {
+    letterTap(t, i);
     return;
   }
   if (t.type === 'word') {
@@ -509,7 +534,8 @@ function updateTasks(dt) {
     if (t.type === 'pairs' && t.mode === 'input') pairsUpdate(t, dt);
     if (t.type === 'mix') updateMixTask(t, dt);
     if (t.type === 'dots') updateDotsTask(t, dt);
-    if (t.type === 'word' && t.sayT >= 0) {
+    if (t.word && t.sayT >= 0) {
+      // Sanan lukeminen (word, wordpick, build, letter): tavut korostuvat vuorotellen
       t.sayT += dt;
       if (t.sayT > wordSyllables(t).length * WORD_SYL_T + 0.3) t.sayT = -1;
     }

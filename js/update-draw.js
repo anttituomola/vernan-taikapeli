@@ -493,6 +493,9 @@ function taskArchStyle(type) {
   if (type === 'order') return { veil: '140,200,255', pillar: '#b8dcff' };
   if (type === 'mirror') return { veil: '200,170,255', pillar: '#d8c8ff' };
   if (type === 'dots') return { veil: '255,220,120', pillar: '#f5e0a8' };
+  if (type === 'wordpick') return { veil: '255,225,150', pillar: '#f3e2a0' };
+  if (type === 'build') return { veil: '200,180,255', pillar: '#d6c8f8' };
+  if (type === 'letter') return { veil: '255,190,150', pillar: '#f5cdb0' };
   return { veil: '120,210,255', pillar: '#b8d4ff' };
 }
 
@@ -602,6 +605,14 @@ function drawTaskOverlay(c) {
     drawDotsOverlay(c, t, shake);
     return;
   }
+  if (t.type === 'wordpick') {
+    drawWordPickOverlay(c, t, shake);
+    return;
+  }
+  if (t.type === 'build') {
+    drawBuildOverlay(c, t, shake);
+    return;
+  }
   if (taskUsesDrag(t)) {
     drawDragTaskOverlay(c, t, shake);
     return;
@@ -626,6 +637,8 @@ function drawTaskOverlay(c) {
     drawOddPrompt(c, shake);
   } else if (t.type === 'word') {
     drawWordPrompt(c, t, shake);
+  } else if (t.type === 'letter') {
+    drawLetterPrompt(c, t, shake);
   } else if (t.type === 'mix') {
     drawMixOverlay(c, t, shake);
   } else if (t.type === 'memory') {
@@ -671,7 +684,7 @@ function drawTaskOverlay(c) {
       if (used) c.globalAlpha = 0.45;
       drawPotionBottle(c, x, y + r * 0.1, r * 0.34, MIX_COLORS[MIX_PRIMARY[i]]);
       c.globalAlpha = 1;
-    } else if (t.type === 'word') {
+    } else if (t.type === 'word' || t.type === 'letter') {
       var wc = t.choices && t.choices[i];
       if (wc) {
         if (wc.wrong) c.globalAlpha = 0.3;

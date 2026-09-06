@@ -522,6 +522,18 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath(); c.arc(x, y - s * 0.22, s * 0.06, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#3a3346';
     c.beginPath(); c.moveTo(x - s * 0.12, y - s * 0.26); c.lineTo(x + s * 0.12, y - s * 0.26); c.lineTo(x, y - s * 0.34); c.closePath(); c.fill();
+  } else if (kind === 'letterfield' || kind === 'sylrapids' || kind === 'wordshop' || kind === 'letterclouds') {
+    // Lukukentät: kirjainkyltti (A, TA, kortti, pilvi-K)
+    var txt = kind === 'letterfield' ? 'A' : (kind === 'sylrapids' ? 'TA' : (kind === 'wordshop' ? 'AB' : 'K'));
+    if (kind === 'letterclouds') { c.fillStyle = '#ffffff'; cloudShape(c, x, y + s * 0.04, s * 0.09); }
+    else if (kind === 'sylrapids') { c.fillStyle = '#8a5a30'; roundRect(c, x - s * 0.24, y + s * 0.08, s * 0.48, s * 0.1, s * 0.05); c.fill(); }
+    else { c.fillStyle = '#fff6d8'; roundRect(c, x - s * 0.2, y - s * 0.18, s * 0.4, s * 0.34, s * 0.06); c.fill(); }
+    c.fillStyle = '#8a2be2';
+    c.font = 'bold ' + Math.round(s * (txt.length > 1 ? 0.2 : 0.28)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(txt, x, y + (kind === 'sylrapids' ? -s * 0.04 : 0));
+    c.textBaseline = 'alphabetic';
   } else if (kind === 'summit') {
     c.fillStyle = '#9fb8dc';
     c.beginPath(); c.moveTo(x - s * 0.24, y + s * 0.18); c.lineTo(x, y - s * 0.22); c.lineTo(x + s * 0.24, y + s * 0.18); c.closePath(); c.fill();
@@ -644,6 +656,7 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  if (hubWorld === 7) return 'letters';
   if (hubWorld === 6) return r <= 2 ? 'mine' : 'mountain';
   if (hubWorld === 5) return 'meadow';
   if (hubWorld === 4) return 'paper';
@@ -682,7 +695,8 @@ var HUB_TILE_COLORS = {
   moon: ['#3a3560', '#332e58'],
   paper: ['#fbf1d8', '#f5e8c8'],
   mine: ['#6b5a4a', '#5f4f40'],
-  mountain: ['#dfe9f5', '#cfdcee']
+  mountain: ['#dfe9f5', '#cfdcee'],
+  letters: ['#fff6e3', '#f7ead2']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
@@ -800,6 +814,15 @@ function drawHubTile(b, band, x, y, s, c, r) {
     b.beginPath(); b.moveTo(cx - s * 0.1 + (rnd - 0.5) * s * 0.2, y + s * 0.57); b.lineTo(cx + (rnd - 0.5) * s * 0.2, y + s * 0.4); b.lineTo(cx + s * 0.1 + (rnd - 0.5) * s * 0.2, y + s * 0.57); b.closePath(); b.fill();
     if (rnd2 < 0.4) drawPine(b, x + s * 0.78, y + s * 0.95, s * 0.4, '#3a7f5a');
     else if (rnd2 < 0.6) drawSnowflake(b, x + s * 0.25, y + s * 0.3, s * 0.1);
+  } else if (band === 'letters') {
+    // Kirjasivu: haaleita tikkukirjaimia ja pieni kukka
+    b.fillStyle = 'rgba(138,43,226,' + (0.12 + rnd * 0.15) + ')';
+    b.font = 'bold ' + Math.round(s * 0.45) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    b.textAlign = 'center';
+    b.textBaseline = 'middle';
+    b.fillText('ABCDEFGHIJKLMNOPRSTUVYÄÖ'.charAt(Math.floor(rnd * 24)), cx + (rnd2 - 0.5) * s * 0.3, cy);
+    b.textBaseline = 'alphabetic';
+    if (rnd2 < 0.35) drawFlower(b, x + s * 0.78, y + s * 0.78, s * 0.06, rnd < 0.5 ? '#ff7bac' : '#7fd4ff');
   } else if (band === 'moon') {
     b.fillStyle = 'rgba(200,200,240,0.25)';
     b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, cy + (rnd2 - 0.5) * s * 0.4, s * 0.16, 0, Math.PI * 2); b.fill();

@@ -34,6 +34,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-herd.js`, `play-kitchen.js` — maailma 5 (vaiheet 21–22)
 - `js/tasks-more.js` — lajittele, järjestä koon mukaan, peilikuva ja yhdistä pisteet
 - `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-summit.js` — maailma 6 (vaiheet 23–26)
+- `js/tasks-read.js` — lukemisen tehtävät: kuva→sana, kokoa sana tavuista, alkukirjain
+- `js/play-letterfield.js`, `play-wordshop.js` — maailma 7 (vaiheet 27 ja 29); Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4 (vaiheet 17–20)
 - `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
@@ -59,8 +61,8 @@ Peli alkaa **saaristokartalta**: saaret ovat maailmoja, ja vene kulkee niiden
 välillä. Saaren napautus purjehduttaa veneen sinne ja avaa saaren
 labyrintin; labyrintin satamaruutu (**B**) palauttaa saaristoon. Seuraava saari
 aukeaa, kun edellisen saaren vartijahuone on läpäisty (Linnasaari: finaali,
-Karkkisaari: Arvoitusten torni). Sumuinen saari kartan reunassa vihjaa
-tulevista maailmoista.
+Karkkisaari: Arvoitusten torni). Saaria on seitsemän, yksi sateenkaaren
+väriä kohti (`SEA_FOG`-taulukkoon voi lisätä sumuisen saaren vihjeeksi).
 
 **Tarina:** Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle. Jokaisen
 saaren vartija palauttaa yhden värin, ja saaristokartan sateenkaari täyttyy
@@ -207,6 +209,33 @@ saaren vartija.
   jääkidettä ja kolme tehtäväkaarta; Tuulen henki rauhoittuu ja ovi aukeaa, kun
   kaikki on tehty. Tehtävät: järjestä koon mukaan, yhdistä pisteet, muisti 5/4.
 
+### Kirjainsaari (maailma 7)
+
+Aukeaa, kun Tuulenhuippu on läpäisty. Pääpaino lukemisessa: kaikki teksti on
+TIKKUKIRJAIMIA ja sanat tavutettuina (KUK-KA). Sanat ja kuvat tulevat samasta
+`WORD_LIST`-listasta kuin lue sana -tehtävässä. Kirjainpilvet on saaren vartija.
+
+- **Kirjainniitty** — ratsastus. Ylhäällä näkyy sana tavutettuna, ja niityllä
+  leijuu sen kirjaimet sekä kaksi hämäyskirjainta. Napauta kirjaimet sanan
+  järjestyksessä: seuraava kirjain hehkuu sanassa, väärä kirjain heilahtaa.
+  Kerätty kirjain lentää sanaan. Valmis sana luetaan tavu kerrallaan ja sen
+  kuva paljastuu (myös alueen pupun kylttiin). Kolme sanaa, lyhin ensin; portti
+  aukeaa lopuksi. Ei sydämiä. Tehtävät: kuva→sana, lue sana.
+- **Tavukoski** ♥ — Kosken hyppely, mutta tukeissa on **tavuja**. Ylhäällä
+  vasemmalla kirjoitettava sana: seuraava tavu hehkuu. Hyppää tukille, jossa on
+  se tavu; väärän tavun tukki keikahtaa ja pudottaa veteen (sydän). Ensin
+  2-tavuinen sana saarelle, sitten 3-tavuinen ylärannalle. Valmis sana soi ja
+  kuva paljastuu. Tehtävät: kokoa sana tavuista, lue sana.
+- **Sanapaja** — ei liikkumista. Pupu tilaa kuvalla, ja sana kootaan
+  raahaamalla tavukortit paikoilleen (seuraava paikka hehkuu; väärä tavu palaa
+  alas). Valmis sana luetaan ja ripustetaan kylttinä pajan seinälle. Viisi
+  tilausta: kaksi 2-tavuista, kolme 3-tavuista. Ei sydämiä.
+- **Kirjainpilvet** ♥ — vartija. Sama hyppely taivaalla: pilvissä on
+  **kirjaimia**, ja sana kirjoitetaan kirjain kerrallaan ylös asti (3-kirjaiminen
+  sana pilvisaarelle, 4-kirjaiminen Sanapöllön luo). Väärä kirjain pudottaa.
+  Sanapöllö herää, kun molemmat sanat on kirjoitettu. Tehtävät: alkukirjain,
+  kuva→sana.
+
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
@@ -303,6 +332,14 @@ kartalla (seuraava huone, linna).
   hehkuu ja kynä osoittaa sitä. Oikea napautus vetää viivan, väärä ravistaa.
   Valmis kuvio (tähti, talo, sydän, jalokivi, puu) täyttyy värillä.
 
+- **Kuva→sana** — kuva kuplassa ja kolme sanakorttia tavutettuna; kuvan
+  napautus lukee sanan (tavut soivat). Väärä kortti himmenee, oikea luetaan.
+- **Kokoa sana** (raahaus) — kuva kuplassa, tyhjät tavupaikat väliviivoilla
+  ja tavukortit alhaalla (sanan tavut + 2 hämäystä). Raahaa tavut paikoilleen;
+  seuraava paikka hehkuu. Valmis sana luetaan.
+- **Alkukirjain** — iso kirjain kuplassa ja neljä kuvaa; valitse kuva, jonka
+  sana alkaa kirjaimella. Väärä kuva himmenee; kirjaimen napautus soittaa sen.
+
 Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän) väärä
 vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
 väärästä vastauksesta tulee vain ravistus.
@@ -333,6 +370,9 @@ väärästä vastauksesta tulee vain ravistus.
 - Pupusilta: pupun nopeus `viewW * 0.14`, lähtöetäisyys `viewW * 0.45`
 - Sotkumörkö: heittoväli `2.4 + Math.random() * 1.2`, leijunta `1.2` s, muodontunnistus `penClassify` (pen-core.js: kulma `0.87` rad, pyöreys `0.13`)
 - Kaivos: kartta `MINE_MAP` (play-mine.js), kaivuaika `MINE_DIG_T = 0.3`, askel `MINE_MOVE_T = 0.16`
+- Kirjainniitty: alueet `LF_ZONES`, sanan pituus 3–5 kirjainta (`lfPickWords`), hämäyskirjaimia 2
+- Tavukoski ja Kirjainpilvet: sanat `rapPickWords` (2+3 tavua / 3+4 kirjainta), kaistan nopeus `0.06 + rivi * 0.009`, tukin pituus `0.17` / `0.14`, keikahdus `tipT = 1.2`
+- Sanapaja: tilauksia `WS_ORDERS`, tavukorttien hämäyksiä 2 (`makeBuildProblem`)
 - Koski: kaistat `RAP_LANE_DEFS` (suunta, nopeus, tukin pituus, kilpikonna), kilpikonnan jakso `TURTLE_CYCLE/TURTLE_UP/TURTLE_WARN`, hypyn kesto `RAP_HOP_T`, laskeutumisen sallima `rowH * 0.3`
 - Majakka: palikoita `LH_BLOCKS`, heilunnan nopeus `1.3 + stack * 0.1`, tarvittava päällekkäisyys `bw * 0.45` (lamppu `0.3`)
 - Tuulenhuippu: puuskan vaiheet `WIND_WARN = 1.0` / `WIND_BLOW = 1.3`, tyyni `sumWindCalm()`, työntö `viewW * 0.15` (ilmassa ×1.6), suojaetäisyys kivestä `viewW * 0.08`, alueet `sumWindDefs`

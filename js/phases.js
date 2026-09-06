@@ -268,7 +268,7 @@ var PHASES = {
     level: 24, control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
     next: 'lighthouse', bgColor: '#3aa0d8',
     ambient: null, fg: null,
-    init: function () { initRapids(); },
+    init: function () { initRapids('logs', 24); },
     update: function (dt) { updateRapids(dt); },
     draw: function () { drawRapids(); },
     tap: function (x, y) { handleRapidsTap(x, y); },
@@ -298,6 +298,54 @@ var PHASES = {
     resize: function (ratio) { resizeSummit(ratio); },
     renderBg: function (b, w, h) { renderSummitBg(b, w, h); },
     respawn: function () { respawnSummit(); }
+  },
+  letterfield: {
+    level: 27, control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
+    next: 'sylrapids', bgColor: '#d9f3ff',
+    ambient: 'butterflies', fg: { kind: 'grass', color: 'rgba(60,140,60,0.7)' },
+    init: function () { initLetterfield(); },
+    update: function (dt) { updateLetterfield(dt); },
+    draw: function () { drawLetterfield(); },
+    tap: function (x, y) { handleLetterfieldTap(x, y); },
+    resize: function (ratio) { resizeLetterfield(ratio); },
+    renderBg: function (b, w, h) { renderLetterfieldBg(b, w, h); },
+    respawn: function () { respawnLetterfield(); }
+  },
+  sylrapids: {
+    level: 28, control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+    next: 'wordshop', bgColor: '#3aa0d8',
+    ambient: null, fg: null,
+    init: function () { initRapids('syl', 28); },
+    update: function (dt) { updateRapids(dt); },
+    draw: function () { drawRapids(); },
+    tap: function (x, y) { handleRapidsTap(x, y); },
+    resize: function (ratio) { resizeRapids(ratio); },
+    renderBg: function (b, w, h) { renderRapidsBg(b, w, h); },
+    respawn: function () { respawnRapids(); }
+  },
+  wordshop: {
+    level: 29, control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+    next: 'letterclouds', bgColor: '#f3e6ff', celebrateMs: 4000,
+    ambient: 'sparkle', fg: null,
+    init: function () { initWordshop(); },
+    update: function (dt) { updateWordshop(dt); },
+    draw: function () { drawWordshop(); },
+    tap: function (x, y) { handleWordshopTap(x, y); },
+    resize: function (ratio) { resizeWordshop(ratio); },
+    renderBg: function (b, w, h) { renderWordshopBg(b, w, h); },
+    respawn: function () { respawnWordshop(); }
+  },
+  letterclouds: {
+    level: 30, control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+    next: null, bgColor: '#8fc8ff', celebrateMs: 5000,
+    ambient: 'sparkle', fg: null,
+    init: function () { initRapids('letters', 30); },
+    update: function (dt) { updateRapids(dt); },
+    draw: function () { drawRapids(); },
+    tap: function (x, y) { handleRapidsTap(x, y); },
+    resize: function (ratio) { resizeRapids(ratio); },
+    renderBg: function (b, w, h) { renderRapidsBg(b, w, h); },
+    respawn: function () { respawnRapids(); }
   },
   finale: {
     level: 9, control: 'run', usesJump: true, usesWand: true, usesHearts: true,

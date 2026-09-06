@@ -271,13 +271,32 @@ var HUB_ROOMS6 = {
   'z': { kind: 'summit', name: 'Tuulenhuippu', color: '#9fd0ff' }
 };
 var HUB_ORDER6 = ['mine', 'rapids', 'lighthouse', 'summit'];
+
+// Maailma 7 = Kirjainsaari: lukukentät, Kirjainpilvet (E) on vartija
+var HUB_MAP7 = [
+  '###########',
+  '#B.......A#',
+  '#########.#',
+  '#C........#',
+  '#.#########',
+  '#D.......E#',
+  '###########'
+];
+var HUB_ROOMS7 = {
+  'A': { kind: 'letterfield', name: 'Kirjainniitty', color: '#9fd97a' },
+  'C': { kind: 'sylrapids', name: 'Tavukoski', color: '#4fa8e0' },
+  'D': { kind: 'wordshop', name: 'Sanapaja', color: '#c9a0ff' },
+  'E': { kind: 'letterclouds', name: 'Kirjainpilvet', color: '#8fc8ff' }
+};
+var HUB_ORDER7 = ['letterfield', 'sylrapids', 'wordshop', 'letterclouds'];
 var HUB_WORLDS = {
   1: { map: HUB_MAP, rooms: HUB_ROOMS, order: HUB_ORDER },
   2: { map: HUB_MAP2, rooms: HUB_ROOMS2, order: HUB_ORDER2 },
   3: { map: HUB_MAP3, rooms: HUB_ROOMS3, order: HUB_ORDER3 },
   4: { map: HUB_MAP4, rooms: HUB_ROOMS4, order: HUB_ORDER4 },
   5: { map: HUB_MAP5, rooms: HUB_ROOMS5, order: HUB_ORDER5 },
-  6: { map: HUB_MAP6, rooms: HUB_ROOMS6, order: HUB_ORDER6 }
+  6: { map: HUB_MAP6, rooms: HUB_ROOMS6, order: HUB_ORDER6 },
+  7: { map: HUB_MAP7, rooms: HUB_ROOMS7, order: HUB_ORDER7 }
 };
 var hubWorld = 1;
 function hubMap() { return (HUB_WORLDS[hubWorld] || HUB_WORLDS[1]).map; }

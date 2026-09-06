@@ -12,10 +12,11 @@ var ISLANDS = [
   { world: 3, name: 'Kuutamosaari', fx: 0.84, fy: 0.76, size: 0.82, finaleKind: 'moon', deco: ['reef', 'nightwood', 'clouds'] },
   { world: 4, name: 'Taikakynän saari', fx: 0.90, fy: 0.47, size: 0.62, finaleKind: 'scribble', deco: ['pen', 'rain', 'bunnybridge'] },
   { world: 5, name: 'Hoivasaari', fx: 0.11, fy: 0.46, size: 0.6, finaleKind: 'kitchen', deco: ['herd', 'kitchen'] },
-  { world: 6, name: 'Vuorisaari', fx: 0.40, fy: 0.46, size: 0.62, finaleKind: 'summit', deco: ['mine', 'rapids', 'lighthouse'] }
+  { world: 6, name: 'Vuorisaari', fx: 0.40, fy: 0.46, size: 0.62, finaleKind: 'summit', deco: ['mine', 'rapids', 'lighthouse'] },
+  { world: 7, name: 'Kirjainsaari', fx: 0.68, fy: 0.43, size: 0.58, finaleKind: 'letterclouds', deco: ['letterfield', 'sylrapids', 'wordshop'] }
 ];
-// Sumuiset saaret vihjaavat tulevista maailmoista
-var SEA_FOG = [{ fx: 0.68, fy: 0.42, size: 0.36 }];
+// Sumuiset saaret vihjaavat tulevista maailmoista (sateenkaaren 7 väriä ovat nyt kaikki käytössä)
+var SEA_FOG = [];
 var RAINBOW_COLORS = ['#ff5a5a', '#ff9f3a', '#ffe14d', '#5fd36b', '#4aa8ff', '#6f5cff', '#c46bff'];
 
 var seaBoat = { x: 0, y: 0, island: 1, target: null, facing: 1, moving: false };
