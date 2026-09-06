@@ -24,7 +24,8 @@ var rapids = {
 };
 
 function rapRowY(r) {
-  return viewH * 0.975 - (r + 0.5) * rapids.rowH;
+  // r voi tulla for-in-silmukasta merkkijonona: muunnetaan luvuksi
+  return viewH * 0.975 - (Number(r) + 0.5) * rapids.rowH;
 }
 
 function rapIsWater(r) {
@@ -42,7 +43,7 @@ function rapLayout() {
     if (!lane) {
       lane = { logs: [], dir: def.dir, sp: def.sp, len: 0 };
       for (i = 0; i < def.n; i++) {
-        lane.logs.push({ x: 0, f: i / def.n, w: L, dir: def.dir, turtle: def.turtle && i === 0, t: i * 1.7 });
+        lane.logs.push({ x: 0, f: ((i + Number(r) * 0.37) % def.n) / def.n, w: L, dir: def.dir, turtle: def.turtle && i === 0, t: i * 1.7 });
       }
       rapids.lanes[r] = lane;
     }
