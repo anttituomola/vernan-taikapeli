@@ -10,7 +10,7 @@ var SHAPE_KINDS = ['star', 'heart', 'flower', 'circle', 'triangle', 'square', 'm
 var dragPiece = null;
 
 function taskUsesDrag(t) {
-  return t.type === 'shadow' || t.type === 'puzzle';
+  return t.type === 'shadow' || t.type === 'puzzle' || t.type === 'sort' || t.type === 'order';
 }
 
 // Muodot: kolme perusmuotoa piirtää drawTaskGlyph, loput tässä. Sama polku
@@ -191,6 +191,11 @@ function taskDrop(px, py) {
   var t = dragPiece.task, p = dragPiece.piece;
   dragPiece = null;
   p.dragging = false;
+  if (t.type === 'sort') {
+    // Korit ottavat useita paloja: oma pudotuslogiikka (tasks-more.js)
+    sortDrop(t, p);
+    return;
+  }
   var i, hit = null, bd = 1e9, r = viewH * 0.09, d, all = true;
   for (i = 0; i < t.targets.length; i++) {
     var tg = t.targets[i];

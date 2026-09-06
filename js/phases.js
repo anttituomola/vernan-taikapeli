@@ -252,6 +252,53 @@ var PHASES = {
     renderBg: function (b, w, h) { renderKitchenBg(b, w, h); },
     respawn: function () { respawnKitchen(); }
   },
+  mine: {
+    level: 23, control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+    next: 'rapids', bgColor: '#2a1f2e',
+    ambient: 'dust', fg: null,
+    init: function () { initMine(); },
+    update: function (dt) { updateMine(dt); },
+    draw: function () { drawMine(); },
+    tap: function (x, y) { handleMineTap(x, y); },
+    resize: function (ratio) { resizeMine(ratio); },
+    renderBg: function (b, w, h) { renderMineBg(b, w, h); },
+    respawn: function () { respawnMine(); }
+  },
+  rapids: {
+    level: 24, control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+    next: 'lighthouse', bgColor: '#3aa0d8',
+    ambient: null, fg: null,
+    init: function () { initRapids(); },
+    update: function (dt) { updateRapids(dt); },
+    draw: function () { drawRapids(); },
+    tap: function (x, y) { handleRapidsTap(x, y); },
+    resize: function (ratio) { resizeRapids(ratio); },
+    renderBg: function (b, w, h) { renderRapidsBg(b, w, h); },
+    respawn: function () { respawnRapids(); }
+  },
+  lighthouse: {
+    level: 25, control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+    next: 'summit', bgColor: '#ffd9a8', celebrateMs: 4000,
+    ambient: 'sparkle', fg: null,
+    init: function () { initLighthouse(); },
+    update: function (dt) { updateLighthouse(dt); },
+    draw: function () { drawLighthouse(); },
+    tap: function (x, y) { handleLighthouseTap(x, y); },
+    resize: function (ratio) { resizeLighthouse(ratio); },
+    renderBg: function (b, w, h) { renderLighthouseBg(b, w, h); },
+    respawn: function () { respawnLighthouse(); }
+  },
+  summit: {
+    level: 26, control: 'run', usesJump: true, usesWand: false, usesHearts: true,
+    next: null, bgColor: '#cfe6ff', celebrateMs: 5000,
+    ambient: 'snow', fg: { kind: 'snow', color: 'rgba(255,255,255,0.85)' },
+    init: function () { initSummit(); },
+    update: function (dt) { updateSummit(dt); },
+    draw: function () { drawSummit(); },
+    resize: function (ratio) { resizeSummit(ratio); },
+    renderBg: function (b, w, h) { renderSummitBg(b, w, h); },
+    respawn: function () { respawnSummit(); }
+  },
   finale: {
     level: 9, control: 'run', usesJump: true, usesWand: true, usesHearts: true,
     next: null, bgColor: '#2b1040', hidden: true, sparkLife: 1.0, celebrateMs: 7000,

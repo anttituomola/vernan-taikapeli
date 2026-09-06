@@ -490,6 +490,46 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath(); c.arc(x, y, s * 0.17, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#6b5fb0';
     c.beginPath(); c.arc(x + s * 0.07, y - s * 0.03, s * 0.14, 0, Math.PI * 2); c.fill();
+  } else if (kind === 'mine') {
+    // Hakku ja jalokivi
+    c.save();
+    c.translate(x - s * 0.04, y + s * 0.04);
+    c.rotate(-0.7);
+    c.strokeStyle = '#8a5a30';
+    c.lineWidth = Math.max(2, s * 0.045);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(0, s * 0.2); c.lineTo(0, -s * 0.2); c.stroke();
+    c.fillStyle = '#c9c4d8';
+    c.beginPath(); c.moveTo(-s * 0.16, -s * 0.2); c.lineTo(s * 0.16, -s * 0.2); c.lineTo(0, -s * 0.1); c.closePath(); c.fill();
+    c.restore();
+    drawGem(c, x + s * 0.14, y + s * 0.12, s * 0.1, '#5fa8ff');
+  } else if (kind === 'rapids') {
+    // Tukki virrassa
+    c.strokeStyle = 'rgba(255,255,255,0.8)';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x - s * 0.22, y + s * 0.14); c.quadraticCurveTo(x - s * 0.1, y + s * 0.08, x, y + s * 0.14); c.quadraticCurveTo(x + s * 0.1, y + s * 0.2, x + s * 0.22, y + s * 0.14); c.stroke();
+    c.fillStyle = '#8a5a30';
+    roundRect(c, x - s * 0.2, y - s * 0.1, s * 0.4, s * 0.14, s * 0.07);
+    c.fill();
+    c.fillStyle = '#c98b4a';
+    c.beginPath(); c.arc(x + s * 0.13, y - s * 0.03, s * 0.055, 0, Math.PI * 2); c.fill();
+  } else if (kind === 'lighthouse') {
+    for (i = 0; i < 4; i++) {
+      c.fillStyle = i % 2 ? '#ff5f5f' : '#ffffff';
+      c.fillRect(x - s * 0.08, y - s * 0.16 + i * s * 0.09, s * 0.16, s * 0.09);
+    }
+    c.fillStyle = '#ffe27a';
+    c.beginPath(); c.arc(x, y - s * 0.22, s * 0.06, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#3a3346';
+    c.beginPath(); c.moveTo(x - s * 0.12, y - s * 0.26); c.lineTo(x + s * 0.12, y - s * 0.26); c.lineTo(x, y - s * 0.34); c.closePath(); c.fill();
+  } else if (kind === 'summit') {
+    c.fillStyle = '#9fb8dc';
+    c.beginPath(); c.moveTo(x - s * 0.24, y + s * 0.18); c.lineTo(x, y - s * 0.22); c.lineTo(x + s * 0.24, y + s * 0.18); c.closePath(); c.fill();
+    c.fillStyle = '#ffffff';
+    c.beginPath(); c.moveTo(x - s * 0.09, y - s * 0.07); c.lineTo(x, y - s * 0.22); c.lineTo(x + s * 0.09, y - s * 0.07); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.9)';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x + s * 0.1, y - s * 0.24); c.quadraticCurveTo(x + s * 0.2, y - s * 0.3, x + s * 0.3, y - s * 0.24); c.stroke();
   } else if (kind === 'bridge') {
     var cols = ['#ff5f7e', '#ffe94f', '#5fa8ff'];
     c.lineWidth = Math.max(2, s * 0.05);
@@ -604,6 +644,7 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  if (hubWorld === 6) return r <= 2 ? 'mine' : 'mountain';
   if (hubWorld === 5) return 'meadow';
   if (hubWorld === 4) return 'paper';
   if (hubWorld === 3) {
@@ -639,7 +680,9 @@ var HUB_TILE_COLORS = {
   nightwood: ['#232a5e', '#1e2454'],
   clouds: ['#c9dcff', '#bcd2fb'],
   moon: ['#3a3560', '#332e58'],
-  paper: ['#fbf1d8', '#f5e8c8']
+  paper: ['#fbf1d8', '#f5e8c8'],
+  mine: ['#6b5a4a', '#5f4f40'],
+  mountain: ['#dfe9f5', '#cfdcee']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
@@ -742,6 +785,21 @@ function drawHubTile(b, band, x, y, s, c, r) {
     else if (rnd < 0.6) drawStar(b, cx + (rnd2 - 0.5) * s * 0.4, cy, s * 0.1, 0, 0);
     else if (rnd < 0.8) { b.fillStyle = 'rgba(255,255,255,0.9)'; cloudShape(b, cx, cy + s * 0.05, s * 0.08); }
     else drawInkBottle(b, cx, cy, s * 0.09);
+  } else if (band === 'mine') {
+    // Kaivoskäytävä: tukipuut ja kimaltavat jalokivet
+    b.fillStyle = '#4a3a2a';
+    b.fillRect(x + s * 0.1, y + s * 0.08, s * 0.08, s * 0.85);
+    b.fillRect(x + s * 0.82, y + s * 0.08, s * 0.08, s * 0.85);
+    b.fillRect(x + s * 0.1, y + s * 0.08, s * 0.8, s * 0.08);
+    if (rnd2 < 0.5) drawGem(b, cx + (rnd - 0.5) * s * 0.3, cy + s * 0.15, s * 0.12, GEM_COLORS[Math.floor(rnd * GEM_COLORS.length)]);
+  } else if (band === 'mountain') {
+    // Lumihuippu: kiviä, lunta ja pieniä kuusia
+    b.fillStyle = '#9fb8dc';
+    b.beginPath(); b.moveTo(cx - s * 0.3 + (rnd - 0.5) * s * 0.2, y + s * 0.9); b.lineTo(cx + (rnd - 0.5) * s * 0.2, y + s * 0.4); b.lineTo(cx + s * 0.3 + (rnd - 0.5) * s * 0.2, y + s * 0.9); b.closePath(); b.fill();
+    b.fillStyle = '#ffffff';
+    b.beginPath(); b.moveTo(cx - s * 0.1 + (rnd - 0.5) * s * 0.2, y + s * 0.57); b.lineTo(cx + (rnd - 0.5) * s * 0.2, y + s * 0.4); b.lineTo(cx + s * 0.1 + (rnd - 0.5) * s * 0.2, y + s * 0.57); b.closePath(); b.fill();
+    if (rnd2 < 0.4) drawPine(b, x + s * 0.78, y + s * 0.95, s * 0.4, '#3a7f5a');
+    else if (rnd2 < 0.6) drawSnowflake(b, x + s * 0.25, y + s * 0.3, s * 0.1);
   } else if (band === 'moon') {
     b.fillStyle = 'rgba(200,200,240,0.25)';
     b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, cy + (rnd2 - 0.5) * s * 0.4, s * 0.16, 0, Math.PI * 2); b.fill();

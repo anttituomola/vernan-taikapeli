@@ -253,12 +253,31 @@ var HUB_ROOMS5 = {
   'v': { kind: 'kitchen', name: 'Taikakeittiö', color: '#ff9f3a' }
 };
 var HUB_ORDER5 = ['herd', 'kitchen'];
+
+// Maailma 6 = Vuorisaari: kaivos, koski, majakka ja Tuulenhuippu (vartija, z)
+var HUB_MAP6 = [
+  '###########',
+  '#B.......w#',
+  '#########.#',
+  '#x........#',
+  '#.#########',
+  '#y.......z#',
+  '###########'
+];
+var HUB_ROOMS6 = {
+  'w': { kind: 'mine', name: 'Kaivos', color: '#8a6a4a' },
+  'x': { kind: 'rapids', name: 'Koski', color: '#3aa0d8' },
+  'y': { kind: 'lighthouse', name: 'Majakka', color: '#ff6b6b' },
+  'z': { kind: 'summit', name: 'Tuulenhuippu', color: '#9fd0ff' }
+};
+var HUB_ORDER6 = ['mine', 'rapids', 'lighthouse', 'summit'];
 var HUB_WORLDS = {
   1: { map: HUB_MAP, rooms: HUB_ROOMS, order: HUB_ORDER },
   2: { map: HUB_MAP2, rooms: HUB_ROOMS2, order: HUB_ORDER2 },
   3: { map: HUB_MAP3, rooms: HUB_ROOMS3, order: HUB_ORDER3 },
   4: { map: HUB_MAP4, rooms: HUB_ROOMS4, order: HUB_ORDER4 },
-  5: { map: HUB_MAP5, rooms: HUB_ROOMS5, order: HUB_ORDER5 }
+  5: { map: HUB_MAP5, rooms: HUB_ROOMS5, order: HUB_ORDER5 },
+  6: { map: HUB_MAP6, rooms: HUB_ROOMS6, order: HUB_ORDER6 }
 };
 var hubWorld = 1;
 function hubMap() { return (HUB_WORLDS[hubWorld] || HUB_WORLDS[1]).map; }

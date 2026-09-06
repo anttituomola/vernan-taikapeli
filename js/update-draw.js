@@ -489,6 +489,10 @@ function taskArchStyle(type) {
   if (type === 'pairs') return { veil: '160,120,255', pillar: '#c9b8f8' };
   if (type === 'word') return { veil: '255,235,140', pillar: '#f3e2a0' };
   if (type === 'mix') return { veil: '255,160,90', pillar: '#f5c9a0' };
+  if (type === 'sort') return { veil: '210,160,110', pillar: '#e6c9a8' };
+  if (type === 'order') return { veil: '140,200,255', pillar: '#b8dcff' };
+  if (type === 'mirror') return { veil: '200,170,255', pillar: '#d8c8ff' };
+  if (type === 'dots') return { veil: '255,220,120', pillar: '#f5e0a8' };
   return { veil: '120,210,255', pillar: '#b8d4ff' };
 }
 
@@ -580,6 +584,22 @@ function drawTaskOverlay(c) {
   c.textBaseline = 'middle';
   if (t.type === 'rhythm') {
     drawRhythmOverlay(c, t, shake);
+    return;
+  }
+  if (t.type === 'sort') {
+    drawSortOverlay(c, t, shake);
+    return;
+  }
+  if (t.type === 'order') {
+    drawOrderOverlay(c, t, shake);
+    return;
+  }
+  if (t.type === 'mirror') {
+    drawMirrorOverlay(c, t, shake);
+    return;
+  }
+  if (t.type === 'dots') {
+    drawDotsOverlay(c, t, shake);
     return;
   }
   if (taskUsesDrag(t)) {

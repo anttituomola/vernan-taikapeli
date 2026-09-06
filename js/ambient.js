@@ -247,7 +247,7 @@ function renderForeground(fg) {
 
 function drawForeground(c) {
   var fg = phaseNow().fg;
-  if (!fg || mode !== 'play') return;
+  if (!fg || mode !== 'play' || !viewW || !viewH) return;
   renderForeground(fg);
   var h = viewH * 0.09;
   var off = (camX * 1.3) % viewW;

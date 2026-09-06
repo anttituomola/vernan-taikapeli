@@ -32,6 +32,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-moon.js` — maailma 3 (vaiheet 13–16)
 - `js/tasks-mix.js` — värien sekoitus: 'mix'-tehtävä ja Taikakeittiön pata
 - `js/play-herd.js`, `play-kitchen.js` — maailma 5 (vaiheet 21–22)
+- `js/tasks-more.js` — lajittele, järjestä koon mukaan, peilikuva ja yhdistä pisteet
+- `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-summit.js` — maailma 6 (vaiheet 23–26)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4 (vaiheet 17–20)
 - `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
@@ -177,6 +179,33 @@ sydämiä. Taikakeittiö on saaren vartija.
   harmaaksi ja tyhjenee. Kuusi tilausta: ensin kaksi perusväriä, sitten neljä
   sekoitusta.
 
+### Vuorisaari (maailma 6)
+
+Aukeaa, kun Taikakeittiön tilaukset on tarjoiltu. Kentät vuorottelevat
+helppo–vaikea, ja kolme niistä on kokonaan uusia pelimalleja. Tuulenhuippu on
+saaren vartija.
+
+- **Kaivos** — uusi malli: **ruudukkokaivos** yhdellä ruudulla. Napauta ruutua,
+  ja prinsessa kaivaa tunnelin sinne (multa murtuu, kivi ei – kierrä). Kuusi
+  jalokiveä kimaltaa mullan läpi; arkkuun kaivautuminen avaa tehtävän. Ovi
+  aukeaa, kun kivet on koossa. Ei sydämiä. Tehtävät: lajittele, lasku.
+- **Koski** ♥ — uusi malli: **virran ylitys**. Napauta prinsessan yläpuolelle
+  hypätäksesi seuraavalle kaistalle (alapuolelle = takaisin). Tukit lipuvat
+  sivuttain ja vievät mukanaan; hyppy tyhjään veteen vie sydämen ja palauttaa
+  viimeiselle rannalle. Kaksi ylintä kaistaa ovat nopeampia, ja niillä uiva
+  kilpikonna sukeltaa hetken heilahdettuaan. Saarella lyhty ja tehtävä,
+  ylärannalla toinen. Tehtävät: yhdistä pisteet, samanlainen.
+- **Majakka** — uusi malli: **palikkatorni**. Nosturi heiluu palikkaa ruudun
+  poikki; napautus pudottaa sen. Palikka pysyy, jos vähintään noin puolet osuu
+  edellisen päälle, muuten se keikahtaa mereen (ei rangaistusta). Kahdeksan
+  palikkaa ja lopuksi lamppu, jonka valo pyörähtää. Kolmen ja kuuden palikan
+  jälkeen avautuu tehtävä. Ei sydämiä. Tehtävät: peilikuva, laske.
+- **Tuulenhuippu** ♥ — vartija. Tasohyppely lumihuipulla rotkoineen. Lippu
+  nousee ja lehtiä lentää sekunnin ajan, sitten **tuulenpuuska** työntää
+  prinsessaa (ilmassa enemmän) – isojen kivien vierellä on suojassa. Kuusi
+  jääkidettä ja kolme tehtäväkaarta; Tuulen henki rauhoittuu ja ovi aukeaa, kun
+  kaikki on tehty. Tehtävät: järjestä koon mukaan, yhdistä pisteet, muisti 5/4.
+
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
@@ -246,6 +275,17 @@ kartalla (seuraava huone, linna).
   vaihdu, jotta sen voi tavata loppuun. Käytössä lammessa, Kuutamometsässä
   (2 tavua), Sadesuojassa, Pupusillalla ja tornissa (3 tavua).
 
+- **Lajittele** (raahaus) — kaksi koria ja kuusi kuviota; korin merkki on joko
+  värilaikku (lajittelu värin mukaan, muodot vaihtelevat) tai harmaa muoto
+  (lajittelu muodon mukaan, värit vaihtelevat). Väärään koriin pudotettu palaa alas.
+- **Järjestä koon mukaan** (raahaus) — neljä samanlaista kuviota eri kokoisina;
+  raahaa ne portaille pienimmästä suurimpaan (katkoviivarengas näyttää koon)
+- **Peilikuva** — 3×3 ruudukko molemmin puolin peiliviivaa; napauta oikean
+  puolen ruutuja päälle ja pois, kunnes kuva on vasemman peilikuva
+- **Yhdistä pisteet** — numerot 1…7 kuvion ääriviivalla; seuraava numero
+  hehkuu ja kynä osoittaa sitä. Oikea napautus vetää viivan, väärä ravistaa.
+  Valmis kuvio (tähti, talo, sydän, jalokivi, puu) täyttyy värillä.
+
 Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän) väärä
 vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
 väärästä vastauksesta tulee vain ravistus.
@@ -275,6 +315,10 @@ väärästä vastauksesta tulee vain ravistus.
 - Sadesuoja: tahrojen väli `0.8 + Math.random() * 0.6`, alueet `rainZones`
 - Pupusilta: pupun nopeus `viewW * 0.14`, lähtöetäisyys `viewW * 0.45`
 - Sotkumörkö: heittoväli `2.4 + Math.random() * 1.2`, leijunta `1.2` s, muodontunnistus `penClassify` (pen-core.js: kulma `0.87` rad, pyöreys `0.13`)
+- Kaivos: kartta `MINE_MAP` (play-mine.js), kaivuaika `MINE_DIG_T = 0.3`, askel `MINE_MOVE_T = 0.16`
+- Koski: kaistat `RAP_LANE_DEFS` (suunta, nopeus, tukin pituus, kilpikonna), kilpikonnan jakso `TURTLE_CYCLE/TURTLE_UP/TURTLE_WARN`, hypyn kesto `RAP_HOP_T`, laskeutumisen sallima `rowH * 0.3`
+- Majakka: palikoita `LH_BLOCKS`, heilunnan nopeus `1.3 + stack * 0.1`, tarvittava päällekkäisyys `bw * 0.45` (lamppu `0.3`)
+- Tuulenhuippu: puuskan vaiheet `WIND_WARN = 1.0` / `WIND_BLOW = 1.3`, tyyni `sumWindCalm()`, työntö `viewW * 0.15` (ilmassa ×1.6), suojaetäisyys kivestä `viewW * 0.08`, alueet `sumWindDefs`
 - Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.16`, kynän automaattinen esiinotto reunalla `penAutoT > 0.6`
 
 ## Tekniikka

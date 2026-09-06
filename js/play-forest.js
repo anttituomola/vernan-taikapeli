@@ -359,6 +359,22 @@ function taskStart(t) {
     makePairsProblem(t);
     t.mode = 'input';
     playNote(659, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'sort') {
+    makeSortProblem(t);
+    t.mode = 'input';
+    playNote(698, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'order') {
+    makeOrderProblem(t);
+    t.mode = 'input';
+    playNote(740, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'mirror') {
+    makeMirrorProblem(t);
+    t.mode = 'input';
+    playNote(784, 0, 0.2, 'triangle', 0.35);
+  } else if (t.type === 'dots') {
+    makeDotsProblem(t);
+    t.mode = 'input';
+    playNote(523, 0, 0.2, 'triangle', 0.35);
   } else {
     t.seq = [];
     for (var i = 0; i < t.seqLen; i++) t.seq.push(Math.floor(Math.random() * t.orbs));
@@ -390,6 +406,14 @@ function handleTaskTap(px, py) {
   }
   if (t.type === 'pairs') {
     pairsTap(t, px, py);
+    return;
+  }
+  if (t.type === 'mirror') {
+    mirrorTap(t, px, py);
+    return;
+  }
+  if (t.type === 'dots') {
+    dotsTap(t, px, py);
     return;
   }
   var op = orbPositions(t.orbs);
@@ -484,6 +508,7 @@ function updateTasks(dt) {
     t = activeTask;
     if (t.type === 'pairs' && t.mode === 'input') pairsUpdate(t, dt);
     if (t.type === 'mix') updateMixTask(t, dt);
+    if (t.type === 'dots') updateDotsTask(t, dt);
     if (t.type === 'word' && t.sayT >= 0) {
       t.sayT += dt;
       if (t.sayT > wordSyllables(t).length * WORD_SYL_T + 0.3) t.sayT = -1;
