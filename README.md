@@ -219,10 +219,13 @@ ylhäällä. Linnasaaren linnan napautus avaa kuplan, jossa on ovi (sisustus) ja
 finaali. Huoneistossa on kaksi huonetta: **sali** (sydäntapetti, ikkuna) ja
 **tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia). Huoneiden välillä
 kuljetaan ovesta (salissa oikealla, tornissa vasemmalla); puput tulevat perässä.
-Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa);
-kauppa on sivutettu, sivua vaihdetaan alareunan nuolista. Ostettu tavara
-ilmestyy siihen huoneeseen, jossa ollaan, ja sen voi raahata minne vain
-(seinätavarat seinälle, lattiatavarat lattialle). Napautus tavaraan tekee
+Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa)
+**raahaamalla**: tartu korttiin, vedä tavara huoneen puolelle ja päästä irti
+haluamaasi kohtaan, niin tähdet veloitetaan. Kaupan päälle palautettu tavara
+peruu oston. Liian kallis kortti ravistaa. Kauppa on sivutettu, sivua
+vaihdetaan alareunan nuolista. Tavarat ovat siinä huoneessa, johon ne on
+tuotu, ja niitä voi raahata minne vain (seinätavarat seinälle, lattiatavarat
+lattialle). Napautus tavaraan tekee
 jotain: lamppu ja valosarja syttyvät, soittorasia ja piano soittavat, kello
 lyö, pallo pyörii, keinuhevonen keinuu, arkku aukeaa, kakun kynttilä sammuu,
 akvaarion kalat säntäävät, teekannu höyryää. Puput reagoivat: peti nukuttaa

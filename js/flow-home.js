@@ -156,28 +156,26 @@ function homeShopArrows() {
   };
 }
 
-function homeBuy(def) {
-  var room = homeRoom();
-  if (homeHas(def.id)) return;
+// Osto raahaamalla: kortista nostetaan haamutavara, joka ostetaan, kun se
+// päästetään irti huoneen puolella. Kaupan päälle palautettu peruu oston.
+function homeShopPick(def, px, py) {
+  if (homeHas(def.id)) {
+    playNote(440, 0, 0.08, 'triangle', 0.15);
+    return;
+  }
   if (starCoins < def.price) {
     homeShake.id = def.id;
     homeShake.t = 0.5;
     playNote(196, 0, 0.2, 'triangle', 0.25);
     return;
   }
+  var it = { id: def.id, fx: px / viewW, fy: py / viewH, on: def.id !== 'chest', phase: 0, room: homeRoomIdx };
+  homeDrag = { item: it, ghost: true, def: def, dx: 0, dy: 0, sx: px, sy: py, moved: false };
+  playNote(660, 0, 0.06, 'sine', 0.2);
+}
+
+function homeBuy(def, it) {
   starCoins -= def.price;
-  var it = { id: def.id, fx: 0.38, fy: def.kind === 'wall' ? 0.3 : 0.8, on: def.id !== 'chest', phase: 0, room: homeRoomIdx };
-  // Sijoita tyhjään kohtaan: siirrä oikealle, jos paikalla on jo jotain
-  var k;
-  for (k = 0; k < 6; k++) {
-    var busy = false, j;
-    for (j = 0; j < homeItems.length; j++) {
-      if (homeItemRoom(homeItems[j]) === homeRoomIdx && homeItems[j].id !== it.id && Math.abs(homeItems[j].fx - it.fx) < 0.08 && Math.abs(homeItems[j].fy - it.fy) < 0.12) busy = true;
-    }
-    if (!busy) break;
-    it.fx += 0.1;
-    if (it.fx * viewW > room.x1 - homeItemSize()) it.fx = 0.12;
-  }
   homeItems.push(it);
   saveProgress();
   spawnSparkles(it.fx * viewW, it.fy * viewH - homeItemSize() * 0.4, 18, '#ffe27a');
@@ -205,7 +203,7 @@ function handleHomeTap(px, py) {
     cells = homeShopCells();
     for (i = 0; i < cells.length; i++) {
       c = cells[i];
-      if (px >= c.x && px <= c.x + c.w && py >= c.y && py <= c.y + c.h) { homeBuy(c.def); return; }
+      if (px >= c.x && px <= c.x + c.w && py >= c.y && py <= c.y + c.h) { homeShopPick(c.def, px, py); return; }
     }
     return;
   }
@@ -241,11 +239,22 @@ function handleHomeTap(px, py) {
   }
 }
 
+// Onko haamutavara vielä kaupan puolella (kaupan yläpuolella = ei ostoa vielä)
+function homeGhostInShop() {
+  return !!(homeDrag && homeDrag.ghost && homeDrag.item.fx * viewW >= homeShopBox().x - homeItemSize() * 0.3);
+}
+
 function homeMove(px, py) {
   if (!homeDrag) return;
   var it = homeDrag.item, def = homeItemDef(it.id), room = homeRoom(), s = homeItemSize();
   if (Math.abs(px - homeDrag.sx) + Math.abs(py - homeDrag.sy) > 12) homeDrag.moved = true;
   var x = px - homeDrag.dx, y = py - homeDrag.dy;
+  if (homeDrag.ghost && x >= homeShopBox().x - s * 0.3) {
+    // Kaupan päällä haamu seuraa sormea vapaasti
+    it.fx = x / viewW;
+    it.fy = y / viewH;
+    return;
+  }
   x = Math.min(Math.max(x, room.x0 + s * 0.5), room.x1 - s * 0.5);
   if (def && def.kind === 'wall') y = Math.min(Math.max(y, room.wallTop + s * 0.5), room.floorY - s * 0.15);
   else y = Math.min(Math.max(y, room.floorY + s * 0.05), room.bottom);
@@ -257,6 +266,17 @@ function homeUp() {
   if (!homeDrag) return;
   var it = homeDrag.item;
   var moved = homeDrag.moved;
+  if (homeDrag.ghost) {
+    var inShop = homeGhostInShop(), def = homeDrag.def;
+    homeDrag = null;
+    if (inShop) {
+      // Peruttu: tavara palaa kortille
+      playNote(330, 0, 0.1, 'triangle', 0.2);
+      return;
+    }
+    homeBuy(def, it);
+    return;
+  }
   homeDrag = null;
   if (moved) {
     saveProgress();
@@ -443,7 +463,7 @@ function drawHome() {
     if (order[i].item) drawHomeItem(ctx, order[i].item, order[i].item.fx * viewW, order[i].item.fy * viewH, homeItemSize());
     else drawHomeBunny(ctx, order[i].bunny);
   }
-  if (homeDrag) {
+  if (homeDrag && !homeDrag.ghost) {
     var r = homeItemRect(homeDrag.item);
     ctx.strokeStyle = 'rgba(255,255,255,0.8)';
     ctx.lineWidth = Math.max(2, viewH * 0.005);
@@ -462,6 +482,21 @@ function drawHome() {
   for (i = 0; i < homeNotes.length; i++) drawNote(ctx, homeNotes[i]);
   drawParticlesLayerAbs(ctx);
   drawHomeShop(ctx);
+  if (homeDrag && homeDrag.ghost) drawHomeGhost(ctx);
+}
+
+// Kaupasta raahattava tavara: haalea kaupan päällä, kirkas huoneen puolella,
+// hinta tähtinä alla
+function drawHomeGhost(c) {
+  var it = homeDrag.item, def = homeDrag.def, s = homeItemSize(), x = it.fx * viewW, y = it.fy * viewH, k;
+  var inShop = homeGhostInShop();
+  c.globalAlpha = inShop ? 0.55 : 0.92;
+  c.fillStyle = 'rgba(255,255,255,0.35)';
+  c.beginPath(); c.arc(x, y - (def.kind === 'wall' ? 0 : s * 0.45), s * 0.85, 0, Math.PI * 2); c.fill();
+  drawHomeItem(c, it, x, y, s);
+  c.globalAlpha = 1;
+  var ps = viewH * 0.016;
+  for (k = 0; k < def.price; k++) drawStar(c, x + (k - (def.price - 1) / 2) * ps * 2.3, y + s * 0.2, ps, 0, 0);
 }
 
 function drawParticlesLayerAbs(c) {
@@ -527,11 +562,19 @@ function drawHomeShop(c) {
   drawStarBalance(c, s.x + viewH * 0.02, s.y + s.head * 0.5);
   for (i = 0; i < cells.length; i++) {
     var cell = cells[i], def = cell.def, owned = !!homeHas(def.id), afford = starCoins >= def.price;
+    var lifting = !!(homeDrag && homeDrag.ghost && homeDrag.def === def);
     var shake = homeShake.id === def.id && homeShake.t > 0 ? Math.sin(globalT * 50) * viewH * 0.006 : 0;
     c.fillStyle = owned ? 'rgba(200,190,220,0.35)' : (afford ? '#ffffff' : 'rgba(255,255,255,0.55)');
     roundRect(c, cell.x + shake, cell.y, cell.w, cell.h, viewH * 0.015);
     c.fill();
-    c.globalAlpha = owned ? 0.35 : (afford ? 1 : 0.5);
+    if (lifting) {
+      c.setLineDash([viewH * 0.01, viewH * 0.008]);
+      c.strokeStyle = '#c9a0ff';
+      c.lineWidth = Math.max(2, viewH * 0.004);
+      c.stroke();
+      c.setLineDash([]);
+    }
+    c.globalAlpha = owned ? 0.35 : (lifting ? 0.25 : (afford ? 1 : 0.5));
     var isz = Math.min(cell.w, cell.h) * 0.62;
     var fake = { id: def.id, fx: 0, fy: 0, on: true, phase: 0 };
     drawHomeItem(c, fake, cell.x + cell.w / 2 + shake, cell.y + cell.h * (def.kind === 'wall' ? 0.42 : 0.68), isz);
