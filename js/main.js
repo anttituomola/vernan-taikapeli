@@ -251,6 +251,7 @@ window.VT = {
   hubLayout: hubLayout,
   offerButtons: function () { return hubOfferButtons(hubLayout()); },
   resetProgress: resetProgress,
+  unlockAll: unlockAll,
   info: function () {
     return {
       running: running, mode: mode, worldW: worldW, viewW: viewW, viewH: viewH,
@@ -266,8 +267,20 @@ window.VT = {
   }
 };
 
+// Testausta varten: merkitse kaikki kentät läpäistyiksi (myös VT.unlockAll() konsolista
+// tai osoite ?unlock). Tähtiä annetaan 3 per kenttä.
+function unlockAll() {
+  var k, n = 0;
+  for (k in PHASES) { if (!hubCleared[k]) { hubCleared[k] = true; n++; } }
+  finaleDone = true;
+  starCoins += n * 3;
+  saveProgress();
+  showSea();
+}
+
 loadProgress();
 hubWorld = lastIsland;
 resize();
 showSea();
+if (/[?&]unlock/.test(location.search)) unlockAll();
 requestAnimationFrame(loop);

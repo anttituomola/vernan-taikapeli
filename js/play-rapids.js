@@ -23,7 +23,7 @@ var TURTLE_CYCLE = 5.5, TURTLE_UP = 3.6, TURTLE_WARN = 0.8;   // loput = pinnan 
 var RAP_ALPHABET = 'ABCDEFGHIJKLMNOPRSTUVYÄÖ';
 var rapids = {
   mode: 'logs', rows: 9, island: 4, lanes: {}, defs: {}, rowH: 0,
-  words: [], tokens: {}, done: {},
+  words: [], tokens: {}, done: {}, hudRect: null, sayT: -1, sayWord: -1,
   p: { row: 0, x: 0, y: 0, hop: null, log: null, off: 0, splashT: 0, safeRow: 0, facing: 1 },
   fish: []
 };
@@ -153,6 +153,8 @@ function initRapids(mode, lvl) {
   if (rapids.mode !== 'logs') rapPickWords();
   rapBuildDefs();
   rapids.done = {};
+  rapids.hudRect = null;
+  rapids.sayT = -1;
   checkpoints = [{ fx: 0.5, x: viewW * 0.5, lit: false }];
   rapids.lanes = {};
   rapids.p.row = 0;
@@ -197,14 +199,37 @@ function resizeRapids() {
   checkpoints[0].x = viewW * 0.5;
 }
 
+// Sanakuplan napautus lukee sanan (tavut/kirjaimet soivat)
+function rapSayWord() {
+  var w = rapCurWord(), showW = w < 0 ? (rapids.words.length ? 1 : -1) : w, parts, k;
+  if (showW < 0) return;
+  parts = rapWordParts(rapids.words[showW]);
+  for (k = 0; k < parts.length; k++) playNote(392 + k * 60, k * 0.32, 0.28, 'triangle', 0.3);
+  rapids.sayT = 0;
+  rapids.sayWord = showW;
+}
+
 function handleRapidsTap(px, py) {
-  var p = rapids.p;
-  if (!running || celebrating || puzzleBusy() || p.hop || p.splashT > 0) return;
-  var to;
+  var p = rapids.p, hr = rapids.hudRect;
+  if (!running || celebrating || puzzleBusy()) return;
+  if (hr && px >= hr.x && px <= hr.x + hr.w && py >= hr.y && py <= hr.y + hr.h) { rapSayWord(); return; }
+  if (p.hop || p.splashT > 0) return;
+  var to, tx = null, i, lg, lane;
   if (py > p.y + rapids.rowH * 0.5 && p.row > 0) to = p.row - 1;
   else if (p.row < rapTop()) to = p.row + 1;
   else return;
-  p.hop = { from: p.row, to: to, t: 0 };
+  // Napautus tukkiin/pilveen seuraavalla kaistalla: hyppy suuntautuu siihen (ulottuvuuden rajoissa)
+  lane = rapids.lanes[to];
+  if (lane && Math.abs(py - rapRowY(to)) < rapids.rowH * 0.7) {
+    for (i = 0; i < lane.logs.length; i++) {
+      lg = lane.logs[i];
+      if (px >= lg.x && px <= lg.x + lg.w) {
+        tx = Math.min(Math.max(lg.x + lg.w / 2, p.x - viewW * 0.3), p.x + viewW * 0.3);
+        break;
+      }
+    }
+  }
+  p.hop = { from: p.row, to: to, t: 0, x0: p.x, tx: tx === null ? p.x : tx };
   p.log = null;
   playNote(to > p.row ? 740 : 520, 0, 0.1, 'sine', 0.3);
   spawnSparkles(p.x, p.y, 4, '#ffffff');
@@ -318,6 +343,7 @@ function updateRapids(dt) {
     rapids.fish[i].t += dt;
     if (rapids.fish[i].t > 6) { rapids.fish[i].t = 0; rapids.fish[i].x = Math.random() * viewW; }
   }
+  if (rapids.sayT >= 0) { rapids.sayT += dt; if (rapids.sayT > 0.32 * 5) rapids.sayT = -1; }
 
   if (p.splashT > 0) {
     p.splashT -= dt;
@@ -326,6 +352,8 @@ function updateRapids(dt) {
     if (!busy && !celebrating) {
       p.hop.t += dt / RAP_HOP_T;
       p.y = rapRowY(p.hop.from) + (rapRowY(p.hop.to) - rapRowY(p.hop.from)) * Math.min(1, p.hop.t);
+      p.x = p.hop.x0 + (p.hop.tx - p.hop.x0) * Math.min(1, p.hop.t);
+      if (p.hop.tx !== p.hop.x0) p.facing = p.hop.tx > p.hop.x0 ? 1 : -1;
       if (p.hop.t >= 1) {
         var to = p.hop.to;
         p.hop = null;
@@ -575,6 +603,8 @@ function drawRapWordHud(c) {
   if (sep) total += c.measureText(sep).width * (parts.length - 1);
   // Vasemmassa yläkulmassa, jotta sydämet keskellä jäävät näkyviin
   var bw = total + h * 1.6 + h * 1.1, bx = hudX() + bw / 2, by = viewH * 0.075;
+  var sayIdx = rapids.sayT >= 0 && rapids.sayWord === showW ? Math.floor(rapids.sayT / 0.32) : -1;
+  rapids.hudRect = { x: bx - bw / 2, y: by - h / 2, w: bw, h: h };
   c.fillStyle = 'rgba(255,255,255,0.92)';
   roundRect(c, bx - bw / 2, by - h / 2, bw, h, h * 0.4);
   c.fill();
@@ -594,6 +624,7 @@ function drawRapWordHud(c) {
     }
     readFont(c, h * 0.62);
     c.fillStyle = done ? '#ff5f7e' : (isNext ? '#8a2be2' : 'rgba(138,43,226,0.35)');
+    if (i === sayIdx) c.fillStyle = '#ffb300';
     c.fillText(parts[i], x, by + h * 0.03);
     x += widths[i];
     if (sep && i < parts.length - 1) { c.fillStyle = '#c9a0ff'; c.fillText(sep, x, by + h * 0.03); x += c.measureText(sep).width; }

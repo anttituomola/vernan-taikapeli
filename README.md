@@ -55,7 +55,8 @@ koodia ei tarvitse muokata.
 
 Kopioi koko kansio (html + `css/` + `js/`). Avaa `index.html` Chromella,
 tai käytä Vercel-osoitetta. Edistyminen tallentuu selaimeen; sen voi nollata
-konsolista `VT.resetProgress()`.
+konsolista `VT.resetProgress()`. Testausta varten kaikki kentät saa läpäistyiksi
+osoitteella `index.html?unlock` (tai konsolista `VT.unlockAll()`).
 
 ## Kartta
 
@@ -218,14 +219,16 @@ TIKKUKIRJAIMIA ja sanat tavutettuina (KUK-KA). Sanat ja kuvat tulevat samasta
 `WORD_LIST`-listasta kuin lue sana -tehtävässä. Kirjainpilvet on saaren vartija.
 
 - **Kirjainniitty** — ratsastus. Ylhäällä näkyy sana tavutettuna, ja niityllä
-  leijuu sen kirjaimet sekä kaksi hämäyskirjainta. Napauta kirjaimet sanan
-  järjestyksessä: seuraava kirjain hehkuu sanassa, väärä kirjain heilahtaa.
-  Kerätty kirjain lentää sanaan. Valmis sana luetaan tavu kerrallaan ja sen
+  leijuu ratsastuskorkeudella sen kirjaimet sekä kaksi hämäyskirjainta. Kerää
+  kirjaimet sanan järjestyksessä ratsastamalla niiden läpi tai napauttamalla:
+  seuraava kirjain hehkuu sekä sanassa että niityllä, väärän napautus heilauttaa.
+  Kerätty kirjain lentää sanaan. Sanakuplan napautus lukee sanan. Valmis sana luetaan tavu kerrallaan ja sen
   kuva paljastuu (myös alueen pupun kylttiin). Kolme sanaa, lyhin ensin; portti
   aukeaa lopuksi. Ei sydämiä. Tehtävät: kuva→sana, lue sana.
 - **Tavukoski** ♥ — Kosken hyppely, mutta tukeissa on **tavuja**. Ylhäällä
-  vasemmalla kirjoitettava sana: seuraava tavu hehkuu. Hyppää tukille, jossa on
-  se tavu; väärän tavun tukki keikahtaa ja pudottaa veteen (sydän). Ensin
+  vasemmalla kirjoitettava sana: seuraava tavu hehkuu (kuplan napautus lukee
+  sanan). Hyppää tukille, jossa on se tavu: napautus suoraan seuraavan kaistan
+  tukkiin hyppää sitä kohti, muu napautus yläpuolelle hyppää suoraan ylös; väärän tavun tukki keikahtaa ja pudottaa veteen (sydän). Ensin
   2-tavuinen sana saarelle, sitten 3-tavuinen ylärannalle. Valmis sana soi ja
   kuva paljastuu. Tehtävät: kokoa sana tavuista, lue sana.
 - **Sanapaja** — ei liikkumista. Pupu tilaa kuvalla, ja sana kootaan

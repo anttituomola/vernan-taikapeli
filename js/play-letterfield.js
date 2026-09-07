@@ -1,10 +1,12 @@
 'use strict';
 
 // Kirjainniitty: Kirjainsaaren ensimmäinen kenttä. Ratsastus niityllä, jolla
-// leijuu kirjaimia. Ylhäällä näkyy sana tavutettuna; napauta niityn kirjaimia
-// sanan järjestyksessä (seuraava kirjain hehkuu sanassa). Väärä kirjain heilahtaa.
-// Kolme sanaa kolmella alueella; valmis sana luetaan ja sen kuva paljastuu.
-// Ei sydämiä: rauhallinen lukukenttä.
+// leijuu kirjaimia ratsastuskorkeudella. Ylhäällä näkyy sana tavutettuna;
+// kerää kirjaimet sanan järjestyksessä joko ratsastamalla niiden läpi tai
+// napauttamalla (seuraava kirjain hehkuu sekä sanassa että niityllä). Väärän
+// kirjaimen napautus heilauttaa sitä; läpi ratsastus ei tee mitään. Sanakuplan
+// napautus lukee sanan. Kolme sanaa kolmella alueella; valmis sana luetaan ja
+// sen kuva paljastuu. Ei sydämiä: rauhallinen lukukenttä.
 
 var LF_ZONES = [[0.05, 0.28], [0.36, 0.60], [0.68, 0.92]];
 var lf = { words: [], letters: [], cur: 0, gate: { fx: 0.965, x: 0, open: false }, sayT: -1, sayWord: -1, bunnies: [] };
@@ -46,7 +48,7 @@ function lfLayoutLetters() {
       lf.letters.push({
         ch: chars[k].ch, distract: chars[k].distract, word: i,
         fx: zone[0] + (zone[1] - zone[0]) * (k + 0.5) / n,
-        fy: 0.14 + ((k * 7) % 3) * 0.11,
+        fy: 0.06 + ((k * 7) % 3) * 0.05,   // ratsastajan ulottuvilla (0.06–0.16 polun yläpuolella)
         collected: false, wob: 0, phase: Math.random() * Math.PI * 2, flyT: -1
       });
     }
@@ -130,9 +132,18 @@ function lfCollect(l) {
   }
 }
 
+// Sanakuplan napautus lukee sanan (tavut soivat ja korostuvat)
+function lfSayCurrent() {
+  var wi = Math.min(lf.cur, lf.words.length - 1), syl = lf.words[wi].w.split('-'), k;
+  lf.sayT = 0;
+  lf.sayWord = wi;
+  for (k = 0; k < syl.length; k++) playNote(392 + k * 70, 0.4 + k * WORD_SYL_T, 0.32, 'triangle', 0.3);
+}
+
 function handleLetterfieldTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
-  var wx = px + camX, i, l, p, dx, dy, need = lfNeeded();
+  var wx = px + camX, i, l, p, dx, dy, need = lfNeeded(), hr = lf.hudRect;
+  if (hr && px >= hr.x && px <= hr.x + hr.w && py >= hr.y && py <= hr.y + hr.h) { lfSayCurrent(); return; }
   for (i = 0; i < lf.letters.length; i++) {
     l = lf.letters[i];
     if (l.collected) continue;
@@ -171,11 +182,20 @@ function updateLetterfield(dt) {
     unicorn.moving = false;
   }
   followCam(unicorn.x, dt);
+  var need = lfNeeded(), p;
   for (i = 0; i < lf.letters.length; i++) {
     l = lf.letters[i];
     l.phase += dt * 1.5;
     if (l.wob > 0) l.wob = Math.max(0, l.wob - dt * 2.5);
     if (l.flyT >= 0) { l.flyT += dt * 1.6; if (l.flyT > 1) l.flyT = 2; }
+    // Läpi ratsastus kerää seuraavan kirjaimen
+    if (!l.collected && need && l.word === lf.cur && l.ch === need && !busy && !celebrating) {
+      p = lfLetterPos(l);
+      dx = p.x - unicorn.x;
+      // Osuma-alue ratsastajan ympärillä (pään korkeus polun yläpuolella)
+      dy = p.y - (unicorn.y - viewH * 0.16);
+      if (dx * dx + dy * dy < viewH * 0.12 * viewH * 0.12) { lfCollect(l); need = lfNeeded(); }
+    }
   }
   if (lf.sayT >= 0) {
     lf.sayT += dt;
@@ -237,6 +257,15 @@ function drawFieldLetter(c, l) {
   if (x < -r * 3 || x > viewW + r * 3) return;
   if (l.wob > 0) x += Math.sin(globalT * 40) * r * 0.25 * l.wob;
   var active = l.word === lf.cur;
+  var isNext = active && !l.collected && l.ch === lfNeeded();
+  if (isNext) {
+    // Seuraava kirjain hehkuu myös niityllä
+    var g = c.createRadialGradient(x, y, r * 0.8, x, y, r * 2.2);
+    g.addColorStop(0, 'rgba(255,230,140,' + (0.45 + Math.sin(globalT * 5) * 0.2) + ')');
+    g.addColorStop(1, 'rgba(255,230,140,0)');
+    c.fillStyle = g;
+    c.beginPath(); c.arc(x, y, r * 2.2, 0, Math.PI * 2); c.fill();
+  }
   c.fillStyle = active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.6)';
   c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
   c.strokeStyle = active ? '#ffd24f' : 'rgba(200,190,220,0.8)';
@@ -272,6 +301,7 @@ function drawLfWordHud(c) {
   readFont(c, h * 0.62);
   var total = c.measureText(w.w).width, bw = total + h * 1.6 + h * 1.1, bx = viewW / 2, by = viewH * 0.075;
   var sayIdx = lf.sayT >= 0 ? Math.floor((lf.sayT - 0.4) / WORD_SYL_T) : -1;
+  lf.hudRect = { x: bx - bw / 2, y: by - h / 2, w: bw, h: h };
   c.fillStyle = 'rgba(255,255,255,0.92)';
   roundRect(c, bx - bw / 2, by - h / 2, bw, h, h * 0.4);
   c.fill();
@@ -289,8 +319,8 @@ function drawLfWordHud(c) {
         c.beginPath(); c.arc(x + cw / 2, by, h * 0.55, 0, Math.PI * 2); c.fill();
       }
       readFont(c, h * 0.62);
-      c.fillStyle = i === sayIdx && w.done ? '#ff5f7e' : (done ? '#ff5f7e' : (isNext ? '#8a2be2' : 'rgba(138,43,226,0.35)'));
-      if (w.done && sayIdx >= 0) c.fillStyle = i === sayIdx ? '#ff5f7e' : '#8a2be2';
+      c.fillStyle = done ? '#ff5f7e' : (isNext ? '#8a2be2' : 'rgba(138,43,226,0.35)');
+      if (sayIdx >= 0 && lf.sayWord === wi) c.fillStyle = i === sayIdx ? '#ff5f7e' : (done ? '#c94f7e' : '#8a2be2');
       c.fillText(ch, x, by + h * 0.03);
       x += cw;
       li++;
