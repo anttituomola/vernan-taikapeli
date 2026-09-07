@@ -196,3 +196,28 @@ function drawCauldron(c, x, y, s, liquid, failed, splash, glow) {
   c.fillRect(x - s * 0.7, y + s * 0.5, s * 0.16, s * 0.3);
   c.fillRect(x + s * 0.54, y + s * 0.5, s * 0.16, s * 0.3);
 }
+
+// ---------- Rekisteröinti ----------
+
+function orbBottleContent(c, t, i, x, y, r) {
+  var used = t.mix && t.mix.pour.indexOf(MIX_PRIMARY[i]) >= 0;
+  if (used) c.globalAlpha = 0.45;
+  drawPotionBottle(c, x, y + r * 0.1, r * 0.34, MIX_COLORS[MIX_PRIMARY[i]]);
+  c.globalAlpha = 1;
+}
+
+function tapMixTask(t, px, py) {
+  var i = orbHit(t, px, py);
+  if (i < 0) return;
+  t.litOrb = i;
+  t.litT = 0.3;
+  mixTaskTap(t, i);
+}
+
+TASK_TYPES.mix = {
+  make: makeMixProblem, pitch: 523, tap: tapMixTask, update: updateMixTask,
+  draw: function (c, t, shake, op) {
+    drawMixOverlay(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbBottleContent);
+  }
+};

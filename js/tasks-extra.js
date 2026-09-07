@@ -409,18 +409,6 @@ function drawHand(c, x, y, s) {
   c.fill(); c.stroke();
 }
 
-// Väärän vastauksen jälkeen arvotaan uusi tehtävä samasta tyypistä
-function regenerateTask(t) {
-  if (t.type === 'match') makeMatchProblem(t);
-  else if (t.type === 'odd') makeOddProblem(t);
-  else if (t.type === 'pattern') makePatternProblem(t);
-  else if (t.type === 'compare') makeCompareProblem(t);
-  t.litOrb = -1;
-  t.litT = 0;
-  playNote(494, 0, 0.1, 'triangle', 0.25);
-  playNote(659, 0.08, 0.14, 'triangle', 0.25);
-}
-
 // ---------- Lue sana ----------
 // Sana näytetään tikkukirjaimin tavuviivoilla; alla 5 kuvaa, joista yksi on sana.
 // Sanan napautus "lukee" sen: tavut korostuvat vuorotellen ja soivat nuotteina.
@@ -626,3 +614,242 @@ function drawWordIcon(c, id, x, y, r) {
     }
   }
 }
+
+// ---------- Siirretyt generaattorit ----------
+// Nämä neljä asuivat aiemmin play-forest.js:ssä; kuuluvat muiden generaattoreiden luo.
+
+function makeMathProblem(t) {
+  t.a = 3 + Math.floor(Math.random() * 7);
+  t.b = 2 + Math.floor(Math.random() * 8);
+  if (t.a + t.b > 15) t.b = 15 - t.a;
+  if (t.b < 2) t.b = 2;
+  t.correct = t.a + t.b;
+  t.answers = pickNumberAnswers(t.correct, [t.a, t.b]);
+}
+
+// Laske vain mallin mukaiset: joukossa on myös hämääjiä (eri muoto tai eri väri)
+function makeCountProblem(t) {
+  var target = { kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)], color: randInt(TASK_BF_COLORS.length), variant: 0 };
+  var count = 4 + randInt(5);
+  var extra = 3 + randInt(3);
+  var items = [], i, e;
+  for (i = 0; i < count; i++) items.push(target);
+  for (i = 0; i < extra; i++) {
+    if (Math.random() < 0.5) {
+      e = { kind: TASK_GLYPH_KINDS[otherIndex(TASK_GLYPH_KINDS.indexOf(target.kind), TASK_GLYPH_KINDS.length)], color: target.color, variant: 0 };
+    } else {
+      e = { kind: target.kind, color: otherIndex(target.color, TASK_BF_COLORS.length), variant: 0 };
+    }
+    items.push(e);
+  }
+  t.items = shuffleNums(items);
+  t.prompt = target;
+  t.glyph = target.kind;
+  t.color = target.color;
+  t.a = count;
+  t.correct = count;
+  t.answers = pickNumberAnswers(count, []);
+}
+
+// Etsi samanlainen kuva: malli on 2–3 kuvion ryhmä, väärät eroavat yhdellä yksityiskohdalla
+function makeMatchProblem(t) {
+  var n = 2 + randInt(2), i, tries = 0, ok, d, idx, keys, kk;
+  var base = [];
+  for (i = 0; i < n; i++) {
+    base.push({ kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)], color: randInt(TASK_BF_COLORS.length), variant: 0 });
+  }
+  var distract;
+  do {
+    tries++;
+    distract = [];
+    d = cloneItems(base); idx = randInt(n); d[idx].color = otherIndex(d[idx].color, TASK_BF_COLORS.length); distract.push(d);
+    d = cloneItems(base); idx = randInt(n); d[idx].kind = TASK_GLYPH_KINDS[otherIndex(TASK_GLYPH_KINDS.indexOf(d[idx].kind), TASK_GLYPH_KINDS.length)]; distract.push(d);
+    d = cloneItems(base);
+    if (n >= 3 && Math.random() < 0.5) d.pop(); else d.push({ kind: base[0].kind, color: base[0].color, variant: 0 });
+    distract.push(d);
+    keys = {}; keys[groupKey(base)] = true; ok = true;
+    for (i = 0; i < distract.length; i++) { kk = groupKey(distract[i]); if (keys[kk]) ok = false; keys[kk] = true; }
+  } while (!ok && tries < 10);
+  var all = [cloneItems(base), distract[0], distract[1], distract[2]];
+  var order = shuffleNums([0, 1, 2, 3]);
+  t.orbs = 4;
+  t.prompt = { items: base };
+  t.choices = [];
+  for (i = 0; i < 4; i++) t.choices.push({ items: all[order[i]] });
+  t.correct = order.indexOf(0);
+}
+
+// Mikä on erilainen: 5 kuviota, joista yksi eroaa pienellä yksityiskohdalla
+// (sakaroiden/terälehtien määrä, kimallus) tai värillä
+function makeOddProblem(t) {
+  var kind = TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)];
+  var color = randInt(TASK_BF_COLORS.length);
+  var n = 5, i;
+  var slot = randInt(n);
+  var same = { kind: kind, color: color, variant: 0 };
+  var diff = Math.random() < 0.7
+    ? { kind: kind, color: color, variant: 1 }
+    : { kind: kind, color: otherIndex(color, TASK_BF_COLORS.length), variant: 0 };
+  t.orbs = n;
+  t.prompt = null;
+  t.choices = [];
+  for (i = 0; i < n; i++) t.choices.push(i === slot ? diff : same);
+  t.correct = slot;
+}
+
+// ---------- Promptit ja pallosisällöt ----------
+
+function drawNumberPrompt(c, t, shake) {
+  c.fillStyle = '#ffe27a';
+  c.font = 'bold ' + Math.round(viewH * 0.09) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.fillText(t.a + (t.type === 'math' ? ' + ' : ' − ') + t.b + ' = ?', viewW / 2 + shake, viewH * 0.32);
+}
+
+function orbNumberContent(c, t, i, x, y, r) {
+  var ans = String(t.answers[i]);
+  c.fillStyle = '#8a2be2';
+  c.font = 'bold ' + Math.round(r * (ans.length > 1 ? 0.7 : 0.9)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.fillText(ans, x, y + r * 0.08);
+}
+
+function orbGlyphRowContent(c, t, i, x, y, r) {
+  var grp = t.choices && t.choices[i];
+  if (grp) drawGlyphRow(c, grp.items, x, y, r * 0.28, r * 0.62);
+}
+
+function orbTaskGlyphContent(c, t, i, x, y, r) {
+  var ch = t.choices && t.choices[i];
+  if (ch) drawTaskGlyph(c, ch.kind, x, y, r * 0.5, TASK_BF_COLORS[ch.color], ch.variant);
+}
+
+function orbCompareContent(c, t, i, x, y, r) {
+  c.fillStyle = '#8a2be2';
+  c.beginPath();
+  c.moveTo(x, y - r * 0.5);
+  c.lineTo(x + r * 0.42, y + r * 0.2);
+  c.lineTo(x - r * 0.42, y + r * 0.2);
+  c.closePath();
+  c.fill();
+}
+
+// Sekä word- että letter-tehtävän palloissa on kuvakkeita (tasks-read käyttää myös)
+function orbWordIconContent(c, t, i, x, y, r) {
+  var wc = t.choices && t.choices[i];
+  if (wc) {
+    if (wc.wrong) c.globalAlpha = 0.3;
+    drawWordIcon(c, wc.icon, x, y, r);
+    c.globalAlpha = 1;
+  }
+}
+
+// ---------- Kosketukset ----------
+
+// Sanan napautus lukee sen ääneen tavu kerrallaan; väärä kuva himmenee
+// ja sana luetaan uudestaan.
+function tapWord(t, px, py) {
+  var rc = wordPromptRect(ctx, t);
+  if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) { wordSay(t); return; }
+  var i = orbHit(t, px, py);
+  if (i < 0) return;
+  t.litOrb = i;
+  t.litT = 0.3;
+  if (i === t.correct) {
+    playNote(TASK_BF_NOTES[Math.min(i, 3)], 0, 0.3, 'triangle', 0.45);
+    taskSolved();
+  } else {
+    playNote(170, 0, 0.3, 'sawtooth', 0.2);
+    t.shakeT = 0.5;
+    if (t.choices && t.choices[i]) t.choices[i].wrong = true;
+    wordSay(t);
+  }
+}
+
+// Vertailussa myös laatikko itse on napautettava, ei vain pallot.
+function tapCompare(t, px, py) {
+  var op = orbPositions(t.orbs);
+  var i = orbHit(t, px, py);
+  if (i < 0) {
+    for (var k = 0; k < 2; k++) {
+      var rc = compareBoxRect(k, op);
+      if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) { i = k; break; }
+    }
+  }
+  if (i < 0) return;
+  answerChoice(t, i, true);
+}
+
+// ---------- Rekisteröinnit ----------
+
+TASK_TYPES.math = {
+  make: makeMathProblem, pitch: 659, tap: tapNumberAnswer,
+  draw: function (c, t, shake, op) {
+    drawNumberPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbNumberContent);
+  }
+};
+
+TASK_TYPES.count = {
+  make: makeCountProblem, pitch: 698, tap: tapNumberAnswer,
+  draw: function (c, t, shake, op) {
+    drawCountPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbNumberContent);
+  }
+};
+
+TASK_TYPES.minus = {
+  make: makeMinusProblem, pitch: 587, tap: tapNumberAnswer,
+  draw: function (c, t, shake, op) {
+    drawNumberPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbNumberContent);
+  }
+};
+
+TASK_TYPES.match = {
+  make: makeMatchProblem, pitch: 784, tap: tapChoiceRegen,
+  draw: function (c, t, shake, op) {
+    if (t.prompt) drawMatchPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbGlyphRowContent);
+  }
+};
+
+TASK_TYPES.odd = {
+  make: makeOddProblem, pitch: 523, tap: tapChoiceRegen,
+  draw: function (c, t, shake, op) {
+    drawOddPrompt(c, shake);
+    drawTaskOrbs(c, t, shake, op, orbTaskGlyphContent);
+  }
+};
+
+TASK_TYPES.pattern = {
+  make: makePatternProblem, pitch: 740, tap: tapChoiceRegen,
+  draw: function (c, t, shake, op) {
+    drawPatternPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbTaskGlyphContent);
+  }
+};
+
+TASK_TYPES.compare = {
+  make: makeCompareProblem, pitch: 622, tap: tapCompare,
+  draw: function (c, t, shake, op) {
+    drawComparePrompt(c, t, op, shake);
+    drawTaskOrbs(c, t, shake, op, orbCompareContent);
+  }
+};
+
+TASK_TYPES.word = {
+  make: makeWordProblem, start: wordSay, tap: tapWord,
+  draw: function (c, t, shake, op) {
+    drawWordPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbWordIconContent);
+  }
+};
+
+TASK_TYPES.rhythm = {
+  make: makeRhythmProblem, showMode: true, replaceShow: true,
+  tap: function (t) { rhythmTap(t); },
+  update: function (t, dt) {
+    if (t.mode === 'show') rhythmShowUpdate(t, dt);
+    else if (t.mode === 'input') rhythmInputUpdate(t, dt);
+  },
+  draw: drawRhythmOverlay
+};

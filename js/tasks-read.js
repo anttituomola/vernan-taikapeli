@@ -298,3 +298,39 @@ function letterTap(t, i) {
     t.choices[i].wrong = true;
   }
 }
+
+// ---------- Rekisteröinnit ----------
+
+// Kirjaimen napautus soittaa sen; pallo osuu letterTap:iin.
+function tapLetterTask(t, px, py) {
+  var rc = letterPromptRect();
+  if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) {
+    t.sayT = 0;
+    playNote(523, 0, 0.35, 'triangle', 0.3);
+    return;
+  }
+  var i = orbHit(t, px, py);
+  if (i < 0) return;
+  t.litOrb = i;
+  t.litT = 0.3;
+  letterTap(t, i);
+}
+
+TASK_TYPES.wordpick = {
+  make: makeWordPickProblem, start: wordSay,
+  tap: wordPickTap,
+  draw: drawWordPickOverlay
+};
+
+TASK_TYPES.build = {
+  make: makeBuildProblem, start: wordSay, drag: true,
+  draw: drawBuildOverlay
+};
+
+TASK_TYPES.letter = {
+  make: makeLetterProblem, pitch: 659, tap: tapLetterTask,
+  draw: function (c, t, shake, op) {
+    drawLetterPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbWordIconContent);
+  }
+};

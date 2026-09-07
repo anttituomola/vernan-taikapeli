@@ -9,10 +9,6 @@
 var SHAPE_KINDS = ['star', 'heart', 'flower', 'circle', 'triangle', 'square', 'moon', 'diamond'];
 var dragPiece = null;
 
-function taskUsesDrag(t) {
-  return t.type === 'shadow' || t.type === 'puzzle' || t.type === 'sort' || t.type === 'order' || t.type === 'build';
-}
-
 // Muodot: kolme perusmuotoa piirtää drawTaskGlyph, loput tässä. Sama polku
 // kelpaa sekä värilliseen muotoon että tummaan varjoon.
 function drawShape(c, kind, x, y, s, color, variant) {
@@ -338,3 +334,23 @@ function drawPairsOverlay(c, t, shake) {
     }
   }
 }
+
+// ---------- Rekisteröinnit ----------
+// Raahaustehtävät: drag lippu ohjaa kosketuksen taskDragStartiin (tasks-core).
+
+TASK_TYPES.shadow = {
+  make: makeShadowProblem, pitch: 698, drag: true,
+  draw: drawDragTaskOverlay
+};
+
+TASK_TYPES.puzzle = {
+  make: makePuzzleProblem, pitch: 784, drag: true,
+  draw: drawDragTaskOverlay
+};
+
+TASK_TYPES.pairs = {
+  make: makePairsProblem, pitch: 659,
+  tap: pairsTap,
+  update: function (t, dt) { if (t.mode === 'input') pairsUpdate(t, dt); },
+  draw: drawPairsOverlay
+};

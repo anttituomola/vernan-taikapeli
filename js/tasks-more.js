@@ -394,3 +394,27 @@ function drawDotsOverlay(c, t, shake) {
     drawPenGlyph(c, q.x + shake + r * 1.9, q.y - r * 1.9 + Math.sin(globalT * 4) * r * 0.2, r * 1.6, '#ffffff');
   }
 }
+
+// ---------- Rekisteröinnit ----------
+
+TASK_TYPES.sort = {
+  make: makeSortProblem, pitch: 698, drag: true,
+  draw: drawSortOverlay
+};
+
+TASK_TYPES.order = {
+  make: makeOrderProblem, pitch: 740, drag: true,
+  draw: drawOrderOverlay
+};
+
+TASK_TYPES.mirror = {
+  make: makeMirrorProblem, pitch: 784,
+  tap: mirrorTap,
+  draw: drawMirrorOverlay
+};
+
+TASK_TYPES.dots = {
+  make: makeDotsProblem, pitch: 523,
+  tap: dotsTap, update: updateDotsTask,
+  draw: drawDotsOverlay
+};

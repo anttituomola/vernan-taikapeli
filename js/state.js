@@ -86,6 +86,12 @@ function puzzleBusy() {
   return spellActive() || taskActive();
 }
 
+// Tehtävätyyppien rekisteri: jokainen tyyppi on pieni moduuli sauman takana:
+//   { make, draw, tap?, update?, start?, regen?, pitch?, showMode?, replaceShow?, drag? }
+// Rekisteröinnit asuvat kunkin tyypin omassa tasks-*.js-tiedostossa;
+// ajonaikainen silmukka (taskStart / handleTaskTap / updateTasks) on tasks-core.js:ssä.
+var TASK_TYPES = {};
+
 // Myrskypilvet tiputtavat salamapisaroita; osuma sirottaa kerättyjä tähtiä
 var clouds = [];
 var drops = [];

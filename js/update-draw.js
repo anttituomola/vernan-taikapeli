@@ -577,132 +577,15 @@ function drawTaskArch(c, task) {
 function drawTaskOverlay(c) {
   if (!taskActive()) return;
   var t = activeTask;
+  var tt = TASK_TYPES[t.type];
+  if (!tt) return;
   var op = orbPositions(t.orbs || 3);
   var shake = t.shakeT > 0 ? Math.sin(globalT * 45) * 10 * t.shakeT : 0;
-  var i;
   c.fillStyle = 'rgba(40,20,70,0.52)';
   c.fillRect(0, 0, viewW, viewH);
-
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  if (t.type === 'rhythm') {
-    drawRhythmOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'sort') {
-    drawSortOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'order') {
-    drawOrderOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'mirror') {
-    drawMirrorOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'dots') {
-    drawDotsOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'wordpick') {
-    drawWordPickOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'build') {
-    drawBuildOverlay(c, t, shake);
-    return;
-  }
-  if (taskUsesDrag(t)) {
-    drawDragTaskOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'pairs') {
-    drawPairsOverlay(c, t, shake);
-    return;
-  }
-  if (t.type === 'math' || t.type === 'minus') {
-    c.fillStyle = '#ffe27a';
-    c.font = 'bold ' + Math.round(viewH * 0.09) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
-    c.fillText(t.a + (t.type === 'math' ? ' + ' : ' − ') + t.b + ' = ?', viewW / 2 + shake, viewH * 0.32);
-  } else if (t.type === 'pattern') {
-    drawPatternPrompt(c, t, shake);
-  } else if (t.type === 'compare') {
-    drawComparePrompt(c, t, op, shake);
-  } else if (t.type === 'count') {
-    drawCountPrompt(c, t, shake);
-  } else if (t.type === 'match' && t.prompt) {
-    drawMatchPrompt(c, t, shake);
-  } else if (t.type === 'odd') {
-    drawOddPrompt(c, shake);
-  } else if (t.type === 'word') {
-    drawWordPrompt(c, t, shake);
-  } else if (t.type === 'letter') {
-    drawLetterPrompt(c, t, shake);
-  } else if (t.type === 'mix') {
-    drawMixOverlay(c, t, shake);
-  } else if (t.type === 'memory') {
-    var dotR = viewH * 0.012;
-    for (i = 0; i < t.seq.length; i++) {
-      c.fillStyle = i < t.inputIdx ? '#ffe27a' : 'rgba(255,255,255,0.35)';
-      c.beginPath();
-      c.arc(viewW / 2 + (i - (t.seq.length - 1) / 2) * dotR * 4 + shake, op.y - op.r * 2.15, dotR, 0, Math.PI * 2);
-      c.fill();
-    }
-  }
-
-  for (i = 0; i < t.orbs; i++) {
-    var lit = t.litOrb === i && (t.mode === 'show' ? true : t.litT > 0);
-    var r = op.r * (lit ? 1.16 : 1);
-    var x = op.xs[i] + shake;
-    var y = op.y;
-    if (lit) {
-      var glow = c.createRadialGradient(x, y, r * 0.3, x, y, r * 2);
-      glow.addColorStop(0, 'rgba(255,255,255,0.5)');
-      glow.addColorStop(1, 'rgba(255,255,255,0)');
-      c.fillStyle = glow;
-      c.beginPath(); c.arc(x, y, r * 2, 0, Math.PI * 2); c.fill();
-    }
-    c.fillStyle = '#fff';
-    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = TASK_BF_COLORS[i % TASK_BF_COLORS.length];
-    c.lineWidth = viewH * 0.008;
-    c.stroke();
-    if (t.type === 'math' || t.type === 'count' || t.type === 'minus') {
-      var ans = String(t.answers[i]);
-      c.fillStyle = '#8a2be2';
-      c.font = 'bold ' + Math.round(r * (ans.length > 1 ? 0.7 : 0.9)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
-      c.fillText(ans, x, y + r * 0.08);
-    } else if (t.type === 'match') {
-      var grp = t.choices && t.choices[i];
-      if (grp) drawGlyphRow(c, grp.items, x, y, r * 0.28, r * 0.62);
-    } else if (t.type === 'odd' || t.type === 'pattern') {
-      var ch = t.choices && t.choices[i];
-      if (ch) drawTaskGlyph(c, ch.kind, x, y, r * 0.5, TASK_BF_COLORS[ch.color], ch.variant);
-    } else if (t.type === 'mix') {
-      var used = t.mix && t.mix.pour.indexOf(MIX_PRIMARY[i]) >= 0;
-      if (used) c.globalAlpha = 0.45;
-      drawPotionBottle(c, x, y + r * 0.1, r * 0.34, MIX_COLORS[MIX_PRIMARY[i]]);
-      c.globalAlpha = 1;
-    } else if (t.type === 'word' || t.type === 'letter') {
-      var wc = t.choices && t.choices[i];
-      if (wc) {
-        if (wc.wrong) c.globalAlpha = 0.3;
-        drawWordIcon(c, wc.icon, x, y, r);
-        c.globalAlpha = 1;
-      }
-    } else if (t.type === 'compare') {
-      c.fillStyle = '#8a2be2';
-      c.beginPath();
-      c.moveTo(x, y - r * 0.5);
-      c.lineTo(x + r * 0.42, y + r * 0.2);
-      c.lineTo(x - r * 0.42, y + r * 0.2);
-      c.closePath();
-      c.fill();
-    } else {
-      drawButterfly(c, x, y, r * 0.42, globalT + i, TASK_BF_COLORS[i % TASK_BF_COLORS.length]);
-    }
-  }
+  tt.draw(c, t, shake, op);
 }
 
 function drawStormCloud(c, cl) {
