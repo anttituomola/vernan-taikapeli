@@ -4,7 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>VERNAN TAIKAPOLKU</title>
-<link rel="stylesheet" href="css/game.css">
+<script>
+// Versioleima: nosta tätä, kun julkaiset uuden version, niin selain lataa
+// kaikki tiedostot uudestaan eikä yhdistä vanhaa index.html:ää uusiin skripteihin.
+var VT_VERSION = '2026-09-07a';
+document.write('<link rel="stylesheet" href="css/game.css?v=' + VT_VERSION + '">');
+</script>
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -20,53 +25,28 @@
 <button id="penBtn" aria-label="KYNA">&#9999;</button>
 <button id="muteBtn" aria-label="AANI">&#128266;</button>
 
-<script src="js/state.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/progress.js"></script>
-<script src="js/world.js"></script>
-<script src="js/draw-actors.js"></script>
-<script src="js/fx.js"></script>
-<script src="js/ambient.js"></script>
-<script src="js/flow-hub.js"></script>
-<script src="js/flow-sea.js"></script>
-<script src="js/flow-home.js"></script>
-<script src="js/play-forest.js"></script>
-<script src="js/tasks-extra.js"></script>
-<script src="js/tasks-drag.js"></script>
-<script src="js/tasks-mix.js"></script>
-<script src="js/play-garden.js"></script>
-<script src="js/play-ice.js"></script>
-<script src="js/play-pond.js"></script>
-<script src="js/play-sky.js"></script>
-<script src="js/platformer.js"></script>
-<script src="js/play-cave.js"></script>
-<script src="js/play-swamp.js"></script>
-<script src="js/play-bridge.js"></script>
-<script src="js/play-finale.js"></script>
-<script src="js/play-beach.js"></script>
-<script src="js/play-candy.js"></script>
-<script src="js/play-tower.js"></script>
-<script src="js/play-reef.js"></script>
-<script src="js/play-nightwood.js"></script>
-<script src="js/play-clouds.js"></script>
-<script src="js/play-moon.js"></script>
-<script src="js/pen-core.js"></script>
-<script src="js/play-pen.js"></script>
-<script src="js/play-rain.js"></script>
-<script src="js/play-bunnybridge.js"></script>
-<script src="js/play-scribble.js"></script>
-<script src="js/play-herd.js"></script>
-<script src="js/play-kitchen.js"></script>
-<script src="js/tasks-more.js"></script>
-<script src="js/play-mine.js"></script>
-<script src="js/play-rapids.js"></script>
-<script src="js/play-lighthouse.js"></script>
-<script src="js/play-summit.js"></script>
-<script src="js/tasks-read.js"></script>
-<script src="js/play-letterfield.js"></script>
-<script src="js/play-wordshop.js"></script>
-<script src="js/phases.js"></script>
-<script src="js/update-draw.js"></script>
-<script src="js/main.js"></script>
+<script>
+// Skriptit ladataan järjestyksessä versioleimalla (document.write säilyttää järjestyksen)
+(function () {
+  var files = [
+    'state', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
+    'flow-hub', 'flow-sea', 'flow-home',
+    'play-forest', 'tasks-extra', 'tasks-drag', 'tasks-mix',
+    'play-garden', 'play-ice', 'play-pond', 'play-sky',
+    'platformer', 'play-cave', 'play-swamp', 'play-bridge', 'play-finale',
+    'play-beach', 'play-candy', 'play-tower',
+    'play-reef', 'play-nightwood', 'play-clouds', 'play-moon',
+    'pen-core', 'play-pen', 'play-rain', 'play-bunnybridge', 'play-scribble',
+    'play-herd', 'play-kitchen',
+    'tasks-more', 'play-mine', 'play-rapids', 'play-lighthouse', 'play-summit',
+    'tasks-read', 'play-letterfield', 'play-wordshop',
+    'phases', 'update-draw', 'main'
+  ];
+  var i;
+  for (i = 0; i < files.length; i++) {
+    document.write('<script src="js/' + files[i] + '.js?v=' + VT_VERSION + '"><\/script>');
+  }
+})();
+</script>
 </body>
 </html>

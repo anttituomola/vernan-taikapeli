@@ -9,7 +9,9 @@ pelastavat puput linnan Myrskynoidalta.
 
 Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 
-- `index.html` — kuori ja script-järjestys
+- `index.html` — kuori ja script-järjestys (`files`-lista) sekä versioleima `VT_VERSION`,
+  joka liitetään jokaiseen tiedostonimeen (`?v=…`). **Nosta leimaa julkaistessa**, muuten
+  tabletin välimuisti voi yhdistää vanhan `index.html`:n uusiin skripteihin ja kenttä jää jumiin.
 - `css/game.css` — napit ja karttanäyttö
 - `js/state.js` — jaettu tila, kartta (`HUB_MAP`, `HUB_ROOMS`, `HUB_ORDER`)
 - `js/audio.js` — WebAudio
@@ -41,7 +43,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
 
-**Uusi vaihe** = tiedosto `js/play-….js`, rivi `PHASES`-olioon (phases.js),
+**Uusi vaihe** = tiedosto `js/play-….js` (nimi `files`-listaan index.html:ssä), rivi `PHASES`-olioon (phases.js),
 huone `HUB_ROOMS`-karttaan ja kirjain `HUB_MAP`iin sekä `HUB_ORDER`iin
 (maailmat 2 ja 3: `HUB_MAP2/3`, `HUB_ROOMS2/3`, `HUB_ORDER2/3`, kootaan `HUB_WORLDS`-olioon).
 **Uusi saari** = rivi `ISLANDS`-taulukkoon (flow-sea.js: sijainti, vartijahuone
