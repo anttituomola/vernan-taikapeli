@@ -5,6 +5,10 @@
 // kosketusten reititys, päivitys, pallorivi — jotta kukin tyyppi voi elää
 // omassa tasks-*.js-tiedostossaan pienen rajapinnan takana.
 //
+// make-sopimus: make(t) saa asettaa rungon kenttiä (orbs, timer, seq...),
+// ja PALAUTTAA tyypin oman ongelmadatan, joka asetetaan t.data:han.
+// Kaikki tyypin tap/update/draw lukevat ongelman t.data:sta.
+//
 // Uusi tehtävätyyppi = yksi rekisteröinti omassa tiedostossaan, ei muutoksia tänne.
 
 // ---------- Jaetut apurit ----------
@@ -64,12 +68,10 @@ function taskStart(t) {
   t.lastShown = -1;
   t.shakeT = 0;
   t.litT = 0;
-  t.prompt = null;
-  t.choices = null;
   t.regenT = 0;
   var tt = TASK_TYPES[t.type];
   if (!tt) return;
-  tt.make(t);
+  t.data = tt.make(t) || {};
   t.mode = tt.showMode ? 'show' : 'input';
   if (tt.start) tt.start(t);
   if (tt.pitch) playNote(tt.pitch, 0, 0.2, 'triangle', 0.35);
@@ -91,8 +93,7 @@ function taskSolved() {
 function regenerateTask(t) {
   var tt = TASK_TYPES[t.type];
   if (!tt) return;
-  if (tt.regen) tt.regen(t);
-  else tt.make(t);
+  t.data = tt.regen ? (tt.regen(t) || {}) : (tt.make(t) || {});
   t.litOrb = -1;
   t.litT = 0;
   playNote(494, 0, 0.1, 'triangle', 0.25);
@@ -123,7 +124,7 @@ function tapNumberAnswer(t, px, py) {
   if (i < 0) return;
   t.litOrb = i;
   t.litT = 0.3;
-  if (t.answers[i] === t.correct) {
+  if (t.data.answers[i] === t.data.correct) {
     playNote(TASK_BF_NOTES[Math.min(i, 3)], 0, 0.3, 'triangle', 0.45);
     taskSolved();
   } else {
@@ -144,7 +145,7 @@ function tapChoiceRegen(t, px, py) {
 function answerChoice(t, i, regen) {
   t.litOrb = i;
   t.litT = 0.3;
-  if (i === t.correct) {
+  if (i === t.data.correct) {
     playNote(TASK_BF_NOTES[Math.min(i, 3)], 0, 0.3, 'triangle', 0.45);
     taskSolved();
   } else {

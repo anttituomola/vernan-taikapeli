@@ -236,6 +236,59 @@ if (TASK_TYPES) {
   for (const t of Object.keys(TASK_TYPES)) {
     check(usedTypes.has(t), 'registry entry ' + t + ' is used by a level');
   }
+
+  // Behavioral exercise: run every type through taskStart + draw + tap/update
+  // inside a Proxy that throws if any code touches a LEGACY top-level field
+  // (fields that must live in t.data since the DTO shrink).
+  vm.runInContext(`(function () {
+    var LEGACY = { a:1, b:1, answers:1, correct:1, prompt:1, choices:1, glyph:1, color:1,
+      items:1, beats:1, taps:1, inputT:1, mix:1, pieces:1, targets:1, grid:1, dots:1,
+      cards:1, open:1, flipBackT:1, cols:1, byColor:1, baskets:1, letter:1, cardW:1 };
+    function trap(t, type) {
+      return new Proxy(t, {
+        get: function (target, prop) {
+          if (LEGACY[prop]) throw new Error(type + ': legacy field read t.' + String(prop));
+          return target[prop];
+        },
+        set: function (target, prop, value) {
+          if (LEGACY[prop]) throw new Error(type + ': legacy field write t.' + String(prop));
+          target[prop] = value; return true;
+        }
+      });
+    }
+    var errs = [];
+    var fakeCtx = document.createElement('canvas').getContext('2d');
+    for (var type in TASK_TYPES) {
+      var tt = TASK_TYPES[type];
+      try {
+        var t = trap(makeTask(0, type, {}), type);
+        taskStart(t);
+        if (!t.data || typeof t.data !== 'object') {
+          throw new Error(type + ': make did not return a data object');
+        }
+        var op = orbPositions(t.orbs || 3);
+        tt.draw(fakeCtx, t, 0, op);
+        if (tt.update) for (var u = 0; u < 3; u++) tt.update(t, 0.1);
+        if (tt.drag) {
+          var pieces = t.data.pieces || [];
+          if (pieces.length) {
+            taskDragStart(t, pieces[0].x, pieces[0].y);
+            taskDragMove(pieces[0].x + 5, pieces[0].y + 5);
+            var tg = (t.data.targets || [])[0];
+            if (tg) taskDrop(tg.x, tg.y); else taskDrop(0, 0);
+          }
+        } else if (tt.tap) {
+          for (var i = 0; i < (t.orbs || 0); i++) tt.tap(t, op.xs[i], op.y);
+          tt.tap(t, viewW / 2, viewH * 0.2);
+          tt.tap(t, viewW / 2, viewH * 0.55);
+        }
+        activeTask = null;
+      } catch (e) { errs.push(String(e.message || e)); }
+    }
+    window.__taskExerciseErrors = errs;
+  })();`, sandbox, { filename: 'tools/exercise.js' });
+  const errs = g('__taskExerciseErrors') || [];
+  check(errs.length === 0, 'all ' + Object.keys(TASK_TYPES).length + ' types exercise clean through the seam', errs.join(' | '));
 } else {
   console.log('  (TASK_TYPES not defined yet — registry checks skipped)');
 }

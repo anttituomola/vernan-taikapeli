@@ -52,16 +52,16 @@ function makeShadowProblem(t) {
   var order = shuffleNums([0, 1, 2, 3]);
   var gap = Math.min(viewW * 0.22, viewH * 0.28);
   var i, hx;
-  t.pieces = [];
-  t.targets = [];
+  var pieces = [], targets = [];
   for (i = 0; i < 4; i++) {
     hx = viewW / 2 + (i - 1.5) * gap;
-    t.pieces.push({
+    pieces.push({
       id: i, kind: kinds[i], color: randInt(TASK_BF_COLORS.length),
       x: hx, y: viewH * 0.7, homeX: hx, homeY: viewH * 0.7, placed: false, dragging: false, ox: 0, oy: 0
     });
-    t.targets.push({ id: order[i], kind: kinds[order[i]], x: viewW / 2 + (i - 1.5) * gap, y: viewH * 0.3, filled: false });
+    targets.push({ id: order[i], kind: kinds[order[i]], x: viewW / 2 + (i - 1.5) * gap, y: viewH * 0.3, filled: false });
   }
+  return { pieces: pieces, targets: targets };
 }
 
 // ---------- Täydennä kuva ----------
@@ -78,16 +78,19 @@ function makePuzzleProblem(t) {
   var cell = viewH * 0.085;
   var gx0 = viewW / 2 - cell, gy0 = viewH * 0.3 - cell;
   var i, hx;
-  t.grid = { kinds: kinds, cols: cols, hole: hole, cell: cell, gx0: gx0, gy0: gy0 };
-  t.targets = [{ id: ci, x: gx0 + hc * cell, y: gy0 + hr * cell, filled: false }];
-  t.pieces = [];
+  var pieces = [];
   for (i = 0; i < cands.length; i++) {
     hx = viewW / 2 + (i - 1) * viewH * 0.2;
-    t.pieces.push({
+    pieces.push({
       id: i, kind: cands[i].kind, color: cands[i].color,
       x: hx, y: viewH * 0.72, homeX: hx, homeY: viewH * 0.72, placed: false, dragging: false, ox: 0, oy: 0
     });
   }
+  return {
+    grid: { kinds: kinds, cols: cols, hole: hole, cell: cell, gx0: gx0, gy0: gy0 },
+    targets: [{ id: ci, x: gx0 + hc * cell, y: gy0 + hr * cell, filled: false }],
+    pieces: pieces
+  };
 }
 
 // ---------- Etsi parit ----------
@@ -100,15 +103,17 @@ function makePairsProblem(t) {
     cards.push({ kind: kinds[i], color: color, face: false, matched: false });
     cards.push({ kind: kinds[i], color: color, face: false, matched: false });
   }
-  t.cards = shuffleNums(cards);
-  t.open = [];
-  t.flipBackT = 0;
-  t.cols = n <= 3 ? 3 : 4;
+  return {
+    cards: shuffleNums(cards),
+    open: [],
+    flipBackT: 0,
+    cols: n <= 3 ? 3 : 4
+  };
 }
 
 function pairsCardRect(t, i) {
-  var cols = t.cols;
-  var rows = Math.ceil(t.cards.length / cols);
+  var cols = t.data.cols;
+  var rows = Math.ceil(t.data.cards.length / cols);
   var cw = viewH * 0.13, ch = viewH * 0.16, gap = viewH * 0.025;
   var totalW = cols * cw + (cols - 1) * gap;
   var totalH = rows * ch + (rows - 1) * gap;
@@ -118,27 +123,28 @@ function pairsCardRect(t, i) {
 
 function pairsTap(t, px, py) {
   var i, rc;
-  if (t.flipBackT > 0) return;
-  for (i = 0; i < t.cards.length; i++) {
+  var cards = t.data.cards, open = t.data.open;
+  if (t.data.flipBackT > 0) return;
+  for (i = 0; i < cards.length; i++) {
     rc = pairsCardRect(t, i);
     if (px < rc.x || px > rc.x + rc.w || py < rc.y || py > rc.y + rc.h) continue;
-    var card = t.cards[i];
+    var card = cards[i];
     if (card.matched || card.face) return;
     card.face = true;
-    t.open.push(i);
+    open.push(i);
     playNote(660 + i * 20, 0, 0.1, 'sine', 0.25);
-    if (t.open.length === 2) {
-      var a = t.cards[t.open[0]], b = t.cards[t.open[1]];
+    if (open.length === 2) {
+      var a = cards[open[0]], b = cards[open[1]];
       if (a.kind === b.kind && a.color === b.color) {
         a.matched = true; b.matched = true;
-        t.open = [];
+        t.data.open = [];
         playNote(784, 0, 0.2, 'triangle', 0.4);
         playNote(1047, 0.1, 0.25, 'triangle', 0.4);
         var all = true, k;
-        for (k = 0; k < t.cards.length; k++) if (!t.cards[k].matched) all = false;
+        for (k = 0; k < cards.length; k++) if (!cards[k].matched) all = false;
         if (all) taskSolved();
       } else {
-        t.flipBackT = 0.9;
+        t.data.flipBackT = 0.9;
         playNote(220, 0.1, 0.2, 'sawtooth', 0.15);
       }
     }
@@ -147,12 +153,12 @@ function pairsTap(t, px, py) {
 }
 
 function pairsUpdate(t, dt) {
-  if (t.flipBackT > 0) {
-    t.flipBackT -= dt;
-    if (t.flipBackT <= 0) {
+  if (t.data.flipBackT > 0) {
+    t.data.flipBackT -= dt;
+    if (t.data.flipBackT <= 0) {
       var k;
-      for (k = 0; k < t.open.length; k++) t.cards[t.open[k]].face = false;
-      t.open = [];
+      for (k = 0; k < t.data.open.length; k++) t.data.cards[t.data.open[k]].face = false;
+      t.data.open = [];
     }
   }
 }
@@ -160,8 +166,9 @@ function pairsUpdate(t, dt) {
 // ---------- Raahaus ----------
 function taskDragStart(t, px, py) {
   var i, best = null, bd = 1e9, r = viewH * 0.09, d;
-  for (i = 0; i < t.pieces.length; i++) {
-    var p = t.pieces[i];
+  var pieces = t.data.pieces;
+  for (i = 0; i < pieces.length; i++) {
+    var p = pieces[i];
     if (p.placed) continue;
     d = pieceDist(p, { x: px, y: py });
     if (d < r && d < bd) { bd = d; best = p; }
@@ -198,8 +205,9 @@ function taskDrop(px, py) {
     return;
   }
   var i, hit = null, bd = 1e9, r = viewH * 0.09, d, all = true;
-  for (i = 0; i < t.targets.length; i++) {
-    var tg = t.targets[i];
+  var targets = t.data.targets;
+  for (i = 0; i < targets.length; i++) {
+    var tg = targets[i];
     if (tg.filled) continue;
     d = pieceDist(p, tg);
     if (d < r && d < bd) { bd = d; hit = tg; }
@@ -207,7 +215,7 @@ function taskDrop(px, py) {
   if (hit && hit.id === p.id) {
     p.x = hit.x; p.y = hit.y; p.placed = true; hit.filled = true;
     playNote(TASK_BF_NOTES[p.id % TASK_BF_NOTES.length], 0, 0.25, 'triangle', 0.45);
-    for (i = 0; i < t.targets.length; i++) if (!t.targets[i].filled) all = false;
+    for (i = 0; i < targets.length; i++) if (!targets[i].filled) all = false;
     if (all) taskSolved();
     return;
   }
@@ -229,10 +237,11 @@ function drawTile(c, x, y, cell, fill) {
 
 function drawDragTaskOverlay(c, t, shake) {
   var i, p, tg, rc;
+  var targets = t.data.targets, pieces = t.data.pieces;
   if (t.type === 'shadow') {
     // Varjot ylhäällä
-    for (i = 0; i < t.targets.length; i++) {
-      tg = t.targets[i];
+    for (i = 0; i < targets.length; i++) {
+      tg = targets[i];
       c.fillStyle = 'rgba(255,255,255,0.14)';
       c.beginPath(); c.arc(tg.x + shake, tg.y, viewH * 0.085, 0, Math.PI * 2); c.fill();
       if (!tg.filled) drawShape(c, tg.kind, tg.x + shake, tg.y, viewH * 0.05, 'rgba(20,10,40,0.85)', 0);
@@ -243,7 +252,7 @@ function drawDragTaskOverlay(c, t, shake) {
     c.textBaseline = 'middle';
     c.fillText('?', viewW / 2 + shake, viewH * 0.5);
   } else if (t.type === 'puzzle') {
-    var g = t.grid, r2, c2;
+    var g = t.data.grid, r2, c2;
     c.fillStyle = 'rgba(255,255,255,0.2)';
     roundRect(c, g.gx0 - g.cell * 0.6 + shake, g.gy0 - g.cell * 0.6, g.cell * 3.2, g.cell * 3.2, g.cell * 0.2);
     c.fill();
@@ -252,7 +261,7 @@ function drawDragTaskOverlay(c, t, shake) {
         var idx = r2 * 3 + c2;
         var tx = g.gx0 + c2 * g.cell + shake, ty = g.gy0 + r2 * g.cell;
         if (idx === g.hole) {
-          if (!t.targets[0].filled) {
+          if (!targets[0].filled) {
             c.setLineDash([g.cell * 0.08, g.cell * 0.08]);
             c.strokeStyle = 'rgba(255,255,255,0.8)';
             c.lineWidth = Math.max(2, g.cell * 0.04);
@@ -268,13 +277,13 @@ function drawDragTaskOverlay(c, t, shake) {
     }
   }
   // Palat: paikalleen asetetut ensin, raahattava viimeisenä päällimmäiseksi
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (p.dragging) continue;
     drawPiece(c, t, p, shake);
   }
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (p.dragging) drawPiece(c, t, p, 0);
   }
 }
@@ -282,7 +291,7 @@ function drawDragTaskOverlay(c, t, shake) {
 function drawPiece(c, t, p, shake) {
   var s = viewH * 0.05;
   if (t.type === 'puzzle') {
-    var cell = t.grid.cell;
+    var cell = t.data.grid.cell;
     c.fillStyle = 'rgba(0,0,0,0.2)';
     roundRect(c, p.x - cell * 0.47 + shake + 4, p.y - cell * 0.47 + 5, cell * 0.94, cell * 0.94, cell * 0.12);
     c.fill();
@@ -303,9 +312,10 @@ function drawPiece(c, t, p, shake) {
 
 function drawPairsOverlay(c, t, shake) {
   var i, rc, card;
-  for (i = 0; i < t.cards.length; i++) {
+  var cards = t.data.cards;
+  for (i = 0; i < cards.length; i++) {
     rc = pairsCardRect(t, i);
-    card = t.cards[i];
+    card = cards[i];
     var x = rc.x + shake, y = rc.y;
     c.fillStyle = 'rgba(0,0,0,0.2)';
     roundRect(c, x + 4, y + 5, rc.w, rc.h, rc.w * 0.12);

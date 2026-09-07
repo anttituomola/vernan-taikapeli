@@ -75,37 +75,37 @@ function wordCardWidth(c, word, h) {
 function makeWordPickProblem(t) {
   var pool = wordsBySyl(1, t.maxSyl || 3), picks = pickDistinct(pool, 3), slot = randInt(3), i;
   if (picks.length < 3) picks = pickDistinct(WORD_LIST, 3);
+  var choices = [];
+  for (i = 0; i < 3; i++) choices.push({ w: picks[i].w, wrong: false });
   t.word = picks[slot];
   t.orbs = 0;
-  t.prompt = null;
-  t.choices = [];
-  for (i = 0; i < 3; i++) t.choices.push({ w: picks[i].w, wrong: false });
-  t.correct = slot;
   t.sayT = -1;
+  return { choices: choices, correct: slot };
 }
 
 function wordPickCardRect(c, t, i) {
-  var h = viewH * 0.14, w = wordCardWidth(c, t.choices[i].w, h);
+  var h = viewH * 0.14, w = wordCardWidth(c, t.data.choices[i].w, h);
   return { x: viewW / 2, y: viewH * (0.44 + i * 0.17), w: Math.min(w, viewW * 0.8), h: h };
 }
 
 function wordPickTap(t, px, py) {
   var i, rc;
+  var choices = t.data.choices;
   // Kuvan napautus: sana kuullaan (tavut soivat), vaikka sitä ei näy
   if (Math.abs(px - viewW / 2) < viewH * 0.16 && Math.abs(py - viewH * 0.18) < viewH * 0.1) { wordSay(t); return; }
-  for (i = 0; i < t.choices.length; i++) {
+  for (i = 0; i < choices.length; i++) {
     rc = wordPickCardRect(ctx, t, i);
     if (px < rc.x - rc.w / 2 || px > rc.x + rc.w / 2 || py < rc.y - rc.h / 2 || py > rc.y + rc.h / 2) continue;
-    if (t.choices[i].wrong) return;
+    if (choices[i].wrong) return;
     t.litOrb = i;
     t.litT = 0.3;
-    if (i === t.correct) {
+    if (i === t.data.correct) {
       wordSay(t);
       taskSolved();
     } else {
       playNote(170, 0, 0.3, 'sawtooth', 0.2);
       t.shakeT = 0.5;
-      t.choices[i].wrong = true;
+      choices[i].wrong = true;
     }
     return;
   }
@@ -113,6 +113,7 @@ function wordPickTap(t, px, py) {
 
 function drawWordPickOverlay(c, t, shake) {
   var i, rc, sayIdx = t.sayT >= 0 ? Math.floor(t.sayT / WORD_SYL_T) : -1;
+  var choices = t.data.choices;
   var cx = viewW / 2 + shake, cy = viewH * 0.18;
   drawPromptBubble(c, cx, cy, viewH * 0.3, viewH * 0.18);
   c.fillStyle = 'rgba(255,255,255,0.9)';
@@ -123,9 +124,9 @@ function drawWordPickOverlay(c, t, shake) {
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', cx + viewH * 0.07, cy + viewH * 0.005);
-  for (i = 0; i < t.choices.length; i++) {
+  for (i = 0; i < choices.length; i++) {
     rc = wordPickCardRect(c, t, i);
-    drawWordCard(c, rc.x + shake, rc.y, rc.w, rc.h, t.choices[i].w, i === t.correct ? sayIdx : -1, t.choices[i].wrong, t.litOrb === i && t.litT > 0 && i === t.correct);
+    drawWordCard(c, rc.x + shake, rc.y, rc.w, rc.h, choices[i].w, i === t.data.correct ? sayIdx : -1, choices[i].wrong, t.litOrb === i && t.litT > 0 && i === t.data.correct);
   }
 }
 
@@ -154,29 +155,29 @@ function makeBuildProblem(t) {
   t.orbs = 0;
   cw = Math.min(viewH * 0.17, viewW * 0.16);
   gap = cw * 1.12;
-  t.targets = [];
+  var targets = [], pieces = [];
   for (i = 0; i < syls.length; i++) {
-    t.targets.push({ id: i, syl: syls[i], x: viewW / 2 + (i - (syls.length - 1) / 2) * gap, y: viewH * 0.4, filled: false });
+    targets.push({ id: i, syl: syls[i], x: viewW / 2 + (i - (syls.length - 1) / 2) * gap, y: viewH * 0.4, filled: false });
   }
-  t.pieces = [];
   for (i = 0; i < cards.length; i++) {
     var hx = viewW / 2 + (i - (cards.length - 1) / 2) * gap;
-    t.pieces.push({ id: i, syl: cards[i], x: hx, y: viewH * 0.76, homeX: hx, homeY: viewH * 0.76, placed: false, dragging: false, ox: 0, oy: 0 });
+    pieces.push({ id: i, syl: cards[i], x: hx, y: viewH * 0.76, homeX: hx, homeY: viewH * 0.76, placed: false, dragging: false, ox: 0, oy: 0 });
   }
-  t.cardW = cw;
+  return { targets: targets, pieces: pieces, cardW: cw };
 }
 
 function buildDrop(t, p) {
   var i, best = null, bd = 1e9, d, r = viewH * 0.1, all = true;
-  for (i = 0; i < t.targets.length; i++) {
-    if (t.targets[i].filled) continue;
-    d = pieceDist(p, t.targets[i]);
-    if (d < r && d < bd) { bd = d; best = t.targets[i]; }
+  var targets = t.data.targets;
+  for (i = 0; i < targets.length; i++) {
+    if (targets[i].filled) continue;
+    d = pieceDist(p, targets[i]);
+    if (d < r && d < bd) { bd = d; best = targets[i]; }
   }
   if (best && best.syl === p.syl) {
     p.x = best.x; p.y = best.y; p.placed = true; best.filled = true;
     playNote(392 + best.id * 70, 0, 0.3, 'triangle', 0.35);
-    for (i = 0; i < t.targets.length; i++) if (!t.targets[i].filled) all = false;
+    for (i = 0; i < targets.length; i++) if (!targets[i].filled) all = false;
     if (all) { wordSay(t); taskSolved(); }
     return;
   }
@@ -208,7 +209,8 @@ function drawSylCard(c, x, y, w, h, syl, color, alpha, shadow) {
 }
 
 function drawBuildOverlay(c, t, shake) {
-  var i, tg, p, cw = t.cardW, ch = cw * 0.72, sayIdx = t.sayT >= 0 ? Math.floor(t.sayT / WORD_SYL_T) : -1;
+  var i, tg, p, cw = t.data.cardW, ch = cw * 0.72, sayIdx = t.sayT >= 0 ? Math.floor(t.sayT / WORD_SYL_T) : -1;
+  var targets = t.data.targets, pieces = t.data.pieces;
   var cx = viewW / 2 + shake, cy = viewH * 0.15;
   drawPromptBubble(c, cx, cy, viewH * 0.3, viewH * 0.17);
   c.fillStyle = 'rgba(255,255,255,0.9)';
@@ -221,9 +223,9 @@ function drawBuildOverlay(c, t, shake) {
   c.fillText('?', cx + viewH * 0.07, cy + viewH * 0.005);
   // Paikat ja väliviivat
   var nextSlot = -1;
-  for (i = 0; i < t.targets.length; i++) if (!t.targets[i].filled && nextSlot < 0) nextSlot = i;
-  for (i = 0; i < t.targets.length; i++) {
-    tg = t.targets[i];
+  for (i = 0; i < targets.length; i++) if (!targets[i].filled && nextSlot < 0) nextSlot = i;
+  for (i = 0; i < targets.length; i++) {
+    tg = targets[i];
     if (!tg.filled) {
       c.fillStyle = i === nextSlot ? 'rgba(255,230,140,0.35)' : 'rgba(255,255,255,0.15)';
       roundRect(c, tg.x - cw / 2 + shake, tg.y - ch / 2, cw, ch, ch * 0.2);
@@ -234,20 +236,20 @@ function drawBuildOverlay(c, t, shake) {
       c.stroke();
       c.setLineDash([]);
     }
-    if (i < t.targets.length - 1) {
+    if (i < targets.length - 1) {
       c.fillStyle = '#c9a0ff';
       c.fillRect(tg.x + cw / 2 + shake + cw * 0.02, tg.y - ch * 0.04, cw * 0.08, ch * 0.08);
     }
   }
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (p.dragging) continue;
     var slotIdx = -1;
-    if (p.placed) for (var k = 0; k < t.targets.length; k++) if (t.targets[k].x === p.x) slotIdx = k;
+    if (p.placed) for (var k = 0; k < targets.length; k++) if (targets[k].x === p.x) slotIdx = k;
     drawSylCard(c, p.x + shake, p.y, cw, ch, p.syl, p.placed && slotIdx === sayIdx ? '#ff5f7e' : '#8a2be2', 1, !p.placed);
   }
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (p.dragging) drawSylCard(c, p.x, p.y, cw, ch, p.syl, '#8a2be2', 1, true);
   }
 }
@@ -255,14 +257,12 @@ function drawBuildOverlay(c, t, shake) {
 // ---------- Alkukirjain ----------
 function makeLetterProblem(t) {
   var picks = pickDistinct(WORD_LIST, 4, function (w) { return w.w.charAt(0); }), slot = randInt(4), i;
+  var choices = [];
+  for (i = 0; i < 4; i++) choices.push({ icon: picks[i].icon, w: picks[i].w, wrong: false });
   t.word = picks[slot];
-  t.letter = picks[slot].w.charAt(0);
   t.orbs = 4;
-  t.prompt = null;
-  t.choices = [];
-  for (i = 0; i < 4; i++) t.choices.push({ icon: picks[i].icon, w: picks[i].w, wrong: false });
-  t.correct = slot;
   t.sayT = -1;
+  return { letter: picks[slot].w.charAt(0), choices: choices, correct: slot };
 }
 
 function letterPromptRect() {
@@ -277,7 +277,7 @@ function drawLetterPrompt(c, t, shake) {
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillStyle = t.sayT >= 0 ? '#ff5f7e' : '#8a2be2';
-  c.fillText(t.letter, cx - rc.h * 0.35, cy + rc.h * 0.04);
+  c.fillText(t.data.letter, cx - rc.h * 0.35, cy + rc.h * 0.04);
   c.fillStyle = '#c9a0ff';
   readFont(c, rc.h * 0.5);
   c.fillText('?', cx + rc.h * 0.4, cy + rc.h * 0.04);
@@ -286,16 +286,16 @@ function drawLetterPrompt(c, t, shake) {
 
 // Väärän kuvan sana luetaan, jotta alkukirjain kuuluu; oikea sana luetaan ja ratkaisu
 function letterTap(t, i) {
-  if (t.choices[i].wrong) return;
+  if (t.data.choices[i].wrong) return;
   t.litOrb = i;
   t.litT = 0.3;
-  if (i === t.correct) {
+  if (i === t.data.correct) {
     wordSay(t);
     taskSolved();
   } else {
     playNote(170, 0, 0.3, 'sawtooth', 0.2);
     t.shakeT = 0.5;
-    t.choices[i].wrong = true;
+    t.data.choices[i].wrong = true;
   }
 }
 

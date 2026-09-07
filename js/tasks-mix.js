@@ -71,10 +71,8 @@ function mixUpdate(m, dt) {
 // ---------- Tehtävätyyppi 'mix' ----------
 function makeMixProblem(t) {
   var pool = t.mixLevel === 2 ? ['RY', 'YB', 'RB'] : ['R', 'Y', 'B', 'RY', 'YB', 'RB'];
-  t.mix = mixStateNew(pool[randInt(pool.length)]);
   t.orbs = 3;
-  t.prompt = null;
-  t.choices = null;
+  return { mix: mixStateNew(pool[randInt(pool.length)]) };
 }
 
 function mixCauldronPos() {
@@ -83,18 +81,18 @@ function mixCauldronPos() {
 
 function mixTaskTap(t, i) {
   var op = orbPositions(3);
-  var r = mixPour(t.mix, MIX_PRIMARY[i], op.xs[i], op.y + op.r * 0.6);
+  var r = mixPour(t.data.mix, MIX_PRIMARY[i], op.xs[i], op.y + op.r * 0.6);
   if (r === 'fail') t.shakeT = 0.5;
 }
 
 function updateMixTask(t, dt) {
-  if (!t.mix) return;
-  if (mixUpdate(t.mix, dt)) taskSolved();
+  if (!t.data.mix) return;
+  if (mixUpdate(t.data.mix, dt)) taskSolved();
 }
 
 // Kohdepullo kuplassa ylhäällä, pata alhaalla ja lentävät tipat
 function drawMixOverlay(c, t, shake) {
-  var m = t.mix;
+  var m = t.data.mix;
   if (!m) return;
   var cx = viewW / 2 + shake, cy = viewH * 0.2;
   drawPromptBubble(c, cx, cy, viewH * 0.26, viewH * 0.16);
@@ -200,7 +198,7 @@ function drawCauldron(c, x, y, s, liquid, failed, splash, glow) {
 // ---------- Rekisteröinti ----------
 
 function orbBottleContent(c, t, i, x, y, r) {
-  var used = t.mix && t.mix.pour.indexOf(MIX_PRIMARY[i]) >= 0;
+  var used = t.data.mix && t.data.mix.pour.indexOf(MIX_PRIMARY[i]) >= 0;
   if (used) c.globalAlpha = 0.45;
   drawPotionBottle(c, x, y + r * 0.1, r * 0.34, MIX_COLORS[MIX_PRIMARY[i]]);
   c.globalAlpha = 1;

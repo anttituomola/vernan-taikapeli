@@ -66,14 +66,16 @@ function makeTask(fx, type, opts) {
     fx: fx, x: 0, type: type, opened: false,
     mode: 'idle',
     timer: 0, shakeT: 0, litT: 0,
-    a: 1, b: 1, answers: [2, 1, 3], correct: 2,
     seq: [], inputIdx: 0, litOrb: -1, lastShown: -1,
     seqLen: opts.seqLen || 3, orbs: opts.orbs || 3, pairs: opts.pairs || 3,
-    prompt: null, choices: null, glyph: 'flower',
-    items: null, beats: null, taps: null, inputT: 0,
     regenT: 0,
     word: null, sayT: -1, maxSyl: opts.maxSyl || 3,
-    mix: null, mixLevel: opts.mixLevel || 1
+    mixLevel: opts.mixLevel || 1,
+    presetWord: opts.presetWord || null,
+    // Tyypin oma ongelmadata: make(t) palauttaa sen, runtime asettaa t.data:han.
+    // Rungon kentät (yllä) ovat kaikkien tyyppien yhteisiä; tyypin omat
+    // kentät (answers, choices, pieces, grid...) elävät vain t.data:ssa.
+    data: null
   };
 }
 var tasks = [];

@@ -16,32 +16,33 @@ function makeSortProblem(t) {
   var cols = shuffleNums([0, 1, 2, 3]).slice(0, 3);
   var gap = Math.min(viewW * 0.14, viewH * 0.17);
   var order = shuffleNums([0, 1, 0, 1, 0, 1]);
-  t.byColor = byColor;
-  t.baskets = [];
+  var baskets = [];
   for (k = 0; k < 2; k++) {
-    t.baskets.push({
+    baskets.push({
       id: k, x: viewW / 2 + (k - 0.5) * Math.min(viewW * 0.38, viewH * 0.5), y: viewH * 0.36,
       kind: byColor ? null : kinds[k], color: byColor ? cols[k] : null, count: 0
     });
   }
-  t.pieces = [];
+  var pieces = [];
   for (i = 0; i < 6; i++) {
     k = order[i];
     hx = viewW / 2 + (i - 2.5) * gap;
-    t.pieces.push({
+    pieces.push({
       id: k,
       kind: byColor ? kinds[randInt(3)] : kinds[k],
       color: byColor ? cols[k] : cols[randInt(3)],
       x: hx, y: viewH * 0.76, homeX: hx, homeY: viewH * 0.76, placed: false, dragging: false, ox: 0, oy: 0
     });
   }
+  return { byColor: byColor, baskets: baskets, pieces: pieces };
 }
 
 function sortDrop(t, p) {
   var i, best = null, bd = 1e9, d, r = viewH * 0.17, all = true;
-  for (i = 0; i < t.baskets.length; i++) {
-    d = pieceDist(p, t.baskets[i]);
-    if (d < r && d < bd) { bd = d; best = t.baskets[i]; }
+  var baskets = t.data.baskets, pieces = t.data.pieces;
+  for (i = 0; i < baskets.length; i++) {
+    d = pieceDist(p, baskets[i]);
+    if (d < r && d < bd) { bd = d; best = baskets[i]; }
   }
   if (best && best.id === p.id) {
     p.placed = true;
@@ -49,7 +50,7 @@ function sortDrop(t, p) {
     p.y = best.y + viewH * 0.02;
     best.count++;
     playNote(TASK_BF_NOTES[best.count % TASK_BF_NOTES.length], 0, 0.22, 'triangle', 0.4);
-    for (i = 0; i < t.pieces.length; i++) if (!t.pieces[i].placed) all = false;
+    for (i = 0; i < pieces.length; i++) if (!pieces[i].placed) all = false;
     if (all) taskSolved();
     return;
   }
@@ -81,13 +82,14 @@ function drawBasket(c, x, y, s, shake) {
 
 function drawSortOverlay(c, t, shake) {
   var i, b, p, s = viewH * 0.045;
-  for (i = 0; i < t.baskets.length; i++) {
-    b = t.baskets[i];
+  var baskets = t.data.baskets, pieces = t.data.pieces;
+  for (i = 0; i < baskets.length; i++) {
+    b = baskets[i];
     drawBasket(c, b.x, b.y, viewH * 0.06, shake);
     // Korin merkki: värilaikku tai harmaa muoto
     c.fillStyle = 'rgba(255,255,255,0.92)';
     c.beginPath(); c.arc(b.x + shake, b.y - viewH * 0.15, viewH * 0.055, 0, Math.PI * 2); c.fill();
-    if (t.byColor) {
+    if (t.data.byColor) {
       c.fillStyle = TASK_BF_COLORS[b.color];
       c.beginPath();
       c.arc(b.x + shake, b.y - viewH * 0.15, viewH * 0.03, 0, Math.PI * 2);
@@ -103,8 +105,8 @@ function drawSortOverlay(c, t, shake) {
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', viewW / 2 + shake, viewH * 0.3);
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (p.dragging) continue;
     if (!p.placed) {
       c.fillStyle = 'rgba(255,255,255,0.75)';
@@ -112,8 +114,8 @@ function drawSortOverlay(c, t, shake) {
     }
     drawShape(c, p.kind, p.x + shake, p.y, p.placed ? s * 0.8 : s, TASK_BF_COLORS[p.color], 0);
   }
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (!p.dragging) continue;
     drawShape(c, p.kind, p.x + 5, p.y + 6, s, 'rgba(0,0,0,0.22)', 0);
     drawShape(c, p.kind, p.x, p.y, s, TASK_BF_COLORS[p.color], 0);
@@ -130,16 +132,16 @@ function makeOrderProblem(t) {
   var perm = shuffleNums([0, 1, 2, 3]);
   var gap = Math.min(viewW * 0.2, viewH * 0.27);
   var i, hx;
-  t.pieces = [];
-  t.targets = [];
+  var pieces = [], targets = [];
   for (i = 0; i < 4; i++) {
     hx = viewW / 2 + (i - 1.5) * gap;
-    t.targets.push({ id: i, x: hx, y: viewH * 0.33, filled: false });
-    t.pieces.push({
+    targets.push({ id: i, x: hx, y: viewH * 0.33, filled: false });
+    pieces.push({
       id: perm[i], kind: kind, color: color, scale: ORDER_SCALES[perm[i]],
       x: hx, y: viewH * 0.74, homeX: hx, homeY: viewH * 0.74, placed: false, dragging: false, ox: 0, oy: 0
     });
   }
+  return { pieces: pieces, targets: targets };
 }
 
 function drawOrderPiece(c, p, x, y) {
@@ -149,9 +151,10 @@ function drawOrderPiece(c, p, x, y) {
 
 function drawOrderOverlay(c, t, shake) {
   var i, tg, p, s = viewH * 0.045, step;
+  var targets = t.data.targets, pieces = t.data.pieces;
   // Portaat: paikat pienimmästä suurimpaan
-  for (i = 0; i < t.targets.length; i++) {
-    tg = t.targets[i];
+  for (i = 0; i < targets.length; i++) {
+    tg = targets[i];
     step = viewH * (0.03 + i * 0.022);
     c.fillStyle = 'rgba(255,255,255,0.22)';
     roundRect(c, tg.x - viewH * 0.075 + shake, tg.y + viewH * 0.07, viewH * 0.15, step, viewH * 0.012);
@@ -177,8 +180,8 @@ function drawOrderOverlay(c, t, shake) {
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', hx + viewH * 0.09, hy + viewH * 0.005);
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (p.dragging) continue;
     if (!p.placed) {
       c.fillStyle = 'rgba(255,255,255,0.75)';
@@ -186,8 +189,8 @@ function drawOrderOverlay(c, t, shake) {
     }
     drawOrderPiece(c, p, p.x + shake, p.y);
   }
-  for (i = 0; i < t.pieces.length; i++) {
-    p = t.pieces[i];
+  for (i = 0; i < pieces.length; i++) {
+    p = pieces[i];
     if (!p.dragging) continue;
     drawShape(c, p.kind, p.x + 5, p.y + 6, viewH * 0.045 * p.scale, 'rgba(0,0,0,0.22)', 0);
     drawOrderPiece(c, p, p.x, p.y);
@@ -212,7 +215,7 @@ function makeMirrorProblem(t) {
   } while (filled < 3 || filled > 5);
   right = [];
   for (r = 0; r < n; r++) { right.push([]); for (c = 0; c < n; c++) right[r].push(0); }
-  t.grid = { n: n, left: left, right: right, color: randInt(TASK_BF_COLORS.length), kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)] };
+  return { grid: { n: n, left: left, right: right, color: randInt(TASK_BF_COLORS.length), kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)] } };
 }
 
 function mirrorCell() {
@@ -233,7 +236,7 @@ function mirrorSolved(g) {
 }
 
 function mirrorTap(t, px, py) {
-  var g = t.grid, r, c, p, cs = mirrorCell();
+  var g = t.data.grid, r, c, p, cs = mirrorCell();
   for (r = 0; r < g.n; r++) {
     for (c = 0; c < g.n; c++) {
       p = mirrorCellPos(1, c, r);
@@ -248,7 +251,7 @@ function mirrorTap(t, px, py) {
 }
 
 function drawMirrorOverlay(c, t, shake) {
-  var g = t.grid, r, k, p, cs = mirrorCell(), side, v;
+  var g = t.data.grid, r, k, p, cs = mirrorCell(), side, v;
   // Vihje: perhonen (symmetria) ja kysymysmerkki
   var hx = viewW / 2 + shake, hy = viewH * 0.14;
   drawPromptBubble(c, hx, hy, viewH * 0.26, viewH * 0.11);
@@ -299,15 +302,16 @@ var DOT_SHAPES = [
 function makeDotsProblem(t) {
   var shape = DOT_SHAPES[randInt(DOT_SHAPES.length)], i;
   var R = Math.min(viewH * 0.3, viewW * 0.22), cx = viewW / 2, cy = viewH * 0.54;
-  t.dots = { shape: shape, pts: [], next: 0, wrongT: 0, wrongIdx: -1, done: false };
+  var dots = { shape: shape, pts: [], next: 0, wrongT: 0, wrongIdx: -1, done: false };
   for (i = 0; i < shape.pts.length; i++) {
-    t.dots.pts.push({ x: cx + shape.pts[i][0] * R, y: cy + shape.pts[i][1] * R });
+    dots.pts.push({ x: cx + shape.pts[i][0] * R, y: cy + shape.pts[i][1] * R });
   }
   t.orbs = 0;
+  return { dots: dots };
 }
 
 function dotsTap(t, px, py) {
-  var d = t.dots, i, dx, dy, r = viewH * 0.06, hit = -1, bd = 1e9, dist;
+  var d = t.data.dots, i, dx, dy, r = viewH * 0.06, hit = -1, bd = 1e9, dist;
   if (d.done) return;
   for (i = 0; i < d.pts.length; i++) {
     dx = px - d.pts[i].x;
@@ -336,11 +340,11 @@ function dotsTap(t, px, py) {
 }
 
 function updateDotsTask(t, dt) {
-  if (t.dots && t.dots.wrongT > 0) t.dots.wrongT -= dt;
+  if (t.data.dots && t.data.dots.wrongT > 0) t.data.dots.wrongT -= dt;
 }
 
 function drawDotsOverlay(c, t, shake) {
-  var d = t.dots, i, p, q, r = viewH * 0.036, n = d.pts.length;
+  var d = t.data.dots, i, p, q, r = viewH * 0.036, n = d.pts.length;
   // Valmis kuvio täyttyy
   if (d.done) {
     c.fillStyle = d.shape.color;
