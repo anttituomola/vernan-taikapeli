@@ -136,14 +136,16 @@ var WORLDS = [
   },
   {
     id: 2, name: 'Karkkisaari',
-    island: { fx: 0.55, fy: 0.58, size: 0.82, finaleKind: 'tower', deco: ['beach', 'candy', 'tower'] },
+    island: { fx: 0.55, fy: 0.58, size: 0.82, finaleKind: 'tower', deco: ['beach', 'candy', 'lollipop', 'tower'] },
     map: [
       '###########',
       '#B.......h#',
       '#########.#',
       '#j........#',
       '#.#########',
-      '#........k#',
+      '#........a#',
+      '#########.#',
+      '#k........#',
       '###########'
     ],
     levels: [
@@ -169,6 +171,18 @@ var WORLDS = [
         resize: function (ratio) { resizeCandy(ratio); },
         renderBg: function (b, w, h) { renderCandyBg(b, w, h); },
         respawn: function () { respawnCandy(); }
+      },
+      {
+        kind: 'lollipop', room: 'a', name: 'Tikkumetsä', color: '#ff6b9d', script: 'play-lollipop',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#ffc4e0', ambient: 'petals', fg: { kind: 'grass', color: 'rgba(200,80,140,0.6)' },
+        init: function () { initLollipop(); },
+        update: function (dt) { updateLollipop(dt); },
+        draw: function () { drawLollipop(); },
+        tap: function (x, y) { handleLollipopTap(x, y); },
+        resize: function (ratio) { resizeLollipop(ratio); },
+        renderBg: function (b, w, h) { renderLollipopBg(b, w, h); },
+        respawn: function () { respawnLollipop(); }
       },
       {
         kind: 'tower', room: 'k', name: 'Arvoitusten torni', color: '#9b7bff', script: 'play-tower',
@@ -309,13 +323,15 @@ var WORLDS = [
   },
   {
     id: 5, name: 'Hoivasaari',
-    island: { fx: 0.11, fy: 0.46, size: 0.6, finaleKind: 'kitchen', deco: ['herd', 'kitchen'] },
+    island: { fx: 0.11, fy: 0.46, size: 0.6, finaleKind: 'kitchen', deco: ['herd', 'berry', 'cafe', 'kitchen'] },
     map: [
-      '#########',
-      '#B......#',
-      '#######.#',
-      '#u.....v#',
-      '#########'
+      '###########',
+      '#B.......u#',
+      '#########.#',
+      '#i........#',
+      '#.#########',
+      '#l.......v#',
+      '###########'
     ],
     levels: [
       {
@@ -329,6 +345,30 @@ var WORLDS = [
         resize: function (ratio) { resizeHerd(ratio); },
         renderBg: function (b, w, h) { renderHerdBg(b, w, h); },
         respawn: function () { respawnHerd(); }
+      },
+      {
+        kind: 'berry', room: 'i', name: 'Marjaniitty', color: '#e06080', script: 'play-berry',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#dff4ff', ambient: 'butterflies', fg: { kind: 'grass', color: 'rgba(60,140,60,0.7)' },
+        init: function () { initBerry(); },
+        update: function (dt) { updateBerry(dt); },
+        draw: function () { drawBerry(); },
+        tap: function (x, y) { handleBerryTap(x, y); },
+        resize: function (ratio) { resizeBerry(ratio); },
+        renderBg: function (b, w, h) { renderBerryBg(b, w, h); },
+        respawn: function () { respawnBerry(); }
+      },
+      {
+        kind: 'cafe', room: 'l', name: 'Pupukahvila', color: '#d9a05f', script: 'play-cafe',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#ffe0d0', ambient: 'sparkle', fg: null,
+        init: function () { initCafe(); },
+        update: function (dt) { updateCafe(dt); },
+        draw: function () { drawCafe(); },
+        tap: function (x, y) { handleCafeTap(x, y); },
+        resize: function () { resizeCafe(); },
+        renderBg: function (b, w, h) { renderCafeBg(b, w, h); },
+        respawn: function () { respawnCafe(); }
       },
       {
         kind: 'kitchen', room: 'v', name: 'Taikakeittiö', color: '#ff9f3a', script: 'play-kitchen',

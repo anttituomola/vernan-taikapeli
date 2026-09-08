@@ -36,16 +36,16 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-cave.js`, `play-swamp.js`, `play-bridge.js` — vaiheet 6–8
 - `js/play-finale.js` — linnan finaali
 - `js/tasks-drag.js` — raahaustehtävät (muoto varjoon, täydennä kuva) ja muistipeli
-- `js/play-beach.js`, `play-candy.js`, `play-tower.js` — maailma 2 (vaiheet 10–12)
-- `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-moon.js` — maailma 3 (vaiheet 13–16)
+- `js/play-beach.js`, `play-candy.js`, `play-lollipop.js`, `play-tower.js` — maailma 2
+- `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-moon.js` — maailma 3
 - `js/tasks-mix.js` — värien sekoitus: 'mix'-tehtävä ja Taikakeittiön pata
-- `js/play-herd.js`, `play-kitchen.js` — maailma 5 (vaiheet 21–22)
+- `js/play-herd.js`, `play-berry.js`, `play-cafe.js`, `play-kitchen.js` — maailma 5
 - `js/tasks-more.js` — lajittele, järjestä koon mukaan, peilikuva ja yhdistä pisteet
-- `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-summit.js` — maailma 6 (vaiheet 23–26)
+- `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-summit.js` — maailma 6
 - `js/tasks-read.js` — lukemisen tehtävät: kuva→sana, kokoa sana tavuista, alkukirjain
-- `js/play-letterfield.js`, `play-wordshop.js` — maailma 7 (vaiheet 27 ja 29); Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
+- `js/play-letterfield.js`, `play-wordshop.js` — maailma 7; Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
-- `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4 (vaiheet 17–20)
+- `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
 
 **Uusi vaihe** = tiedosto `js/play-….js` ja yksi `levels`-alkio js/worlds.js:n
@@ -120,6 +120,9 @@ Arvoitusten torni on saaren vartija.
   pomputtavat korkealle (korkeat karkit vaativat pompun), kuulakarkit
   vierivät maassa (hyppää yli), limonadikuilut. Tehtävät: täydennä kuva,
   muoto varjoon.
+- **Tikkumetsä** ♥ — ratsastus karkkimaisemassa: tikkarit kerätään sormella
+  tai ohitse ratsastaen, salmiakkipyörät vierivät polulla (sydän). Karkkiportti
+  aukeaa, kun kaikki kahdeksan tikkarin on kerätty. Tehtävät: laske, erilainen.
 - **Arvoitusten torni** ♥ — neljä tehtäväovea peräkkäin (parit 4 paria,
   täydennä kuva, lue sana, muisti 4/4), jalokivet hyllyillä ja heiluvat
   kattokruunut, joiden alta kuljetaan kun ne ovat sivulla.
@@ -176,7 +179,7 @@ Sotkumörkö on saaren vartija.
 
 ### Hoivasaari (maailma 5)
 
-Aukeaa, kun Sotkumörkö on rauhoitettu. Molemmat kentät ovat kiireettömiä: ei
+Aukeaa, kun Sotkumörkö on rauhoitettu. Kaikki kentät ovat kiireettömiä: ei
 sydämiä. Taikakeittiö on saaren vartija.
 
 - **Pupupaimen** — ratsastus niityllä. Kolme pupua alussa liittyy laumaan, kun
@@ -184,6 +187,14 @@ sydämiä. Taikakeittiö on saaren vartija.
   pelästyttävät lähellä olevat puput pensaisiin piiloon (korvat ja huutomerkki
   näkyvät); napautus kutsuu pupun takaisin. Kaikki kolme pupukoloon. Nuoli
   näyttää piilossa olevan pupun tai kolon. Tehtävät: lue sana (2 tavua), laske.
+- **Marjaniitty** — kiireetön ratsastus. Mansikat ja mustikat kerätään koriin
+  sormella tai ohitse ratsastaen; lähin pupu hyppää ilosta jokaisesta marjasta.
+  Kori hehkuu, kun kaikki kahdeksan on koossa — vie kori perille. Ei sydämiä.
+  Tehtävät: parit 3, lajittele.
+- **Pupukahvila** — ei liikkumista, kuvat eikä sanoja. Pupuasiakas tilaa
+  evästä kuplassa; napauta oikea eväs (porkkana, omena, marja) hyllyltä
+  tarjottimeen. Ensin yksi eväs per tilaus, lopuksi kaksi. Väärä eväs vain
+  ravistaa. Viisi tilausta. Ei sydämiä.
 - **Taikakeittiö** — ei liikkumista. Pupuasiakas tilaa kuplassa värillisen
   juoman; kaada hyllyn pulloista (punainen, keltainen, sininen) pataan. Perusväri
   on yksi kaato, sekoitus kaksi: punainen + keltainen = oranssi, keltainen +
@@ -285,7 +296,7 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 
 ## Ohjaus
 
-- Metsä, jää, suo ja rannikko: pidä sormea pohjassa ratsastaaksesi, napauta kerätäksesi.
+- Metsä, jää, suo, rannikko, tikkumetsä, paimen ja marjaniitty: pidä sormea pohjassa ratsastaaksesi, napauta kerätäksesi.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -370,6 +381,9 @@ väärästä vastauksesta tulee vain ravistus.
 - Pupupaimen: pöllön varoitus `1.2` s, pelästymissäde `viewW * 0.35`, pupun nopeus `viewW * 0.26`
 - Lue sana: sanat `WORD_LIST` (tasks-extra.js), tavujen enimmäismäärä `makeTask(fx, 'word', { maxSyl })`, tavun kesto `WORD_SYL_T`
 - Rannikko: aallon väli `6 + Math.random() * 3`, rapujen nopeus `viewW * 0.06`
+- Tikkumetsä: pyörien nopeus `viewW * 0.06` ja kaistat `lollyWheels`, tikkareiden määrä `LOLLY_COUNT`
+- Marjaniitty: marjojen määrä `BERRY_COUNT`, pupujen paikat `berryBunnies`
+- Pupukahvila: tilausten määrä `CAFE_ORDERS`, kaksiosaiset tilaukset `doubles` (initCafe)
 - Karkkilaakso: pompun voima `viewH * 1.15` (platformer.js), kuulakarkkien nopeus `viewW * 0.07`
 - Torni: kattokruunujen heilunta `speed: 1.1`, kulma `0.55`
 - Merenpohja: meduusojen nopeus/amplitudi `jellyDefs`, virtauksen voima `viewW * 0.35`, uinnin kiihtyvyys `viewW * 0.42` / `viewH * 0.55`
