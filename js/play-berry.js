@@ -1,12 +1,11 @@
 'use strict';
 
 // Marjaniitty: kiireetön hoivakenttä ilman sydämiä. Mansikat ja mustikat
-// kerätään koriin sormella tai ohitse ratsastaen; puput hyppäävät ilosta
-// jokaisesta marjasta. Kori hehkuu kun se on täynnä — vie se perille.
+// kerätään koriin sormella tai ohitse ratsastaen. Kori hehkuu kun se on
+// täynnä — vie se perille.
 
 var BERRY_COUNT = 8;
 var berries = [];
-var berryBunnies = [];
 var berryBasket = { fx: 0.95, x: 0, ready: false };
 var berryDefs = [
   { fx: 0.08, fy: 0.20 }, { fx: 0.17, fy: 0.28 }, { fx: 0.26, fy: 0.16 }, { fx: 0.38, fy: 0.25 },
@@ -20,7 +19,7 @@ function berryPathY(f) {
 
 function initBerry() {
   var i;
-  tasks = [makeTask(0.36, 'pairs', { pairs: 3 }), makeTask(0.70, 'sort')];
+  tasks = [makeTask(0.36, 'pairs', { pairs: 6 }), makeTask(0.70, 'sort')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   berries = [];
   for (i = 0; i < BERRY_COUNT; i++) {
@@ -28,14 +27,6 @@ function initBerry() {
       ax: berryDefs[i].fx * worldW, ay: groundTop - berryDefs[i].fy * viewH,
       collected: false, phase: Math.random() * Math.PI * 2, kind: BERRY_KINDS[i % 2]
     });
-  }
-  berryBunnies = [];
-  for (i = 0; i < 3; i++) {
-    berryBunnies.push({ fx: 0.22 + i * 0.27, x: 0, y: 0, hop: 0, earT: i * 1.3, facing: i % 2 ? -1 : 1 });
-  }
-  for (i = 0; i < berryBunnies.length; i++) {
-    berryBunnies[i].x = berryBunnies[i].fx * worldW;
-    berryBunnies[i].y = berryPathY(0.86);
   }
   berryBasket.x = berryBasket.fx * worldW;
   berryBasket.ready = false;
@@ -57,10 +48,6 @@ function resizeBerry(ratio) {
     berries[i].ax = berryDefs[i].fx * worldW;
     berries[i].ay = groundTop - berryDefs[i].fy * viewH;
   }
-  for (i = 0; i < berryBunnies.length; i++) {
-    berryBunnies[i].x = berryBunnies[i].fx * worldW;
-    berryBunnies[i].y = berryPathY(0.86);
-  }
   berryBasket.x = berryBasket.fx * worldW;
 }
 
@@ -69,13 +56,6 @@ function collectBerry(be) {
   spawnSparkles(be.ax, be.ay, 14, be.kind === 'mansikka' ? '#ff5f7e' : '#6f5cff');
   playNote(660 + countCollected(berries) * 55, 0, 0.25, 'sine', 0.4);
   playNote(990 + countCollected(berries) * 55, 0.08, 0.3, 'sine', 0.3);
-  // Lähin pupu hyppää ilosta
-  var i, best = null, bd = 1e9;
-  for (i = 0; i < berryBunnies.length; i++) {
-    var d = Math.abs(berryBunnies[i].x - be.ax);
-    if (d < bd) { bd = d; best = berryBunnies[i]; }
-  }
-  if (best) best.hop = 1;
   if (countCollected(berries) === BERRY_COUNT && !berryBasket.ready) {
     berryBasket.ready = true;
     playNote(523, 0.3, 0.3, 'triangle', 0.4);
@@ -130,13 +110,6 @@ function updateBerry(dt) {
       dy = be.ay - unicorn.y;
       if (dx * dx + dy * dy < viewH * 0.09 * viewH * 0.09) collectBerry(be);
     }
-  }
-
-  // Puput pomppivat ja heiluttavat korviaan
-  for (i = 0; i < berryBunnies.length; i++) {
-    var bu = berryBunnies[i];
-    bu.earT += dt * 3;
-    if (bu.hop > 0) bu.hop = Math.max(0, bu.hop - dt * 2.5);
   }
 
   if (berryBasket.ready && !celebrating && Math.abs(unicorn.x - berryBasket.x) < viewW * 0.08) {
@@ -233,7 +206,7 @@ function beDrawBerry(c, x, y, s, kind) {
 }
 
 function drawBerry() {
-  var i, order = [];
+  var i;
   if (!drawWorldBg()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   // Korin hehku kun se odottaa täyttä lastia
@@ -250,19 +223,8 @@ function drawBerry() {
     var by = berries[i].ay + Math.sin(berries[i].phase) * viewH * 0.012;
     beDrawBerry(ctx, berries[i].ax - camX, by, viewH * 0.026, berries[i].kind);
   }
-  // Puput ja yksisarvinen syvyysjärjestyksessä
-  for (i = 0; i < berryBunnies.length; i++) order.push({ y: berryBunnies[i].y, b: berryBunnies[i] });
-  order.push({ y: unicorn.y, u: true });
-  order.sort(function (a, b2) { return a.y - b2.y; });
-  var us = viewH / 800;
-  for (i = 0; i < order.length; i++) {
-    if (order[i].u) {
-      drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
-    } else {
-      var bu = order[i].b;
-      drawBunny(ctx, bu.x - camX, bu.y, viewH * 0.04, bu.hop * viewH * 0.03, bu.earT, false);
-    }
-  }
+  // Yksisarvinen
+  drawUnicorn(ctx, unicorn.x - camX, unicorn.y, viewH / 800 * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
   drawParticlesLayer(ctx);
   if (berryBasket.ready && !celebrating) drawEdgeArrow(ctx, berryBasket.x);
   drawCelebrateLayer();
