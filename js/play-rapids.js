@@ -130,9 +130,8 @@ function rapPickWords() {
   rapids.words = [a, b];
 }
 
-function initRapids(mode, lvl) {
+function initRapids(mode) {
   var i;
-  level = lvl || 24;
   rapids.mode = mode || 'logs';
   celebrating = false;
   celebrateT = 0;

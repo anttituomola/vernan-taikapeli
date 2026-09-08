@@ -61,7 +61,6 @@ function initGame() {
   unicorn.facing = 1;
   unicorn.moving = false;
   camX = 0;
-  level = 1;
   document.body.style.background = '#cfe9ff';
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';
@@ -73,6 +72,7 @@ function initGame() {
 function skipTo(kind) {
   var p = PHASES[kind] || PHASES.start;
   hubPlaying = kind;
+  level = p.level;
   p.init();
 }
 

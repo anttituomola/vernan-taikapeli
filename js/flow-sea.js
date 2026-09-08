@@ -4,17 +4,7 @@
 // ja vene kulkee saarten välillä. Saaren viimeinen huone (finaleKind) on saaren
 // vartija: sen läpäisy palauttaa yhden sateenkaaren värin kartan yläreunaan.
 // Tarina: Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle, väri per saari.
-// Uusi saari = rivi ISLANDS-taulukkoon + HUB_MAP/HUB_ROOMS/HUB_ORDER omalle sokkelolle.
-
-var ISLANDS = [
-  { world: 1, name: 'Linnasaari', fx: 0.24, fy: 0.70, size: 1.0, finaleKind: 'finale', deco: 'castle' },
-  { world: 2, name: 'Karkkisaari', fx: 0.55, fy: 0.58, size: 0.82, finaleKind: 'tower', deco: ['beach', 'candy', 'tower'] },
-  { world: 3, name: 'Kuutamosaari', fx: 0.84, fy: 0.76, size: 0.82, finaleKind: 'moon', deco: ['reef', 'nightwood', 'clouds'] },
-  { world: 4, name: 'Taikakynän saari', fx: 0.90, fy: 0.47, size: 0.62, finaleKind: 'scribble', deco: ['pen', 'rain', 'bunnybridge'] },
-  { world: 5, name: 'Hoivasaari', fx: 0.11, fy: 0.46, size: 0.6, finaleKind: 'kitchen', deco: ['herd', 'kitchen'] },
-  { world: 6, name: 'Vuorisaari', fx: 0.40, fy: 0.46, size: 0.62, finaleKind: 'summit', deco: ['mine', 'rapids', 'lighthouse'] },
-  { world: 7, name: 'Kirjainsaari', fx: 0.68, fy: 0.43, size: 0.58, finaleKind: 'letterclouds', deco: ['letterfield', 'sylrapids', 'wordshop'] }
-];
+// Saaret (ISLANDS) johdetaan js/worlds.js:n WORLDS-rekisteristä.
 // Sumuiset saaret vihjaavat tulevista maailmoista (sateenkaaren 7 väriä ovat nyt kaikki käytössä)
 var SEA_FOG = [];
 var RAINBOW_COLORS = ['#ff5a5a', '#ff9f3a', '#ffe14d', '#5fd36b', '#4aa8ff', '#6f5cff', '#c46bff'];

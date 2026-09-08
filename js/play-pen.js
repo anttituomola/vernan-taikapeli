@@ -36,7 +36,7 @@ function layoutPen() {
 
 function initPen() {
   var i;
-  setupRunLevel(17, '#fdf6e3');
+  setupRunLevel('#fdf6e3');
   penCoreReset();
   penBottles = [];
   for (i = 0; i < PEN_BOTTLES; i++) penBottles.push({ ax: 0, ay: 0, collected: false, phase: Math.random() * Math.PI * 2 });

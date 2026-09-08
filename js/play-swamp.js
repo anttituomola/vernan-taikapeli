@@ -19,7 +19,6 @@ var wispDefs = [
 
 function initSwamp() {
   var i;
-  level = 7;
   celebrating = false;
   celebrateT = 0;
   particles = [];

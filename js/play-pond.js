@@ -18,7 +18,6 @@ function layoutPond() {
 
 function initPond() {
   var i, def;
-  level = 4;
   celebrating = false;
   celebrateT = 0;
   particles = [];

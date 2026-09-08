@@ -61,7 +61,6 @@ function lfLetterPos(l) {
 
 function initLetterfield() {
   var i;
-  level = 27;
   celebrating = false;
   celebrateT = 0;
   particles = [];

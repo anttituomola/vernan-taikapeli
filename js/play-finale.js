@@ -18,7 +18,7 @@ var finaleFriends = [];
 
 function initFinale() {
   var i;
-  setupRunLevel(9, '#2b1040');
+  setupRunLevel('#2b1040');
   finale.phase = 'boss';
   finale.t = 0;
   finale.arenaW = Math.min(worldW, viewW * 1.4);

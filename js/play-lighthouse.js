@@ -34,7 +34,6 @@ function lhHook() {
 
 function initLighthouse() {
   var i;
-  level = 25;
   celebrating = false;
   celebrateT = 0;
   particles = [];

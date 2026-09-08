@@ -98,7 +98,6 @@ function mineBfs(sc, sr, tc, tr) {
 
 function initMine() {
   var i;
-  level = 23;
   celebrating = false;
   celebrateT = 0;
   particles = [];

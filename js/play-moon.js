@@ -28,7 +28,7 @@ function layoutMoon() {
 
 function initMoon() {
   var i;
-  setupRunLevel(16, '#0a0a2a');
+  setupRunLevel('#0a0a2a');
   layoutMoon();
   tasks = [
     makeTask(0.22, 'rhythm'),

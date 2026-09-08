@@ -17,7 +17,6 @@ var ringDefs = [
 
 function initBridge() {
   var i;
-  level = 8;
   celebrating = false;
   celebrateT = 0;
   particles = [];

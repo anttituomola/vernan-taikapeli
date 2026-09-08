@@ -27,7 +27,6 @@ function layoutHerd() {
 
 function initHerd() {
   var i;
-  level = 21;
   celebrating = false;
   celebrateT = 0;
   particles = [];

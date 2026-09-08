@@ -28,7 +28,6 @@ function kNextOrder() {
 
 function initKitchen() {
   var i, k, tmp, prim = ['R', 'Y', 'B'], sec = ['RY', 'YB', 'RB', 'RY', 'YB', 'RB'];
-  level = 22;
   celebrating = false;
   celebrateT = 0;
   particles = [];

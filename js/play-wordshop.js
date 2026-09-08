@@ -28,7 +28,6 @@ function wsNextOrder() {
 
 function initWordshop() {
   var a = pickDistinct(wordsBySyl(2, 2), 2), b = pickDistinct(wordsBySyl(3, 3), 3);
-  level = 29;
   celebrating = false;
   celebrateT = 0;
   particles = [];

@@ -17,7 +17,6 @@ function layoutLevel2() {
 }
 
 function initLevel2() {
-  level = 2;
   celebrating = false;
   celebrateT = 0;
   particles = [];

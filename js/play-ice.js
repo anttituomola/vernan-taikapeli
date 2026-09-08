@@ -4,7 +4,6 @@
 
 function initIce() {
   var i, def;
-  level = 3;
   celebrating = false;
   celebrateT = 0;
   particles = [];

@@ -45,7 +45,7 @@ function layoutReef() {
 
 function initReef() {
   var i;
-  setupRunLevel(13, '#0b3a6b');
+  setupRunLevel('#0b3a6b');
   tasks = [makeTask(0.32, 'pairs', { pairs: 4 }), makeTask(0.64, 'count')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.46, 0.78]);

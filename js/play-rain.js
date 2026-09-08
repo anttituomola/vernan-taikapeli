@@ -32,7 +32,7 @@ function layoutRain() {
 
 function initRain() {
   var i;
-  setupRunLevel(18, '#e9eef7');
+  setupRunLevel('#e9eef7');
   penCoreReset();
   rainBottles = [];
   for (i = 0; i < RAIN_BOTTLES; i++) rainBottles.push({ ax: 0, ay: 0, collected: false, phase: Math.random() * Math.PI * 2 });

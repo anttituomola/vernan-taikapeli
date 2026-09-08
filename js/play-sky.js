@@ -4,7 +4,6 @@
 
 function initSky() {
   var i, def;
-  level = 5;
   celebrating = false;
   celebrateT = 0;
   particles = [];

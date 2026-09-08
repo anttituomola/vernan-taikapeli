@@ -305,7 +305,12 @@ if (WORLDS) {
     pos++;
     check(PHASES[lv.kind] && PHASES[lv.kind].level === pos,
       lv.kind + ' derived level = ' + pos);
-    const expectNext = flat[pos] && flat[pos].w === w ? flat[pos].lv.kind : null;
+    let expectNext = null;
+    if (!lv.hidden) {
+      for (let j = pos; j < flat.length && flat[j].w === w; j++) {
+        if (!flat[j].lv.hidden) { expectNext = flat[j].lv.kind; break; }
+      }
+    }
     const actualNext = PHASES[lv.kind] ? PHASES[lv.kind].next : '<missing>';
     check(actualNext === expectNext,
       lv.kind + ' derived next = ' + JSON.stringify(expectNext),

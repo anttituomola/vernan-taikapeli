@@ -9,11 +9,15 @@ pelastavat puput linnan Myrskynoidalta.
 
 Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 
-- `index.html` — kuori ja script-järjestys (`files`-lista) sekä versioleima `VT_VERSION`,
-  joka liitetään jokaiseen tiedostonimeen (`?v=…`). **Nosta leimaa julkaistessa**, muuten
+- `index.html` — kuori ja versioleima `VT_VERSION`, joka liitetään jokaiseen tiedostonimeen
+  (`?v=…`). Skriptien latauslista johdetaan `js/worlds.js`:n `scriptManifest()`-funktiosta.
+  **Nosta leimaa julkaistessa**, muuten
   tabletin välimuisti voi yhdistää vanhan `index.html`:n uusiin skripteihin ja kenttä jää jumiin.
 - `css/game.css` — napit ja karttanäyttö
-- `js/state.js` — jaettu tila, kartta (`HUB_MAP`, `HUB_ROOMS`, `HUB_ORDER`)
+- `js/worlds.js` — **saarirekisteri (`WORLDS`)**: pelin ainoa totuus maailmoista ja kentistä.
+  Vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`. Rekisteristä johdetaan
+  `PHASES` (kenttäkoukut), `HUB_WORLDS` (sokkelot), `ISLANDS` (saaristokartta) ja `scriptManifest()`.
+- `js/state.js` — jaettu tila, sokkelon ajonaikainen tila
 - `js/audio.js` — WebAudio
 - `js/progress.js` — edistymisen tallennus (localStorage), sydämet, tarkistuspisteet
 - `js/world.js` — koko, taustojen esirenderöinti
@@ -40,14 +44,14 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-letterfield.js`, `play-wordshop.js` — maailma 7 (vaiheet 27 ja 29); Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4 (vaiheet 17–20)
-- `js/phases.js` — vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
 
-**Uusi vaihe** = tiedosto `js/play-….js` (nimi `files`-listaan index.html:ssä), rivi `PHASES`-olioon (phases.js),
-huone `HUB_ROOMS`-karttaan ja kirjain `HUB_MAP`iin sekä `HUB_ORDER`iin
-(maailmat 2 ja 3: `HUB_MAP2/3`, `HUB_ROOMS2/3`, `HUB_ORDER2/3`, kootaan `HUB_WORLDS`-olioon).
-**Uusi saari** = rivi `ISLANDS`-taulukkoon (flow-sea.js: sijainti, vartijahuone
-`finaleKind`, koristeet) ja oma sokkelo `hubMap()/hubRooms()/hubOrder()`-valintoihin.
+**Uusi vaihe** = tiedosto `js/play-….js` ja yksi `levels`-alkio js/worlds.js:n
+`WORLDS`-rekisteriin (`kind`, `script`, huoneen kirjain `room`, ohjaus ja koukut;
+kirjain myös saaren `map`-karttaan). Kentän numero, `next`-ketju,
+`HUB_ROOMS`/`HUB_ORDER` ja skriptien latauslista johdetaan rekisteristä.
+**Uusi saari** = yksi `WORLDS`-alkio: nimi, `island`-tiedot (sijainti,
+vartijahuone `finaleKind`, koristeet), `map` ja `levels`.
 Silmukka, syöte ja koko kulkevat `PHASES`-koukkujen kautta, joten muuta
 koodia ei tarvitse muokata.
 

@@ -34,7 +34,6 @@ function layoutNightwood() {
 
 function initNightwood() {
   var i;
-  level = 14;
   celebrating = false;
   celebrateT = 0;
   particles = [];

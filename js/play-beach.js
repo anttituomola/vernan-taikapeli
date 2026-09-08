@@ -20,7 +20,6 @@ function pathMidY() {
 
 function initBeach() {
   var i;
-  level = 10;
   celebrating = false;
   celebrateT = 0;
   particles = [];

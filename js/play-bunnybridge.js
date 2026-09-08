@@ -33,7 +33,7 @@ function bbIsletX(idx) {
 
 function initBunnyBridge() {
   var i;
-  setupRunLevel(19, '#f3f7e8');
+  setupRunLevel('#f3f7e8');
   penCoreReset();
   bbBottles = [];
   for (i = 0; i < BB_BOTTLES; i++) bbBottles.push({ ax: 0, ay: 0, collected: false, phase: Math.random() * Math.PI * 2 });

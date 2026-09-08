@@ -83,8 +83,8 @@ function resetPrincess(x, y) {
 }
 
 // Yhteiset nappien ja tilan alustukset run-tyyppiselle kentälle
-function setupRunLevel(lvl, bgColor) {
-  level = lvl;
+// (kentän numeron asettaa skipTo WORLDS-rekisteristä ennen init-kutsua)
+function setupRunLevel(bgColor) {
   celebrating = false;
   celebrateT = 0;
   particles = [];
