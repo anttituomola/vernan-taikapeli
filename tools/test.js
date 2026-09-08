@@ -297,6 +297,18 @@ if (TASK_TYPES) {
 const WORLDS = g('WORLDS');
 if (WORLDS) {
   section('E. WORLDS registry');
+  // index.html: worlds.js must load in an EARLIER script block than the
+  // scriptManifest() call — document.write'd scripts run only after the
+  // current block ends, so one shared block would throw ReferenceError.
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const worldsAt = html.indexOf("js/worlds.js");
+  const manifestAt = html.indexOf('= scriptManifest()');
+  check(worldsAt !== -1 && manifestAt !== -1, 'index.html loads worlds.js and calls scriptManifest()');
+  if (worldsAt !== -1 && manifestAt !== -1) {
+    const between = html.slice(worldsAt, manifestAt);
+    check(worldsAt < manifestAt && between.includes('</script>'),
+      'worlds.js loads in an earlier script block than scriptManifest()');
+  }
   // Derived PHASES must match flattened registry order.
   let pos = 0;
   const flat = [];

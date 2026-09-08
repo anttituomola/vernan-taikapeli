@@ -7,7 +7,7 @@
 <script>
 // Versioleima: nosta tätä, kun julkaiset uuden version, niin selain lataa
 // kaikki tiedostot uudestaan eikä yhdistä vanhaa index.html:ää uusiin skripteihin.
-var VT_VERSION = '2026-09-07b';
+var VT_VERSION = '2026-09-08a';
 document.write('<link rel="stylesheet" href="css/game.css?v=' + VT_VERSION + '">');
 </script>
 </head>
@@ -27,9 +27,12 @@ document.write('<link rel="stylesheet" href="css/game.css?v=' + VT_VERSION + '">
 
 <script>
 // Saarirekisteri ensin: se rakentaa PHASES/HUB_WORLDS/ISLANDS-näkymät ja
-// scriptManifest()-latauslistan. Skriptit ladataan järjestyksessä versioleimalla
-// (document.write säilyttää järjestyksen).
+// scriptManifest()-latauslistan. Oma lohko, koska document.write:lla lisätty
+// skripti suoritetaan vasta tämän lohkon jälkeen.
 document.write('<script src="js/worlds.js?v=' + VT_VERSION + '"><\/script>');
+</script>
+<script>
+// Skriptit ladataan järjestyksessä versioleimalla (document.write säilyttää järjestyksen)
 (function () {
   var files = scriptManifest();
   var i;
