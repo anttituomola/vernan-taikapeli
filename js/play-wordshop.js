@@ -28,16 +28,6 @@ function wsNextOrder() {
 
 function initWordshop() {
   var a = pickDistinct(wordsBySyl(2, 2), 2), b = pickDistinct(wordsBySyl(3, 3), 3);
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
   tasks = [];
   wshop.orders = a.concat(b);
   wshop.served = 0;
@@ -48,11 +38,6 @@ function initWordshop() {
   princess.x = viewW * 0.4;
   princess.y = viewH * 0.8;
   princess.facing = 1;
-  document.body.style.background = '#f3e6ff';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(659, 0.12, 0.2, 'triangle', 0.35);

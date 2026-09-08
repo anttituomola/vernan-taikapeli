@@ -342,6 +342,15 @@ if (WORLDS) {
       check(files.filter((f) => f === s).length === 1, 'manifest contains ' + s + ' exactly once');
     }
   }
+  // Lifecycle kit: level inits leave shared reset/chrome to levelBegin.
+  for (const f of files) {
+    if (!/^play-/.test(f)) continue;
+    const src = readSrc(f);
+    check(!/setupRunLevel/.test(src), f + ' does not use setupRunLevel');
+    check(!/document\.body\.style\.background/.test(src), f + ' leaves body background to levelBegin');
+    check(!/getElementById\('karttaBtn'\)/.test(src), f + ' leaves button chrome to levelBegin');
+    check(!/\bheartsReset\(\)/.test(src), f + ' leaves heartsReset to levelBegin');
+  }
 }
 
 // ---------------------------------------------------------------- summary

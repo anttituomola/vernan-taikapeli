@@ -51,7 +51,6 @@ var crystalDefs = [
 
 function initCave() {
   var i;
-  setupRunLevel('#0b0a1e');
   layoutCave();
   tasks = [makeTask(0.30, 'minus'), makeTask(0.79, 'pattern')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;

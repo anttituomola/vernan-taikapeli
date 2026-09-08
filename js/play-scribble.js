@@ -35,7 +35,6 @@ function layoutScribble() {
 
 function initScribble() {
   var i;
-  setupRunLevel('#f2ecf7');
   penCoreReset();
   penHooks.onStroke = scribbleOnStroke;
   penHooks.bubbleTargets = function () {

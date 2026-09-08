@@ -27,16 +27,6 @@ function layoutHerd() {
 
 function initHerd() {
   var i;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
   tasks = [makeTask(0.36, 'word', { maxSyl: 2 }), makeTask(0.70, 'count')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   herdOwls = [];
@@ -53,11 +43,6 @@ function initHerd() {
   unicorn.y = unicorn.ty = herdPathY(0.5);
   unicorn.facing = 1;
   unicorn.moving = false;
-  document.body.style.background = '#c9f0ff';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(523, 0, 0.25, 'sine', 0.35);
   playNote(659, 0.12, 0.3, 'triangle', 0.3);

@@ -61,16 +61,6 @@ function lfLetterPos(l) {
 
 function initLetterfield() {
   var i;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
   tasks = [makeTask(0.325, 'wordpick', { maxSyl: 2 }), makeTask(0.645, 'word', { maxSyl: 3 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   lfPickWords();
@@ -87,11 +77,6 @@ function initLetterfield() {
   unicorn.y = unicorn.ty = (groundTop + groundBottom) / 2;
   unicorn.facing = 1;
   unicorn.moving = false;
-  document.body.style.background = '#d9f3ff';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(523, 0, 0.25, 'sine', 0.35);
   playNote(659, 0.12, 0.3, 'triangle', 0.3);

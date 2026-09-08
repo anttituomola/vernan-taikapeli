@@ -4,15 +4,6 @@
 
 function initSky() {
   var i, def;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
   tasks = [makeTask(0.28, 'memory'), makeTask(0.66, 'odd')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   activeTask = null;
@@ -43,11 +34,6 @@ function initSky() {
   princess.onGround = false;
   princess.walkPhase = 0;
   princess.coyote = 0;
-  document.body.style.background = '#140832';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'block';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(523, 0, 0.22, 'sine', 0.35);
   playNote(784, 0.14, 0.32, 'triangle', 0.35);

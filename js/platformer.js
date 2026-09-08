@@ -82,26 +82,8 @@ function resetPrincess(x, y) {
   princess.coyote = 0.12;
 }
 
-// Yhteiset nappien ja tilan alustukset run-tyyppiselle kentälle
-// (kentän numeron asettaa skipTo WORLDS-rekisteristä ennen init-kutsua)
-function setupRunLevel(bgColor) {
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
-  heartsReset();
-  document.body.style.background = bgColor;
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'block';
-  document.getElementById('karttaBtn').style.display = 'block';
-}
+// Yhteiset nappien ja tilan alustukset run-tyyppiselle kentälle on siirtynyt
+// flow-hub.js:n levelBegin-funktioon (kutsutaan jokaisen kentän alussa).
 
 function updateSparksAgainst(dt, targets, radius, onHit) {
   var i, k;

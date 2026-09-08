@@ -37,7 +37,6 @@ function layoutSummit() {
 
 function initSummit() {
   var i;
-  setupRunLevel('#cfe6ff');
   layoutSummit();
   tasks = [makeTask(0.24, 'order'), makeTask(0.50, 'dots'), makeTask(0.72, 'memory', { seqLen: 5, orbs: 4 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;

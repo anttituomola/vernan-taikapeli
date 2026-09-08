@@ -19,17 +19,6 @@ var wispDefs = [
 
 function initSwamp() {
   var i;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
-  heartsReset();
   tasks = [
     makeTask(0.34, 'rhythm'),
     makeTask(0.58, 'memory', { seqLen: 5, orbs: 4 }),
@@ -68,11 +57,6 @@ function initSwamp() {
   invulnT = 0;
   checkpoint.x = unicorn.x;
   checkpoint.y = unicorn.y;
-  document.body.style.background = '#12241c';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(294, 0, 0.3, 'triangle', 0.35);
   playNote(392, 0.15, 0.4, 'sine', 0.3);

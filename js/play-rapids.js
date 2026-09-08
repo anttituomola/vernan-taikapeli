@@ -133,20 +133,9 @@ function rapPickWords() {
 function initRapids(mode) {
   var i;
   rapids.mode = mode || 'logs';
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
-  heartsReset();
-  if (rapids.mode === 'logs') tasks = [makeTask(-5, 'dots'), makeTask(-5, 'match')];
-  else if (rapids.mode === 'syl') tasks = [makeTask(-5, 'build', { maxSyl: 2 }), makeTask(-5, 'word', { maxSyl: 3 })];
-  else tasks = [makeTask(-5, 'letter'), makeTask(-5, 'wordpick', { maxSyl: 3 })];
+  tasks = [makeTask(-5, 'dots'), makeTask(-5, 'match')];
+  if (rapids.mode === 'syl') tasks = [makeTask(-5, 'build', { maxSyl: 2 }), makeTask(-5, 'word', { maxSyl: 3 })];
+  else if (rapids.mode === 'letters') tasks = [makeTask(-5, 'letter'), makeTask(-5, 'wordpick', { maxSyl: 3 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   rapids.words = [];
   if (rapids.mode !== 'logs') rapPickWords();
@@ -168,11 +157,6 @@ function initRapids(mode) {
   rapLayout();
   checkpoint.x = rapids.p.x;
   checkpoint.y = rapRowY(0);
-  document.body.style.background = rapSky() ? '#8fc8ff' : '#3aa0d8';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(392, 0, 0.25, 'sine', 0.3);
   playNote(587, 0.14, 0.3, 'triangle', 0.3);

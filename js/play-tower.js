@@ -27,7 +27,6 @@ function layoutTower() {
 
 function initTower() {
   var i;
-  setupRunLevel('#241c48');
   layoutTower();
   tasks = [
     makeTask(0.20, 'pairs', { pairs: 4 }),

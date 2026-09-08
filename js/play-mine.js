@@ -98,16 +98,6 @@ function mineBfs(sc, sr, tc, tr) {
 
 function initMine() {
   var i;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
   // Arkkujen tehtävät käynnistetään käsin (x kauas, jotta kaari ei laukea itsestään)
   tasks = [makeTask(-5, 'sort'), makeTask(-5, 'math')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
@@ -121,11 +111,6 @@ function initMine() {
   mine.shakeT = 0;
   mine.lampT = 0;
   mineLayout();
-  document.body.style.background = '#2a1f2e';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(330, 0, 0.25, 'triangle', 0.3);
   playNote(494, 0.14, 0.3, 'triangle', 0.3);

@@ -17,17 +17,6 @@ var ringDefs = [
 
 function initBridge() {
   var i;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
-  heartsReset();
   tasks = [makeTask(0.48, 'compare')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.34, 0.68]);
@@ -57,11 +46,6 @@ function initBridge() {
   princess.coyote = 0;
   checkpoint.x = princess.x;
   checkpoint.y = princess.y;
-  document.body.style.background = '#2a1f5e';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'block';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(523, 0, 0.2, 'sine', 0.35);
   playNote(659, 0.1, 0.2, 'sine', 0.35);

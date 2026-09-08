@@ -28,17 +28,7 @@ function kNextOrder() {
 
 function initKitchen() {
   var i, k, tmp, prim = ['R', 'Y', 'B'], sec = ['RY', 'YB', 'RB', 'RY', 'YB', 'RB'];
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
   tasks = [];
-  activeTask = null;
   // Tilaukset: ensin kaksi perusväriä, sitten sekoitukset
   for (i = prim.length - 1; i > 0; i--) { k = randInt(i + 1); tmp = prim[i]; prim[i] = prim[k]; prim[k] = tmp; }
   for (i = sec.length - 1; i > 0; i--) { k = randInt(i + 1); tmp = sec[i]; sec[i] = sec[k]; sec[k] = tmp; }
@@ -52,11 +42,6 @@ function initKitchen() {
   princess.y = viewH * 0.8;
   princess.facing = 1;
   princess.walkPhase = 0;
-  document.body.style.background = '#f7e6d2';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(659, 0.12, 0.2, 'triangle', 0.35);

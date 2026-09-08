@@ -18,15 +18,6 @@ function layoutPond() {
 
 function initPond() {
   var i, def;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
   tasks = [makeTask(0.32, 'math'), makeTask(0.72, 'word', { maxSyl: 2 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   activeTask = null;
@@ -51,11 +42,6 @@ function initPond() {
   princess.onGround = true;
   princess.walkPhase = 0;
   princess.coyote = 0.12;
-  document.body.style.background = '#0a4550';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'block';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(392, 0, 0.22, 'triangle', 0.35);
   playNote(523, 0.12, 0.28, 'sine', 0.35);

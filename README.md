@@ -25,7 +25,9 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/fx.js` — kipinät, konfetti, opastenuoli
 - `js/ambient.js` — tunnelmahiukkaset, etualan siluetit ja kentän alkukortti (PHASES: `ambient`, `fg`)
 - `js/flow-sea.js` — saaristokartta (ylin navigaatio), saaret ja sateenkaari
-- `js/flow-hub.js` — saaren karttalabyrintti ja vaiheen käynnistys
+- `js/flow-hub.js` — saaren karttalabyrintti, vaiheen käynnistys ja kentän elinkaaren
+  yhteinen alku (`levelBegin`: tilan nollaus ja nappien ilme rekisterin lipuista; skipTo
+  ja uusinta kutsuvat sitä ennen kentän omaa init-koukkua)
 - `js/flow-home.js` — linnan sisustus (tähtikauppa, raahaus, puput)
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)

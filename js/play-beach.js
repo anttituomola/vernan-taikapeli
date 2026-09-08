@@ -20,17 +20,6 @@ function pathMidY() {
 
 function initBeach() {
   var i;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
-  heartsReset();
   tasks = [makeTask(0.30, 'shadow'), makeTask(0.55, 'math'), makeTask(0.78, 'pairs', { pairs: 3 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.42, 0.72]);
@@ -59,11 +48,6 @@ function initBeach() {
   invulnT = 0;
   checkpoint.x = unicorn.x;
   checkpoint.y = unicorn.y;
-  document.body.style.background = '#7fd0ff';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(523, 0, 0.25, 'sine', 0.35);
   playNote(659, 0.12, 0.3, 'triangle', 0.3);

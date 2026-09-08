@@ -37,7 +37,6 @@ function layoutCandy() {
 
 function initCandy() {
   var i;
-  setupRunLevel('#ffd9ec');
   layoutCandy();
   tasks = [makeTask(0.34, 'puzzle'), makeTask(0.70, 'shadow')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;

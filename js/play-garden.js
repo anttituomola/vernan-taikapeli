@@ -17,18 +17,6 @@ function layoutLevel2() {
 }
 
 function initLevel2() {
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  document.body.style.background = '#1a1448';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'block';
-  document.getElementById('karttaBtn').style.display = 'block';
   layoutLevel2();
   princess.x = viewW * 0.12;
   princess.y = groundTop;

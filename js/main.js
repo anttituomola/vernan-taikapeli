@@ -154,7 +154,9 @@ document.getElementById('seaBtn').addEventListener('click', function () {
 });
 
 document.getElementById('replayBtn').addEventListener('click', function () {
-  phaseNow().init();
+  var p = phaseNow();
+  levelBegin(p);
+  p.init();
 });
 
 document.getElementById('continueBtn').addEventListener('click', function () {

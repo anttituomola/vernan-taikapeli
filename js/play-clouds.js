@@ -43,7 +43,6 @@ function layoutClouds() {
 
 function initClouds() {
   var i;
-  setupRunLevel('#3b3f8c');
   layoutClouds();
   tasks = [makeTask(0.30, 'puzzle'), makeTask(0.68, 'mix', { mixLevel: 2 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;

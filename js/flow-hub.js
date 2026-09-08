@@ -5,10 +5,6 @@
 function initGame() {
   stars = [];
   bunnies = [];
-  particles = [];
-  confetti = [];
-  celebrating = false;
-  celebrateT = 0;
   var i;
   for (i = 0; i < STAR_COUNT; i++) {
     var sax = starDefs[i].fx * worldW;
@@ -60,19 +56,37 @@ function initGame() {
   unicorn.ty = unicorn.y;
   unicorn.facing = 1;
   unicorn.moving = false;
+  renderBackground();
+}
+
+// Kentän elinkaaren yhteinen alku: ajonaikaisen tilan nollaus ja nappien
+// ilme rekisterin lipuista (usesJump, bgColor). skipTo ja uusinta kutsuvat
+// tätä ennen kentän omaa init()-koukkua, joka asettaa vain kentän omat asiat.
+function levelBegin(p) {
+  celebrating = false;
+  celebrateT = 0;
+  particles = [];
+  confetti = [];
+  sparks = [];
+  holding = false;
   camX = 0;
-  document.body.style.background = '#cfe9ff';
+  gates = [];
+  activeGate = null;
+  activeTask = null;
+  heartsReset();
+  document.body.style.background = p.bgColor;
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
+  document.getElementById('jumpBtn').style.display = p.usesJump ? 'block' : 'none';
+  document.getElementById('penBtn').style.display = 'none';
   document.getElementById('karttaBtn').style.display = 'block';
-  renderBackground();
 }
 
 function skipTo(kind) {
   var p = PHASES[kind] || PHASES.start;
   hubPlaying = kind;
   level = p.level;
+  levelBegin(p);
   p.init();
 }
 

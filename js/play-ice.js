@@ -4,15 +4,6 @@
 
 function initIce() {
   var i, def;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
   tasks = [makeTask(0.30, 'odd'), makeTask(0.68, 'count')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   activeTask = null;
@@ -41,11 +32,6 @@ function initIce() {
   unicorn.facing = 1;
   unicorn.moving = false;
   invulnT = 0;
-  document.body.style.background = '#3d6ea8';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(698, 0, 0.22, 'sine', 0.35);
   playNote(880, 0.12, 0.3, 'triangle', 0.35);

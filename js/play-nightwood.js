@@ -34,17 +34,6 @@ function layoutNightwood() {
 
 function initNightwood() {
   var i;
-  celebrating = false;
-  celebrateT = 0;
-  particles = [];
-  confetti = [];
-  sparks = [];
-  holding = false;
-  camX = 0;
-  gates = [];
-  activeGate = null;
-  activeTask = null;
-  heartsReset();
   tasks = [makeTask(0.35, 'memory', { seqLen: 4, orbs: 4 }), makeTask(0.68, 'word', { maxSyl: 2 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.42, 0.74]);
@@ -62,11 +51,6 @@ function initNightwood() {
   unicorn.moving = false;
   checkpoint.x = unicorn.x;
   checkpoint.y = unicorn.y;
-  document.body.style.background = '#0b1030';
-  document.getElementById('replayBtn').style.display = 'none';
-  document.getElementById('continueBtn').style.display = 'none';
-  document.getElementById('jumpBtn').style.display = 'none';
-  document.getElementById('karttaBtn').style.display = 'block';
   renderBackground();
   playNote(330, 0, 0.35, 'sine', 0.3);
   playNote(494, 0.18, 0.35, 'triangle', 0.3);
