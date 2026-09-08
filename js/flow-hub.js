@@ -565,6 +565,92 @@ function drawHubRoomIcon(c, kind, x, y, s) {
       c.arc(x, y + s * 0.1, s * (0.22 - i * 0.05), Math.PI, 0);
       c.stroke();
     }
+  } else if (kind === 'lollipop') {
+    c.strokeStyle = '#fff';
+    c.lineWidth = Math.max(2, s * 0.04);
+    c.beginPath(); c.moveTo(x, y + s * 0.02); c.lineTo(x, y + s * 0.24); c.stroke();
+    c.fillStyle = '#ff6b9d';
+    c.beginPath(); c.arc(x, y - s * 0.08, s * 0.14, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.85)';
+    c.lineWidth = Math.max(1.5, s * 0.035);
+    c.beginPath(); c.arc(x, y - s * 0.08, s * 0.07, 0.5, 2.6); c.stroke();
+  } else if (kind === 'berry') {
+    c.fillStyle = '#ff5f7e';
+    c.beginPath(); c.arc(x - s * 0.08, y, s * 0.09, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#6f5cff';
+    c.beginPath(); c.arc(x + s * 0.07, y - s * 0.06, s * 0.08, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x + s * 0.06, y + s * 0.07, s * 0.08, 0, Math.PI * 2); c.fill();
+  } else if (kind === 'cafe') {
+    c.fillStyle = '#fff';
+    roundRect(c, x - s * 0.13, y - s * 0.08, s * 0.24, s * 0.18, s * 0.04);
+    c.fill();
+    c.strokeStyle = '#fff';
+    c.lineWidth = Math.max(2, s * 0.035);
+    c.beginPath(); c.arc(x + s * 0.14, y, s * 0.06, -Math.PI / 2, Math.PI / 2); c.stroke();
+    c.fillStyle = '#d9a05f';
+    c.fillRect(x - s * 0.16, y + s * 0.12, s * 0.34, s * 0.03);
+  } else if (kind === 'candysky') {
+    c.fillStyle = '#ff6b9d';
+    c.beginPath(); c.arc(x, y, s * 0.11, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.moveTo(x - s * 0.09, y); c.lineTo(x - s * 0.2, y - s * 0.07); c.lineTo(x - s * 0.2, y + s * 0.07); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(x + s * 0.09, y); c.lineTo(x + s * 0.2, y - s * 0.07); c.lineTo(x + s * 0.2, y + s * 0.07); c.closePath(); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.85)';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.arc(x, y, s * 0.05, -0.6, 1.2); c.stroke();
+  } else if (kind === 'stars') {
+    c.fillStyle = '#ffe27a';
+    c.beginPath();
+    for (i = 0; i < 10; i++) {
+      a = -Math.PI / 2 + i * Math.PI / 5;
+      var sr = i % 2 ? s * 0.06 : s * 0.15;
+      if (i === 0) c.moveTo(x + Math.cos(a) * sr, y + Math.sin(a) * sr);
+      else c.lineTo(x + Math.cos(a) * sr, y + Math.sin(a) * sr);
+    }
+    c.closePath(); c.fill();
+  } else if (kind === 'orchard') {
+    c.fillStyle = '#ff5f5f';
+    c.beginPath(); c.arc(x - s * 0.05, y, s * 0.1, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x + s * 0.05, y, s * 0.1, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#8a6a44';
+    c.lineWidth = Math.max(1.5, s * 0.025);
+    c.beginPath(); c.moveTo(x, y - s * 0.08); c.lineTo(x + s * 0.04, y - s * 0.16); c.stroke();
+    c.fillStyle = '#6fb35a';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x + s * 0.08, y - s * 0.13, s * 0.06, s * 0.03, -0.5, 0, Math.PI * 2);
+    else c.arc(x + s * 0.08, y - s * 0.13, s * 0.04, 0, Math.PI * 2);
+    c.fill();
+  } else if (kind === 'naptime') {
+    c.fillStyle = '#ffe9a0';
+    c.beginPath(); c.arc(x - s * 0.04, y - s * 0.04, s * 0.13, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#5a4a8a';
+    c.beginPath(); c.arc(x + s * 0.02, y - s * 0.08, s * 0.11, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff';
+    c.font = 'bold ' + Math.round(s * 0.16) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.textAlign = 'center';
+    c.fillText('Z', x + s * 0.14, y + s * 0.16);
+  } else if (kind === 'glide') {
+    c.save();
+    c.translate(x, y);
+    c.rotate(-0.5);
+    c.fillStyle = '#fff8ea';
+    c.beginPath();
+    c.moveTo(0, s * 0.16);
+    c.quadraticCurveTo(-s * 0.11, s * 0.03, 0, -s * 0.16);
+    c.quadraticCurveTo(s * 0.11, s * 0.03, 0, s * 0.16);
+    c.fill();
+    c.strokeStyle = '#d9c9a8';
+    c.lineWidth = Math.max(1.5, s * 0.02);
+    c.beginPath(); c.moveTo(0, s * 0.17); c.lineTo(0, -s * 0.13); c.stroke();
+    c.restore();
+  } else if (kind === 'grove') {
+    c.fillStyle = '#5fb356';
+    c.beginPath(); c.arc(x, y, s * 0.13, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x - s * 0.1, y + s * 0.05, s * 0.09, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(x + s * 0.1, y + s * 0.05, s * 0.09, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff';
+    c.font = 'bold ' + Math.round(s * 0.16) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.textAlign = 'center';
+    c.fillText('A', x, y + s * 0.1);
   }
 }
 

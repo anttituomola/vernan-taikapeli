@@ -1,10 +1,12 @@
 'use strict';
 
-// Lisää tehtävätyyppejä (Vuorisaari):
+// Lisää tehtävätyyppejä (Vuorisaari + uudet saarikentät):
 //   sort   – lajittele: raahaa kuusi kuviota kahteen koriin värin tai muodon mukaan
 //   order  – järjestä koon mukaan: raahaa neljä kuviota pienimmästä suurimpaan
 //   mirror – peilikuva: napauta oikean puolen ruutuja, kunnes kuva on vasemman peilikuva
 //   dots   – yhdistä pisteet: napauta numerot 1…N järjestyksessä, kuva piirtyy
+//   give   – anna N kappaletta: napauta keosta oikeat kuviot koriin
+//   matrix – puuttuva ruutu: 2×2-ruudukosta puuttuu yksi kuvio, valitse se palloista
 // Perusrunko (taskStart, handleTaskTap, taskDrop, drawTaskOverlay) haarautuu näihin.
 
 // ---------- Lajittele ----------
@@ -421,4 +423,201 @@ TASK_TYPES.dots = {
   make: makeDotsProblem, pitch: 523,
   tap: dotsTap, update: updateDotsTask,
   draw: drawDotsOverlay
+};
+
+// ---------- Anna N kappaletta ----------
+// Pöydällä sekalainen keko kuvioita; vain kohdekuviot (sama muoto JA väri)
+// kelpaavat koriin. Napautettu kohdekuvio lentää koriin, väärä ravistaa.
+// Prompt-kuplassa näkyy montako kappaletta koriin pitää viedä.
+function makeGiveProblem(t) {
+  var i, hx, gap;
+  var n = 2 + randInt(3); // 2–4 annettavaa
+  var kind = TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)];
+  var color = randInt(TASK_BF_COLORS.length);
+  var items = [];
+  for (i = 0; i < n; i++) items.push({ kind: kind, color: color, target: true });
+  // Hämääjät: väärä muoto tai väärä väri (ei koskaan molemmat samalla tavalla oikein)
+  for (i = 0; i < 3; i++) {
+    if (Math.random() < 0.5) {
+      items.push({ kind: TASK_GLYPH_KINDS[otherIndex(TASK_GLYPH_KINDS.indexOf(kind), TASK_GLYPH_KINDS.length)], color: color, target: false });
+    } else {
+      items.push({ kind: kind, color: otherIndex(color, TASK_BF_COLORS.length), target: false });
+    }
+  }
+  var order = shuffleNums(items.map(function (_, k) { return k; }));
+  gap = Math.min(viewW * 0.13, viewH * 0.16);
+  var laid = [];
+  for (i = 0; i < items.length; i++) {
+    var it = items[order[i]];
+    hx = viewW / 2 + (i - (items.length - 1) / 2) * gap;
+    laid.push({
+      kind: it.kind, color: it.color, target: it.target,
+      x: hx, y: viewH * 0.74, given: false, flyT: -1
+    });
+  }
+  t.orbs = 0;
+  return { n: n, kind: kind, color: color, items: laid, given: 0, basketX: viewW / 2, basketY: viewH * 0.38 };
+}
+
+function giveTap(t, px, py) {
+  var d = t.data, i, dx, dy, r = viewH * 0.07, best = null, bd = 1e9, dist;
+  for (i = 0; i < d.items.length; i++) {
+    var it = d.items[i];
+    if (it.given) continue;
+    dx = px - it.x;
+    dy = py - it.y;
+    dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < r && dist < bd) { bd = dist; best = it; }
+  }
+  if (!best) return;
+  if (best.target) {
+    best.given = true;
+    best.flyT = 0;
+    d.given++;
+    playNote(TASK_BF_NOTES[d.given % TASK_BF_NOTES.length], 0, 0.25, 'triangle', 0.4);
+    if (d.given >= d.n) taskSolved();
+  } else {
+    playNote(170, 0, 0.3, 'sawtooth', 0.2);
+    t.shakeT = 0.5;
+  }
+}
+
+function updateGiveTask(t, dt) {
+  var items = t.data.items, i, it, arrived = false;
+  for (i = 0; i < items.length; i++) {
+    it = items[i];
+    if (it.flyT >= 0 && it.flyT < 1) {
+      it.flyT = Math.min(1, it.flyT + dt * 2.4);
+      if (it.flyT >= 1) arrived = true;
+    }
+  }
+  if (arrived) {
+    spawnSparkles(t.data.basketX, t.data.basketY, 8, '#ffe27a');
+    playNote(880, 0, 0.12, 'sine', 0.25);
+  }
+}
+
+function drawGiveOverlay(c, t, shake) {
+  var d = t.data, i, it, s = viewH * 0.05;
+  // Prompt-kupla: N palloa + kohdekuvio
+  var hx = viewW / 2 + shake, hy = viewH * 0.13;
+  drawPromptBubble(c, hx, hy, viewH * 0.34, viewH * 0.11);
+  c.fillStyle = '#8a2be2';
+  for (i = 0; i < d.n; i++) {
+    c.beginPath();
+    c.arc(hx - viewH * 0.1 + i * viewH * 0.038, hy, viewH * 0.013, 0, Math.PI * 2);
+    c.fill();
+  }
+  drawTaskGlyph(c, d.kind, hx + viewH * 0.1, hy, viewH * 0.03, TASK_BF_COLORS[d.color], 0);
+  // Kori ja kerättyjen määrä
+  drawBasket(c, d.basketX, d.basketY, viewH * 0.06, shake);
+  for (i = 0; i < d.given; i++) {
+    drawTaskGlyph(c, d.kind, d.basketX + (i - (d.n - 1) / 2) * viewH * 0.045 + shake, d.basketY - viewH * 0.02,
+      viewH * 0.022, TASK_BF_COLORS[d.color], 0);
+  }
+  // Kevyt hälinäkorostus korin ympärille kun kaikki ei vielä kerätty
+  for (i = 0; i < d.items.length; i++) {
+    it = d.items[i];
+    if (it.given && it.flyT >= 1) continue;
+    var x = it.x, y = it.y, sc = 1, alpha = 1;
+    if (it.flyT >= 0) {
+      // Lento koriin: kaari ylös ja pienenee
+      var f = it.flyT;
+      x = it.x + (d.basketX - it.x) * f;
+      y = it.y + (d.basketY - it.y) * f - Math.sin(f * Math.PI) * viewH * 0.12;
+      sc = 1 - f * 0.5;
+      alpha = 1 - f * 0.3;
+    }
+    c.globalAlpha = alpha;
+    if (!it.given) {
+      c.fillStyle = 'rgba(255,255,255,0.75)';
+      c.beginPath(); c.arc(it.x + shake, it.y, s * 1.5, 0, Math.PI * 2); c.fill();
+    }
+    drawTaskGlyph(c, it.kind, x + shake, y, s * sc, TASK_BF_COLORS[it.color], 0);
+    c.globalAlpha = 1;
+  }
+}
+
+TASK_TYPES.give = {
+  make: makeGiveProblem, pitch: 587,
+  tap: giveTap, update: updateGiveTask,
+  draw: drawGiveOverlay
+};
+
+// ---------- Puuttuva ruutu (2×2-matriisi) ----------
+// Kaksi muotoa × kaksi väriä: jokainen rivi sama väri, jokainen sarake sama
+// muoto. Yksi ruutu on piilotettu — palloista valitaan puuttuva kuvio.
+// Väärästä valinnasta arvotaan uusi tehtävä.
+function makeMatrixProblem(t) {
+  var ki = shuffleNums([0, 1, 2]).slice(0, 2); // TASK_GLYPH_KINDS-indeksit
+  var ci = shuffleNums([0, 1, 2, 3]).slice(0, 2); // väri-indeksit
+  var cells = [
+    { kind: TASK_GLYPH_KINDS[ki[0]], color: ci[0] },
+    { kind: TASK_GLYPH_KINDS[ki[1]], color: ci[0] },
+    { kind: TASK_GLYPH_KINDS[ki[0]], color: ci[1] },
+    { kind: TASK_GLYPH_KINDS[ki[1]], color: ci[1] }
+  ];
+  var hidden = randInt(4);
+  var ans = cells[hidden];
+  // Väärät: sama muoto väärä väri + väärä muoto oikea väri
+  var wrong1 = { kind: ans.kind, color: otherIndex(ans.color, TASK_BF_COLORS.length) };
+  var otherKind = ans.kind === TASK_GLYPH_KINDS[ki[0]] ? TASK_GLYPH_KINDS[ki[1]] : TASK_GLYPH_KINDS[ki[0]];
+  var wrong2 = { kind: otherKind, color: ans.color };
+  var order = shuffleNums([0, 1, 2]);
+  var pool = [ans, wrong1, wrong2];
+  var choices = [];
+  for (var i = 0; i < 3; i++) choices.push(pool[order[i]]);
+  t.orbs = 3;
+  return { cells: cells, hidden: hidden, choices: choices, correct: order.indexOf(0) };
+}
+
+function matrixCellPos(k) {
+  var cs = Math.min(viewH * 0.15, viewW * 0.13);
+  return {
+    x: viewW / 2 + ((k % 2) - 0.5) * cs * 1.15,
+    y: viewH * 0.4 + ((k < 2 ? 0 : 1) - 0.5) * cs * 1.15,
+    cs: cs
+  };
+}
+
+function drawMatrixPrompt(c, t, shake) {
+  var d = t.data, k, p;
+  // Vihje-kupla: rivit = väri, sarakkeet = muoto
+  var hx = viewW / 2 + shake, hy = viewH * 0.12;
+  drawPromptBubble(c, hx, hy, viewH * 0.3, viewH * 0.11);
+  drawTaskGlyph(c, d.cells[0].kind, hx - viewH * 0.07, hy, viewH * 0.024, TASK_BF_COLORS[d.cells[0].color], 0);
+  drawTaskGlyph(c, d.cells[1].kind, hx, hy, viewH * 0.024, TASK_BF_COLORS[d.cells[1].color], 0);
+  c.fillStyle = '#8a2be2';
+  c.font = 'bold ' + Math.round(viewH * 0.055) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText('?', hx + viewH * 0.08, hy + viewH * 0.005);
+  for (k = 0; k < 4; k++) {
+    p = matrixCellPos(k);
+    var isHidden = k === d.hidden;
+    c.fillStyle = isHidden ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.9)';
+    roundRect(c, p.x - p.cs * 0.46 + shake, p.y - p.cs * 0.46, p.cs * 0.92, p.cs * 0.92, p.cs * 0.12);
+    c.fill();
+    if (isHidden) {
+      c.setLineDash([p.cs * 0.1, p.cs * 0.08]);
+      c.strokeStyle = 'rgba(138,43,226,0.55)';
+      c.lineWidth = Math.max(2, p.cs * 0.035);
+      c.stroke();
+      c.setLineDash([]);
+      c.fillStyle = '#8a2be2';
+      c.font = 'bold ' + Math.round(p.cs * 0.5 * (1 + Math.sin(globalT * 5) * 0.06)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+      c.fillText('?', p.x + shake, p.y + p.cs * 0.03);
+    } else {
+      drawTaskGlyph(c, d.cells[k].kind, p.x + shake, p.y, p.cs * 0.3, TASK_BF_COLORS[d.cells[k].color], 0);
+    }
+  }
+}
+
+TASK_TYPES.matrix = {
+  make: makeMatrixProblem, pitch: 680,
+  tap: tapChoiceRegen,
+  draw: function (c, t, shake, op) {
+    drawMatrixPrompt(c, t, shake);
+    drawTaskOrbs(c, t, shake, op, orbTaskGlyphContent);
+  }
 };

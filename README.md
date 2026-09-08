@@ -36,16 +36,16 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-cave.js`, `play-swamp.js`, `play-bridge.js` — vaiheet 6–8
 - `js/play-finale.js` — linnan finaali
 - `js/tasks-drag.js` — raahaustehtävät (muoto varjoon, täydennä kuva) ja muistipeli
-- `js/play-beach.js`, `play-candy.js`, `play-lollipop.js`, `play-tower.js` — maailma 2
-- `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-moon.js` — maailma 3
+- `js/play-beach.js`, `play-candy.js`, `play-lollipop.js`, `play-candysky.js`, `play-tower.js` — maailma 2
+- `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-stars.js`, `play-moon.js` — maailma 3
 - `js/tasks-mix.js` — värien sekoitus: 'mix'-tehtävä ja Taikakeittiön pata
-- `js/play-herd.js`, `play-berry.js`, `play-cafe.js`, `play-kitchen.js` — maailma 5
-- `js/tasks-more.js` — lajittele, järjestä koon mukaan, peilikuva ja yhdistä pisteet
-- `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-summit.js` — maailma 6
+- `js/play-herd.js`, `play-berry.js`, `play-cafe.js`, `play-naptime.js`, `play-kitchen.js` — maailma 5
+- `js/tasks-more.js` — lajittele, järjestä koon mukaan, peilikuva, yhdistä pisteet, anna N kappaletta, puuttuva ruutu
+- `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-glide.js`, `play-summit.js` — maailma 6
 - `js/tasks-read.js` — lukemisen tehtävät: kuva→sana, kokoa sana tavuista, alkukirjain
-- `js/play-letterfield.js`, `play-wordshop.js` — maailma 7; Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
+- `js/play-letterfield.js`, `play-wordshop.js`, `play-grove.js` — maailma 7; Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
-- `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-scribble.js` — maailma 4
+- `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
 
 **Uusi vaihe** = tiedosto `js/play-….js` ja yksi `levels`-alkio js/worlds.js:n
@@ -123,6 +123,9 @@ Arvoitusten torni on saaren vartija.
 - **Tikkumetsä** ♥ — ratsastus karkkimaisemassa: tikkarit kerätään sormella
   tai ohitse ratsastaen, salmiakkipyörät vierivät polulla (sydän). Karkkiportti
   aukeaa, kun kaikki kahdeksan tikkarin on kerätty. Tehtävät: laske, erilainen.
+- **Karkkitaivas** ♥ — vapaa lento karkkipilvien välissä: kahdeksan käärekarkkia
+  kerätään, ajelehtivat ukkospilvet vievät sydämen. Karkkiportti hehkuu, kun
+  karkit on koossa — lennä sen luo. Tehtävät: anna N kappaletta, lasku.
 - **Arvoitusten torni** ♥ — neljä tehtäväovea peräkkäin (parit 4 paria,
   täydennä kuva, lue sana, muisti 4/4), jalokivet hyllyillä ja heiluvat
   kattokruunut, joiden alta kuljetaan kun ne ovat sivulla.
@@ -142,6 +145,10 @@ Aukeaa, kun Arvoitusten torni on läpäisty. Kuun vartija on saaren vartija.
   seisomisen jälkeen (palaavat 2,5 s), pinkit pilvet pomputtavat, myrskypallot
   vierivät (hyppää yli), kuiluista putoaa taivaaseen. Tehtävät: täydennä kuva,
   vertaa.
+- **Tähtisumu** — ei liikkumista, ei sydämiä. Pilvet ajelehtivat tähtien
+  päällä: napauta pilveä puhaltaaksesi sen hetkeksi pois, ja napauta
+  paljastunutta tähteä kerätäksesi sen. Kuusi tähteä; tehtävät avautuvat
+  keräilyn edetessä. Tehtävät: puuttuva ruutu, muisti 4/4.
 - **Kuun vartija** ♥ — neljä tehtäväporttia (rytmi, muoto varjoon, vähennys,
   muisti 5/4). Tähtiä putoaa: hehku maassa varoittaa 0,9 s ennen osumaa.
   Kuunkivet kerätään kiviltä, ja kuun kasvot heräävät tehtävä kerrallaan.
@@ -171,6 +178,11 @@ Sotkumörkö on saaren vartija.
   piirrettyjä viivoja pitkin prinsessan luo, kun tämä on lähellä, ja seuraavat
   häntä sen jälkeen. Kaikki kolme pupukoloon. Pudonnut pupu palaa
   saarekkeelleen ilman sydänmenetystä. Tehtävät: parit 3, erilainen.
+- **Omenavarat** ♥ — kuusi omenaa roikkuu puissa laskevien terassien
+  yläpuolella. Napauta omena pudottaaksesi sen — se vierii piirrettyjä
+  ramppeja pitkin kohti koria. Rotkoon pudonnut omena palaa puuhunsa;
+  prinsessalta menee sydän. Kaikki omenat koriin. Tehtävät: kuvio, muoto
+  varjoon.
 - **Sotkumörkö** ♥ — vartija. Kolme porttia näyttää muodon (ympyrä, kolmio,
   neliö): piirrä sama muoto kynä kädessä, ja portti aukeaa; väärä muoto
   tärisyttää porttia. Mörkö heittää tahroja, jotka leijuvat hetken ja putoavat:
@@ -188,13 +200,17 @@ sydämiä. Taikakeittiö on saaren vartija.
   näkyvät); napautus kutsuu pupun takaisin. Kaikki kolme pupukoloon. Nuoli
   näyttää piilossa olevan pupun tai kolon. Tehtävät: lue sana (2 tavua), laske.
 - **Marjaniitty** — kiireetön ratsastus. Mansikat ja mustikat kerätään koriin
-  sormella tai ohitse ratsastaen; lähin pupu hyppää ilosta jokaisesta marjasta.
+  sormella tai ohitse ratsastaen.
   Kori hehkuu, kun kaikki kahdeksan on koossa — vie kori perille. Ei sydämiä.
-  Tehtävät: parit 3, lajittele.
+  Tehtävät: parit 6, lajittele.
 - **Pupukahvila** — ei liikkumista, kuvat eikä sanoja. Pupuasiakas tilaa
   evästä kuplassa; napauta oikea eväs (porkkana, omena, marja) hyllyltä
   tarjottimeen. Ensin yksi eväs per tilaus, lopuksi kaksi. Väärä eväs vain
   ravistaa. Viisi tilausta. Ei sydämiä.
+- **Uniaika** — ei liikkumista, ei sydämiä. Kolme pupua väsyttää (haukottelevat
+  kuplineen): napauta pupua, niin se kävelee petiinsä, ja napauta petiä, niin
+  pupu saa peiton ja tuutulaulun. Tehtävät avautuvat hoitamisen edetessä.
+  Tehtävät: anna N kappaletta, laske.
 - **Taikakeittiö** — ei liikkumista. Pupuasiakas tilaa kuplassa värillisen
   juoman; kaada hyllyn pulloista (punainen, keltainen, sininen) pataan. Perusväri
   on yksi kaato, sekoitus kaksi: punainen + keltainen = oranssi, keltainen +
@@ -223,6 +239,9 @@ saaren vartija.
   edellisen päälle, muuten se keikahtaa mereen (ei rangaistusta). Kahdeksan
   palikkaa ja lopuksi lamppu, jonka valo pyörähtää. Kolmen ja kuuden palikan
   jälkeen avautuu tehtävä. Ei sydämiä. Tehtävät: peilikuva, laske.
+- **Kotkalento** ♥ — vapaa liito vuoristoalueen yllä: kahdeksan kotkan sulkaa
+  keinuu tuulessa, ajelehtivat ukkospilvet vievät sydämen. Tuuliportti hehkuu,
+  kun sulat on koossa. Tehtävät: puuttuva ruutu, peilikuva.
 - **Tuulenhuippu** ♥ — vartija. Tasohyppely lumihuipulla rotkoineen. Lippu
   nousee ja lehtiä lentää sekunnin ajan, sitten **tuulenpuuska** työntää
   prinsessaa (ilmassa enemmän) – isojen kivien vierellä on suojassa. Kuusi
@@ -252,6 +271,11 @@ TIKKUKIRJAIMIA ja sanat tavutettuina (KUK-KA). Sanat ja kuvat tulevat samasta
   raahaamalla tavukortit paikoilleen (seuraava paikka hehkuu; väärä tavu palaa
   alas). Valmis sana luetaan ja ripustetaan kylttinä pajan seinälle. Viisi
   tilausta: kaksi 2-tavuista, kolme 3-tavuista. Ei sydämiä.
+- **Kirjainpuutarha** — ei liikkumista, ei sydämiä. Kuudessa pensaassa kylpee
+  kirjaimia; sanakupla ylhäällä näyttää tavutettuna, mikä sana on vuorossa
+  (kuplan napautus lukee sen). Napauta pensasta, jossa on sanan seuraava
+  kirjain — kirjain lentää sanaan ja pensaat sekoittuvat. Kolme sanaa;
+  tehtävät avautuvat sanojen valmistuessa. Tehtävät: alkukirjain, kuva→sana.
 - **Kirjainpilvet** ♥ — vartija. Sama hyppely taivaalla: pilvissä on
   **kirjaimia**, ja sana kirjoitetaan kirjain kerrallaan ylös asti (3-kirjaiminen
   sana pilvisaarelle, 4-kirjaiminen Sanapöllön luo). Väärä kirjain pudottaa.
@@ -303,9 +327,12 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   tahansa toisella sormella mihin tahansa hyppää. Vasen alakulma napin
   ympärillä (27 vmin) hyppää sekin, vaikka napista osuisi ohi.
 - Raahaustehtävät: paina palaa, vedä ja päästä irti kohteen päällä.
-- Taikakynä: pidä pohjassa kävelläksesi; kynänappi ottaa kynän käteen, jolloin
-  sormella piirretään.
-- Taivas ja silta: pidä pohjassa lentääksesi sormea kohti, **↑** on siivenisku.
+- Taikakynä, sadesuoja, pupusilta ja omenavarat: pidä pohjassa kävelläksesi;
+  kynänappi ottaa kynän käteen, jolloin sormella piirretään. Omenavaroissa
+  napautus pudottaa omenan puusta.
+- Taivas, silta, karkkitaivas ja kotkalento: pidä pohjassa lentääksesi sormea
+  kohti, **↑** on siivenisku.
+- Tähtisumu, uniaika ja kirjainpuutarha: pelkkä napautus — hahmo ei liiku.
 - Rytmitehtävä: kuuntele iskut, taputa sama kuvio mihin tahansa ruudulla.
   Tempo saa heittää, kuvion pitää täsmätä.
 
@@ -353,6 +380,13 @@ kartalla (seuraava huone, linna).
 - **Yhdistä pisteet** — numerot 1…7 kuvion ääriviivalla; seuraava numero
   hehkuu ja kynä osoittaa sitä. Oikea napautus vetää viivan, väärä ravistaa.
   Valmis kuvio (tähti, talo, sydän, jalokivi, puu) täyttyy värillä.
+- **Anna N kappaletta** — keko kuvioita pöydällä; napauta oikeanlaiset (sama
+  muoto JA väri kuin kuplassa) koriin, kunnes kuplan määrä (2–4) on täynnä.
+  Oikea kuvio lentää koriin kaaressa, väärä ravistaa. Hämääjät eroavat joko
+  muodoltaan tai väriltään.
+- **Puuttuva ruutu** — 2×2-ruudukko, jossa rivi määrää värin ja sarake muodon;
+  yksi ruutu on piilossa (?). Valitse puuttuva kuvio kolmesta pallosta:
+  väärät ovat sama muoto väärällä värillä ja väärä muoto oikealla värillä.
 
 - **Kuva→sana** — kuva kuplassa ja kolme sanakorttia tavutettuna; kuvan
   napautus lukee sanan (tavut soivat). Väärä kortti himmenee, oikea luetaan.
@@ -382,7 +416,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Lue sana: sanat `WORD_LIST` (tasks-extra.js), tavujen enimmäismäärä `makeTask(fx, 'word', { maxSyl })`, tavun kesto `WORD_SYL_T`
 - Rannikko: aallon väli `6 + Math.random() * 3`, rapujen nopeus `viewW * 0.06`
 - Tikkumetsä: pyörien nopeus `viewW * 0.06` ja kaistat `lollyWheels`, tikkareiden määrä `LOLLY_COUNT`
-- Marjaniitty: marjojen määrä `BERRY_COUNT`, pupujen paikat `berryBunnies`
+- Marjaniitty: marjojen määrä `BERRY_COUNT`, muistipelin parit `{ pairs: 6 }` (initBerry)
 - Pupukahvila: tilausten määrä `CAFE_ORDERS`, kaksiosaiset tilaukset `doubles` (initCafe)
 - Karkkilaakso: pompun voima `viewH * 1.15` (platformer.js), kuulakarkkien nopeus `viewW * 0.07`
 - Torni: kattokruunujen heilunta `speed: 1.1`, kulma `0.55`
@@ -402,6 +436,12 @@ väärästä vastauksesta tulee vain ravistus.
 - Majakka: palikoita `LH_BLOCKS`, heilunnan nopeus `1.3 + stack * 0.1`, tarvittava päällekkäisyys `bw * 0.45` (lamppu `0.3`)
 - Tuulenhuippu: puuskan vaiheet `WIND_WARN = 1.0` / `WIND_BLOW = 1.3`, tyyni `sumWindCalm()`, työntö `viewW * 0.15` (ilmassa ×1.6), suojaetäisyys kivestä `viewW * 0.08`, alueet `sumWindDefs`
 - Taikakynä: musteen määrä `penInkMax = viewW * 1.6`, palautuminen `viewW * 0.22`/s, viivan ikä `PEN_LIFE = 8`, askelkorkeus `PEN_STEP = 0.07`, jyrkin viiva `PEN_SLOPE = 1.4`, kävelynopeus `viewW * 0.16`
+- Karkkitaivas: karkkien määrä `CANDYSKY_COUNT`, ukkospilvet `tFx` (initCandysky)
+- Tähtisumu: tähtien määrä `STARS_COUNT`, pilvet `nebCloudDefs`, puhalluksen kesto `blowT = 2.2`
+- Omenavarat: terassit `orchardTerraces`, omenoita `ORCHARD_COUNT`, vierimisnopeus `viewW * 0.13`
+- Uniaika: pupujen määrä `NAP_BUNNIES`, haukotusväli `2.5 + Math.random() * 2.5`
+- Kotkalento: sulkien määrä `GLIDE_COUNT`, ukkospilvet `tFx` (initGlide)
+- Kirjainpuutarha: sanojen määrä `GROVE_WORDS`, pensaita `GROVE_BUSHES`, hämääjät `GROVE_DISTRACTORS`
 
 ## Tekniikka
 

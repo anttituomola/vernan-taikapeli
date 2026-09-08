@@ -136,7 +136,7 @@ var WORLDS = [
   },
   {
     id: 2, name: 'Karkkisaari',
-    island: { fx: 0.55, fy: 0.58, size: 0.82, finaleKind: 'tower', deco: ['beach', 'candy', 'lollipop', 'tower'] },
+    island: { fx: 0.55, fy: 0.58, size: 0.82, finaleKind: 'tower', deco: ['beach', 'candy', 'candysky', 'lollipop', 'tower'] },
     map: [
       '###########',
       '#B.......h#',
@@ -145,7 +145,9 @@ var WORLDS = [
       '#.#########',
       '#........a#',
       '#########.#',
-      '#k........#',
+      '#c........#',
+      '#.#########',
+      '#........k#',
       '###########'
     ],
     levels: [
@@ -185,6 +187,18 @@ var WORLDS = [
         respawn: function () { respawnLollipop(); }
       },
       {
+        kind: 'candysky', room: 'c', name: 'Karkkitaivas', color: '#ff9fd0', script: 'play-candysky',
+        control: 'fly', usesJump: true, jumpKind: 'flap', usesWand: false, usesHearts: true,
+        bgColor: '#ffd9ec', ambient: 'petals', fg: null,
+        init: function () { initCandysky(); },
+        update: function (dt) { updateCandysky(dt); },
+        draw: function () { drawCandysky(); },
+        tap: function (x, y) { handleCandyskyTap(x, y); },
+        resize: function (ratio) { resizeCandysky(ratio); },
+        renderBg: function (b, w, h) { renderCandyskyBg(b, w, h); },
+        respawn: function () { respawnCandysky(); }
+      },
+      {
         kind: 'tower', room: 'k', name: 'Arvoitusten torni', color: '#9b7bff', script: 'play-tower',
         control: 'run', usesJump: true, usesWand: false, usesHearts: true,
         bgColor: '#241c48', ambient: 'dust', fg: null,
@@ -199,14 +213,18 @@ var WORLDS = [
   },
   {
     id: 3, name: 'Kuutamosaari',
-    island: { fx: 0.84, fy: 0.76, size: 0.82, finaleKind: 'moon', deco: ['reef', 'nightwood', 'clouds'] },
+    island: { fx: 0.84, fy: 0.76, size: 0.82, finaleKind: 'moon', deco: ['reef', 'nightwood', 'stars', 'clouds'] },
     map: [
       '###########',
       '#B.......m#',
       '#########.#',
       '#n........#',
       '#.#########',
-      '#o.......p#',
+      '#........o#',
+      '#########.#',
+      '#u........#',
+      '#.#########',
+      '#........p#',
       '###########'
     ],
     levels: [
@@ -246,6 +264,18 @@ var WORLDS = [
         respawn: function () { respawnClouds(); }
       },
       {
+        kind: 'stars', room: 'u', name: 'Tähtisumu', color: '#5a6fd0', script: 'play-stars',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#0b1030', ambient: 'stars', fg: null,
+        init: function () { initStars(); },
+        update: function (dt) { updateStars(dt); },
+        draw: function () { drawStars(); },
+        tap: function (x, y) { handleStarsTap(x, y); },
+        resize: function () { resizeStars(); },
+        renderBg: function (b, w, h) { renderStarsBg(b, w, h); },
+        respawn: function () { respawnStars(); }
+      },
+      {
         kind: 'moon', room: 'p', name: 'Kuun vartija', color: '#6b5fb0', script: 'play-moon',
         control: 'run', usesJump: true, usesWand: false, usesHearts: true, celebrateMs: 5000,
         bgColor: '#0a0a2a', ambient: 'stars', fg: null,
@@ -260,14 +290,18 @@ var WORLDS = [
   },
   {
     id: 4, name: 'Taikakynän saari',
-    island: { fx: 0.90, fy: 0.47, size: 0.62, finaleKind: 'scribble', deco: ['pen', 'rain', 'bunnybridge'] },
+    island: { fx: 0.90, fy: 0.47, size: 0.62, finaleKind: 'scribble', deco: ['pen', 'rain', 'orchard', 'bunnybridge'] },
     map: [
       '###########',
       '#B.......q#',
       '#########.#',
       '#r........#',
       '#.#########',
-      '#s.......t#',
+      '#........s#',
+      '#########.#',
+      '#o........#',
+      '#.#########',
+      '#........t#',
       '###########'
     ],
     levels: [
@@ -308,6 +342,18 @@ var WORLDS = [
         respawn: function () { respawnBunnyBridge(); }
       },
       {
+        kind: 'orchard', room: 'o', name: 'Omenavarat', color: '#8fc85a', script: 'play-orchard',
+        control: 'draw', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#f6f3e0', ambient: 'butterflies', fg: null,
+        init: function () { initOrchard(); },
+        update: function (dt) { updateOrchard(dt); },
+        draw: function () { drawOrchard(); },
+        tap: function (x, y) { handleOrchardTap(x, y); },
+        resize: function (ratio) { resizeOrchard(ratio); },
+        renderBg: function (b, w, h) { renderOrchardBg(b, w, h); },
+        respawn: function () { respawnOrchard(); }
+      },
+      {
         kind: 'scribble', room: 't', name: 'Sotkumörkö', color: '#5a4a7a', script: 'play-scribble',
         control: 'draw', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5000,
         bgColor: '#f2ecf7', ambient: 'dust', fg: null,
@@ -323,14 +369,18 @@ var WORLDS = [
   },
   {
     id: 5, name: 'Hoivasaari',
-    island: { fx: 0.11, fy: 0.46, size: 0.6, finaleKind: 'kitchen', deco: ['herd', 'berry', 'cafe', 'kitchen'] },
+    island: { fx: 0.11, fy: 0.46, size: 0.6, finaleKind: 'kitchen', deco: ['herd', 'berry', 'naptime', 'cafe', 'kitchen'] },
     map: [
       '###########',
       '#B.......u#',
       '#########.#',
       '#i........#',
       '#.#########',
-      '#l.......v#',
+      '#........l#',
+      '#########.#',
+      '#n........#',
+      '#.#########',
+      '#........v#',
       '###########'
     ],
     levels: [
@@ -371,6 +421,18 @@ var WORLDS = [
         respawn: function () { respawnCafe(); }
       },
       {
+        kind: 'naptime', room: 'n', name: 'Uniaika', color: '#9a7ab8', script: 'play-naptime',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#4a3f78', ambient: null, fg: null,
+        init: function () { initNaptime(); },
+        update: function (dt) { updateNaptime(dt); },
+        draw: function () { drawNaptime(); },
+        tap: function (x, y) { handleNaptimeTap(x, y); },
+        resize: function () { resizeNaptime(); },
+        renderBg: function (b, w, h) { renderNaptimeBg(b, w, h); },
+        respawn: function () { respawnNaptime(); }
+      },
+      {
         kind: 'kitchen', room: 'v', name: 'Taikakeittiö', color: '#ff9f3a', script: 'play-kitchen',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 4000,
         bgColor: '#f7e6d2', ambient: 'sparkle', fg: null,
@@ -386,14 +448,18 @@ var WORLDS = [
   },
   {
     id: 6, name: 'Vuorisaari',
-    island: { fx: 0.40, fy: 0.46, size: 0.62, finaleKind: 'summit', deco: ['mine', 'rapids', 'lighthouse'] },
+    island: { fx: 0.40, fy: 0.46, size: 0.62, finaleKind: 'summit', deco: ['mine', 'rapids', 'glide', 'lighthouse'] },
     map: [
       '###########',
       '#B.......w#',
       '#########.#',
       '#x........#',
       '#.#########',
-      '#y.......z#',
+      '#........y#',
+      '#########.#',
+      '#g........#',
+      '#.#########',
+      '#........z#',
       '###########'
     ],
     levels: [
@@ -434,6 +500,18 @@ var WORLDS = [
         respawn: function () { respawnLighthouse(); }
       },
       {
+        kind: 'glide', room: 'g', name: 'Kotkalento', color: '#9fc8f0', script: 'play-glide',
+        control: 'fly', usesJump: true, jumpKind: 'flap', usesWand: false, usesHearts: true,
+        bgColor: '#cfe6ff', ambient: 'sparkle', fg: null,
+        init: function () { initGlide(); },
+        update: function (dt) { updateGlide(dt); },
+        draw: function () { drawGlide(); },
+        tap: function (x, y) { handleGlideTap(x, y); },
+        resize: function (ratio) { resizeGlide(ratio); },
+        renderBg: function (b, w, h) { renderGlideBg(b, w, h); },
+        respawn: function () { respawnGlide(); }
+      },
+      {
         kind: 'summit', room: 'z', name: 'Tuulenhuippu', color: '#9fd0ff', script: 'play-summit',
         control: 'run', usesJump: true, usesWand: false, usesHearts: true, celebrateMs: 5000,
         bgColor: '#cfe6ff', ambient: 'snow', fg: { kind: 'snow', color: 'rgba(255,255,255,0.85)' },
@@ -448,14 +526,18 @@ var WORLDS = [
   },
   {
     id: 7, name: 'Kirjainsaari',
-    island: { fx: 0.68, fy: 0.43, size: 0.58, finaleKind: 'letterclouds', deco: ['letterfield', 'sylrapids', 'wordshop'] },
+    island: { fx: 0.68, fy: 0.43, size: 0.58, finaleKind: 'letterclouds', deco: ['letterfield', 'sylrapids', 'grove', 'wordshop'] },
     map: [
       '###########',
       '#B.......A#',
       '#########.#',
       '#C........#',
       '#.#########',
-      '#D.......E#',
+      '#........D#',
+      '#########.#',
+      '#F........#',
+      '#.#########',
+      '#........E#',
       '###########'
     ],
     levels: [
@@ -494,6 +576,18 @@ var WORLDS = [
         resize: function (ratio) { resizeWordshop(ratio); },
         renderBg: function (b, w, h) { renderWordshopBg(b, w, h); },
         respawn: function () { respawnWordshop(); }
+      },
+      {
+        kind: 'grove', room: 'F', name: 'Kirjainpuutarha', color: '#7fc86a', script: 'play-grove',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#d9f3ff', ambient: 'butterflies', fg: null,
+        init: function () { initGrove(); },
+        update: function (dt) { updateGrove(dt); },
+        draw: function () { drawGrove(); },
+        tap: function (x, y) { handleGroveTap(x, y); },
+        resize: function () { resizeGrove(); },
+        renderBg: function (b, w, h) { renderGroveBg(b, w, h); },
+        respawn: function () { respawnGrove(); }
       },
       {
         kind: 'letterclouds', room: 'E', name: 'Kirjainpilvet', color: '#8fc8ff', script: 'play-rapids',
