@@ -33,7 +33,7 @@ function cafeNextOrder() {
 
 function initCafe() {
   var i, k, tmp;
-  var singles = ['carrot', 'apple'], doubles = [['carrot', 'apple'], ['apple', 'berry'], ['carrot', 'berry']];
+  var singles = [['carrot'], ['apple']], doubles = [['carrot', 'apple'], ['apple', 'berry'], ['carrot', 'berry']];
   for (i = singles.length - 1; i > 0; i--) { k = randInt(i + 1); tmp = singles[i]; singles[i] = singles[k]; singles[k] = tmp; }
   for (i = doubles.length - 1; i > 0; i--) { k = randInt(i + 1); tmp = doubles[i]; doubles[i] = doubles[k]; doubles[k] = tmp; }
   tasks = [];
@@ -272,7 +272,7 @@ function drawCafeHud(c) {
   c.fill();
   for (i = 0; i < CAFE_ORDERS; i++) {
     var order = cafe.orders[i] || ['carrot'];
-    var first = typeof order === 'string' ? order : order[0];
+    var first = order[0];
     c.globalAlpha = i < cafe.served ? 1 : 0.3;
     cafeDrawFood(c, first, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.8, hs * 0.55);
     c.globalAlpha = 1;
