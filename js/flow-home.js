@@ -30,10 +30,20 @@ var HOME_ITEMS = [
   { id: 'chest', price: 4, kind: 'floor' },
   { id: 'trampoline', price: 5, kind: 'floor' },
   { id: 'aquarium', price: 5, kind: 'floor' },
-  { id: 'piano', price: 5, kind: 'floor' }
+  { id: 'piano', price: 5, kind: 'floor' },
+  // Keittiö
+  { id: 'fruitbowl', price: 2, kind: 'floor' },
+  { id: 'cookies', price: 2, kind: 'floor' },
+  { id: 'pots', price: 2, kind: 'wall' },
+  { id: 'sink', price: 3, kind: 'floor' },
+  { id: 'cupboard', price: 3, kind: 'wall' },
+  { id: 'stove', price: 4, kind: 'floor' },
+  { id: 'dinnertable', price: 4, kind: 'floor' },
+  { id: 'fridge', price: 5, kind: 'floor' }
 ];
-// Huoneet: 0 = sali (ovi oikealla), 1 = tornihuone (ovi vasemmalla)
-var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }];
+// Huoneet: 0 = sali (ovet oikealla torniin ja vasemmalla keittiöön),
+// 1 = tornihuone (ovi vasemmalla saliin), 2 = keittiö (ovi oikealla saliin)
+var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }, { id: 'kitchen' }];
 var HOME_SHOP_PAGE = 10;
 // Maalit: purkki raahataan seinälle (wall-liuku) tai lattialle (floor-liuku). Ilmaisia.
 var HOME_PAINTS = [
@@ -46,7 +56,7 @@ var HOME_PAINTS = [
   { id: 'wood', pot: '#a9743f', wall: ['#f7ead2', '#e6cfa8'], floor: ['#c98b4a', '#8a5a30'] }
 ];
 var HOME_BOWS = ['#ff7bac', '#5fa8ff', '#ffd24f'];
-function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 } }; }
+function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 }, 2: { wall: 4, floor: 6 } }; }
 // Onko #rrggbb-väri vaalea (tapettikuvion sävyn valintaan)
 function homeColorIsLight(hex) {
   var n = parseInt(hex.slice(1), 16);
@@ -96,11 +106,31 @@ function homeHasHere(id) {
 function homeItemSize() {
   return viewH * 0.13;
 }
-// Ovi: salissa oikeassa reunassa, tornihuoneessa vasemmassa
-function homeDoorRect() {
+// Ovet: { x, y, w, h, to, side } — salissa oikealla torniin ja vasemmalla
+// keittiöön, tornissa vasemmalla saliin, keittiössä oikealla saliin
+function homeDoors() {
   var room = homeRoom(), h = viewH;
-  if (homeRoomIdx === 0) return { x: room.x1 - h * 0.13, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3 };
-  return { x: room.x0 + h * 0.01, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3 };
+  var right = { x: room.x1 - h * 0.13, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3, side: 1 };
+  var left = { x: room.x0 + h * 0.01, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3, side: -1 };
+  if (homeRoomIdx === 0) { right.to = 1; left.to = 2; return [right, left]; }
+  if (homeRoomIdx === 1) { left.to = 0; return [left]; }
+  right.to = 0;
+  return [right];
+}
+// Ovi, joka johtaa huoneeseen `to` (tai ensimmäinen ovi)
+function homeDoorTo(to) {
+  var ds = homeDoors(), i;
+  for (i = 0; i < ds.length; i++) if (ds[i].to === to) return ds[i];
+  return ds[0];
+}
+function homeDoorAt(px, py, pad) {
+  var ds = homeDoors(), i, d;
+  pad = pad || 0;
+  for (i = 0; i < ds.length; i++) {
+    d = ds[i];
+    if (px >= d.x - d.w * pad && px <= d.x + d.w * (1 + pad) && py >= d.y - d.h * pad * 0.5 && py <= d.y + d.h * (1 + pad * 0.5)) return d;
+  }
+  return null;
 }
 
 function showHome() {
@@ -131,19 +161,20 @@ function showHome() {
 }
 
 function homeGoRoom(idx) {
-  var i, b;
+  var i, b, from = homeRoomIdx, dr;
   homeRoomIdx = idx;
   homeBgKey = '';
   homeDrag = null;
-  // Puput tulevat perässä ovesta
+  // Puput tulevat perässä siitä ovesta, joka johtaa takaisin lähtöhuoneeseen
+  dr = homeDoorTo(from);
   for (i = 0; i < homeBunnies.length; i++) {
     b = homeBunnies[i];
-    b.fx = idx === 0 ? 0.62 - i * 0.04 : 0.1 + i * 0.04;
+    b.fx = (dr.x + dr.w / 2) / viewW + dr.side * -(0.06 + i * 0.04);
     b.fy = 0.75 + (i % 2) * 0.1;
     b.timer = 0.3 + i * 0.3;
     b.hop = 1;
   }
-  spawnSparkles(homeDoorRect().x + homeDoorRect().w / 2, homeRoom().floorY - viewH * 0.15, 12, '#ffe27a');
+  spawnSparkles(dr.x + dr.w / 2, homeRoom().floorY - viewH * 0.15, 12, '#ffe27a');
   playNote(392, 0, 0.1, 'triangle', 0.25);
   playNote(523, 0.1, 0.15, 'triangle', 0.25);
 }
@@ -225,7 +256,8 @@ function homeShopPick(cell, px, py) {
     playNote(196, 0, 0.2, 'triangle', 0.25);
     return;
   }
-  it = { id: def.id, fx: px / viewW, fy: py / viewH, on: def.id !== 'chest', phase: 0, room: homeRoomIdx };
+  // Arkku, jääkaappi, kaappi ja liesi alkavat kiinni/sammuksissa; muut (lamput, kynttilät) päällä
+  it = { id: def.id, fx: px / viewW, fy: py / viewH, on: ['chest', 'fridge', 'cupboard', 'stove'].indexOf(def.id) < 0, phase: 0, room: homeRoomIdx };
   homeDrag = { item: it, ghost: true, def: def, dx: 0, dy: 0, sx: px, sy: py, moved: false };
   playNote(660, 0, 0.06, 'sine', 0.2);
 }
@@ -241,18 +273,20 @@ function homeStore(it) {
   playNote(392, 0.1, 0.15, 'triangle', 0.25);
 }
 
-// Tavara toiseen huoneeseen oven kautta: ilmestyy toisen huoneen oven viereen
-function homeMoveToOtherRoom(it) {
+// Tavara toiseen huoneeseen oven kautta: ilmestyy kohdehuoneessa sen oven
+// viereen, joka johtaa takaisin tähän huoneeseen
+function homeMoveToOtherRoom(it, door) {
   var def = homeItemDef(it.id), room = homeRoom(), s = homeItemSize();
-  var other = homeRoomIdx === 0 ? 1 : 0;
+  var other = door.to, from = homeRoomIdx;
+  // Kohdehuoneen paluuovi: torni ja keittiö -> saliin; sali -> tornista tullessa oikealla, keittiöstä vasemmalla
+  var backSide = other === 1 ? -1 : (other === 2 ? 1 : (from === 1 ? 1 : -1));
   it.room = other;
   it.roll = 0;
-  // Toisen huoneen ovi on vastakkaisella laidalla: sali -> torni vasempaan laitaan, torni -> sali oikeaan
-  it.fx = (other === 1 ? room.x0 + s * 1.3 : room.x1 - s * 1.6) / viewW;
+  it.fx = (backSide < 0 ? room.x0 + s * 1.3 : room.x1 - s * 1.6) / viewW;
   if (def && def.kind === 'wall') it.fy = 0.3;
   else it.fy = Math.min(Math.max(it.fy, (room.floorY + s * 0.05) / viewH), room.bottom / viewH);
   saveProgress();
-  var dr = homeDoorRect();
+  var dr = door;
   spawnSparkles(dr.x + dr.w / 2, dr.y + dr.h * 0.4, 16, '#ffe27a');
   playNote(523, 0, 0.1, 'triangle', 0.25);
   playNote(659, 0.1, 0.1, 'triangle', 0.25);
@@ -261,7 +295,9 @@ function homeMoveToOtherRoom(it) {
 
 // Maali seinälle tai lattialle; tausta piirretään uudelleen
 function homePaint(idx, py) {
-  var room = homeRoom(), d = homeDecor[homeRoomIdx];
+  var room = homeRoom();
+  if (!homeDecor[homeRoomIdx]) homeDecor[homeRoomIdx] = homeDecorDefault()[homeRoomIdx];
+  var d = homeDecor[homeRoomIdx];
   if (py < room.floorY) d.wall = idx; else d.floor = idx;
   homeBgKey = '';
   saveProgress();
@@ -355,10 +391,8 @@ function handleHomeTap(px, py) {
     }
   }
   // Ovi: toiseen huoneeseen
-  r = homeDoorRect();
-  if (px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h) {
-    homeGoRoom(homeRoomIdx === 0 ? 1 : 0);
-  }
+  var door = homeDoorAt(px, py, 0);
+  if (door) homeGoRoom(door.to);
 }
 
 // Onko raahattava kaupan puolella (haamu: ei ostoa vielä; oma tavara: varastoon)
@@ -369,13 +403,13 @@ function homeDragX() {
 function homeGhostInShop() {
   return !!(homeDrag && homeDragX() >= homeShopBox().x - homeItemSize() * 0.3);
 }
-// Onko raahattava tavara oven päällä (siirto toiseen huoneeseen)
+// Onko raahattava tavara oven päällä (siirto toiseen huoneeseen): palauttaa oven tai null
 function homeDragOnDoor() {
-  if (!homeDrag || !homeDrag.item) return false;
-  var dr = homeDoorRect(), x = homeDrag.item.fx * viewW, y = homeDrag.item.fy * viewH;
+  if (!homeDrag || !homeDrag.item) return null;
+  var x = homeDrag.item.fx * viewW, y = homeDrag.item.fy * viewH;
   var def = homeItemDef(homeDrag.item.id);
   if (def && def.kind !== 'wall') y -= homeItemSize() * 0.4;
-  return x >= dr.x - dr.w * 0.2 && x <= dr.x + dr.w * 1.2 && y >= dr.y - dr.h * 0.1 && y <= dr.y + dr.h * 1.1;
+  return homeDoorAt(x, y, 0.2);
 }
 
 function homeMove(px, py) {
@@ -434,7 +468,7 @@ function homeUp() {
     return;
   }
   if (onDoor && moved) {
-    homeMoveToOtherRoom(it);
+    homeMoveToOtherRoom(it, onDoor);
     return;
   }
   if (moved) {
@@ -504,6 +538,37 @@ function homeItemTap(it) {
   } else if (it.id === 'vase') {
     it.spinT = 1.5;
     playNote(988, 0, 0.1, 'sine', 0.2);
+  } else if (it.id === 'stove') {
+    // Liesi: levy hehkuu ja kattila kiehuu
+    it.on = !it.on;
+    playNote(it.on ? 660 : 330, 0, 0.12, 'triangle', 0.25);
+    if (it.on) playNote(880, 0.1, 0.2, 'sine', 0.2);
+  } else if (it.id === 'fridge') {
+    it.on = !it.on;
+    playNote(it.on ? 523 : 392, 0, 0.12, 'triangle', 0.25);
+    if (it.on) spawnSparkles(x, y - s * 0.6, 8, '#dff3ff');
+  } else if (it.id === 'sink') {
+    it.waterT = 2.2;
+    for (i = 0; i < 4; i++) playNote(1400 + i * 150, i * 0.12, 0.1, 'sine', 0.12);
+  } else if (it.id === 'cupboard') {
+    it.on = !it.on;
+    playNote(it.on ? 587 : 440, 0, 0.1, 'triangle', 0.25);
+  } else if (it.id === 'pots') {
+    it.clankT = 1.4;
+    playNote(1100, 0, 0.12, 'square', 0.08);
+    playNote(1500, 0.14, 0.1, 'square', 0.07);
+  } else if (it.id === 'dinnertable') {
+    it.on = !it.on;
+    playNote(it.on ? 784 : 262, 0, 0.15, 'sine', 0.25);
+    if (!it.on) spawnSparkles(x, y - s * 0.8, 8, '#c9c9c9');
+  } else if (it.id === 'cookies') {
+    playNote(700, 0, 0.06, 'square', 0.08);
+    playNote(900, 0.08, 0.06, 'square', 0.08);
+    spawnSparkles(x, y - s * 0.3, 8, '#c98b4a');
+  } else if (it.id === 'fruitbowl') {
+    it.phase = 1;
+    playNote(880, 0, 0.1, 'sine', 0.2);
+    playNote(1175, 0.08, 0.12, 'sine', 0.2);
   } else {
     playNote(660, 0, 0.08, 'triangle', 0.2);
   }
@@ -523,6 +588,8 @@ function updateHome(dt) {
     if (it.rockT > 0) it.rockT -= dt;
     if (it.steamT > 0) it.steamT -= dt;
     if (it.spinT > 0) it.spinT -= dt;
+    if (it.waterT > 0) it.waterT -= dt;
+    if (it.clankT > 0) it.clankT -= dt;
     if (it.bounceT > 0) it.bounceT = Math.max(0, it.bounceT - dt * 2);
     if (it.roll) {
       var nx = it.fx * viewW + it.roll * dt;
@@ -553,6 +620,8 @@ function updateHome(dt) {
   // kakku ja trampoliini toimivat varavaihtoehtoina. Muuten vaellus.
   var bed = homeHasHere('bed'), carrots = homeHasHere('carrots'), ball = homeHasHere('ball');
   var teddy = homeHasHere('teddy'), cake = homeHasHere('cake'), tramp = homeHasHere('trampoline');
+  var fruit = homeHasHere('fruitbowl'), cookies = homeHasHere('cookies'), dinner = homeHasHere('dinnertable');
+  var snack = carrots || cake || fruit || cookies;
   for (i = 0; i < homeBunnies.length; i++) {
     b = homeBunnies[i];
     b.earT += dt * (b.state === 'eat' ? 12 : 3);
@@ -560,10 +629,11 @@ function updateHome(dt) {
     var want = 'wander', target = null;
     if (i === 0 && bed) { want = 'sleep'; target = { fx: bed.fx, fy: bed.fy - 0.005 }; }
     else if (i === 0 && teddy) { want = 'hug'; target = { fx: teddy.fx + 0.035, fy: teddy.fy }; }
-    else if (i === 1 && carrots) { want = 'eat'; target = { fx: carrots.fx + 0.045, fy: carrots.fy }; }
-    else if (i === 1 && cake) { want = 'eat'; target = { fx: cake.fx + 0.045, fy: cake.fy }; }
+    else if (i === 0 && dinner) { want = 'sit'; target = { fx: dinner.fx - 0.06, fy: dinner.fy + 0.01 }; }
+    else if (i === 1 && snack) { want = 'eat'; target = { fx: snack.fx + 0.045, fy: snack.fy }; }
     else if (i === 2 && ball) { want = 'play'; target = { fx: ball.fx + (b.side || -1) * 0.05, fy: ball.fy }; }
     else if (i === 2 && tramp) { want = 'bounce'; target = { fx: tramp.fx, fy: tramp.fy - 0.01 }; }
+    else if (i === 2 && dinner) { want = 'sit'; target = { fx: dinner.fx + 0.06, fy: dinner.fy + 0.01 }; }
     if (want !== 'wander') {
       b.tx = target.fx; b.ty = target.fy;
     } else if (b.timer <= 0) {
@@ -631,17 +701,21 @@ function drawHome() {
   }
   // Oma tavara kaupan päällä: piirretään kaupan päälle haaleana laatikon kanssa (varastoon)
   var toShop = homeDrag && homeDrag.item && !homeDrag.ghost && homeGhostInShop();
-  // Oven hehku (voimakkaampi, kun tavaraa raahataan: sen voi viedä ovesta) ja
-  // vihje, kunnes toisessa huoneessa on jotain
-  var dr = homeDoorRect(), otherHas = false;
-  for (i = 0; i < homeItems.length; i++) if (homeItemRoom(homeItems[i]) === (homeRoomIdx === 0 ? 1 : 0)) otherHas = true;
+  // Ovien hehku (voimakkaampi, kun tavaraa raahataan: sen voi viedä ovesta) ja
+  // vihje salissa, kunnes oven takana olevassa huoneessa on jotain
+  var doors = homeDoors(), dr, k, onDoor = homeDragOnDoor();
   var dragging = !!(homeDrag && homeDrag.item && !homeDrag.ghost);
-  var dg = ctx.createRadialGradient(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 0.2, dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3);
-  dg.addColorStop(0, 'rgba(255,240,180,' + ((dragging ? (homeDragOnDoor() ? 0.8 : 0.5) : 0.25) + Math.sin(globalT * 3) * 0.1) + ')');
-  dg.addColorStop(1, 'rgba(255,240,180,0)');
-  ctx.fillStyle = dg;
-  ctx.beginPath(); ctx.arc(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3, 0, Math.PI * 2); ctx.fill();
-  if (!otherHas && homeRoomIdx === 0) drawHintArrow(ctx, dr.x + dr.w / 2, dr.y - viewH * 0.06);
+  for (k = 0; k < doors.length; k++) {
+    dr = doors[k];
+    var otherHas = false;
+    for (i = 0; i < homeItems.length; i++) if (homeItemRoom(homeItems[i]) === dr.to) otherHas = true;
+    var dg = ctx.createRadialGradient(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 0.2, dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3);
+    dg.addColorStop(0, 'rgba(255,240,180,' + ((dragging ? (onDoor === dr ? 0.8 : 0.5) : 0.25) + Math.sin(globalT * 3) * 0.1) + ')');
+    dg.addColorStop(1, 'rgba(255,240,180,0)');
+    ctx.fillStyle = dg;
+    ctx.beginPath(); ctx.arc(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3, 0, Math.PI * 2); ctx.fill();
+    if (!otherHas && homeRoomIdx === 0) drawHintArrow(ctx, dr.x + dr.w / 2, dr.y - viewH * 0.06);
+  }
   for (i = 0; i < homeNotes.length; i++) drawNote(ctx, homeNotes[i]);
   drawParticlesLayerAbs(ctx);
   drawHomeShop(ctx);
@@ -875,6 +949,14 @@ function drawHomeBunny(c, b) {
   } else if (b.state === 'hug') {
     c.fillStyle = '#ff5f7e';
     drawHeartShape(c, x + s * 0.6, y - s * 2.1 - Math.sin(globalT * 3) * s * 0.1, s * 0.22, true);
+  } else if (b.state === 'sit') {
+    // Pöydässä: pieni lautanen ja haarukka pupun edessä
+    c.fillStyle = '#fff';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y + s * 0.15, s * 0.45, s * 0.14, 0, 0, Math.PI * 2); else c.arc(x, y + s * 0.15, s * 0.3, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = '#ff8a3d';
+    c.beginPath(); c.arc(x, y + s * 0.13, s * 0.12, 0, Math.PI * 2); c.fill();
   }
 }
 
@@ -1264,6 +1346,255 @@ function drawHomeItem(c, it, x, y, s) {
     c.fill();
     c.fillStyle = '#ff7bac';
     c.beginPath(); c.arc(x + s * 0.38, y - s * 1.0, s * 0.06, 0, Math.PI * 2); c.fill();
+  } else if (it.id === 'fruitbowl') {
+    // Hedelmäkulho: omenat, banaani ja rypäleet
+    c.fillStyle = '#7fd4ff';
+    c.beginPath(); c.moveTo(x - s * 0.45, y - s * 0.32); c.lineTo(x + s * 0.45, y - s * 0.32); c.quadraticCurveTo(x + s * 0.3, y, x, y); c.quadraticCurveTo(x - s * 0.3, y, x - s * 0.45, y - s * 0.32); c.fill();
+    c.fillStyle = '#ff4d5e';
+    c.beginPath(); c.arc(x - s * 0.22, y - s * 0.42, s * 0.12, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#6fd66f';
+    c.beginPath(); c.arc(x + s * 0.02, y - s * 0.46, s * 0.12, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#ffe94f';
+    c.beginPath(); c.moveTo(x - s * 0.1, y - s * 0.62); c.quadraticCurveTo(x + s * 0.2, y - s * 0.78, x + s * 0.42, y - s * 0.55); c.quadraticCurveTo(x + s * 0.2, y - s * 0.66, x - s * 0.06, y - s * 0.56); c.closePath(); c.fill();
+    c.fillStyle = '#8a4dff';
+    for (i = 0; i < 5; i++) { c.beginPath(); c.arc(x + s * 0.24 + (i % 3) * s * 0.07 - s * 0.05, y - s * 0.4 + Math.floor(i / 3) * s * 0.07, s * 0.045, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = 'rgba(255,255,255,0.5)';
+    c.beginPath(); c.arc(x - s * 0.26, y - s * 0.47, s * 0.035, 0, Math.PI * 2); c.fill();
+  } else if (it.id === 'cookies') {
+    // Piparilautanen
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y - s * 0.06, s * 0.48, s * 0.14, 0, 0, Math.PI * 2); else c.arc(x, y - s * 0.06, s * 0.3, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = '#7fd4ff';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.stroke();
+    var ccols = ['#c98b4a', '#b87a3a', '#d9a05f'];
+    for (i = 0; i < 4; i++) {
+      var cx2 = x + (i - 1.5) * s * 0.17, cy2 = y - s * 0.16 - (i % 2) * s * 0.05;
+      c.fillStyle = ccols[i % 3];
+      c.beginPath(); c.arc(cx2, cy2, s * 0.11, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#5a3416';
+      c.beginPath(); c.arc(cx2 - s * 0.04, cy2 - s * 0.03, s * 0.02, 0, Math.PI * 2); c.arc(cx2 + s * 0.04, cy2 + s * 0.02, s * 0.02, 0, Math.PI * 2); c.fill();
+    }
+    c.fillStyle = '#ff5f7e';
+    drawHeartShape(c, x, y - s * 0.3, s * 0.05, true);
+  } else if (it.id === 'pots') {
+    // Kattilat ja paistinpannu koukuissa; napautus kilistää
+    var cl = it.clankT > 0 ? Math.sin(globalT * 16) * 0.15 * Math.min(1, it.clankT) : 0;
+    c.fillStyle = '#8a5a30';
+    roundRect(c, x - s * 0.55, y - s * 0.42, s * 1.1, s * 0.06, s * 0.02);
+    c.fill();
+    var pcol = ['#ff5f7e', '#5fa8ff', '#ffd24f'];
+    for (i = -1; i <= 1; i++) {
+      var px = x + i * s * 0.36;
+      c.save();
+      c.translate(px, y - s * 0.36);
+      c.rotate(cl * (i === 0 ? -1 : 1));
+      c.strokeStyle = '#3a3346';
+      c.lineWidth = Math.max(1.5, s * 0.03);
+      c.beginPath(); c.moveTo(0, 0); c.lineTo(0, s * 0.12); c.stroke();
+      c.fillStyle = pcol[i + 1];
+      if (i === 0) {
+        c.beginPath(); c.arc(0, s * 0.3, s * 0.17, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#3a3346';
+        c.beginPath(); c.arc(0, s * 0.3, s * 0.1, 0, Math.PI * 2); c.fill();
+      } else {
+        roundRect(c, -s * 0.15, s * 0.12, s * 0.3, s * 0.3, s * 0.05);
+        c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.4)';
+        c.fillRect(-s * 0.15, s * 0.12, s * 0.3, s * 0.05);
+      }
+      c.restore();
+    }
+  } else if (it.id === 'sink') {
+    // Tiskiallas: kaappi, allas, hana; napautus laskee vettä
+    c.fillStyle = '#7fd4ff';
+    roundRect(c, x - s * 0.5, y - s * 0.55, s, s * 0.55, s * 0.04);
+    c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.35)';
+    c.fillRect(x - s * 0.44, y - s * 0.45, s * 0.4, s * 0.38);
+    c.fillRect(x + s * 0.04, y - s * 0.45, s * 0.4, s * 0.38);
+    c.fillStyle = '#ffd24f';
+    c.beginPath(); c.arc(x - s * 0.06, y - s * 0.26, s * 0.03, 0, Math.PI * 2); c.arc(x + s * 0.06, y - s * 0.26, s * 0.03, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#e8eef7';
+    roundRect(c, x - s * 0.55, y - s * 0.65, s * 1.1, s * 0.12, s * 0.03);
+    c.fill();
+    c.fillStyle = '#c9d6e8';
+    roundRect(c, x - s * 0.3, y - s * 0.63, s * 0.6, s * 0.08, s * 0.03);
+    c.fill();
+    c.strokeStyle = '#8a8298';
+    c.lineWidth = Math.max(2, s * 0.06);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x + s * 0.2, y - s * 0.65); c.lineTo(x + s * 0.2, y - s * 0.92); c.quadraticCurveTo(x + s * 0.2, y - s * 1.02, x + s * 0.08, y - s * 1.0); c.lineTo(x, y - s * 0.96); c.stroke();
+    c.lineCap = 'butt';
+    if (it.waterT > 0) {
+      c.strokeStyle = 'rgba(120,200,255,0.85)';
+      c.lineWidth = Math.max(2, s * 0.05);
+      c.beginPath(); c.moveTo(x, y - s * 0.95); c.lineTo(x, y - s * 0.66); c.stroke();
+      c.fillStyle = 'rgba(160,220,255,0.8)';
+      for (i = 0; i < 3; i++) { c.beginPath(); c.arc(x + Math.sin(globalT * 7 + i * 2) * s * 0.1, y - s * 0.62 - ((globalT * 1.3 + i * 0.33) % 1) * s * 0.06, s * 0.025, 0, Math.PI * 2); c.fill(); }
+    }
+  } else if (it.id === 'cupboard') {
+    // Seinäkaappi: ovet aukeavat, sisällä lautasia ja mukeja
+    c.fillStyle = '#a9743f';
+    roundRect(c, x - s * 0.5, y - s * 0.4, s, s * 0.8, s * 0.05);
+    c.fill();
+    if (it.on) {
+      c.fillStyle = '#fff6d8';
+      c.fillRect(x - s * 0.44, y - s * 0.34, s * 0.88, s * 0.68);
+      c.fillStyle = '#c98b4a';
+      c.fillRect(x - s * 0.44, y - s * 0.02, s * 0.88, s * 0.04);
+      var mcols = ['#ff7bac', '#7fd4ff', '#ffd24f', '#6fd66f'];
+      for (i = 0; i < 4; i++) { c.fillStyle = mcols[i]; roundRect(c, x - s * 0.38 + i * s * 0.2, y + s * 0.08, s * 0.14, s * 0.2, s * 0.03); c.fill(); }
+      for (i = 0; i < 3; i++) { c.fillStyle = '#fff'; c.beginPath(); c.arc(x - s * 0.24 + i * s * 0.24, y - s * 0.18, s * 0.12, 0, Math.PI * 2); c.fill(); c.strokeStyle = mcols[i]; c.lineWidth = Math.max(1.5, s * 0.025); c.stroke(); }
+      c.fillStyle = '#a9743f';
+      c.fillRect(x - s * 0.62, y - s * 0.4, s * 0.14, s * 0.8);
+      c.fillRect(x + s * 0.48, y - s * 0.4, s * 0.14, s * 0.8);
+    } else {
+      c.fillStyle = '#c98b4a';
+      roundRect(c, x - s * 0.44, y - s * 0.34, s * 0.42, s * 0.68, s * 0.03);
+      c.fill();
+      roundRect(c, x + s * 0.02, y - s * 0.34, s * 0.42, s * 0.68, s * 0.03);
+      c.fill();
+      c.fillStyle = '#ffd24f';
+      c.beginPath(); c.arc(x - s * 0.08, y, s * 0.03, 0, Math.PI * 2); c.arc(x + s * 0.08, y, s * 0.03, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(255,255,255,0.25)';
+      c.fillRect(x - s * 0.4, y - s * 0.3, s * 0.34, s * 0.25);
+      c.fillRect(x + s * 0.06, y - s * 0.3, s * 0.34, s * 0.25);
+    }
+  } else if (it.id === 'stove') {
+    // Liesi: uuni luukulla, levyt ja kattila; päällä levy hehkuu ja kattila kiehuu
+    c.fillStyle = '#e8eef7';
+    roundRect(c, x - s * 0.5, y - s * 0.6, s, s * 0.6, s * 0.04);
+    c.fill();
+    c.fillStyle = '#3a3346';
+    roundRect(c, x - s * 0.38, y - s * 0.42, s * 0.76, s * 0.32, s * 0.03);
+    c.fill();
+    c.fillStyle = it.on ? 'rgba(255,170,60,0.6)' : 'rgba(120,150,200,0.35)';
+    c.fillRect(x - s * 0.32, y - s * 0.36, s * 0.64, s * 0.2);
+    c.fillStyle = '#c9c4d8';
+    c.fillRect(x - s * 0.44, y - s * 0.52, s * 0.88, s * 0.05);
+    for (i = 0; i < 3; i++) { c.fillStyle = ['#ff5f7e', '#ffd24f', '#5fa8ff'][i]; c.beginPath(); c.arc(x - s * 0.2 + i * s * 0.2, y - s * 0.495, s * 0.02, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = '#3a3346';
+    c.beginPath();
+    if (c.ellipse) { c.ellipse(x - s * 0.24, y - s * 0.62, s * 0.16, s * 0.05, 0, 0, Math.PI * 2); c.ellipse(x + s * 0.24, y - s * 0.62, s * 0.16, s * 0.05, 0, 0, Math.PI * 2); }
+    else { c.arc(x - s * 0.24, y - s * 0.62, s * 0.1, 0, Math.PI * 2); c.arc(x + s * 0.24, y - s * 0.62, s * 0.1, 0, Math.PI * 2); }
+    c.fill();
+    if (it.on) {
+      c.fillStyle = 'rgba(255,120,60,' + (0.6 + Math.sin(globalT * 8) * 0.25) + ')';
+      c.beginPath();
+      if (c.ellipse) c.ellipse(x + s * 0.24, y - s * 0.62, s * 0.12, s * 0.035, 0, 0, Math.PI * 2); else c.arc(x + s * 0.24, y - s * 0.62, s * 0.08, 0, Math.PI * 2);
+      c.fill();
+    }
+    // Kattila vasemmalla levyllä
+    c.fillStyle = '#ff5f7e';
+    roundRect(c, x - s * 0.4, y - s * 0.86, s * 0.32, s * 0.24, s * 0.04);
+    c.fill();
+    c.fillStyle = '#c8323c';
+    c.fillRect(x - s * 0.44, y - s * 0.88, s * 0.4, s * 0.05);
+    c.strokeStyle = '#3a3346';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x - s * 0.44, y - s * 0.76); c.lineTo(x - s * 0.5, y - s * 0.78); c.moveTo(x - s * 0.08, y - s * 0.76); c.lineTo(x - s * 0.02, y - s * 0.78); c.stroke();
+    if (it.on) {
+      c.strokeStyle = 'rgba(255,255,255,0.75)';
+      c.lineWidth = Math.max(1.5, s * 0.03);
+      for (i = -1; i <= 1; i++) {
+        var sx = x - s * 0.24 + i * s * 0.08, ph = globalT * 4 + i;
+        c.beginPath(); c.moveTo(sx, y - s * 0.9); c.quadraticCurveTo(sx + Math.sin(ph) * s * 0.06, y - s * 1.05, sx, y - s * 1.18 - (ph % 1) * s * 0.02); c.stroke();
+      }
+    }
+  } else if (it.id === 'dinnertable') {
+    // Ruokapöytä: liina, kaksi tuolia, kynttilä (napautus sytyttää/sammuttaa)
+    c.fillStyle = '#a9743f';
+    for (i = -1; i <= 1; i += 2) {
+      c.fillRect(x + i * s * 0.62 - s * 0.03, y - s * 0.5, s * 0.06, s * 0.5);
+      c.fillRect(x + i * s * 0.5 - s * 0.03, y - s * 0.32, s * 0.06, s * 0.32);
+      roundRect(c, x + i * s * 0.62 - s * 0.14, y - s * 0.34, s * 0.28, s * 0.05, s * 0.02);
+      c.fill();
+    }
+    c.fillStyle = '#a9743f';
+    c.fillRect(x - s * 0.3, y - s * 0.5, s * 0.06, s * 0.5);
+    c.fillRect(x + s * 0.24, y - s * 0.5, s * 0.06, s * 0.5);
+    c.fillStyle = '#fff';
+    roundRect(c, x - s * 0.45, y - s * 0.58, s * 0.9, s * 0.1, s * 0.03);
+    c.fill();
+    c.fillStyle = '#ff7bac';
+    for (i = 0; i < 6; i++) if (i % 2 === 0) c.fillRect(x - s * 0.45 + i * s * 0.15, y - s * 0.58, s * 0.15, s * 0.1);
+    c.fillStyle = '#fff';
+    c.beginPath();
+    if (c.ellipse) { c.ellipse(x - s * 0.24, y - s * 0.6, s * 0.11, s * 0.04, 0, 0, Math.PI * 2); c.ellipse(x + s * 0.24, y - s * 0.6, s * 0.11, s * 0.04, 0, 0, Math.PI * 2); }
+    else { c.arc(x - s * 0.24, y - s * 0.6, s * 0.08, 0, Math.PI * 2); c.arc(x + s * 0.24, y - s * 0.6, s * 0.08, 0, Math.PI * 2); }
+    c.fill();
+    c.fillStyle = '#ffd24f';
+    c.beginPath(); c.arc(x, y - s * 0.66, s * 0.06, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff6d8';
+    c.fillRect(x - s * 0.02, y - s * 0.82, s * 0.04, s * 0.18);
+    if (it.on) {
+      var fg2 = c.createRadialGradient(x, y - s * 0.88, s * 0.01, x, y - s * 0.88, s * 0.3);
+      fg2.addColorStop(0, 'rgba(255,230,140,0.6)');
+      fg2.addColorStop(1, 'rgba(255,230,140,0)');
+      c.fillStyle = fg2;
+      c.beginPath(); c.arc(x, y - s * 0.88, s * 0.3, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#ffb347';
+      c.beginPath();
+      if (c.ellipse) c.ellipse(x, y - s * 0.88 + Math.sin(globalT * 12) * s * 0.01, s * 0.03, s * 0.06, 0, 0, Math.PI * 2); else c.arc(x, y - s * 0.88, s * 0.04, 0, Math.PI * 2);
+      c.fill();
+    }
+  } else if (it.id === 'fridge') {
+    // Jääkaappi: ovi aukeaa ja sisällä hehkuu valo ja herkkuja
+    c.fillStyle = '#e8f2ff';
+    roundRect(c, x - s * 0.4, y - s * 1.0, s * 0.8, s, s * 0.06);
+    c.fill();
+    if (it.on) {
+      var lg2 = c.createRadialGradient(x, y - s * 0.5, s * 0.1, x, y - s * 0.5, s * 0.7);
+      lg2.addColorStop(0, 'rgba(255,255,220,0.55)');
+      lg2.addColorStop(1, 'rgba(255,255,220,0)');
+      c.fillStyle = lg2;
+      c.beginPath(); c.arc(x, y - s * 0.5, s * 0.7, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#fff';
+      c.fillRect(x - s * 0.34, y - s * 0.94, s * 0.68, s * 0.88);
+      c.fillStyle = '#c9d6e8';
+      for (i = 0; i < 3; i++) c.fillRect(x - s * 0.34, y - s * 0.7 + i * s * 0.26, s * 0.68, s * 0.03);
+      // Herkut hyllyillä
+      c.fillStyle = '#ff8a3d';
+      c.beginPath(); c.moveTo(x - s * 0.24, y - s * 0.72); c.lineTo(x - s * 0.14, y - s * 0.72); c.lineTo(x - s * 0.19, y - s * 0.9); c.closePath(); c.fill();
+      c.fillStyle = '#7fd4ff';
+      roundRect(c, x - s * 0.02, y - s * 0.9, s * 0.14, s * 0.18, s * 0.03);
+      c.fill();
+      c.fillStyle = '#ff4d5e';
+      c.beginPath(); c.arc(x - s * 0.18, y - s * 0.52, s * 0.08, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#ffd24f';
+      roundRect(c, x + s * 0.02, y - s * 0.58, s * 0.2, s * 0.12, s * 0.02);
+      c.fill();
+      c.fillStyle = '#ff9ec6';
+      roundRect(c, x - s * 0.22, y - s * 0.3, s * 0.26, s * 0.16, s * 0.03);
+      c.fill();
+      c.fillStyle = '#8a4dff';
+      c.beginPath(); c.arc(x + s * 0.14, y - s * 0.24, s * 0.07, 0, Math.PI * 2); c.fill();
+      // Auki oleva ovi sivulla
+      c.fillStyle = '#d0e0f5';
+      roundRect(c, x + s * 0.4, y - s * 1.0, s * 0.16, s, s * 0.04);
+      c.fill();
+    } else {
+      c.fillStyle = '#c9d6e8';
+      c.fillRect(x - s * 0.4, y - s * 0.62, s * 0.8, s * 0.03);
+      c.fillStyle = '#8a8298';
+      roundRect(c, x + s * 0.24, y - s * 0.9, s * 0.05, s * 0.22, s * 0.02);
+      c.fill();
+      roundRect(c, x + s * 0.24, y - s * 0.55, s * 0.05, s * 0.3, s * 0.02);
+      c.fill();
+      // Magneetit ja piirustus
+      c.fillStyle = '#fff';
+      c.fillRect(x - s * 0.28, y - s * 0.5, s * 0.26, s * 0.24);
+      drawHeartShape(c, x - s * 0.15, y - s * 0.38, s * 0.05, true);
+      c.fillStyle = '#ffd24f';
+      c.beginPath(); c.arc(x - s * 0.02, y - s * 0.5, s * 0.03, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#5fd36b';
+      c.beginPath(); c.arc(x - s * 0.2, y - s * 0.8, s * 0.035, 0, Math.PI * 2); c.fill();
+    }
+    c.fillStyle = 'rgba(255,255,255,0.5)';
+    c.fillRect(x - s * 0.36, y - s * 0.96, s * 0.06, s * 0.9);
   }
 }
 
@@ -1277,16 +1608,49 @@ function renderHomeBg() {
   homeBgCanvas.height = Math.round(viewH * DPR);
   var b = homeBgCanvas.getContext('2d');
   b.setTransform(DPR, 0, 0, DPR, 0, 0);
-  var room = homeRoom(), w = viewW, h = viewH, i, k, x, y, tower = homeRoomIdx === 1;
+  var room = homeRoom(), w = viewW, h = viewH, i, k, x, y, tower = homeRoomIdx === 1, kitchen = homeRoomIdx === 2;
   b.fillStyle = wallP.wall[1];
   b.fillRect(0, 0, w, h);
-  // Seinä maalilla ja tapetilla (sali: sydämet, torni: tähtitaivas)
+  // Seinä maalilla ja tapetilla (sali: sydämet, torni: tähtitaivas, keittiö: kaakelit)
   var wall = b.createLinearGradient(0, 0, 0, room.floorY);
   wall.addColorStop(0, wallP.wall[0]);
   wall.addColorStop(1, wallP.wall[1]);
   b.fillStyle = wall;
   b.fillRect(0, 0, room.x1 + h * 0.02, room.floorY);
-  if (tower) {
+  if (kitchen) {
+    // Kaakeliseinä: vaaleat laatat saumoilla, alaosassa koristeraita
+    var ts = h * 0.075;
+    b.strokeStyle = 'rgba(120,90,60,0.18)';
+    b.lineWidth = Math.max(1, h * 0.003);
+    for (y = 0; y < room.floorY; y += ts) { b.beginPath(); b.moveTo(0, y); b.lineTo(room.x1 + h * 0.02, y); b.stroke(); }
+    for (x = 0; x < room.x1 + h * 0.02; x += ts) { b.beginPath(); b.moveTo(x, 0); b.lineTo(x, room.floorY); b.stroke(); }
+    for (k = 0; k < 10; k++) {
+      x = ts * (0.5 + k * 1.4 + (k % 2) * 0.7);
+      y = room.floorY - ts * 1.5;
+      if (x > room.x1 - ts) break;
+      b.fillStyle = k % 2 ? '#ff7bac' : '#7fd4ff';
+      drawFlower(b, x, y, ts * 0.12, k % 2 ? '#ff7bac' : '#7fd4ff');
+    }
+    // Astiakisko kattilankansineen ja kauhoineen
+    b.fillStyle = '#8a5a30';
+    b.fillRect(h * 0.05, h * 0.12, room.x1 * 0.42, h * 0.012);
+    for (k = 0; k < 4; k++) {
+      x = h * 0.1 + k * room.x1 * 0.1;
+      b.strokeStyle = '#8a8298';
+      b.lineWidth = Math.max(1.5, h * 0.005);
+      b.beginPath(); b.moveTo(x, h * 0.13); b.lineTo(x, h * 0.17); b.stroke();
+      if (k % 2 === 0) {
+        b.fillStyle = '#c9c4d8';
+        b.beginPath(); b.arc(x, h * 0.2, h * 0.03, 0, Math.PI * 2); b.fill();
+        b.fillStyle = '#8a8298';
+        b.beginPath(); b.arc(x, h * 0.2, h * 0.012, 0, Math.PI * 2); b.fill();
+      } else {
+        b.fillStyle = '#c9c4d8';
+        b.fillRect(x - h * 0.006, h * 0.17, h * 0.012, h * 0.06);
+        b.beginPath(); b.arc(x, h * 0.245, h * 0.02, 0, Math.PI * 2); b.fill();
+      }
+    }
+  } else if (tower) {
     // Tähtitapetti: vaalealla seinällä tummat tähdet, tummalla valkoiset
     var light = homeColorIsLight(wallP.wall[0]);
     for (i = 0; i < 60; i++) {
@@ -1307,9 +1671,44 @@ function renderHomeBg() {
       }
     }
   }
-  // Ikkuna: salissa neliö ja päivä, tornissa pyöreä ja kuu
-  var wx = tower ? room.x1 * 0.7 : room.x1 * 0.22, wy = room.floorY * 0.42, ww = h * 0.2, wh = h * 0.26;
-  if (tower) {
+  // Ikkuna: salissa neliö ja päivä, tornissa pyöreä ja kuu, keittiössä verhoikkuna ja yrttiruukku
+  var wx = tower ? room.x1 * 0.7 : (kitchen ? room.x1 * 0.72 : room.x1 * 0.34), wy = room.floorY * 0.42, ww = h * 0.2, wh = h * 0.26;
+  if (kitchen) {
+    b.fillStyle = '#fff';
+    roundRect(b, wx - ww / 2 - h * 0.012, wy - wh / 2 - h * 0.012, ww + h * 0.024, wh + h * 0.024, h * 0.015);
+    b.fill();
+    var ksky = b.createLinearGradient(0, wy - wh / 2, 0, wy + wh / 2);
+    ksky.addColorStop(0, '#8fd0ff');
+    ksky.addColorStop(1, '#e6f6ff');
+    b.fillStyle = ksky;
+    b.fillRect(wx - ww / 2, wy - wh / 2, ww, wh);
+    b.fillStyle = '#7fcf68';
+    b.beginPath(); b.arc(wx - ww * 0.2, wy + wh * 0.7, ww * 0.5, Math.PI, 0); b.fill();
+    b.beginPath(); b.arc(wx + ww * 0.3, wy + wh * 0.75, ww * 0.45, Math.PI, 0); b.fill();
+    drawTree(b, wx + ww * 0.25, wy + wh * 0.35, ww * 0.35);
+    b.fillStyle = 'rgba(255,255,255,0.9)';
+    cloudShape(b, wx - ww * 0.15, wy - wh * 0.25, h * 0.012);
+    b.fillStyle = '#fff';
+    b.fillRect(wx - h * 0.006, wy - wh / 2, h * 0.012, wh);
+    // Ruudulliset verhot
+    for (i = -1; i <= 1; i += 2) {
+      b.fillStyle = '#ffd6ec';
+      b.beginPath();
+      b.moveTo(wx + i * ww * 0.5, wy - wh / 2 - h * 0.012);
+      b.lineTo(wx + i * ww * 0.5, wy + wh / 2 + h * 0.012);
+      b.quadraticCurveTo(wx + i * ww * 0.3, wy, wx + i * ww * 0.36, wy - wh / 2 - h * 0.012);
+      b.closePath(); b.fill();
+      b.fillStyle = 'rgba(255,120,170,0.35)';
+      for (k = 0; k < 4; k++) b.fillRect(wx + i * ww * 0.5 - (i > 0 ? ww * 0.14 : 0), wy - wh / 2 + k * wh * 0.25, ww * 0.14, wh * 0.06);
+    }
+    b.fillStyle = '#ffd24f';
+    b.fillRect(wx - ww / 2 - h * 0.02, wy + wh / 2 + h * 0.01, ww + h * 0.04, h * 0.02);
+    // Yrttiruukku ikkunalaudalla
+    b.fillStyle = '#c96a3a';
+    b.beginPath(); b.moveTo(wx - h * 0.035, wy + wh / 2 - h * 0.03); b.lineTo(wx + h * 0.035, wy + wh / 2 - h * 0.03); b.lineTo(wx + h * 0.028, wy + wh / 2 + h * 0.01); b.lineTo(wx - h * 0.028, wy + wh / 2 + h * 0.01); b.closePath(); b.fill();
+    b.fillStyle = '#4fb356';
+    for (i = -1; i <= 1; i++) { b.beginPath(); b.arc(wx + i * h * 0.02, wy + wh / 2 - h * 0.05 - Math.abs(i) * h * 0.005, h * 0.016, 0, Math.PI * 2); b.fill(); }
+  } else if (tower) {
     b.fillStyle = '#8a8298';
     b.beginPath(); b.arc(wx, wy, ww * 0.62, 0, Math.PI * 2); b.fill();
     var night = b.createRadialGradient(wx, wy, ww * 0.1, wx, wy, ww * 0.55);
@@ -1352,29 +1751,46 @@ function renderHomeBg() {
   floor.addColorStop(1, floorP.floor[1]);
   b.fillStyle = floor;
   b.fillRect(0, room.floorY, room.x1 + h * 0.02, h - room.floorY);
-  b.strokeStyle = 'rgba(40,30,60,0.22)';
-  b.lineWidth = 2;
-  for (y = room.floorY + h * 0.06; y < h; y += h * 0.07) { b.beginPath(); b.moveTo(0, y); b.lineTo(room.x1 + h * 0.02, y); b.stroke(); }
-  for (i = 0; i < 12; i++) {
-    x = i * h * 0.16 + (i % 2) * h * 0.08;
-    b.beginPath(); b.moveTo(x, room.floorY); b.lineTo(x - h * 0.06, h); b.stroke();
-  }
-  // Ovi: salissa oikealla (torniin), tornissa vasemmalla (saliin)
-  var dr = homeDoorRect();
-  b.fillStyle = '#8a5a30';
-  roundRect(b, dr.x, dr.y, dr.w, dr.h, h * 0.03);
-  b.fill();
-  b.fillStyle = '#ffd24f';
-  b.beginPath(); b.arc(homeRoomIdx === 0 ? dr.x + dr.w * 0.75 : dr.x + dr.w * 0.25, dr.y + dr.h * 0.53, h * 0.01, 0, Math.PI * 2); b.fill();
-  // Kyltti oven yllä: portaat torniin / sydän saliin
-  b.fillStyle = '#fff6d8';
-  roundRect(b, dr.x + dr.w * 0.1, dr.y - h * 0.07, dr.w * 0.8, h * 0.05, h * 0.01);
-  b.fill();
-  if (homeRoomIdx === 0) {
-    b.fillStyle = '#8a5cb8';
-    for (i = 0; i < 3; i++) b.fillRect(dr.x + dr.w * 0.25 + i * dr.w * 0.17, dr.y - h * 0.03 - i * h * 0.01, dr.w * 0.17, h * 0.01 * (i + 1));
+  if (kitchen) {
+    // Ruutulattia: joka toinen laatta tummempi
+    var fs = h * 0.09, row = 0;
+    b.fillStyle = 'rgba(0,0,0,0.13)';
+    for (y = room.floorY; y < h; y += fs, row++) {
+      for (x = (row % 2) * fs; x < room.x1 + h * 0.02; x += fs * 2) b.fillRect(x, y, fs, Math.min(fs, h - y));
+    }
+    b.strokeStyle = 'rgba(40,30,60,0.15)';
+    b.lineWidth = 1.5;
+    for (y = room.floorY; y < h; y += fs) { b.beginPath(); b.moveTo(0, y); b.lineTo(room.x1 + h * 0.02, y); b.stroke(); }
+    for (x = 0; x < room.x1 + h * 0.02; x += fs) { b.beginPath(); b.moveTo(x, room.floorY); b.lineTo(x, h); b.stroke(); }
   } else {
-    b.fillStyle = '#ff5f7e';
-    drawHeartShape(b, dr.x + dr.w / 2, dr.y - h * 0.045, h * 0.012, true);
+    b.strokeStyle = 'rgba(40,30,60,0.22)';
+    b.lineWidth = 2;
+    for (y = room.floorY + h * 0.06; y < h; y += h * 0.07) { b.beginPath(); b.moveTo(0, y); b.lineTo(room.x1 + h * 0.02, y); b.stroke(); }
+    for (i = 0; i < 12; i++) {
+      x = i * h * 0.16 + (i % 2) * h * 0.08;
+      b.beginPath(); b.moveTo(x, room.floorY); b.lineTo(x - h * 0.06, h); b.stroke();
+    }
+  }
+  // Ovet ja kyltit niiden yllä: portaat = torni, sydän = sali, kattila = keittiö
+  var doors = homeDoors(), dr, d;
+  for (d = 0; d < doors.length; d++) {
+    dr = doors[d];
+    b.fillStyle = '#8a5a30';
+    roundRect(b, dr.x, dr.y, dr.w, dr.h, h * 0.03);
+    b.fill();
+    b.fillStyle = '#ffd24f';
+    b.beginPath(); b.arc(dr.side > 0 ? dr.x + dr.w * 0.75 : dr.x + dr.w * 0.25, dr.y + dr.h * 0.53, h * 0.01, 0, Math.PI * 2); b.fill();
+    b.fillStyle = '#fff6d8';
+    roundRect(b, dr.x + dr.w * 0.1, dr.y - h * 0.07, dr.w * 0.8, h * 0.05, h * 0.01);
+    b.fill();
+    if (dr.to === 1) {
+      b.fillStyle = '#8a5cb8';
+      for (i = 0; i < 3; i++) b.fillRect(dr.x + dr.w * 0.25 + i * dr.w * 0.17, dr.y - h * 0.03 - i * h * 0.01, dr.w * 0.17, h * 0.01 * (i + 1));
+    } else if (dr.to === 2) {
+      drawCauldron(b, dr.x + dr.w / 2, dr.y - h * 0.032, h * 0.016, '#ff9f3a', false, 0, false);
+    } else {
+      b.fillStyle = '#ff5f7e';
+      drawHeartShape(b, dr.x + dr.w / 2, dr.y - h * 0.045, h * 0.012, true);
+    }
   }
 }

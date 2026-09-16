@@ -11,25 +11,27 @@ var bal = { x: 0, y: 0, vx: 0, vy: 0, burn: 0, tilt: 0, wheelA: 0, bumpT: 0 };
 var balItems = [];
 var balKites = [];
 var balPad = { fx: 0.94, x: 0, ready: false };
-// Tuulikerrokset: y0–y1 osuus ruudusta, w = tuuli (osuus ruudun leveydestä / s)
+// Tuulikerrokset: y0–y1 osuus ruudusta, w = tuuli (osuus ruudun leveydestä / s).
+// Kolme kerrosta: ylhäällä ja alhaalla eteenpäin, keskellä taaksepäin. Jokaisessa
+// kerroksessa ajelehtii isoja nuolia tuulen suuntaan, ja keskikerros on
+// sävytetty sinertäväksi, jotta "väärä" kerros erottuu yhdellä silmäyksellä.
 var BAL_BANDS = [
-  { y0: 0.05, y1: 0.28, w: 0.26 },
-  { y0: 0.28, y1: 0.47, w: -0.11 },
-  { y0: 0.47, y1: 0.64, w: 0.17 },
-  { y0: 0.64, y1: 0.75, w: -0.08 }
+  { y0: 0.05, y1: 0.30, w: 0.24, tint: null },
+  { y0: 0.30, y1: 0.54, w: -0.12, tint: 'rgba(90,140,255,0.22)' },
+  { y0: 0.54, y1: 0.75, w: 0.16, tint: null }
 ];
 var balItemDefs = [
-  { fx: 0.12, fy: 0.55, c: '#ff5f7e' }, { fx: 0.22, fy: 0.18, c: '#ffd23e' }, { fx: 0.31, fy: 0.38, c: '#7fd4ff' },
-  { fx: 0.42, fy: 0.68, c: '#5fd36b' }, { fx: 0.53, fy: 0.15, c: '#c9a0ff' }, { fx: 0.63, fy: 0.40, c: '#ff9d5c' },
-  { fx: 0.74, fy: 0.58, c: '#ff7bac' }, { fx: 0.84, fy: 0.22, c: '#ffe94f' }
+  { fx: 0.12, fy: 0.62, c: '#ff5f7e' }, { fx: 0.22, fy: 0.18, c: '#ffd23e' }, { fx: 0.31, fy: 0.42, c: '#7fd4ff' },
+  { fx: 0.42, fy: 0.66, c: '#5fd36b' }, { fx: 0.53, fy: 0.15, c: '#c9a0ff' }, { fx: 0.63, fy: 0.44, c: '#ff9d5c' },
+  { fx: 0.74, fy: 0.62, c: '#ff7bac' }, { fx: 0.84, fy: 0.22, c: '#ffe94f' }
 ];
 var balKiteDefs = [
   { fx: 0.27, fy: 0.16, amp: 0.05, f: 0.8, c: '#ff5f7e' },
-  { fx: 0.38, fy: 0.55, amp: 0.06, f: 1.1, c: '#5fd36b' },
+  { fx: 0.38, fy: 0.62, amp: 0.05, f: 1.1, c: '#5fd36b' },
   { fx: 0.48, fy: 0.20, amp: 0.07, f: 0.7, c: '#7fd4ff' },
-  { fx: 0.58, fy: 0.52, amp: 0.05, f: 1.0, c: '#ffd23e' },
+  { fx: 0.58, fy: 0.60, amp: 0.05, f: 1.0, c: '#ffd23e' },
   { fx: 0.69, fy: 0.24, amp: 0.06, f: 0.9, c: '#c9a0ff' },
-  { fx: 0.80, fy: 0.55, amp: 0.05, f: 1.2, c: '#ff9d5c' }
+  { fx: 0.80, fy: 0.62, amp: 0.05, f: 1.2, c: '#ff9d5c' }
 ];
 
 function balR() { return viewH * 0.085; }
@@ -320,24 +322,51 @@ function drawFerrisWheel(c) {
   c.beginPath(); c.arc(x, y, viewH * 0.012, 0, Math.PI * 2); c.fill();
 }
 
+// Iso pehmeä nuoli tuulen suuntaan
+function drawWindArrow(c, x, y, s, dir, alpha) {
+  c.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+  c.beginPath();
+  c.moveTo(x + dir * s * 1.1, y);
+  c.lineTo(x + dir * s * 0.35, y - s * 0.55);
+  c.lineTo(x + dir * s * 0.35, y - s * 0.22);
+  c.lineTo(x - dir * s * 1.1, y - s * 0.22);
+  c.lineTo(x - dir * s * 1.1, y + s * 0.22);
+  c.lineTo(x + dir * s * 0.35, y + s * 0.22);
+  c.lineTo(x + dir * s * 0.35, y + s * 0.55);
+  c.closePath();
+  c.fill();
+}
+
+// Tuulikerrokset: sävy, kerrosrajat ja ajelehtivat nuolet (vain tuulialueella)
 function drawWindStreaks(c) {
-  var i, k, band, y, x, len, dir, sp, off;
+  var i, k, band, y, x, dir, sp, off, s, calmL = worldW * 0.05 - camX, calmR = worldW * 0.885 - camX;
+  var x0 = Math.max(0, calmL), x1 = Math.min(viewW, calmR);
+  if (x1 <= x0) return;
   for (k = 0; k < BAL_BANDS.length; k++) {
     band = BAL_BANDS[k];
+    var by0 = viewH * band.y0, by1 = viewH * band.y1;
+    if (band.tint) { c.fillStyle = band.tint; c.fillRect(x0, by0, x1 - x0, by1 - by0); }
+    if (k > 0) {
+      c.strokeStyle = 'rgba(255,255,255,0.35)';
+      c.lineWidth = Math.max(1.5, viewH * 0.004);
+      c.setLineDash([viewH * 0.02, viewH * 0.02]);
+      c.beginPath(); c.moveTo(x0, by0); c.lineTo(x1, by0); c.stroke();
+      c.setLineDash([]);
+    }
     dir = band.w > 0 ? 1 : -1;
     sp = Math.abs(band.w) * viewW;
-    for (i = 0; i < 7; i++) {
-      y = viewH * (band.y0 + (band.y1 - band.y0) * ((i * 0.37 + 0.1) % 1));
-      len = viewH * (0.04 + (i % 3) * 0.02);
-      off = (globalT * sp * 1.6 * dir + i * viewW * 0.29 - camX * 0.3);
-      x = ((off % (viewW + len * 2)) + viewW + len * 2) % (viewW + len * 2) - len;
-      c.strokeStyle = 'rgba(255,255,255,' + (0.14 + (i % 2) * 0.08) + ')';
-      c.lineWidth = Math.max(1.5, viewH * 0.004);
-      c.lineCap = 'round';
-      c.beginPath(); c.moveTo(x, y); c.lineTo(x + len * dir, y - len * 0.08); c.stroke();
-      c.beginPath(); c.moveTo(x + len * dir, y - len * 0.08); c.lineTo(x + len * dir - dir * len * 0.25, y - len * 0.3); c.stroke();
+    s = viewH * 0.034;
+    c.save();
+    c.beginPath(); c.rect(x0, by0, x1 - x0, by1 - by0); c.clip();
+    for (i = 0; i < 6; i++) {
+      y = by0 + (by1 - by0) * (0.18 + ((i * 0.31 + 0.07) % 1) * 0.64);
+      off = globalT * sp * 1.4 * dir + i * viewW * 0.23 - camX * 0.5;
+      x = ((off % (viewW + s * 4)) + viewW + s * 4) % (viewW + s * 4) - s * 2;
+      drawWindArrow(c, x, y, s, dir, 0.45 + Math.sin(globalT * 3 + i) * 0.12);
     }
+    c.restore();
   }
+  // Tyynet alueet: ei tuulta -> ei nuolia; pieni pilvimerkki kertoo tyynen
   c.lineCap = 'butt';
 }
 
@@ -381,9 +410,24 @@ function drawKite(c, k) {
 
 function drawHotAirBalloon(c, x, y, R, tilt, burn, t) {
   var i;
+  // Viiri korin kyljessä liehuu tuulen suuntaan: näyttää missä tuulessa ollaan
+  var wind = balWindAt(bal.x, bal.y), wdir = wind > 0 ? 1 : (wind < 0 ? -1 : 0);
   c.save();
   c.translate(x, y);
   c.rotate(tilt);
+  if (wdir !== 0) {
+    var fl = R * (0.5 + Math.min(1, Math.abs(wind) / (viewW * 0.25)) * 0.5);
+    c.fillStyle = '#ffd24f';
+    c.beginPath();
+    c.moveTo(0, -R * 1.05);
+    c.quadraticCurveTo(wdir * fl * 0.5, -R * 1.05 - fl * 0.2 + Math.sin(t * 9) * fl * 0.08, wdir * fl, -R * 1.05 - fl * 0.1 + Math.sin(t * 9 + 1) * fl * 0.1);
+    c.lineTo(wdir * fl * 0.9, -R * 1.05 + fl * 0.16 + Math.sin(t * 9 + 1) * fl * 0.1);
+    c.quadraticCurveTo(wdir * fl * 0.5, -R * 1.05 + fl * 0.16, 0, -R * 1.05 + fl * 0.22);
+    c.closePath();
+    c.fill();
+    c.fillStyle = '#5a3a1e';
+    c.fillRect(-R * 0.02, -R * 1.3, R * 0.04, R * 0.3);
+  }
   // Korin köydet ja kori
   var by = R * 1.55;
   c.strokeStyle = '#8a5a30';
@@ -445,8 +489,8 @@ function drawHotAirBalloon(c, x, y, R, tilt, burn, t) {
 function drawBalloon() {
   var i, R = balR();
   if (!drawWorldBg()) return;
-  drawWindStreaks(ctx);
   drawFerrisWheel(ctx);
+  drawWindStreaks(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawSkyLantern(ctx, checkpoints[i]);
   if (balPad.ready) {

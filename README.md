@@ -304,9 +304,11 @@ vartija; sen läpäisy nostaa kultatähden sateenkaaren huipulle.
   lennossa (bonus, ei vaadita). Tehtävät korokkeilla: kello, palapeli.
 - **Kuumailmapallo** ♥ — uusi verbi: **korkeuden valinta**. Pidä pohjassa:
   sormi pallon yläpuolella = poltin (nousu), alapuolella = venttiili (lasku).
-  Neljä tuulikerrosta vievät palloa eri suuntiin (viivat näyttävät suunnan):
-  oikea korkeus vie eteenpäin, väärä taaksepäin — myös hyödyksi, jos ilmapallo
-  jäi taakse. Kerää kahdeksan juhlailmapalloa (myös napauttamalla läheltä),
+  Kolme tuulikerrosta, joita erottavat katkoviivat: ylin ja alin vievät
+  eteenpäin, sinertävä keskikerros taaksepäin. Isot valkoiset nuolet
+  ajelehtivat kerroksissa tuulen suuntaan, ja pallon huipun viiri liehuu
+  siihen suuntaan, johon tuuli juuri nyt vie. Taaksepäin vievä kerros on
+  hyödyksi, jos ilmapallo jäi taakse. Kerää kahdeksan juhlailmapalloa (myös napauttamalla läheltä),
   väistä leijoja (sydän) ja laskeudu lopuksi alustalle, kun se hehkuu.
   Illan tivoli maailmanpyörineen pyörii alla. Tehtävät: reitti, kello.
 - **Jäätelökoju** — ei liikkumista, ei sydämiä. Pupuasiakas tilaa kuplassa
@@ -336,9 +338,16 @@ palautuvat. Kenttä itse ei ala alusta.
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
 säilyivät täysinä; juhlassa näkyy "+n". Tähtisaldo näkyy kartoilla vasemmalla
 ylhäällä. Linnasaaren linnan napautus avaa kuplan, jossa on ovi (sisustus) ja
-finaali. Huoneistossa on kaksi huonetta: **sali** (sydäntapetti, ikkuna) ja
-**tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia). Huoneiden välillä
-kuljetaan ovesta (salissa oikealla, tornissa vasemmalla); puput tulevat perässä.
+finaali. Huoneistossa on kolme huonetta: **sali** (sydäntapetti, ikkuna),
+**tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia) ja **keittiö**
+(kaakeliseinä, verhoikkuna yrttiruukulla, astiakisko, ruutulattia). Salista
+oikea ovi (portaat-kyltti) vie torniin ja vasen ovi (kattila-kyltti) keittiöön;
+tornista ja keittiöstä palataan saliin (sydän-kyltti). Puput tulevat perässä.
+Keittiön tavarat: hedelmäkulho ja piparilautanen (puput syövät), kattilat
+seinällä (kilisevät), tiskiallas (hana laskee vettä), seinäkaappi (aukeaa,
+sisällä mukit ja lautaset), liesi (levy hehkuu ja kattila kiehuu), ruokapöytä
+(kynttilä syttyy, kaksi pupua istuu pöytään) ja jääkaappi (ovi aukeaa, valo
+ja herkut). Tavaroita voi viedä mihin huoneeseen vain.
 Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa)
 **raahaamalla**: tartu korttiin, vedä tavara huoneen puolelle ja päästä irti
 haluamaasi kohtaan, niin tähdet veloitetaan. Kaupan päälle palautettu tavara

@@ -37,6 +37,9 @@ function loadProgress() {
     }
     homeItems = (d && d.home && d.home.length !== undefined) ? d.home : [];
     if (d && d.decor && d.decor[0] && d.decor[1]) homeDecor = d.decor;
+    // Vanha tallennus: uusille huoneille oletusmaalit
+    var dd = homeDecorDefault(), rk;
+    for (rk in dd) if (!homeDecor[rk]) homeDecor[rk] = dd[rk];
     if (d && d.bows && d.bows.length === 3) homeBows = d.bows;
   } catch (e) { /* rikkinäinen tallennus: aloitetaan alusta */ }
 }
