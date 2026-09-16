@@ -72,6 +72,7 @@ function makeTask(fx, type, opts) {
     word: null, sayT: -1, maxSyl: opts.maxSyl || 3,
     mixLevel: opts.mixLevel || 1,
     presetWord: opts.presetWord || null,
+    opts: opts,
     // Tyypin oma ongelmadata: make(t) palauttaa sen, runtime asettaa t.data:han.
     // Rungon kentät (yllä) ovat kaikkien tyyppien yhteisiä; tyypin omat
     // kentät (answers, choices, pieces, grid...) elävät vain t.data:ssa.

@@ -9,8 +9,9 @@ domainkielen sanasto — tekninen rakenne dokumentoidaan README:ssä.
 ### Maailma
 
 **Saari**:
-Yksi pelin maailma: kokonaisuus, jolla on nimi, sokkelo ja vartija. Saaria
-on seitsemän, yksi jokaista sateenkaaren väriä kohti.
+Yksi pelin maailma: kokonaisuus, jolla on nimi, sokkelo ja vartija. Värisaaria
+on seitsemän, yksi jokaista sateenkaaren väriä kohti; kahdeksas, Tivolisaari,
+on sateenkaaren päässä ja sen vartija palauttaa **kultatähden** kaaren huipulle.
 _Vältä_: maailma, world, taso
 
 **Kenttä**:

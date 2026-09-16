@@ -651,6 +651,64 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.font = 'bold ' + Math.round(s * 0.16) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
     c.textAlign = 'center';
     c.fillText('A', x, y + s * 0.1);
+  } else if (kind === 'circus') {
+    // Sirkusteltta: raidallinen teltta ja lippu
+    c.fillStyle = '#c8323c';
+    c.beginPath(); c.moveTo(x - s * 0.24, y + s * 0.16); c.lineTo(x + s * 0.24, y + s * 0.16); c.lineTo(x + s * 0.2, y - s * 0.02); c.lineTo(x - s * 0.2, y - s * 0.02); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(x - s * 0.26, y - s * 0.02); c.lineTo(x + s * 0.26, y - s * 0.02); c.lineTo(x, y - s * 0.24); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.75)';
+    for (i = -1; i <= 1; i += 2) { c.beginPath(); c.moveTo(x + i * s * 0.1 - s * 0.03, y - s * 0.02); c.lineTo(x + i * s * 0.1 + s * 0.03, y - s * 0.02); c.lineTo(x, y - s * 0.24); c.closePath(); c.fill(); }
+    c.fillRect(x - s * 0.05, y + s * 0.02, s * 0.1, s * 0.14);
+    c.fillStyle = '#ffd24f';
+    c.beginPath(); c.moveTo(x, y - s * 0.24); c.lineTo(x, y - s * 0.34); c.lineTo(x + s * 0.1, y - s * 0.31); c.lineTo(x, y - s * 0.27); c.closePath(); c.fill();
+  } else if (kind === 'balloon') {
+    // Kuumailmapallo
+    c.strokeStyle = '#8a5a30';
+    c.lineWidth = Math.max(1, s * 0.02);
+    c.beginPath(); c.moveTo(x - s * 0.08, y + s * 0.06); c.lineTo(x - s * 0.05, y + s * 0.2); c.moveTo(x + s * 0.08, y + s * 0.06); c.lineTo(x + s * 0.05, y + s * 0.2); c.stroke();
+    c.fillStyle = '#8a5a30';
+    c.fillRect(x - s * 0.07, y + s * 0.18, s * 0.14, s * 0.08);
+    for (i = 0; i < 6; i++) {
+      c.fillStyle = maneColors[i];
+      c.beginPath(); c.moveTo(x, y - s * 0.06); c.arc(x, y - s * 0.06, s * 0.17, (i / 6) * Math.PI * 2 - Math.PI / 2, ((i + 1) / 6) * Math.PI * 2 - Math.PI / 2); c.closePath(); c.fill();
+    }
+  } else if (kind === 'icecream') {
+    // Jäätelötötterö
+    c.fillStyle = '#e8a860';
+    c.beginPath(); c.moveTo(x - s * 0.1, y - s * 0.02); c.lineTo(x + s * 0.1, y - s * 0.02); c.lineTo(x, y + s * 0.26); c.closePath(); c.fill();
+    c.fillStyle = '#ff8fb8';
+    c.beginPath(); c.arc(x - s * 0.04, y - s * 0.09, s * 0.1, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff3d0';
+    c.beginPath(); c.arc(x + s * 0.05, y - s * 0.12, s * 0.1, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#9fe8b8';
+    c.beginPath(); c.arc(x, y - s * 0.24, s * 0.09, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#c8102e';
+    c.beginPath(); c.arc(x, y - s * 0.34, s * 0.04, 0, Math.PI * 2); c.fill();
+  } else if (kind === 'ducks') {
+    // Kumiankka
+    c.fillStyle = '#ffc832';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x - s * 0.02, y + s * 0.06, s * 0.2, s * 0.12, 0, 0, Math.PI * 2); else c.arc(x, y + s * 0.06, s * 0.15, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.arc(x + s * 0.1, y - s * 0.08, s * 0.1, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.moveTo(x - s * 0.18, y + s * 0.02); c.lineTo(x - s * 0.28, y - s * 0.08); c.lineTo(x - s * 0.14, y - s * 0.04); c.closePath(); c.fill();
+    c.fillStyle = '#ff8f3a';
+    c.beginPath(); c.moveTo(x + s * 0.18, y - s * 0.08); c.lineTo(x + s * 0.28, y - s * 0.05); c.lineTo(x + s * 0.18, y - s * 0.02); c.closePath(); c.fill();
+    c.fillStyle = '#333';
+    c.beginPath(); c.arc(x + s * 0.13, y - s * 0.1, s * 0.02, 0, Math.PI * 2); c.fill();
+  } else if (kind === 'magician') {
+    // Silinteri ja taikasauva
+    c.fillStyle = '#1a1030';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y + s * 0.1, s * 0.24, s * 0.06, 0, 0, Math.PI * 2); else c.arc(x, y + s * 0.1, s * 0.2, 0, Math.PI * 2);
+    c.fill();
+    c.fillRect(x - s * 0.15, y - s * 0.2, s * 0.3, s * 0.3);
+    c.fillStyle = '#8a4dff';
+    c.fillRect(x - s * 0.15, y - s * 0.02, s * 0.3, s * 0.06);
+    c.strokeStyle = '#fff';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x + s * 0.12, y + s * 0.02); c.lineTo(x + s * 0.3, y - s * 0.24); c.stroke();
+    drawStar(c, x + s * 0.32, y - s * 0.28, s * 0.06, 0, 0);
   }
 }
 
@@ -756,6 +814,7 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  if (hubWorld === 8) return 'fair';
   if (hubWorld === 7) return 'letters';
   if (hubWorld === 6) return r <= 2 ? 'mine' : 'mountain';
   if (hubWorld === 5) return 'meadow';
@@ -796,7 +855,8 @@ var HUB_TILE_COLORS = {
   paper: ['#fbf1d8', '#f5e8c8'],
   mine: ['#6b5a4a', '#5f4f40'],
   mountain: ['#dfe9f5', '#cfdcee'],
-  letters: ['#fff6e3', '#f7ead2']
+  letters: ['#fff6e3', '#f7ead2'],
+  fair: ['#ffe6f2', '#fff3d6']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
@@ -923,6 +983,27 @@ function drawHubTile(b, band, x, y, s, c, r) {
     b.fillText('ABCDEFGHIJKLMNOPRSTUVYÄÖ'.charAt(Math.floor(rnd * 24)), cx + (rnd2 - 0.5) * s * 0.3, cy);
     b.textBaseline = 'alphabetic';
     if (rnd2 < 0.35) drawFlower(b, x + s * 0.78, y + s * 0.78, s * 0.06, rnd < 0.5 ? '#ff7bac' : '#7fd4ff');
+  } else if (band === 'fair') {
+    // Tivoli: ilmapalloja, valoja ja pieniä telttoja
+    var fcols = ['#ff5f7e', '#ffd23e', '#7fd4ff', '#5fd36b', '#c9a0ff'];
+    if (rnd < 0.4) {
+      b.strokeStyle = 'rgba(120,80,120,0.5)';
+      b.lineWidth = Math.max(1, s * 0.02);
+      b.beginPath(); b.moveTo(cx, cy + s * 0.05); b.quadraticCurveTo(cx + s * 0.05, cy + s * 0.25, cx - s * 0.03, cy + s * 0.42); b.stroke();
+      b.fillStyle = fcols[Math.floor(rnd2 * 5)];
+      b.beginPath();
+      if (b.ellipse) b.ellipse(cx + (rnd2 - 0.5) * s * 0.2, cy - s * 0.1, s * 0.13, s * 0.16, 0, 0, Math.PI * 2); else b.arc(cx, cy - s * 0.1, s * 0.14, 0, Math.PI * 2);
+      b.fill();
+      b.fillStyle = 'rgba(255,255,255,0.5)';
+      b.beginPath(); b.arc(cx + (rnd2 - 0.5) * s * 0.2 - s * 0.05, cy - s * 0.16, s * 0.035, 0, Math.PI * 2); b.fill();
+    } else if (rnd < 0.65) {
+      drawFairTent(b, cx, y + s * 0.92, s * 0.32, rnd2 < 0.5 ? '#c8323c' : '#7a3cb8');
+    } else if (rnd < 0.85) {
+      drawStar(b, cx + (rnd2 - 0.5) * s * 0.4, cy, s * 0.1, 0, 0);
+    } else {
+      var k2;
+      for (k2 = 0; k2 < 3; k2++) { b.fillStyle = fcols[(k2 + Math.floor(rnd2 * 5)) % 5]; b.beginPath(); b.arc(x + s * (0.25 + k2 * 0.25), cy + Math.sin(k2 * 2) * s * 0.08, s * 0.05, 0, Math.PI * 2); b.fill(); }
+    }
   } else if (band === 'moon') {
     b.fillStyle = 'rgba(200,200,240,0.25)';
     b.beginPath(); b.arc(cx + (rnd - 0.5) * s * 0.5, cy + (rnd2 - 0.5) * s * 0.4, s * 0.16, 0, Math.PI * 2); b.fill();

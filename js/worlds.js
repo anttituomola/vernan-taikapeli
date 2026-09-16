@@ -602,6 +602,87 @@ var WORLDS = [
         respawn: function () { respawnRapids(); }
       }
     ]
+  },
+  {
+    // Sateenkaaren päässä: aukeaa, kun kaikki seitsemän väriä on palautettu.
+    // Vartija (Taikurin teltta) kruunaa sateenkaaren kultatähdellä.
+    id: 8, name: 'Tivolisaari',
+    island: { fx: 0.60, fy: 0.885, size: 0.58, finaleKind: 'magician', deco: ['circus', 'balloon', 'magician'] },
+    map: [
+      '###########',
+      '#B.......T#',
+      '#########.#',
+      '#P........#',
+      '#.#########',
+      '#........J#',
+      '#########.#',
+      '#O........#',
+      '#.#########',
+      '#........M#',
+      '###########'
+    ],
+    levels: [
+      {
+        kind: 'circus', room: 'T', name: 'Sirkusteltta', color: '#e84a5a', script: 'play-circus',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#3a1030', ambient: 'sparkle', fg: null,
+        init: function () { initCircus(); },
+        update: function (dt) { updateCircus(dt); },
+        draw: function () { drawCircus(); },
+        tap: function (x, y) { handleCircusTap(x, y); },
+        resize: function (ratio) { resizeCircus(ratio); },
+        renderBg: function (b, w, h) { renderCircusBg(b, w, h); },
+        respawn: function () { respawnCircus(); }
+      },
+      {
+        kind: 'balloon', room: 'P', name: 'Kuumailmapallo', color: '#ff9d5c', script: 'play-balloon',
+        control: 'fly', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#5a3a8a', ambient: 'stars', fg: null,
+        init: function () { initBalloon(); },
+        update: function (dt) { updateBalloon(dt); },
+        draw: function () { drawBalloon(); },
+        tap: function (x, y) { handleBalloonTap(x, y); },
+        resize: function (ratio) { resizeBalloon(ratio); },
+        renderBg: function (b, w, h) { renderBalloonBg(b, w, h); },
+        respawn: function () { respawnBalloon(); }
+      },
+      {
+        kind: 'icecream', room: 'J', name: 'Jäätelökoju', color: '#ff8fb8', script: 'play-icecream',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 4000,
+        bgColor: '#e8f6ff', ambient: 'sparkle', fg: null,
+        init: function () { initIcecream(); },
+        update: function (dt) { updateIcecream(dt); },
+        draw: function () { drawIcecream(); },
+        tap: function (x, y) { handleIcecreamTap(x, y); },
+        resize: function () { resizeIcecream(); },
+        renderBg: function (b, w, h) { renderIcecreamBg(b, w, h); },
+        respawn: function () { respawnIcecream(); }
+      },
+      {
+        kind: 'ducks', room: 'O', name: 'Ankkaonginta', color: '#ffc832', script: 'play-ducks',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#8ed3ff', ambient: 'butterflies', fg: null,
+        init: function () { initDucks(); },
+        update: function (dt) { updateDucks(dt); },
+        draw: function () { drawDucks(); },
+        tap: function (x, y) { handleDucksTap(x, y); },
+        resize: function () { resizeDucks(); },
+        renderBg: function (b, w, h) { renderDucksBg(b, w, h); },
+        respawn: function () { respawnDucks(); }
+      },
+      {
+        kind: 'magician', room: 'M', name: 'Taikurin teltta', color: '#5a2a9a', script: 'play-magician',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6000,
+        bgColor: '#0f0a2e', ambient: 'stars', fg: null,
+        init: function () { initMagician(); },
+        update: function (dt) { updateMagician(dt); },
+        draw: function () { drawMagician(); },
+        tap: function (x, y) { handleMagicianTap(x, y); },
+        resize: function () { resizeMagician(); },
+        renderBg: function (b, w, h) { renderMagicianBg(b, w, h); },
+        respawn: function () { respawnMagician(); }
+      }
+    ]
   }
 ];
 
@@ -663,7 +744,7 @@ function scriptManifest() {
   var files = [
     'state', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
     'flow-hub', 'flow-sea', 'flow-home',
-    'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read',
+    'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair',
     'platformer', 'pen-core'
   ];
   var seen = {}, wi, li, s;

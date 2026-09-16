@@ -44,6 +44,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-glide.js`, `play-summit.js` — maailma 6
 - `js/tasks-read.js` — lukemisen tehtävät: kuva→sana, kokoa sana tavuista, alkukirjain
 - `js/play-letterfield.js`, `play-wordshop.js`, `play-grove.js` — maailma 7; Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
+- `js/tasks-fair.js` — Tivolisaaren tehtävät: mitä kello on, maksa rahoilla, palapeli, ohjelmoi reitti
+- `js/play-circus.js`, `play-balloon.js`, `play-icecream.js`, `play-ducks.js`, `play-magician.js` — maailma 8
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -70,13 +72,16 @@ Peli alkaa **saaristokartalta**: saaret ovat maailmoja, ja vene kulkee niiden
 välillä. Saaren napautus purjehduttaa veneen sinne ja avaa saaren
 labyrintin; labyrintin satamaruutu (**B**) palauttaa saaristoon. Seuraava saari
 aukeaa, kun edellisen saaren vartijahuone on läpäisty (Linnasaari: finaali,
-Karkkisaari: Arvoitusten torni). Saaria on seitsemän, yksi sateenkaaren
-väriä kohti (`SEA_FOG`-taulukkoon voi lisätä sumuisen saaren vihjeeksi).
+Karkkisaari: Arvoitusten torni). Värisaaria on seitsemän, yksi sateenkaaren
+väriä kohti (`SEA_FOG`-taulukkoon voi lisätä sumuisen saaren vihjeeksi), ja
+kahdeksas saari (Tivolisaari) odottaa sateenkaaren päässä.
 
 **Tarina:** Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle. Jokaisen
 saaren vartija palauttaa yhden värin, ja saaristokartan sateenkaari täyttyy
-väri kerrallaan (paljastus animoituu, kun kartalle palataan). Seitsemän väriä
-= tilaa seitsemälle saarelle.
+väri kerrallaan (paljastus animoituu, kun kartalle palataan). Kun kaikki
+seitsemän väriä on koossa, sateenkaaren päästä löytyy Tivolisaari, jonka
+vartija kruunaa kaaren **kultatähdellä** (`RAINBOW_COLORS.length`:n jälkeinen
+paljastus piirretään tähtenä).
 
 Linnasaaren labyrintissä huoneet ovat portteja: jokainen on läpäistävä, jotta
 tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.
@@ -282,6 +287,46 @@ TIKKUKIRJAIMIA ja sanat tavutettuina (KUK-KA). Sanat ja kuvat tulevat samasta
   Sanapöllö herää, kun molemmat sanat on kirjoitettu. Tehtävät: alkukirjain,
   kuva→sana.
 
+### Tivolisaari (maailma 8)
+
+Aukeaa, kun Kirjainpilvet on läpäisty eli sateenkaari on kokonaan koossa.
+Jokainen kenttä on oma pelimallinsa, ja saaren tehtävät opettavat kelloa,
+rahaa, palapelin kokoamista ja ohjelmointia. Taikurin teltta on saaren
+vartija; sen läpäisy nostaa kultatähden sateenkaaren huipulle.
+
+- **Sirkusteltta** ♥ — uusi verbi: **trapetsi**. Prinsessa roikkuu
+  heilahtelevassa trapetsissa; napautus irrottaa, ja hän lentää kaaressa
+  seuraavaan tankoon. Lähellä oleva tanko vetää käsiä puoleensa, joten ajoitus
+  on anteeksiantava mutta vaatii eteenpäin heilahtavan hetken (ikkuna n. 0,8 s
+  4,5 s:n jaksosta). Haalea pistekaari näyttää, mihin irrotus juuri nyt veisi.
+  Ohi lentävä putoaa turvaverkkoon (sydän) ja palaa viimeiselle korokkeelle;
+  korokkeelta napautus loikkaa ensimmäiseen tankoon. Kahdeksan tähteä kerätään
+  lennossa (bonus, ei vaadita). Tehtävät korokkeilla: kello, palapeli.
+- **Kuumailmapallo** ♥ — uusi verbi: **korkeuden valinta**. Pidä pohjassa:
+  sormi pallon yläpuolella = poltin (nousu), alapuolella = venttiili (lasku).
+  Neljä tuulikerrosta vievät palloa eri suuntiin (viivat näyttävät suunnan):
+  oikea korkeus vie eteenpäin, väärä taaksepäin — myös hyödyksi, jos ilmapallo
+  jäi taakse. Kerää kahdeksan juhlailmapalloa (myös napauttamalla läheltä),
+  väistä leijoja (sydän) ja laskeudu lopuksi alustalle, kun se hehkuu.
+  Illan tivoli maailmanpyörineen pyörii alla. Tehtävät: reitti, kello.
+- **Jäätelökoju** — ei liikkumista, ei sydämiä. Pupuasiakas tilaa kuplassa
+  tötterön, jossa on 2–4 palloa tietyissä väreissä **alhaalta ylös** — nuoli
+  kuplassa näyttää seuraavan pallon. Napauta oikea maku astiasta (5 makua);
+  väärä pallo putoaa tiskille. Kahdessa viimeisessä tilauksessa myös koriste
+  (kirsikka tai strösseli) viimeiseksi. Kuusi tilausta; tehtävät toisen ja
+  neljännen jälkeen: maksa, kello.
+- **Ankkaonginta** — ei liikkumista, ei sydämiä. Kymmenen numeroankkaa lipuu
+  kolmella kaistalla eri suuntiin. Napauta lampeen: koukku sukeltaa
+  napautuskohtaan 0,35 sekunnissa, joten ankan liike pitää ennakoida. Ankat
+  pyydetään numerojärjestyksessä 1…10 (seuraava numero kuplassa); väärä ankka
+  pärskähtää takaisin. Pyydetyt ankat rivistyvät hyllylle. Tehtävät 4 ja 8
+  ankan jälkeen: reitti, maksa.
+- **Taikurin teltta** ♥ — vartija. Taikuripupu piilottaa kultatähden kupin
+  alle ja sekoittaa kupit kaarissa: seuraa silmillä ja napauta oikea kuppi.
+  Kolme kierrosta (3 kuppia / 3 vaihtoa, 3 / 5, 4 / 6 nopeammin). Väärä kuppi
+  vie sydämen, ja tähti näytetään uudestaan. Kierrosten välissä tehtävät:
+  palapeli (6 palaa), kello. Lopuksi tähti nousee hatusta ja ilotulitus alkaa.
+
 ♥ = **sydämet käytössä**: 3 sydäntä, osuma vie yhden. Kun sydämet loppuvat,
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
@@ -333,6 +378,10 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 - Taivas, silta, karkkitaivas ja kotkalento: pidä pohjassa lentääksesi sormea
   kohti, **↑** on siivenisku.
 - Tähtisumu, uniaika ja kirjainpuutarha: pelkkä napautus — hahmo ei liiku.
+- Sirkusteltta: napautus irrottaa trapetsista (tai loikkaa korokkeelta).
+- Kuumailmapallo: pidä pohjassa — sormi pallon yläpuolella nostaa, alapuolella
+  laskee; tuuli vie sivulle.
+- Jäätelökoju, ankkaonginta ja taikurin teltta: pelkkä napautus.
 - Rytmitehtävä: kuuntele iskut, taputa sama kuvio mihin tahansa ruudulla.
   Tempo saa heittää, kuvion pitää täsmätä.
 
@@ -396,8 +445,22 @@ kartalla (seuraava huone, linna).
 - **Alkukirjain** — iso kirjain kuplassa ja neljä kuvaa; valitse kuva, jonka
   sana alkaa kirjaimella. Väärä kuva himmenee; kirjaimen napautus soittaa sen.
 
-Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän) väärä
-vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
+- **Mitä kello on** — kellotaulu kuplassa näyttää tasatunnin (punainen
+  tuntiviisari, harmaa minuuttiviisari kohdassa 12) ja kolme palloa numeroin;
+  väärät ovat läheisiä tunteja. Väärästä arvotaan uusi kello.
+- **Maksa** — lipussa hinta 3–9; pöydällä rahat 5, 2, 2, 1, 1, 1. Napautettu
+  raha lentää lautaselle ja summa näkyy vieressä; lautasen rahan napautus
+  palauttaa sen. Summa yli hinnan pöhähtää ja rahat palaavat pöydälle.
+- **Palapeli** (raahaus) — kuva (pupu, linna, kukka, yksisarvinen, pallo)
+  leikattuna 2×2 palaan (vartijassa 3×2, `{ pieces: 6 }`); malli kuplassa.
+  Raahaa palat kehyksen ruutuihin; väärä ruutu palauttaa palan alas.
+- **Reitti** — 4×4 ruudukko: pupu, porkkana ja pensaita. Napauta nuolia
+  ohjelmariville (enintään 6), rivin napautus poistaa viimeisen, ▶ ajaa
+  ohjelman askel kerrallaan. Pensaaseen tai reunaan törmäys palauttaa pupun
+  alkuun (ohjelma säilyy korjattavaksi). Perillä porkkanalla tehtävä ratkeaa.
+
+Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän, kello)
+väärä vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
 väärästä vastauksesta tulee vain ravistus.
 
 ## Vaikeuden säätö
@@ -442,6 +505,12 @@ väärästä vastauksesta tulee vain ravistus.
 - Uniaika: pupujen määrä `NAP_BUNNIES`, haukotusväli `2.5 + Math.random() * 2.5`
 - Kotkalento: sulkien määrä `GLIDE_COUNT`, ukkospilvet `tFx` (initGlide)
 - Kirjainpuutarha: sanojen määrä `GROVE_WORDS`, pensaita `GROVE_BUSHES`, hämääjät `GROVE_DISTRACTORS`
+- Sirkusteltta: heilahdus `CIRC_A`/`CIRC_W`, irrotuksen voima `CIRC_K`, lennon painovoima `CIRC_G`, tarttumis- ja vetosäde `CIRC_GRAB`/`CIRC_MAG`, rata `circDefs` (play-circus.js; tarttumisikkunan voi mitata simuloimalla `circBarPos`/`circBarVel`-funktioilla)
+- Kuumailmapallo: tuulikerrokset `BAL_BANDS`, leijat `balKiteDefs`, polttimen voima `viewH * 0.8`, vajoaminen `viewH * 0.3`
+- Jäätelökoju: tilaukset `ICE_ORDERS` ja koot `initIcecream`, maut `ICE_FLAVORS`
+- Ankkaonginta: kaistat `DUCK_LANES` (suunta, nopeus), koukun sukellus `0.35` s, pyyntisäde `viewH * 0.065`
+- Taikurin teltta: kierrokset `MAG_ROUNDS` (kupit, vaihdot, vaihdon kesto)
+- Maksa: rahat `PAY_COINS`, hinta `3 + randInt(7)`; Reitti: ruudukko `ROUTE_N`, askeleita `ROUTE_MAX`, askelaika `0.5` s; Palapeli: kuvat `JIGSAW_PICS`
 
 ## Tekniikka
 

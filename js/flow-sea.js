@@ -5,7 +5,8 @@
 // vartija: sen läpäisy palauttaa yhden sateenkaaren värin kartan yläreunaan.
 // Tarina: Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle, väri per saari.
 // Saaret (ISLANDS) johdetaan js/worlds.js:n WORLDS-rekisteristä.
-// Sumuiset saaret vihjaavat tulevista maailmoista (sateenkaaren 7 väriä ovat nyt kaikki käytössä)
+// Sumuiset saaret vihjaavat tulevista maailmoista. Sateenkaaren 7 väriä ovat
+// kaikki käytössä; kahdeksas saari (Tivolisaari) kruunaa kaaren kultatähdellä.
 var SEA_FOG = [];
 var RAINBOW_COLORS = ['#ff5a5a', '#ff9f3a', '#ffe14d', '#5fd36b', '#4aa8ff', '#6f5cff', '#c46bff'];
 
@@ -249,6 +250,13 @@ function drawSeaRainbow(c) {
     }
   }
   c.globalAlpha = 1;
+  // Kultatähti kaaren huipulla: kahdeksannen saaren vartija
+  var goldN = RAINBOW_COLORS.length;
+  if (rainbowShown > goldN || (seaReveal && seaReveal.idx === goldN)) {
+    c.globalAlpha = rainbowShown > goldN ? 1 : Math.min(1, seaReveal.t / 1.3);
+    drawStar(c, cx, cy - R0 - bw * 0.6, viewH * 0.045, Math.sin(globalT * 0.8) * 0.2, 0.9);
+    c.globalAlpha = 1;
+  }
   c.fillStyle = 'rgba(255,255,255,0.95)';
   cloudShape(c, cx - R0 + bw * 1.5, cy - bw * 0.5, viewH * 0.03);
   cloudShape(c, cx + R0 - bw * 1.5, cy - bw * 0.5, viewH * 0.03);
@@ -257,6 +265,15 @@ function drawSeaRainbow(c) {
 function drawRevealSparkles(c) {
   var cx = viewW * 0.5, cy = viewH * 0.40, bw = viewH * 0.021, R0 = viewH * 0.27;
   var r = R0 - seaReveal.idx * bw - bw / 2, k, a, t = seaReveal.t;
+  if (seaReveal.idx >= RAINBOW_COLORS.length) {
+    for (k = 0; k < 8; k++) {
+      a = t * 2 + k * Math.PI / 4;
+      c.globalAlpha = Math.max(0, 1 - t / 2.4);
+      drawStar(c, cx + Math.cos(a) * bw * 4, cy - R0 - bw * 0.6 + Math.sin(a) * bw * 4, bw * 0.8, globalT * 3 + k, 0.8);
+    }
+    c.globalAlpha = 1;
+    return;
+  }
   for (k = 0; k < 7; k++) {
     a = Math.PI + ((t * 0.55 + k / 7) % 1) * Math.PI;
     c.globalAlpha = Math.max(0, 1 - t / 2.4);
