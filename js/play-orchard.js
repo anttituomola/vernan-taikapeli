@@ -180,14 +180,19 @@ function updateOrchard(dt) {
 }
 
 // ---------- Piirto ----------
+var ORCHARD_PAPER = { paper: '#f6f3e0', hill1: '#e2eec8', hill2: '#cfe4ae' };
+function orchardLayers() { return paperLayers(ORCHARD_PAPER, renderOrchardNear); }
 function renderOrchardBg(b, w, h) {
+  renderPaperFar(b, w, h, ORCHARD_PAPER);
+  renderPaperMid(b, w, h, ORCHARD_PAPER);
+  renderOrchardNear(b, w, h);
+}
+function renderOrchardNear(b, w, h) {
   var i, x, tr, ty;
-  renderPaperScene(b, w, h, [], null, { paper: '#f6f3e0', hill1: '#e2eec8', hill2: '#cfe4ae' });
-  // Terassit ja niiden reunat
+  renderPaperNear(b, w, h, [], null);
   for (i = 0; i < orchardTerraces.length; i++) {
     drawPaperGround(b, orchardTerraces[i].seg[0] * w, orchardTerraceY(i), (orchardTerraces[i].seg[1] - orchardTerraces[i].seg[0]) * w, h);
   }
-  // Omenapuut terassilla
   for (i = 0; i < orchardTrees.length; i++) {
     tr = orchardTrees[i];
     ty = orchardTerraceY(tr.terrace);
@@ -201,12 +206,10 @@ function renderOrchardBg(b, w, h) {
     b.fillStyle = 'rgba(255,255,255,0.25)';
     b.beginPath(); b.arc(x - h * 0.03, ty - h * 0.21, h * 0.03, 0, Math.PI * 2); b.fill();
   }
-  // Kukkia
   for (i = 0; i < 16; i++) {
     x = w * (0.02 + i * 0.062);
     drawFlower(b, x, orchardTerraceY(2) - h * 0.015, h * 0.011, i % 2 ? '#ff7bac' : '#ffe27a');
   }
-  // Omenakori
   var bx = orchardBasket.x, s = h * 0.09;
   b.fillStyle = '#c98b4a';
   b.beginPath();
@@ -239,7 +242,7 @@ function orDrawApple(c, x, y, s, rot) {
 
 function drawOrchard() {
   var i, a;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawPenStrokesLayer(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) {
@@ -263,7 +266,7 @@ function drawOrchard() {
     }
     if (anyRolling && !anyTree) drawEdgeArrow(ctx, orchardBasket.x);
   }
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, ORCHARD_COUNT, function (i2) { return orchardApples[i2] && orchardApples[i2].collected; },
     function (c, x, y, s) { orDrawApple(c, x, y, s, 0); });
   drawHearts(ctx);

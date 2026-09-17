@@ -89,6 +89,9 @@ function countButterflies() {
 function collectButterfly(bf) {
   bf.collected = true;
   spawnSparkles(bf.ax, bf.ay, 14, '#ffd6ff');
+  artPop(bf.ax, bf.ay, viewH * 0.05, '#ffd6ff', 'ring');
+  var idx = butterflies.indexOf(bf);
+  if (idx >= 0) hudBump[idx] = 0.4;
   playNote(784, 0, 0.2, 'sine', 0.4);
   playNote(1175, 0.08, 0.28, 'sine', 0.35);
   if (countButterflies() === BUTTERFLY_COUNT) startCelebration();
@@ -189,6 +192,8 @@ function updateLevel2(dt) {
       if (odx * odx + ody * ody < viewH * 0.07 * viewH * 0.07) {
         owl.awake = true;
         spawnSparkles(owl.x, owl.y - viewH * 0.05, 12, '#ffe27a');
+        artPop(owl.x, owl.y - viewH * 0.05, viewH * 0.08, '#ffe27a', 'burst');
+        artShakeStart(viewH * 0.008, 0.25);
         playNote(392, 0, 0.15, 'triangle', 0.3);
         playNote(523, 0.1, 0.25, 'triangle', 0.3);
         sparks.splice(i, 1);
@@ -229,137 +234,55 @@ function updateLevel2(dt) {
   }
 }
 
-function drawPrincessFree(c, x, y, s, facing, walkPhase, moving, t) {
-  c.save();
-  c.translate(x, y);
-  c.scale(facing, 1);
-  var bob = moving ? Math.abs(Math.sin(walkPhase)) * s * 3 : Math.sin(t * 2) * s * 1.2;
-  c.translate(0, -bob);
-  c.strokeStyle = '#ffd9b8';
-  c.lineWidth = s * 5;
-  c.lineCap = 'round';
-  var swing = moving ? Math.sin(walkPhase) * s * 7 : 0;
-  c.beginPath();
-  c.moveTo(-s * 4, -s * 18);
-  c.lineTo(-s * 6 - swing, -s * 2);
-  c.moveTo(s * 4, -s * 18);
-  c.lineTo(s * 6 + swing, -s * 2);
-  c.stroke();
-  c.fillStyle = '#ff6fb0';
-  c.beginPath();
-  c.moveTo(0, -s * 28);
-  c.quadraticCurveTo(-s * 16, -s * 8, -s * 12, -s * 2);
-  c.lineTo(s * 12, -s * 2);
-  c.quadraticCurveTo(s * 16, -s * 8, 0, -s * 28);
-  c.closePath(); c.fill();
-  c.fillStyle = '#ffd9b8';
-  c.beginPath(); c.arc(0, -s * 42, s * 8, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#f7c948';
-  c.beginPath();
-  c.arc(0, -s * 45, s * 8.2, Math.PI * 0.95, Math.PI * 2.05);
-  c.fill();
-  c.fillStyle = '#333';
-  if ((t % 4.1) < 0.14) {
-    c.fillRect(s * 1.8, -s * 42.3, s * 2.4, s * 0.6);
-  } else {
-    c.beginPath(); c.arc(s * 3, -s * 42, s * 1.2, 0, Math.PI * 2); c.fill();
-  }
-  c.fillStyle = '#ffd24f';
-  c.beginPath();
-  c.moveTo(-s * 6, -s * 50);
-  c.lineTo(-s * 6, -s * 56);
-  c.lineTo(-s * 3, -s * 52);
-  c.lineTo(0, -s * 58);
-  c.lineTo(s * 3, -s * 52);
-  c.lineTo(s * 6, -s * 56);
-  c.lineTo(s * 6, -s * 50);
-  c.closePath(); c.fill();
-  c.strokeStyle = '#d9b3ff';
-  c.lineWidth = s * 2.4;
-  c.beginPath();
-  c.moveTo(s * 6, -s * 30);
-  c.lineTo(s * 22, -s * 48);
-  c.stroke();
-  c.fillStyle = '#ffe27a';
-  c.beginPath(); c.arc(s * 24, -s * 50, s * 4, 0, Math.PI * 2); c.fill();
-  c.restore();
-}
-
 function drawOwl(c) {
   var x = owl.x - camX;
   var y = owl.y - viewH * 0.055 - (owl.awake ? owl.flyT * viewH * 0.05 : 0);
   var s = viewH * 0.055;
   if (x < -s * 3 || x > viewW + s * 3) return;
+  if (!owl.awake) artShadow(c, x, owl.y, s * 1.1, s * 0.28, 0.16);
   c.save();
   c.translate(x, y);
-  c.fillStyle = '#8b5a2b';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(0, 0, s * 0.7, s * 0.9, 0, 0, Math.PI * 2);
-  else c.arc(0, 0, s * 0.75, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = '#c9a06a';
-  c.beginPath(); c.arc(0, s * 0.15, s * 0.35, 0, Math.PI * 2); c.fill();
-  if (owl.awake) {
-    c.fillStyle = '#fff';
-    c.beginPath(); c.arc(-s * 0.22, -s * 0.25, s * 0.22, 0, Math.PI * 2); c.fill();
-    c.beginPath(); c.arc(s * 0.22, -s * 0.25, s * 0.22, 0, Math.PI * 2); c.fill();
-    c.fillStyle = '#333';
-    c.beginPath(); c.arc(-s * 0.18, -s * 0.25, s * 0.1, 0, Math.PI * 2); c.fill();
-    c.beginPath(); c.arc(s * 0.26, -s * 0.25, s * 0.1, 0, Math.PI * 2); c.fill();
-  } else {
-    c.strokeStyle = '#333';
-    c.lineWidth = s * 0.08;
-    c.beginPath();
-    c.arc(-s * 0.22, -s * 0.22, s * 0.16, 0.2, Math.PI - 0.2);
-    c.stroke();
-    c.beginPath();
-    c.arc(s * 0.22, -s * 0.22, s * 0.16, 0.2, Math.PI - 0.2);
-    c.stroke();
-  }
-  c.fillStyle = '#e8a020';
+  artBlob(c, 0, 0, s * 0.7, s * 0.9, '#8b5a2b', { hi: 0.3 });
+  artCircle(c, 0, s * 0.18, s * 0.35, '#c9a06a', {});
+  artEye(c, -s * 0.22, -s * 0.25, s * 0.2, owl.awake ? 0.35 : 0, !owl.awake);
+  artEye(c, s * 0.22, -s * 0.25, s * 0.2, owl.awake ? 0.35 : 0, !owl.awake);
   c.beginPath();
   c.moveTo(0, -s * 0.05);
   c.lineTo(s * 0.18, s * 0.12);
   c.lineTo(-s * 0.18, s * 0.12);
-  c.closePath(); c.fill();
+  c.closePath();
+  artFillPath(c, '#e8a020', -s * 0.05, s * 0.12, s * 0.12, { lineColor: '#b07810' });
+  if (owl.awake) {
+    artBlob(c, -s * 0.55, s * 0.1, s * 0.28, s * 0.18, '#8b5a2b', { rot: -0.4 });
+    artBlob(c, s * 0.55, s * 0.1, s * 0.28, s * 0.18, '#8b5a2b', { rot: 0.4 });
+  }
   c.restore();
 }
 
 function drawButterfly(c, x, y, s, phase, color) {
   var flap = 0.55 + Math.sin(phase * 8) * 0.45;
+  var line = s < 18 ? false : Math.max(0.8, s * 0.12);
   c.save();
   c.translate(x, y);
-  c.fillStyle = color;
-  c.globalAlpha = 0.9;
-  c.beginPath();
-  if (c.ellipse) {
-    c.ellipse(-s * 0.55 * flap, 0, s * 0.55 * flap, s * 0.4, -0.4, 0, Math.PI * 2);
-    c.ellipse(s * 0.55 * flap, 0, s * 0.55 * flap, s * 0.4, 0.4, 0, Math.PI * 2);
-  } else {
-    c.arc(-s * 0.4, 0, s * 0.4, 0, Math.PI * 2);
-    c.arc(s * 0.4, 0, s * 0.4, 0, Math.PI * 2);
-  }
-  c.fill();
-  c.globalAlpha = 1;
-  c.fillStyle = '#4a3060';
-  c.fillRect(-s * 0.06, -s * 0.35, s * 0.12, s * 0.7);
+  artBlob(c, -s * 0.52 * flap, 0, s * 0.52 * flap, s * 0.38, color, { rot: -0.4, hi: 0.35, line: line });
+  artBlob(c, s * 0.52 * flap, 0, s * 0.52 * flap, s * 0.38, color, { rot: 0.4, hi: 0.35, line: line });
+  artLimb(c, 0, -s * 0.32, 0, s * 0.32, Math.max(1.2, s * 0.12), '#4a3060', false);
   c.restore();
 }
 
 function drawLevel2() {
   var i;
   if (!bgCanvas.width || !viewW || !viewH) return;
-  ctx.clearRect(0, 0, viewW, viewH);
-  ctx.drawImage(bgCanvas, 0, 0, bgCanvas.width, bgCanvas.height, -camX, 0, worldW, viewH);
+  var sh = artShakeOffset();
+  ctx.save();
+  ctx.translate(sh.x, sh.y);
+  drawWorldBg();
 
-  ctx.fillStyle = 'rgba(255,244,180,0.55)';
   for (i = 0; i < 8; i++) {
     var fx = ((globalT * (12 + i) + i * 90) % (viewW + 80)) - 40;
     var fy = viewH * (0.12 + (i % 4) * 0.08) + Math.sin(globalT * 2 + i) * 6;
-    ctx.globalAlpha = 0.35 + Math.sin(globalT * 3 + i) * 0.2;
-    ctx.beginPath(); ctx.arc(fx, fy, 2.5, 0, Math.PI * 2); ctx.fill();
+    artGlow(ctx, fx, fy, 10, '#ffe9a0', 0.25 + Math.sin(globalT * 3 + i) * 0.15);
   }
-  ctx.globalAlpha = 1;
 
   drawOwl(ctx);
 
@@ -382,13 +305,7 @@ function drawLevel2() {
   for (i = 0; i < sparks.length; i++) {
     var sp = sparks[i];
     var a = 1 - sp.age / sp.life;
-    var sg = ctx.createRadialGradient(sp.x - camX, sp.y, 2, sp.x - camX, sp.y, viewH * 0.04);
-    sg.addColorStop(0, 'rgba(255,255,200,' + a + ')');
-    sg.addColorStop(1, 'rgba(200,140,255,0)');
-    ctx.fillStyle = sg;
-    ctx.beginPath();
-    ctx.arc(sp.x - camX, sp.y, viewH * 0.04, 0, Math.PI * 2);
-    ctx.fill();
+    artGlow(ctx, sp.x - camX, sp.y, viewH * 0.045, '#ffe9a0', a * 0.7);
   }
 
   var moving = Math.abs(princess.vx) > 12 && princess.onGround;
@@ -404,6 +321,7 @@ function drawLevel2() {
     ctx.fillRect(p.x - camX - p.size / 2, p.y - p.size / 2, p.size, p.size);
   }
   ctx.globalAlpha = 1;
+  artPopsDraw(ctx, camX);
 
   if (celebrating) {
     drawRainbow(ctx);
@@ -418,6 +336,9 @@ function drawLevel2() {
     }
   }
 
+  ctx.restore();
+  drawLight(ctx, phaseNow().light);
+
   var hs = viewH * 0.022, pad = hs * 1.4, left = hudX();
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   roundRect(ctx, left, pad * 0.5, hs * 3.2 * BUTTERFLY_COUNT + pad, hs * 3.6, hs);
@@ -425,7 +346,8 @@ function drawLevel2() {
   for (i = 0; i < BUTTERFLY_COUNT; i++) {
     ctx.save();
     ctx.globalAlpha = (butterflies[i] && butterflies[i].collected) ? 1 : 0.25;
-    drawButterfly(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.8, hs * 1.1, i, bfColors[i % bfColors.length]);
+    var bump = hudBump[i] > 0 ? 1 + Math.sin(Math.PI * hudBump[i] / 0.4) * 0.45 : 1;
+    drawButterfly(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.8, hs * 1.1 * bump, i, bfColors[i % bfColors.length]);
     ctx.restore();
   }
   drawTaskOverlay(ctx);

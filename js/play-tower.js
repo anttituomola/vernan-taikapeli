@@ -136,7 +136,35 @@ function updateTower(dt) {
 }
 
 // ---------- Piirto ----------
+function towerLayers() {
+  return [
+    { speed: 0.22, render: renderTowerFar },
+    { speed: 0.55, render: renderTowerMid },
+    { speed: 1, render: renderTowerNear }
+  ];
+}
 function renderTowerBg(b, w, h) {
+  renderTowerFar(b, w, h);
+  renderTowerMid(b, w, h);
+  renderTowerNear(b, w, h);
+}
+function renderTowerFar(b, w, h) {
+  var i, x;
+  var sky = b.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#0b0630');
+  sky.addColorStop(1, '#2a1860');
+  b.fillStyle = sky;
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, w * 0.5, h * 0.18, h * 0.05, 0.22, '#fff4c8', '#ffffff', '#ffe9a8');
+  b.fillStyle = '#fff6c8';
+  for (i = 0; i < 40; i++) {
+    x = (i * 173.3) % w;
+    b.globalAlpha = 0.4 + (i % 4) * 0.12;
+    b.beginPath(); b.arc(x, (i * 97.1) % (h * 0.4), 1.3 + (i % 3), 0, Math.PI * 2); b.fill();
+  }
+  b.globalAlpha = 1;
+}
+function renderTowerMid(b, w, h) {
   var i, x, k;
   var wall = b.createLinearGradient(0, 0, 0, h);
   wall.addColorStop(0, '#241c48');
@@ -147,7 +175,6 @@ function renderTowerBg(b, w, h) {
   b.strokeStyle = 'rgba(255,255,255,0.05)';
   b.lineWidth = 2;
   for (i = 0; i < 14; i++) { b.beginPath(); b.moveTo(0, h * 0.05 * i); b.lineTo(w, h * 0.05 * i); b.stroke(); }
-  // Kirjahyllyt ja ikkunat vuorotellen
   var bookCols = ['#ff5f7e', '#ffb84f', '#6fd66f', '#5fa8ff', '#b678ff', '#ffe94f'];
   for (i = 0; i < 12; i++) {
     x = w * (0.04 + i * 0.082);
@@ -177,7 +204,9 @@ function renderTowerBg(b, w, h) {
       }
     }
   }
-  // Lattia ja matto
+}
+function renderTowerNear(b, w, h) {
+  var i, x;
   var floor = b.createLinearGradient(0, groundTop, 0, h);
   floor.addColorStop(0, '#7d6a9c');
   floor.addColorStop(1, '#4a3d66');
@@ -185,11 +214,8 @@ function renderTowerBg(b, w, h) {
   b.fillRect(0, groundTop, w, h - groundTop);
   b.fillStyle = 'rgba(0,0,0,0.12)';
   for (x = 0; x < w; x += h * 0.12) b.fillRect(x, groundTop, 2, h - groundTop);
-  b.fillStyle = '#5a3aa0';
-  b.fillRect(0, groundTop + 4, w, h * 0.06);
-  b.fillStyle = '#ffd24f';
-  b.fillRect(0, groundTop + 4, w, 3);
-  b.fillRect(0, groundTop + 4 + h * 0.06 - 3, w, 3);
+  b.beginPath(); b.rect(0, groundTop + 4, w, h * 0.06);
+  artFillPath(b, '#5a3aa0', groundTop + 4, groundTop + 4 + h * 0.06, h * 0.03, { lineColor: '#ffd24f' });
   for (i = 1; i < platforms.length; i++) {
     drawStoneSlab(b, platforms[i].x, platforms[i].y, platforms[i].w, h * 0.05, h);
   }
@@ -283,7 +309,7 @@ function drawThroneGlow(c) {
 
 function drawTower() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < pendulums.length; i++) drawPendulum(ctx, pendulums[i]);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
@@ -298,7 +324,7 @@ function drawTower() {
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   if (throne.open && !celebrating) drawEdgeArrow(ctx, throne.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, GEM_COUNT, function (i2) { return gems[i2] && gems[i2].collected; },
     function (c, x, y, s) { drawGem(c, x, y, s, '#8fd3ff'); });
   drawHearts(ctx);

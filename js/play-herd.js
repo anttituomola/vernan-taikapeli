@@ -218,33 +218,28 @@ function updateHerd(dt) {
 }
 
 // ---------- Piirto ----------
+function herdLayers() {
+  return [
+    { speed: 0.22, render: renderHerdFar },
+    { speed: 0.55, render: renderHerdMid },
+    { speed: 1, render: renderHerdNear }
+  ];
+}
 function renderHerdBg(b, w, h) {
+  renderHerdFar(b, w, h);
+  renderHerdMid(b, w, h);
+  renderHerdNear(b, w, h);
+}
+function renderHerdFar(b, w, h) { meadowFar(b, w, h, '#7ec8ff', '#c8ecff', '#c8e8b8'); }
+function renderHerdMid(b, w, h) { meadowMid(b, w, h, '#a7dd8f'); }
+function renderHerdNear(b, w, h) {
   var i, x;
-  var sky = b.createLinearGradient(0, 0, 0, groundTop);
-  sky.addColorStop(0, '#9fdcff');
-  sky.addColorStop(1, '#e8f7ff');
-  b.fillStyle = sky;
-  b.fillRect(0, 0, w, groundTop + 2);
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  for (i = 0; i < 9; i++) cloudShape(b, w * (0.05 + i * 0.11), h * (0.1 + (i % 3) * 0.07), h * 0.03);
-  b.fillStyle = '#a7dd8f';
-  for (i = 0; i < 10; i++) {
-    x = w * (i / 9);
-    b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.12 + (i % 3) * 0.04), Math.PI, 0); b.fill();
-  }
-  var grass = b.createLinearGradient(0, groundTop, 0, h);
-  grass.addColorStop(0, '#8fd97a');
-  grass.addColorStop(1, '#5fb356');
-  b.fillStyle = grass;
-  b.fillRect(0, groundTop, w, h - groundTop);
-  b.fillStyle = 'rgba(255,240,180,0.45)';
-  b.fillRect(0, groundTop + h * 0.02, w, groundBottom - groundTop - h * 0.02);
+  meadowNearGrass(b, w, h);
   for (i = 0; i < 40; i++) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, ['#ff7bac', '#ffe27a', '#c9a0ff', '#7fd4ff'][i % 4]);
   }
   for (i = 0; i < herdBushes.length; i++) drawBush(b, herdBushes[i].x, herdBushes[i].y, h * 0.09);
-  // Pupukolo
   var bx = herdBurrow.x, s = h * 0.1;
   b.fillStyle = '#8a6a44';
   b.beginPath(); b.arc(bx, groundTop + h * 0.02, s * 0.95, Math.PI, 0); b.fill();
@@ -280,7 +275,7 @@ function drawHerdBunny(c, b) {
 
 function drawHerd() {
   var i, order = [];
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < herdOwls.length; i++) if (herdOwls[i].state !== 'dive') drawNightOwl(ctx, herdOwls[i]);
   // Puput ja yksisarvinen syvyysjärjestyksessä
@@ -303,7 +298,7 @@ function drawHerd() {
     if (hid) drawEdgeArrow(ctx, hid.x);
     else if (allFollow && herdHomeCount() < herdBunnies.length) drawEdgeArrow(ctx, herdBurrow.x);
   }
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, HERD_N, function (i2) { return herdBunnies[i2] && herdBunnies[i2].state === 'home'; },
     function (c, x, y, s2) { drawBunny(c, x, y + s2 * 0.3, s2 * 0.9, 0, 0, true); });
   drawTaskOverlay(ctx);

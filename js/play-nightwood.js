@@ -197,14 +197,26 @@ function updateNightwood(dt) {
 }
 
 // ---------- Piirto ----------
+function nightwoodLayers() {
+  return [
+    { speed: 0.22, render: renderNightwoodFar },
+    { speed: 0.55, render: renderNightwoodMid },
+    { speed: 1, render: renderNightwoodNear }
+  ];
+}
 function renderNightwoodBg(b, w, h) {
+  renderNightwoodFar(b, w, h);
+  renderNightwoodMid(b, w, h);
+  renderNightwoodNear(b, w, h);
+}
+function renderNightwoodFar(b, w, h) {
   var i, x;
   var sky = b.createLinearGradient(0, 0, 0, groundTop);
   sky.addColorStop(0, '#070a24');
   sky.addColorStop(0.7, '#1b2a5a');
   sky.addColorStop(1, '#2a3f78');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, groundTop + 2);
+  b.fillRect(0, 0, w, h);
   b.fillStyle = '#ffffff';
   for (i = 0; i < 120; i++) {
     x = (i * 197.3) % w;
@@ -213,29 +225,20 @@ function renderNightwoodBg(b, w, h) {
     b.beginPath(); b.arc(x, sy, 1 + (i % 3) * 0.6, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  // Kuu
-  var mx = w * 0.5, my = h * 0.16, mr = h * 0.075;
-  var mg = b.createRadialGradient(mx, my, mr * 0.5, mx, my, mr * 3);
-  mg.addColorStop(0, 'rgba(255,245,200,0.5)');
-  mg.addColorStop(1, 'rgba(255,245,200,0)');
-  b.fillStyle = mg;
-  b.beginPath(); b.arc(mx, my, mr * 3, 0, Math.PI * 2); b.fill();
-  b.fillStyle = '#fff6c8';
-  b.beginPath(); b.arc(mx, my, mr, 0, Math.PI * 2); b.fill();
-  b.fillStyle = 'rgba(200,190,150,0.3)';
-  b.beginPath(); b.arc(mx - mr * 0.3, my - mr * 0.2, mr * 0.2, 0, Math.PI * 2); b.fill();
-  b.beginPath(); b.arc(mx + mr * 0.35, my + mr * 0.3, mr * 0.14, 0, Math.PI * 2); b.fill();
-  // Kaukaiset kukkulat ja kuusirivit
-  b.fillStyle = '#121a44';
-  for (i = 0; i < 9; i++) {
-    x = w * (i / 8);
-    b.beginPath(); b.arc(x, groundTop - h * 0.05, h * (0.14 + (i % 3) * 0.04), Math.PI, 0); b.fill();
-  }
+  drawBgSun(b, w * 0.5, h * 0.16, h * 0.075, 0.22, '#fff6c8', '#ffffff', '#ffe9a8');
+  fillHillBand(b, w, h, groundTop - h * 0.05, '#121a44', function (x) {
+    return groundTop - h * 0.12 - Math.sin(x * 0.002) * h * 0.04;
+  });
+}
+function renderNightwoodMid(b, w, h) {
+  var i, x;
   for (i = 0; i < 26; i++) {
     x = w * (0.01 + i * 0.039) + (i % 2) * h * 0.02;
     drawPine(b, x, groundTop - h * 0.02, h * (0.22 + (i % 3) * 0.06), i % 2 ? '#0e1538' : '#16204a');
   }
-  // Polku
+}
+function renderNightwoodNear(b, w, h) {
+  var i, x;
   var path = b.createLinearGradient(0, groundTop, 0, groundBottom);
   path.addColorStop(0, '#31507a');
   path.addColorStop(0.5, '#3c5f8f');
@@ -244,19 +247,17 @@ function renderNightwoodBg(b, w, h) {
   b.fillRect(0, groundTop, w, h - groundTop);
   b.fillStyle = '#1a2a52';
   b.fillRect(0, groundBottom, w, h - groundBottom);
-  // Hohtavat sienet polun reunoilla
+  for (i = 0; i < 10; i++) {
+    x = w * (0.04 + i * 0.1);
+    drawPine(b, x, groundTop - h * 0.01, h * (0.18 + (i % 3) * 0.04), i % 2 ? '#1a2a58' : '#243868');
+  }
   for (i = 0; i < 22; i++) {
     x = (i * 311.7) % w;
     var my2 = i % 2 ? groundTop + h * 0.02 : groundBottom - h * 0.01;
-    var gg = b.createRadialGradient(x, my2 - h * 0.02, h * 0.005, x, my2 - h * 0.02, h * 0.05);
-    gg.addColorStop(0, 'rgba(150,230,255,0.5)');
-    gg.addColorStop(1, 'rgba(150,230,255,0)');
-    b.fillStyle = gg;
-    b.beginPath(); b.arc(x, my2 - h * 0.02, h * 0.05, 0, Math.PI * 2); b.fill();
+    artGlow(b, x, my2 - h * 0.02, h * 0.05, '#7fd4ff', 0.45);
     b.fillStyle = '#d9e8ff';
     b.fillRect(x - h * 0.005, my2 - h * 0.025, h * 0.01, h * 0.025);
-    b.fillStyle = '#7fd4ff';
-    b.beginPath(); b.arc(x, my2 - h * 0.025, h * 0.016, Math.PI, 0); b.fill();
+    artCircle(b, x, my2 - h * 0.025, h * 0.016, '#7fd4ff', { line: false, hi: 0.4 });
   }
   drawMoonGateFrame(b, moonGate.x, groundTop - h * 0.02, h);
 }
@@ -369,7 +370,7 @@ function drawMoonGateGlow(c) {
 
 function drawNightwood() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   drawMoonGateGlow(ctx);
@@ -386,7 +387,7 @@ function drawNightwood() {
   for (i = 0; i < owls.length; i++) if (owls[i].state === 'dive') drawNightOwl(ctx, owls[i]);
   drawParticlesLayer(ctx);
   if (moonGate.open && !celebrating) drawEdgeArrow(ctx, moonGate.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, GLOW_COUNT, function (i2) { return glowBugs[i2] && glowBugs[i2].collected; },
     function (c, x, y, s) { drawGlowBug(c, x, y, s * 0.75, true, 0); });
   drawHearts(ctx);

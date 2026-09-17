@@ -187,21 +187,22 @@ function updateGrove(dt) {
 }
 
 // ---------- Piirto ----------
+function groveLayers() {
+  return [
+    { speed: 0.22, render: renderGroveFar },
+    { speed: 0.55, render: renderGroveMid },
+    { speed: 1, render: renderGroveNear }
+  ];
+}
 function renderGroveBg(b, w, h) {
+  renderGroveFar(b, w, h);
+  renderGroveMid(b, w, h);
+  renderGroveNear(b, w, h);
+}
+function renderGroveFar(b, w, h) { meadowFar(b, w, h, '#7ec8ff', '#eefaff', '#c8e8b8'); }
+function renderGroveMid(b, w, h) { meadowMid(b, w, h, '#a7dd8f'); }
+function renderGroveNear(b, w, h) {
   var i, x;
-  var sky = b.createLinearGradient(0, 0, 0, h * 0.5);
-  sky.addColorStop(0, '#b8e6ff');
-  sky.addColorStop(1, '#eefaff');
-  b.fillStyle = sky;
-  b.fillRect(0, 0, w, h * 0.5 + 2);
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  for (i = 0; i < 6; i++) cloudShape(b, w * (0.08 + i * 0.17), h * (0.1 + (i % 2) * 0.08), h * 0.03);
-  // Kukkulat ja nurmi
-  b.fillStyle = '#a7dd8f';
-  for (i = 0; i < 8; i++) {
-    x = w * (i / 7);
-    b.beginPath(); b.arc(x, h * 0.52, h * (0.12 + (i % 3) * 0.04), Math.PI, 0); b.fill();
-  }
   var grass = b.createLinearGradient(0, h * 0.44, 0, h);
   grass.addColorStop(0, '#8fd97a');
   grass.addColorStop(1, '#5fb356');
@@ -233,7 +234,7 @@ function groveDrawBush(c, p, ch, wrong) {
 
 function drawGrove() {
   var i, p;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Sanakupla: kerätyt kirjaimet paikoillaan, seuraava hehkuu
   var lay = groveWordLayout();
   var totalW = lay.xs.length * viewH * 0.055 + viewH * 0.1;
@@ -284,7 +285,7 @@ function drawGrove() {
   }
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, GROVE_WORDS, function (i2) { return i2 < grove.done; },
     function (c, x, y, s) { drawWordIcon(c, 'book', x, y, s); });
   drawTaskOverlay(ctx);

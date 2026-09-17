@@ -47,9 +47,12 @@ function initPond() {
   playNote(523, 0.12, 0.28, 'sine', 0.35);
 }
 
-function collectPearl(p) {
+function collectPondPearl(p) {
   p.collected = true;
   spawnSparkles(p.ax, p.ay, 12, '#c8f4ff');
+  artPop(p.ax, p.ay, viewH * 0.05, '#c8f4ff', 'ring');
+  var idx = pearls.indexOf(p);
+  if (idx >= 0) hudBump[idx] = 0.4;
   playNote(698, 0, 0.18, 'sine', 0.4);
   playNote(1047, 0.08, 0.24, 'sine', 0.32);
   if (countCollected(pearls) === PICKUP_COUNT) startCelebration();
@@ -126,6 +129,8 @@ function updatePond(dt) {
       if (odx * odx + ody * ody < viewH * 0.07 * viewH * 0.07) {
         frog.awake = true;
         spawnSparkles(frog.x, frog.y, 12, '#b6ff9a');
+        artPop(frog.x, frog.y - viewH * 0.04, viewH * 0.08, '#b6ff9a', 'burst');
+        artShakeStart(viewH * 0.008, 0.25);
         playNote(330, 0, 0.15, 'triangle', 0.3);
         sparks.splice(i, 1);
         continue;
@@ -136,7 +141,7 @@ function updatePond(dt) {
       if (pearls[k].collected) continue;
       var pdx = sp.x - pearls[k].ax, pdy = sp.y - (pearls[k].ay + Math.sin(pearls[k].phase) * viewH * 0.015);
       if (pdx * pdx + pdy * pdy < viewH * 0.04 * viewH * 0.04) {
-        collectPearl(pearls[k]);
+        collectPondPearl(pearls[k]);
         sparks.splice(i, 1);
         break;
       }
@@ -158,34 +163,25 @@ function drawFrog(c) {
   var x = frog.x - camX;
   var y = frog.y - viewH * 0.04 - (frog.awake ? frog.hopT * viewH * 0.04 : Math.abs(Math.sin(frog.hopT)) * 6);
   var s = viewH * 0.05;
+  if (!frog.awake) artShadow(c, x, frog.y, s * 1.2, s * 0.28, 0.16);
   c.save();
   c.translate(x, y);
-  c.fillStyle = '#5ecf6a';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(0, 0, s * 0.8, s * 0.55, 0, 0, Math.PI * 2);
-  else c.arc(0, 0, s * 0.6, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = frog.awake ? '#fff' : '#c8f5c4';
-  c.beginPath(); c.arc(-s * 0.28, -s * 0.25, s * 0.2, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(s * 0.28, -s * 0.25, s * 0.2, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#234';
-  c.beginPath(); c.arc(-s * 0.24, -s * 0.25, s * 0.08, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(s * 0.32, -s * 0.25, s * 0.08, 0, Math.PI * 2); c.fill();
+  artLimb(c, -s * 0.45, s * 0.25, -s * 0.7, s * 0.5, s * 0.16, '#4aaa58', false);
+  artLimb(c, s * 0.45, s * 0.25, s * 0.7, s * 0.5, s * 0.16, '#4aaa58', false);
+  artBlob(c, 0, 0, s * 0.8, s * 0.55, '#5ecf6a', { hi: 0.3 });
+  artEye(c, -s * 0.28, -s * 0.22, s * 0.18, 0.25, !frog.awake);
+  artEye(c, s * 0.28, -s * 0.22, s * 0.18, 0.25, !frog.awake);
   c.restore();
 }
 
 function drawPearl(c, x, y, r) {
-  var g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
-  g.addColorStop(0, '#ffffff');
-  g.addColorStop(0.45, '#d4f6ff');
-  g.addColorStop(1, '#7ecbe0');
-  c.fillStyle = g;
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+  artGlow(c, x, y, r * 2.6, '#c8f4ff', 0.45);
+  artCircle(c, x, y, r, '#d4f6ff', { shadeTo: '#7ecbe0', hi: 0.5 });
 }
 
 function drawPond() {
-  var i, hs, pad;
-  if (!drawWorldBg()) return;
+  var i, hs, pad, bump;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   drawFrog(ctx);
   for (i = 0; i < pearls.length; i++) {
@@ -199,10 +195,7 @@ function drawPond() {
   }
   for (i = 0; i < sparks.length; i++) {
     var a = 1 - sparks[i].age / sparks[i].life;
-    ctx.fillStyle = 'rgba(180,255,255,' + a + ')';
-    ctx.beginPath();
-    ctx.arc(sparks[i].x - camX, sparks[i].y, viewH * 0.035, 0, Math.PI * 2);
-    ctx.fill();
+    artGlow(ctx, sparks[i].x - camX, sparks[i].y, viewH * 0.045, '#c8f4ff', a * 0.7);
   }
   var moving = Math.abs(princess.vx) > 12 && princess.onGround;
   drawPrincessFree(ctx, princess.x - camX, princess.y, viewH / 520, princess.facing, princess.walkPhase, moving, globalT);
@@ -212,15 +205,16 @@ function drawPond() {
     ctx.fillRect(particles[i].x - camX - 2, particles[i].y - 2, particles[i].size, particles[i].size);
   }
   ctx.globalAlpha = 1;
-  drawCelebrateLayer();
+  endPlayWorld();
   hs = viewH * 0.022; pad = hs * 1.4;
   var left = hudX();
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.fillStyle = 'rgba(10,50,60,0.32)';
   roundRect(ctx, left, pad * 0.5, hs * 3.2 * PICKUP_COUNT + pad, hs * 3.4, hs);
   ctx.fill();
   for (i = 0; i < PICKUP_COUNT; i++) {
-    ctx.globalAlpha = pearls[i] && pearls[i].collected ? 1 : 0.25;
-    drawPearl(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.7, hs * 0.85);
+    ctx.globalAlpha = pearls[i] && pearls[i].collected ? 1 : 0.28;
+    bump = hudBump[i] > 0 ? 1 + Math.sin(Math.PI * hudBump[i] / 0.4) * 0.45 : 1;
+    drawPearl(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.7, hs * 0.85 * bump);
     ctx.globalAlpha = 1;
   }
   drawTaskOverlay(ctx);

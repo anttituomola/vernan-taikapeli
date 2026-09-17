@@ -101,14 +101,28 @@ function updateWordshop(dt) {
 }
 
 // ---------- Piirto ----------
+function wordshopLayers() {
+  return [
+    { speed: 0.22, render: renderWordshopFar },
+    { speed: 0.55, render: renderWordshopMid },
+    { speed: 1, render: renderWordshopNear }
+  ];
+}
 function renderWordshopBg(b, w, h) {
-  var vw = viewW, i, x, y;
-  var wall = b.createLinearGradient(0, 0, 0, h * 0.62);
+  renderWordshopFar(b, w, h);
+  renderWordshopMid(b, w, h);
+  renderWordshopNear(b, w, h);
+}
+function renderWordshopFar(b, w, h) {
+  var wall = b.createLinearGradient(0, 0, 0, h);
   wall.addColorStop(0, '#fbf1ff');
   wall.addColorStop(1, '#e8d6f7');
   b.fillStyle = wall;
-  b.fillRect(0, 0, w, h * 0.62);
-  // Tapetti: kirjaimia haaleana
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, w * 0.82, h * 0.16, h * 0.055, 0.22, '#ffe9c8', '#fffdf0', '#ffd45a');
+}
+function renderWordshopMid(b, w, h) {
+  var i, x, y;
   b.fillStyle = 'rgba(138,43,226,0.08)';
   readFont(b, h * 0.05);
   b.textAlign = 'center';
@@ -118,7 +132,9 @@ function renderWordshopBg(b, w, h) {
     b.fillText(RAP_ALPHABET.charAt((i * 3 + y * 7) % RAP_ALPHABET.length), x, h * 0.08 + y * h * 0.12);
   }
   b.textBaseline = 'alphabetic';
-  // Kylttirima
+}
+function renderWordshopNear(b, w, h) {
+  var vw = viewW, y;
   b.fillStyle = '#c98b4a';
   roundRect(b, vw * 0.06, h * 0.13, vw * 0.6, h * 0.02, h * 0.008);
   b.fill();
@@ -195,12 +211,12 @@ function drawWordshopSigns(c) {
 }
 
 function drawWordshop() {
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawWordshopSigns(ctx);
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawWordshopCustomer(ctx);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, WS_ORDERS, function (i2) { return i2 < wshop.served; },
     function (c, x, y, s2) { c.fillStyle = '#fff6d8'; roundRect(c, x - s2 * 0.7, y - s2 * 0.45, s2 * 1.4, s2 * 0.9, s2 * 0.2); c.fill(); readFont(c, s2 * 0.7); c.fillStyle = '#8a2be2'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('A', x, y + s2 * 0.05); c.textBaseline = 'alphabetic'; });
   drawTaskOverlay(ctx);

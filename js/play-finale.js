@@ -266,7 +266,37 @@ function updateFinale(dt) {
 }
 
 // ---------- Piirto ----------
+function finaleLayers() {
+  return [
+    { speed: 0.22, render: renderFinaleFar },
+    { speed: 0.55, render: renderFinaleMid },
+    { speed: 1, render: renderFinaleNear }
+  ];
+}
 function renderFinaleBg(b, w, h) {
+  renderFinaleFar(b, w, h);
+  renderFinaleMid(b, w, h);
+  renderFinaleNear(b, w, h);
+}
+function renderFinaleFar(b, w, h) {
+  var i, x;
+  var sky = b.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#0b0630');
+  sky.addColorStop(1, '#2a1860');
+  b.fillStyle = sky;
+  b.fillRect(0, 0, w, h);
+  var moonX = w * 0.5, moonY = h * 0.18, moonR = h * 0.05;
+  bgSun = { x: moonX, y: moonY, r: moonR, speed: 0.22 };
+  artGlow(b, moonX, moonY, moonR * 3, '#fff4c8', 0.45);
+  b.fillStyle = '#fff6c8';
+  for (i = 0; i < 40; i++) {
+    x = (i * 173.3) % w;
+    b.globalAlpha = 0.4 + (i % 4) * 0.12;
+    b.beginPath(); b.arc(x, (i * 97.1) % (h * 0.45), 1.3 + (i % 3), 0, Math.PI * 2); b.fill();
+  }
+  b.globalAlpha = 1;
+}
+function renderFinaleMid(b, w, h) {
   var i, x;
   var wall = b.createLinearGradient(0, 0, 0, h);
   wall.addColorStop(0, '#2b1040');
@@ -274,13 +304,11 @@ function renderFinaleBg(b, w, h) {
   wall.addColorStop(1, '#3a2058');
   b.fillStyle = wall;
   b.fillRect(0, 0, w, h);
-  // Kivimuuri
   b.strokeStyle = 'rgba(255,255,255,0.06)';
   b.lineWidth = 2;
   for (i = 0; i < 12; i++) {
     b.beginPath(); b.moveTo(0, h * 0.06 * i); b.lineTo(w, h * 0.06 * i); b.stroke();
   }
-  // Ikkunat yötaivaaseen
   for (i = 0; i < 6; i++) {
     x = w * (0.08 + i * 0.16);
     var wg = b.createLinearGradient(0, h * 0.12, 0, h * 0.42);
@@ -298,15 +326,16 @@ function renderFinaleBg(b, w, h) {
     b.beginPath(); b.arc(x + h * 0.015, h * 0.24, h * 0.006, 0, Math.PI * 2); b.fill();
     b.beginPath(); b.arc(x - h * 0.02, h * 0.31, h * 0.005, 0, Math.PI * 2); b.fill();
   }
-  // Liput
   for (i = 0; i < 7; i++) {
     x = w * (0.02 + i * 0.16);
-    b.fillStyle = i % 2 ? '#ff6fb0' : '#ffd24f';
     b.beginPath();
     b.moveTo(x - h * 0.03, h * 0.02); b.lineTo(x + h * 0.03, h * 0.02); b.lineTo(x + h * 0.03, h * 0.12); b.lineTo(x, h * 0.16); b.lineTo(x - h * 0.03, h * 0.12);
-    b.closePath(); b.fill();
+    b.closePath();
+    artFillPath(b, i % 2 ? '#ff6fb0' : '#ffd24f', h * 0.02, h * 0.16, h * 0.03);
   }
-  // Lattia
+}
+function renderFinaleNear(b, w, h) {
+  var i, x;
   var floor = b.createLinearGradient(0, groundTop, 0, h);
   floor.addColorStop(0, '#8a78a8');
   floor.addColorStop(1, '#4e3f68');
@@ -314,13 +343,8 @@ function renderFinaleBg(b, w, h) {
   b.fillRect(0, groundTop, w, h - groundTop);
   b.fillStyle = 'rgba(0,0,0,0.12)';
   for (x = 0; x < w; x += h * 0.12) b.fillRect(x, groundTop, 2, h - groundTop);
-  // Punainen matto
-  b.fillStyle = '#c0304e';
-  b.fillRect(0, groundTop + 4, w, h * 0.06);
-  b.fillStyle = '#ffd24f';
-  b.fillRect(0, groundTop + 4, w, 3);
-  b.fillRect(0, groundTop + 4 + h * 0.06 - 3, w, 3);
-  // Kielekkeet
+  b.beginPath(); b.rect(0, groundTop + 4, w, h * 0.06);
+  artFillPath(b, '#c0304e', groundTop + 4, groundTop + 4 + h * 0.06, h * 0.03, { lineColor: '#ffd24f' });
   for (i = 1; i < platforms.length; i++) {
     drawStoneSlab(b, platforms[i].x, platforms[i].y, platforms[i].w, h * 0.05, h);
   }
@@ -494,7 +518,7 @@ function drawFriend(c, fr) {
 
 function drawFinale() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   if (finale.phase !== 'boss') {
     for (i = 0; i < tasks.length; i++) drawCage(ctx, tasks[i], i);
     for (i = 0; i < finaleBunnies.length; i++) {
@@ -514,8 +538,7 @@ function drawFinale() {
   ctx.globalAlpha = 1;
   drawSparks(ctx);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
-  // HUD: vapautetut puput
+  endPlayWorld();
   if (finale.phase !== 'boss') {
     drawPickupHud(ctx, finaleBunnies.length, function (i2) { return finaleBunnies[i2] && finaleBunnies[i2].freed; },
       function (c, x, y, s) { drawBunny(c, x, y + s * 0.4, s * 1.4, 0, 0, true); });

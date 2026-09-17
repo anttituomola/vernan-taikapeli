@@ -288,17 +288,29 @@ function updateCircus(dt) {
 }
 
 // ---------- Piirto ----------
+function circusLayers() {
+  return [
+    { speed: 0.22, render: renderCircusFar },
+    { speed: 0.55, render: renderCircusMid },
+    { speed: 1, render: renderCircusNear }
+  ];
+}
 function renderCircusBg(b, w, h) {
-  var i, x, y, n, pt = circPedTop(), ny = circNetY();
-  // Teltan sisus: lämmin tumma seinä
+  renderCircusFar(b, w, h);
+  renderCircusMid(b, w, h);
+  renderCircusNear(b, w, h);
+}
+function renderCircusFar(b, w, h) {
   var wall = b.createLinearGradient(0, 0, 0, h);
   wall.addColorStop(0, '#5a1430');
   wall.addColorStop(0.35, '#3a1030');
   wall.addColorStop(1, '#1c0a22');
   b.fillStyle = wall;
   b.fillRect(0, 0, w, h);
-  // Katto: punavalkoiset raidat ja koristereunus
-  var sw = h * 0.07;
+  drawBgSun(b, w * 0.5, h * 0.08, h * 0.05, 0.22, '#ffe9a0', '#fff8d0', '#ffd24f');
+}
+function renderCircusMid(b, w, h) {
+  var i, x, y, sw = h * 0.07;
   for (i = 0, x = 0; x < w; i++, x += sw) {
     b.fillStyle = i % 2 ? '#c8323c' : '#fff3e0';
     b.fillRect(x, 0, sw + 1, h * 0.2);
@@ -310,7 +322,6 @@ function renderCircusBg(b, w, h) {
   b.beginPath();
   for (x = 0; x <= w + sw; x += sw) { b.moveTo(x, h * 0.2); b.arc(x + sw / 2, h * 0.2, sw / 2, Math.PI, 0, true); }
   b.stroke();
-  // Valosarja
   var cols = ['#ff5f7e', '#ffd23e', '#7fd4ff', '#5fd36b', '#c9a0ff'];
   b.strokeStyle = 'rgba(255,255,255,0.35)';
   b.lineWidth = Math.max(1, h * 0.003);
@@ -327,7 +338,9 @@ function renderCircusBg(b, w, h) {
     b.fillStyle = cols[i % 5];
     b.beginPath(); b.arc(x, y, h * 0.008, 0, Math.PI * 2); b.fill();
   }
-  // Katsomo: pupuyleisö riveissä
+}
+function renderCircusNear(b, w, h) {
+  var i, x, y, n, pt = circPedTop(), ny = circNetY();
   var rows = 3;
   for (i = 0; i < rows; i++) {
     y = h * (0.86 + i * 0.035);
@@ -502,7 +515,7 @@ function drawCircusGhostArc(c) {
 
 function drawCircus() {
   var i, n, s;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Valokeilat seuraavat
   drawSpotlight(ctx, circ.spotX - camX - viewH * 0.12, 0.12);
   drawSpotlight(ctx, circ.spotX - camX + viewH * 0.14, 0.09);
@@ -568,7 +581,7 @@ function drawCircus() {
   }
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, CIRC_STARS, function (k) { return circ.stars[k] && circ.stars[k].collected; },
     function (c, x, y, sz) { drawStar(c, x, y, sz, 0, 0); });
   drawHearts(ctx);

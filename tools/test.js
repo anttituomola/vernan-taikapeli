@@ -351,6 +351,19 @@ if (WORLDS) {
     check(!/getElementById\('karttaBtn'\)/.test(src), f + ' leaves button chrome to levelBegin');
     check(!/\bheartsReset\(\)/.test(src), f + ' leaves heartsReset to levelBegin');
   }
+  // Duplicate top-level functions: later scripts overwrite earlier ones.
+  const fnFiles = {};
+  for (const f of files) {
+    const src = readSrc(f);
+    const re = /^function ([A-Za-z_$][\w$]*)\s*\(/gm;
+    let m;
+    while ((m = re.exec(src))) {
+      (fnFiles[m[1]] || (fnFiles[m[1]] = [])).push(f);
+    }
+  }
+  const dups = Object.keys(fnFiles).filter((n) => fnFiles[n].length > 1);
+  check(dups.length === 0, 'no duplicate function names across scripts',
+    dups.map((n) => n + ' in ' + fnFiles[n].join(', ')).join('; '));
 }
 
 // ---------------------------------------------------------------- summary

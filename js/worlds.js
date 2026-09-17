@@ -54,29 +54,35 @@ var WORLDS = [
         update: function (dt) { updateLevel2(dt); },
         draw: function () { drawLevel2(); },
         resize: function (ratio) { resizeGarden(ratio); },
-        renderBg: function (b, w, h) { renderGardenBg(b, w, h); }
+        renderBg: function (b, w, h) { renderGardenBg(b, w, h); },
+        renderBgLayers: function () { return gardenLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.85, tint: ['rgba(70,40,130,0.16)', 'rgba(40,20,80,0.06)'], vignette: 0.55 }
       },
       {
         kind: 'ice', room: 'b', name: 'Jää', color: '#8ecbff', script: 'play-ice',
         control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
         unicornStyle: 'ice',
-        bgColor: '#3d6ea8', ambient: 'snow', fg: { kind: 'snow', color: 'rgba(255,255,255,0.8)' },
+        bgColor: '#8ecbff', ambient: 'snow', fg: { kind: 'snow', color: 'rgba(255,255,255,0.8)' },
         init: function () { initIce(); },
         update: function (dt) { updateIce(dt); },
         draw: function () { drawIce(); },
         tap: function (x, y) { handleIceTap(x, y); },
         resize: function (ratio) { resizeIce(ratio); },
-        renderBg: function (b, w, h) { renderIceBg(b, w, h); }
+        renderBg: function (b, w, h) { renderIceBg(b, w, h); },
+        renderBgLayers: function () { return iceLayers(); },
+        light: { rays: true, raysColor: '#e8f4ff', raysAlpha: 0.8, tint: ['rgba(180,220,255,0.10)', 'rgba(120,170,220,0.06)'], vignette: 0.35 }
       },
       {
         kind: 'pond', room: 'c', name: 'Lampi', color: '#3ecfb0', script: 'play-pond',
         control: 'run', usesJump: true, usesWand: true, usesHearts: false,
-        bgColor: '#0a4550', ambient: 'bubbles', fg: { kind: 'reeds', color: 'rgba(20,80,60,0.75)' },
+        bgColor: '#4ec4f0', ambient: 'bubbles', fg: { kind: 'reeds', color: 'rgba(20,80,60,0.75)' },
         init: function () { initPond(); },
         update: function (dt) { updatePond(dt); },
         draw: function () { drawPond(); },
         resize: function (ratio) { resizePond(ratio); },
-        renderBg: function (b, w, h) { renderPondBg(b, w, h); }
+        renderBg: function (b, w, h) { renderPondBg(b, w, h); },
+        renderBgLayers: function () { return pondLayers(); },
+        light: { rays: true, tint: ['rgba(255,230,160,0.10)', 'rgba(80,180,170,0.06)'], vignette: 0.32 }
       },
       {
         kind: 'sky', room: 'd', name: 'Taivas', color: '#7a5cff', script: 'play-sky',
@@ -87,7 +93,9 @@ var WORLDS = [
         draw: function () { drawSky(); },
         tap: function (x, y) { handleSkyTap(x, y); },
         resize: function (ratio) { resizeSky(ratio); },
-        renderBg: function (b, w, h) { renderSkyBg(b, w, h); }
+        renderBg: function (b, w, h) { renderSkyBg(b, w, h); },
+        renderBgLayers: function () { return skyLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.85, tint: ['rgba(70,40,130,0.14)', 'rgba(40,20,80,0.06)'], vignette: 0.5 }
       },
       {
         kind: 'cave', room: 'e', name: 'Kristalliluola', color: '#4a3f8a', script: 'play-cave',
@@ -98,6 +106,8 @@ var WORLDS = [
         draw: function () { drawCave(); },
         resize: function (ratio) { resizeCave(ratio); },
         renderBg: function (b, w, h) { renderCaveBg(b, w, h); },
+        renderBgLayers: function () { return caveLayers(); },
+        light: { rays: true, raysColor: '#c8b8ff', raysAlpha: 0.55, tint: ['rgba(40,20,80,0.16)', 'rgba(10,5,30,0.10)'], vignette: 0.45 },
         respawn: function () { respawnCave(); }
       },
       {
@@ -110,6 +120,8 @@ var WORLDS = [
         tap: function (x, y) { handleSwampTap(x, y); },
         resize: function (ratio) { resizeSwamp(ratio); },
         renderBg: function (b, w, h) { renderSwampBg(b, w, h); },
+        renderBgLayers: function () { return swampLayers(); },
+        light: { rays: true, raysColor: '#d8ffd0', raysAlpha: 0.7, tint: ['rgba(20,50,40,0.14)', 'rgba(10,30,20,0.08)'], vignette: 0.5 },
         respawn: function () { respawnSwamp(); }
       },
       {
@@ -122,6 +134,8 @@ var WORLDS = [
         tap: function (x, y) { handleBridgeTap(x, y); },
         resize: function (ratio) { resizeBridge(ratio); },
         renderBg: function (b, w, h) { renderBridgeBg(b, w, h); },
+        renderBgLayers: function () { return bridgeLayers(); },
+        light: { rays: true, raysColor: '#f0d8ff', raysAlpha: 0.8, tint: ['rgba(80,40,140,0.12)', 'rgba(50,20,90,0.06)'], vignette: 0.4 },
         respawn: function () { respawnBridge(); }
       },
       {
@@ -134,6 +148,8 @@ var WORLDS = [
         draw: function () { drawFinale(); },
         resize: function (ratio) { resizeFinale(ratio); },
         renderBg: function (b, w, h) { renderFinaleBg(b, w, h); },
+        renderBgLayers: function () { return finaleLayers(); },
+        light: { rays: true, raysColor: '#ffe9a0', raysAlpha: 0.45, tint: ['rgba(80,30,90,0.12)', 'rgba(40,15,50,0.08)'], vignette: 0.4 },
         respawn: function () { respawnFinale(); }
       }
     ]
@@ -165,6 +181,8 @@ var WORLDS = [
         tap: function (x, y) { handleBeachTap(x, y); },
         resize: function (ratio) { resizeBeach(ratio); },
         renderBg: function (b, w, h) { renderBeachBg(b, w, h); },
+        renderBgLayers: function () { return beachLayers(); },
+        light: { rays: true, tint: ['rgba(255,220,140,0.12)', 'rgba(80,180,220,0.06)'], vignette: 0.28 },
         respawn: function () { respawnBeach(); }
       },
       {
@@ -176,6 +194,8 @@ var WORLDS = [
         draw: function () { drawCandy_(); },
         resize: function (ratio) { resizeCandy(ratio); },
         renderBg: function (b, w, h) { renderCandyBg(b, w, h); },
+        renderBgLayers: function () { return candyLayers(); },
+        light: { rays: true, raysColor: '#ffe0f0', tint: ['rgba(255,180,210,0.10)', 'rgba(255,200,160,0.06)'], vignette: 0.28 },
         respawn: function () { respawnCandy(); }
       },
       {
@@ -188,6 +208,8 @@ var WORLDS = [
         tap: function (x, y) { handleLollipopTap(x, y); },
         resize: function (ratio) { resizeLollipop(ratio); },
         renderBg: function (b, w, h) { renderLollipopBg(b, w, h); },
+        renderBgLayers: function () { return lollipopLayers(); },
+        light: { rays: true, raysColor: '#ffe0f0', tint: ['rgba(255,160,200,0.10)', 'rgba(180,230,180,0.06)'], vignette: 0.28 },
         respawn: function () { respawnLollipop(); }
       },
       {
@@ -200,6 +222,8 @@ var WORLDS = [
         tap: function (x, y) { handleCandyskyTap(x, y); },
         resize: function (ratio) { resizeCandysky(ratio); },
         renderBg: function (b, w, h) { renderCandyskyBg(b, w, h); },
+        renderBgLayers: function () { return candyskyLayers(); },
+        light: { rays: true, raysColor: '#ffe0f0', tint: ['rgba(255,160,200,0.10)', 'rgba(255,200,230,0.06)'], vignette: 0.3 },
         respawn: function () { respawnCandysky(); }
       },
       {
@@ -211,6 +235,8 @@ var WORLDS = [
         draw: function () { drawTower(); },
         resize: function (ratio) { resizeTower(ratio); },
         renderBg: function (b, w, h) { renderTowerBg(b, w, h); },
+        renderBgLayers: function () { return towerLayers(); },
+        light: { rays: true, raysColor: '#ffe9a0', raysAlpha: 0.5, tint: ['rgba(40,20,80,0.14)', 'rgba(20,10,40,0.08)'], vignette: 0.42 },
         respawn: function () { respawnTower(); }
       }
     ]
@@ -242,6 +268,8 @@ var WORLDS = [
         tap: function (x, y) { handleReefTap(x, y); },
         resize: function (ratio) { resizeReef(ratio); },
         renderBg: function (b, w, h) { renderReefBg(b, w, h); },
+        renderBgLayers: function () { return reefLayers(); },
+        light: { rays: true, raysColor: '#c8f4ff', raysAlpha: 0.7, tint: ['rgba(40,140,200,0.12)', 'rgba(10,40,80,0.10)'], vignette: 0.4 },
         respawn: function () { respawnReef(); }
       },
       {
@@ -254,6 +282,8 @@ var WORLDS = [
         tap: function (x, y) { handleNightwoodTap(x, y); },
         resize: function (ratio) { resizeNightwood(ratio); },
         renderBg: function (b, w, h) { renderNightwoodBg(b, w, h); },
+        renderBgLayers: function () { return nightwoodLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.85, tint: ['rgba(20,30,80,0.16)', 'rgba(10,15,40,0.08)'], vignette: 0.5 },
         respawn: function () { respawnNightwood(); }
       },
       {
@@ -265,6 +295,8 @@ var WORLDS = [
         draw: function () { drawClouds(); },
         resize: function (ratio) { resizeClouds(ratio); },
         renderBg: function (b, w, h) { renderCloudsBg(b, w, h); },
+        renderBgLayers: function () { return cloudsLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(140,120,220,0.10)', 'rgba(255,180,160,0.06)'], vignette: 0.32 },
         respawn: function () { respawnClouds(); }
       },
       {
@@ -277,6 +309,8 @@ var WORLDS = [
         tap: function (x, y) { handleStarsTap(x, y); },
         resize: function () { resizeStars(); },
         renderBg: function (b, w, h) { renderStarsBg(b, w, h); },
+        renderBgLayers: function () { return starsLayers(); },
+        light: { rays: true, raysColor: '#ffe9a0', raysAlpha: 0.7, tint: ['rgba(20,30,80,0.16)', 'rgba(10,15,40,0.08)'], vignette: 0.45 },
         respawn: function () { respawnStars(); }
       },
       {
@@ -288,6 +322,8 @@ var WORLDS = [
         draw: function () { drawMoon(); },
         resize: function (ratio) { resizeMoon(ratio); },
         renderBg: function (b, w, h) { renderMoonBg(b, w, h); },
+        renderBgLayers: function () { return moonLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.8, tint: ['rgba(20,20,70,0.14)', 'rgba(10,10,40,0.08)'], vignette: 0.45 },
         respawn: function () { respawnMoon(); }
       }
     ]
@@ -319,6 +355,8 @@ var WORLDS = [
         tap: function (x, y) { penStart(x, y); },
         resize: function (ratio) { resizePen(ratio); },
         renderBg: function (b, w, h) { renderPenBg(b, w, h); },
+        renderBgLayers: function () { return penLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(255,230,180,0.10)', 'rgba(200,180,140,0.06)'], vignette: 0.28 },
         respawn: function () { respawnPen(); }
       },
       {
@@ -331,6 +369,8 @@ var WORLDS = [
         tap: function (x, y) { penStart(x, y); },
         resize: function (ratio) { resizeRain(ratio); },
         renderBg: function (b, w, h) { renderRainBg(b, w, h); },
+        renderBgLayers: function () { return rainLayers(); },
+        light: { rays: true, raysColor: '#c8d8ff', raysAlpha: 0.55, tint: ['rgba(160,180,220,0.12)', 'rgba(120,140,180,0.06)'], vignette: 0.32 },
         respawn: function () { respawnRain(); }
       },
       {
@@ -343,6 +383,8 @@ var WORLDS = [
         tap: function (x, y) { penStart(x, y); },
         resize: function (ratio) { resizeBunnyBridge(ratio); },
         renderBg: function (b, w, h) { renderBunnyBridgeBg(b, w, h); },
+        renderBgLayers: function () { return bunnyBridgeLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(200,230,160,0.10)', 'rgba(180,210,140,0.05)'], vignette: 0.28 },
         respawn: function () { respawnBunnyBridge(); }
       },
       {
@@ -355,6 +397,8 @@ var WORLDS = [
         tap: function (x, y) { handleOrchardTap(x, y); },
         resize: function (ratio) { resizeOrchard(ratio); },
         renderBg: function (b, w, h) { renderOrchardBg(b, w, h); },
+        renderBgLayers: function () { return orchardLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(220,230,160,0.10)', 'rgba(180,200,120,0.05)'], vignette: 0.28 },
         respawn: function () { respawnOrchard(); }
       },
       {
@@ -367,6 +411,8 @@ var WORLDS = [
         tap: function (x, y) { penStart(x, y); },
         resize: function (ratio) { resizeScribble(ratio); },
         renderBg: function (b, w, h) { renderScribbleBg(b, w, h); },
+        renderBgLayers: function () { return scribbleLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.7, tint: ['rgba(80,60,120,0.12)', 'rgba(50,40,90,0.06)'], vignette: 0.36 },
         respawn: function () { respawnScribble(); }
       }
     ]
@@ -398,6 +444,8 @@ var WORLDS = [
         tap: function (x, y) { handleHerdTap(x, y); },
         resize: function (ratio) { resizeHerd(ratio); },
         renderBg: function (b, w, h) { renderHerdBg(b, w, h); },
+        renderBgLayers: function () { return herdLayers(); },
+        light: { rays: true, tint: ['rgba(255,225,160,0.12)', 'rgba(255,190,140,0)'], vignette: 0.32 },
         respawn: function () { respawnHerd(); }
       },
       {
@@ -410,6 +458,8 @@ var WORLDS = [
         tap: function (x, y) { handleBerryTap(x, y); },
         resize: function (ratio) { resizeBerry(ratio); },
         renderBg: function (b, w, h) { renderBerryBg(b, w, h); },
+        renderBgLayers: function () { return berryLayers(); },
+        light: { rays: true, tint: ['rgba(255,200,180,0.12)', 'rgba(255,160,140,0.04)'], vignette: 0.32 },
         respawn: function () { respawnBerry(); }
       },
       {
@@ -422,6 +472,8 @@ var WORLDS = [
         tap: function (x, y) { handleCafeTap(x, y); },
         resize: function () { resizeCafe(); },
         renderBg: function (b, w, h) { renderCafeBg(b, w, h); },
+        renderBgLayers: function () { return cafeLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(255,200,180,0.12)', 'rgba(220,140,120,0.06)'], vignette: 0.3 },
         respawn: function () { respawnCafe(); }
       },
       {
@@ -434,6 +486,8 @@ var WORLDS = [
         tap: function (x, y) { handleNaptimeTap(x, y); },
         resize: function () { resizeNaptime(); },
         renderBg: function (b, w, h) { renderNaptimeBg(b, w, h); },
+        renderBgLayers: function () { return naptimeLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.8, tint: ['rgba(40,30,90,0.16)', 'rgba(20,15,50,0.08)'], vignette: 0.45 },
         respawn: function () { respawnNaptime(); }
       },
       {
@@ -446,6 +500,8 @@ var WORLDS = [
         tap: function (x, y) { handleKitchenTap(x, y); },
         resize: function (ratio) { resizeKitchen(ratio); },
         renderBg: function (b, w, h) { renderKitchenBg(b, w, h); },
+        renderBgLayers: function () { return kitchenLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(255,210,160,0.12)', 'rgba(220,160,100,0.05)'], vignette: 0.3 },
         respawn: function () { respawnKitchen(); }
       }
     ]
@@ -477,6 +533,8 @@ var WORLDS = [
         tap: function (x, y) { handleMineTap(x, y); },
         resize: function (ratio) { resizeMine(ratio); },
         renderBg: function (b, w, h) { renderMineBg(b, w, h); },
+        renderBgLayers: function () { return mineLayers(); },
+        light: { rays: true, raysColor: '#ffe9a0', raysAlpha: 0.45, tint: ['rgba(40,20,30,0.18)', 'rgba(20,10,20,0.08)'], vignette: 0.5 },
         respawn: function () { respawnMine(); }
       },
       {
@@ -489,6 +547,8 @@ var WORLDS = [
         tap: function (x, y) { handleRapidsTap(x, y); },
         resize: function (ratio) { resizeRapids(ratio); },
         renderBg: function (b, w, h) { renderRapidsBg(b, w, h); },
+        renderBgLayers: function () { return rapidsLayers(); },
+        light: { rays: true, raysColor: '#c8e8ff', tint: ['rgba(80,160,220,0.10)', 'rgba(40,100,160,0.05)'], vignette: 0.32 },
         respawn: function () { respawnRapids(); }
       },
       {
@@ -501,6 +561,8 @@ var WORLDS = [
         tap: function (x, y) { handleLighthouseTap(x, y); },
         resize: function (ratio) { resizeLighthouse(ratio); },
         renderBg: function (b, w, h) { renderLighthouseBg(b, w, h); },
+        renderBgLayers: function () { return lighthouseLayers(); },
+        light: { rays: true, raysColor: '#ffe0b0', tint: ['rgba(255,180,120,0.14)', 'rgba(200,120,80,0.06)'], vignette: 0.34 },
         respawn: function () { respawnLighthouse(); }
       },
       {
@@ -513,6 +575,8 @@ var WORLDS = [
         tap: function (x, y) { handleGlideTap(x, y); },
         resize: function (ratio) { resizeGlide(ratio); },
         renderBg: function (b, w, h) { renderGlideBg(b, w, h); },
+        renderBgLayers: function () { return glideLayers(); },
+        light: { rays: true, raysColor: '#c8e4ff', tint: ['rgba(140,180,220,0.10)', 'rgba(80,120,180,0.05)'], vignette: 0.32 },
         respawn: function () { respawnGlide(); }
       },
       {
@@ -524,6 +588,8 @@ var WORLDS = [
         draw: function () { drawSummit(); },
         resize: function (ratio) { resizeSummit(ratio); },
         renderBg: function (b, w, h) { renderSummitBg(b, w, h); },
+        renderBgLayers: function () { return summitLayers(); },
+        light: { rays: true, raysColor: '#c8e4ff', tint: ['rgba(160,190,230,0.10)', 'rgba(80,120,180,0.05)'], vignette: 0.34 },
         respawn: function () { respawnSummit(); }
       }
     ]
@@ -555,6 +621,8 @@ var WORLDS = [
         tap: function (x, y) { handleLetterfieldTap(x, y); },
         resize: function (ratio) { resizeLetterfield(ratio); },
         renderBg: function (b, w, h) { renderLetterfieldBg(b, w, h); },
+        renderBgLayers: function () { return letterfieldLayers(); },
+        light: { rays: true, tint: ['rgba(255,225,160,0.12)', 'rgba(255,190,140,0)'], vignette: 0.32 },
         respawn: function () { respawnLetterfield(); }
       },
       {
@@ -567,6 +635,8 @@ var WORLDS = [
         tap: function (x, y) { handleRapidsTap(x, y); },
         resize: function (ratio) { resizeRapids(ratio); },
         renderBg: function (b, w, h) { renderRapidsBg(b, w, h); },
+        renderBgLayers: function () { return rapidsLayers(); },
+        light: { rays: true, raysColor: '#c8e8ff', tint: ['rgba(80,160,220,0.10)', 'rgba(40,100,160,0.05)'], vignette: 0.32 },
         respawn: function () { respawnRapids(); }
       },
       {
@@ -579,6 +649,8 @@ var WORLDS = [
         tap: function (x, y) { handleWordshopTap(x, y); },
         resize: function (ratio) { resizeWordshop(ratio); },
         renderBg: function (b, w, h) { renderWordshopBg(b, w, h); },
+        renderBgLayers: function () { return wordshopLayers(); },
+        light: { rays: true, raysColor: '#e8d4ff', tint: ['rgba(200,160,240,0.12)', 'rgba(140,100,200,0.05)'], vignette: 0.3 },
         respawn: function () { respawnWordshop(); }
       },
       {
@@ -591,6 +663,8 @@ var WORLDS = [
         tap: function (x, y) { handleGroveTap(x, y); },
         resize: function () { resizeGrove(); },
         renderBg: function (b, w, h) { renderGroveBg(b, w, h); },
+        renderBgLayers: function () { return groveLayers(); },
+        light: { rays: true, tint: ['rgba(255,225,160,0.12)', 'rgba(255,190,140,0)'], vignette: 0.32 },
         respawn: function () { respawnGrove(); }
       },
       {
@@ -603,6 +677,8 @@ var WORLDS = [
         tap: function (x, y) { handleRapidsTap(x, y); },
         resize: function (ratio) { resizeRapids(ratio); },
         renderBg: function (b, w, h) { renderRapidsBg(b, w, h); },
+        renderBgLayers: function () { return rapidsLayers(); },
+        light: { rays: true, raysColor: '#c8e8ff', tint: ['rgba(80,160,220,0.10)', 'rgba(40,100,160,0.05)'], vignette: 0.32 },
         respawn: function () { respawnRapids(); }
       }
     ]
@@ -636,6 +712,8 @@ var WORLDS = [
         tap: function (x, y) { handleCircusTap(x, y); },
         resize: function (ratio) { resizeCircus(ratio); },
         renderBg: function (b, w, h) { renderCircusBg(b, w, h); },
+        renderBgLayers: function () { return circusLayers(); },
+        light: { rays: true, raysColor: '#ffd24f', raysAlpha: 0.7, tint: ['rgba(120,20,50,0.16)', 'rgba(40,10,30,0.08)'], vignette: 0.42 },
         respawn: function () { respawnCircus(); }
       },
       {
@@ -648,6 +726,8 @@ var WORLDS = [
         tap: function (x, y) { handleBalloonTap(x, y); },
         resize: function (ratio) { resizeBalloon(ratio); },
         renderBg: function (b, w, h) { renderBalloonBg(b, w, h); },
+        renderBgLayers: function () { return balloonLayers(); },
+        light: { rays: true, raysColor: '#ffe0b0', tint: ['rgba(120,40,90,0.14)', 'rgba(255,160,80,0.06)'], vignette: 0.38 },
         respawn: function () { respawnBalloon(); }
       },
       {
@@ -660,6 +740,8 @@ var WORLDS = [
         tap: function (x, y) { handleIcecreamTap(x, y); },
         resize: function () { resizeIcecream(); },
         renderBg: function (b, w, h) { renderIcecreamBg(b, w, h); },
+        renderBgLayers: function () { return icecreamLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(255,180,200,0.10)', 'rgba(180,220,255,0.05)'], vignette: 0.3 },
         respawn: function () { respawnIcecream(); }
       },
       {
@@ -672,6 +754,8 @@ var WORLDS = [
         tap: function (x, y) { handleDucksTap(x, y); },
         resize: function () { resizeDucks(); },
         renderBg: function (b, w, h) { renderDucksBg(b, w, h); },
+        renderBgLayers: function () { return ducksLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(140,200,255,0.10)', 'rgba(80,160,220,0.05)'], vignette: 0.3 },
         respawn: function () { respawnDucks(); }
       },
       {
@@ -684,6 +768,8 @@ var WORLDS = [
         tap: function (x, y) { handleMagicianTap(x, y); },
         resize: function () { resizeMagician(); },
         renderBg: function (b, w, h) { renderMagicianBg(b, w, h); },
+        renderBgLayers: function () { return magicianLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.75, tint: ['rgba(30,20,80,0.16)', 'rgba(15,10,40,0.08)'], vignette: 0.48 },
         respawn: function () { respawnMagician(); }
       }
     ]

@@ -136,7 +136,19 @@ function updateStars(dt) {
 }
 
 // ---------- Piirto ----------
+function starsLayers() {
+  return [
+    { speed: 0.22, render: renderStarsFar },
+    { speed: 0.55, render: renderStarsMid },
+    { speed: 1, render: renderStarsNear }
+  ];
+}
 function renderStarsBg(b, w, h) {
+  renderStarsFar(b, w, h);
+  renderStarsMid(b, w, h);
+  renderStarsNear(b, w, h);
+}
+function renderStarsFar(b, w, h) {
   var i;
   var sky = b.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, '#0b1030');
@@ -144,7 +156,6 @@ function renderStarsBg(b, w, h) {
   sky.addColorStop(1, '#2c3468');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  // Tähtitaivas
   b.fillStyle = '#fff6c8';
   for (i = 0; i < 90; i++) {
     b.globalAlpha = 0.25 + (i % 5) * 0.13;
@@ -153,19 +164,18 @@ function renderStarsBg(b, w, h) {
     b.fill();
   }
   b.globalAlpha = 1;
-  // Kuu
-  b.fillStyle = '#ffe9a0';
-  b.beginPath(); b.arc(w * 0.85, h * 0.14, h * 0.06, 0, Math.PI * 2); b.fill();
-  b.fillStyle = '#0b1030';
-  b.beginPath(); b.arc(w * 0.87, h * 0.125, h * 0.05, 0, Math.PI * 2); b.fill();
-  // Sumuiset kukkulat
-  b.fillStyle = '#1a2148';
+  drawBgSun(b, w * 0.82, h * 0.14, h * 0.055, 0.22, '#ffe9a0', '#ffffff', '#ffe9a8');
+}
+function renderStarsMid(b, w, h) {
+  var i;
+  b.fillStyle = artMix('#1a2148', '#2c3468', 0.35);
   for (i = 0; i < 7; i++) {
     b.beginPath();
     b.arc(w * (i / 6), h * 0.82, h * (0.1 + (i % 3) * 0.04), Math.PI, 0);
     b.fill();
   }
-  // Maasto
+}
+function renderStarsNear(b, w, h) {
   var gr = b.createLinearGradient(0, h * 0.78, 0, h);
   gr.addColorStop(0, '#2c3468');
   gr.addColorStop(1, '#171c40');
@@ -191,7 +201,7 @@ function nebDrawStar(c, x, y, s, lit) {
 
 function drawStars() {
   var i, s, cl;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Tähdet (peitetyt himmeämpinä)
   for (i = 0; i < nebStars.length; i++) {
     s = nebStars[i];
@@ -218,7 +228,7 @@ function drawStars() {
   }
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, STARS_COUNT, function (i2) { return nebStars[i2] && nebStars[i2].collected; },
     function (c, x, y, s2) { nebDrawStar(c, x, y, s2, true); });
   drawTaskOverlay(ctx);

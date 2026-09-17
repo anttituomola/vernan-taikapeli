@@ -182,38 +182,51 @@ function updateBeach(dt) {
 }
 
 // ---------- Piirto ----------
+function beachLayers() {
+  return [
+    { speed: 0.22, render: renderBeachFar },
+    { speed: 0.55, render: renderBeachMid },
+    { speed: 1, render: renderBeachNear }
+  ];
+}
 function renderBeachBg(b, w, h) {
-  var i, x;
-  var horizon = h * 0.5;
+  renderBeachFar(b, w, h);
+  renderBeachMid(b, w, h);
+  renderBeachNear(b, w, h);
+}
+function renderBeachFar(b, w, h) {
+  var i, x, horizon = h * 0.5;
   var sky = b.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#7fd0ff');
+  sky.addColorStop(0, '#5ec4ff');
+  sky.addColorStop(0.55, '#c8ecff');
   sky.addColorStop(1, '#ffe9c4');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, horizon + 2);
-  var sunX = w * 0.8, sunY = h * 0.18, sunR = h * 0.07;
-  var sg = b.createRadialGradient(sunX, sunY, sunR * 0.2, sunX, sunY, sunR * 2.4);
-  sg.addColorStop(0, 'rgba(255,240,170,1)');
-  sg.addColorStop(1, 'rgba(255,240,170,0)');
-  b.fillStyle = sg;
-  b.fillRect(sunX - sunR * 2.4, sunY - sunR * 2.4, sunR * 4.8, sunR * 4.8);
-  b.fillStyle = '#fff1a8';
-  b.beginPath(); b.arc(sunX, sunY, sunR, 0, Math.PI * 2); b.fill();
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  for (i = 0; i < 8; i++) cloudShape(b, w * (0.03 + i * 0.125), h * (0.1 + (i % 3) * 0.08), h * 0.03);
-  // Meri
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, w * 0.8, h * 0.18, h * 0.07, 0.22, '#fff4c8', '#fffdf0', '#ffd45a');
+  for (i = 0; i < 8; i++) {
+    x = w * (0.03 + i * 0.125);
+    if (Math.abs(x - w * 0.8) < h * 0.2) continue;
+    drawCloud(b, x, h * (0.1 + (i % 3) * 0.08), h * 0.03, 0.85);
+  }
+}
+function renderBeachMid(b, w, h) {
+  var horizon = h * 0.5, i, x;
   var sea = b.createLinearGradient(0, horizon, 0, groundTop);
-  sea.addColorStop(0, '#5fc9e6');
-  sea.addColorStop(1, '#1f8fb0');
+  sea.addColorStop(0, '#7ad4e8');
+  sea.addColorStop(1, '#2aa0c0');
   b.fillStyle = sea;
-  b.fillRect(0, horizon, w, groundTop - horizon);
+  b.fillRect(0, horizon, w, h - horizon);
   b.strokeStyle = 'rgba(255,255,255,0.35)';
   b.lineWidth = 2;
+  b.lineCap = 'round';
   for (i = 0; i < 40; i++) {
     x = (i * 173.1) % w;
     var wy = horizon + h * 0.03 + ((i * 61) % Math.max(1, (groundTop - horizon - h * 0.06)));
     b.beginPath(); b.moveTo(x, wy); b.quadraticCurveTo(x + h * 0.03, wy - h * 0.008, x + h * 0.06, wy); b.stroke();
   }
-  // Ranta ja polku (hiekka)
+}
+function renderBeachNear(b, w, h) {
+  var i, x;
   var sand = b.createLinearGradient(0, groundTop - h * 0.02, 0, h);
   sand.addColorStop(0, '#fff0c9');
   sand.addColorStop(0.3, '#f3dfae');
@@ -228,7 +241,6 @@ function renderBeachBg(b, w, h) {
     x = (i * 97.7) % w;
     b.beginPath(); b.arc(x, groundTop + h * 0.03 + ((i * 37) % Math.max(1, (h - groundTop - h * 0.05))), h * 0.004, 0, Math.PI * 2); b.fill();
   }
-  // Palmut
   for (i = 0; i < 7; i++) {
     x = w * (0.06 + i * 0.14) + (i % 2) * h * 0.05;
     drawPalm(b, x, groundTop - h * 0.02, h * 0.26);
@@ -237,23 +249,14 @@ function renderBeachBg(b, w, h) {
 }
 
 function drawPalm(b, x, baseY, s) {
-  var i;
-  b.strokeStyle = '#a8763e';
-  b.lineWidth = s * 0.09;
-  b.lineCap = 'round';
-  b.beginPath(); b.moveTo(x, baseY); b.quadraticCurveTo(x + s * 0.15, baseY - s * 0.55, x + s * 0.08, baseY - s); b.stroke();
-  b.strokeStyle = '#3f9a44';
-  b.lineWidth = s * 0.11;
+  var i, topX = x + s * 0.08, topY = baseY - s;
+  artLimb(b, x, baseY, topX, topY, s * 0.09, '#a8763e', '#6a4a28');
   for (i = 0; i < 7; i++) {
     var a = -Math.PI * 0.05 + i * Math.PI * 0.18;
-    b.beginPath();
-    b.moveTo(x + s * 0.08, baseY - s);
-    b.quadraticCurveTo(x + s * 0.08 + Math.cos(a) * s * 0.45, baseY - s - s * 0.35 + Math.sin(a) * s * 0.1, x + s * 0.08 + Math.cos(a) * s * 0.75, baseY - s + Math.sin(a) * s * 0.4 + s * 0.2);
-    b.stroke();
+    artLimb(b, topX, topY, topX + Math.cos(a) * s * 0.75, topY + Math.sin(a) * s * 0.4 + s * 0.2, s * 0.08, '#3f9a44', false);
   }
-  b.fillStyle = '#8a5a30';
-  b.beginPath(); b.arc(x + s * 0.06, baseY - s * 0.98, s * 0.06, 0, Math.PI * 2); b.fill();
-  b.beginPath(); b.arc(x + s * 0.13, baseY - s * 0.95, s * 0.06, 0, Math.PI * 2); b.fill();
+  artCircle(b, x + s * 0.06, baseY - s * 0.98, s * 0.06, '#8a5a30', {});
+  artCircle(b, x + s * 0.13, baseY - s * 0.95, s * 0.06, '#8a5a30', {});
 }
 
 function drawLighthouseFrame(b, x, baseY, h) {
@@ -358,7 +361,7 @@ function drawLighthouseGlow(c) {
 
 function drawBeach() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   drawLighthouseGlow(ctx);
@@ -375,7 +378,7 @@ function drawBeach() {
   drawWaveOverlay(ctx);
   drawParticlesLayer(ctx);
   if (lighthouse.open && !celebrating) drawEdgeArrow(ctx, lighthouse.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, SHELL_COUNT, function (i2) { return shells[i2] && shells[i2].collected; },
     function (c, x, y, s) { drawShell(c, x, y, s, '#ffd6e8'); });
   drawHearts(ctx);

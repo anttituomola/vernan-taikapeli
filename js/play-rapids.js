@@ -358,34 +358,59 @@ function updateRapids(dt) {
 }
 
 // ---------- Piirto ----------
+function rapidsLayers() {
+  return [
+    { speed: 0.22, render: renderRapidsFar },
+    { speed: 0.55, render: renderRapidsMid },
+    { speed: 1, render: renderRapidsNear }
+  ];
+}
 function renderRapidsBg(b, w, h) {
-  var i, x, r, y0, y1, vw = viewW, rh = rapids.rowH, sky = rapSky();
-  b.fillStyle = sky ? '#8fc8ff' : '#2f8ccc';
-  b.fillRect(0, 0, w, h);
+  renderRapidsFar(b, w, h);
+  renderRapidsMid(b, w, h);
+  renderRapidsNear(b, w, h);
+}
+function renderRapidsFar(b, w, h) {
+  var vw = viewW, sky = rapSky(), i, x;
   if (sky) {
     var sg = b.createLinearGradient(0, 0, 0, h);
     sg.addColorStop(0, '#5fa8ff');
+    sg.addColorStop(0.55, '#c8e8ff');
     sg.addColorStop(1, '#dff3ff');
     b.fillStyle = sg;
     b.fillRect(0, 0, w, h);
-    b.fillStyle = '#fff6c8';
-    b.beginPath(); b.arc(vw * 0.88, h * 0.09, h * 0.05, 0, Math.PI * 2); b.fill();
+    drawBgSun(b, vw * 0.88, h * 0.12, h * 0.06, 0.22, '#fff4c8', '#fffdf0', '#ffe08a');
   } else {
-    // Taivas ja vuoret yläreunassa
-    var sk = b.createLinearGradient(0, 0, 0, h * 0.16);
-    sk.addColorStop(0, '#9fdcff');
-    sk.addColorStop(1, '#dff3ff');
+    var sk = b.createLinearGradient(0, 0, 0, h);
+    sk.addColorStop(0, '#7ec8ff');
+    sk.addColorStop(0.35, '#c8ecff');
+    sk.addColorStop(1, '#2f8ccc');
     b.fillStyle = sk;
-    b.fillRect(0, 0, w, h * 0.16);
+    b.fillRect(0, 0, w, h);
+    drawBgSun(b, vw * 0.82, h * 0.08, h * 0.055, 0.22, '#fff4c8', '#fffdf0', '#ffd45a');
     b.fillStyle = '#8fa8c8';
     for (i = 0; i < 7; i++) {
       x = vw * (i / 6);
-      b.beginPath(); b.moveTo(x - h * 0.16, h * 0.16); b.lineTo(x, h * 0.03 + (i % 2) * h * 0.03); b.lineTo(x + h * 0.16, h * 0.16); b.closePath(); b.fill();
+      b.beginPath(); b.moveTo(x - h * 0.16, h * 0.22); b.lineTo(x, h * 0.05 + (i % 2) * h * 0.03); b.lineTo(x + h * 0.16, h * 0.22); b.closePath(); b.fill();
       b.fillStyle = '#ffffff';
-      b.beginPath(); b.moveTo(x - h * 0.05, h * 0.07 + (i % 2) * h * 0.03); b.lineTo(x, h * 0.03 + (i % 2) * h * 0.03); b.lineTo(x + h * 0.05, h * 0.07 + (i % 2) * h * 0.03); b.closePath(); b.fill();
+      b.beginPath(); b.moveTo(x - h * 0.05, h * 0.09 + (i % 2) * h * 0.03); b.lineTo(x, h * 0.05 + (i % 2) * h * 0.03); b.lineTo(x + h * 0.05, h * 0.09 + (i % 2) * h * 0.03); b.closePath(); b.fill();
       b.fillStyle = '#8fa8c8';
     }
   }
+}
+function renderRapidsMid(b, w, h) {
+  var i, x, sky = rapSky(), vw = viewW;
+  if (sky) {
+    b.fillStyle = 'rgba(255,255,255,0.55)';
+    for (i = 0; i < 10; i++) cloudShape(b, vw * (0.04 + i * 0.1), h * (0.18 + (i % 3) * 0.08), h * 0.03);
+  } else {
+    fillHillBand(b, w, h, h * 0.28, '#7aa0c4', function (px) {
+      return h * 0.2 - Math.sin(px * 0.004) * h * 0.04;
+    });
+  }
+}
+function renderRapidsNear(b, w, h) {
+  var i, x, r, y0, y1, vw = viewW, rh = rapids.rowH, sky = rapSky();
   for (r = 0; r < rapids.rows; r++) {
     y0 = rapRowY(r) - rh / 2;
     y1 = y0 + rh;
@@ -638,7 +663,7 @@ function drawWordOwl(c) {
 
 function drawRapids() {
   var p = rapids.p, r, i, lane, rh = rapids.rowH, y, sky = rapSky();
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawRapidsWaves(ctx);
   if (!sky) {
     for (i = 0; i < rapids.fish.length; i++) {
@@ -686,7 +711,7 @@ function drawRapids() {
     ctx.globalAlpha = 1;
   }
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   if (rapids.mode === 'logs') {
     drawPickupHud(ctx, rapTop(), function (i2) { return i2 < rapids.p.row; },
       function (c, x, y2, s2) { c.fillStyle = '#5fa8ff'; c.beginPath(); c.arc(x, y2, s2 * 0.45, 0, Math.PI * 2); c.fill(); });

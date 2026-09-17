@@ -197,7 +197,19 @@ function updateBalloon(dt) {
 }
 
 // ---------- Piirto ----------
+function balloonLayers() {
+  return [
+    { speed: 0.22, render: renderBalloonFar },
+    { speed: 0.55, render: renderBalloonMid },
+    { speed: 1, render: renderBalloonNear }
+  ];
+}
 function renderBalloonBg(b, w, h) {
+  renderBalloonFar(b, w, h);
+  renderBalloonMid(b, w, h);
+  renderBalloonNear(b, w, h);
+}
+function renderBalloonFar(b, w, h) {
   var i, x, y;
   var sky = b.createLinearGradient(0, 0, 0, groundTop);
   sky.addColorStop(0, '#1a1050');
@@ -213,20 +225,13 @@ function renderBalloonBg(b, w, h) {
     b.beginPath(); b.arc(x, y, 1 + (i % 3) * 0.7, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  // Laskeva aurinko horisontissa
-  var sg = b.createRadialGradient(w * 0.3, groundTop, h * 0.02, w * 0.3, groundTop, h * 0.25);
-  sg.addColorStop(0, 'rgba(255,240,180,0.9)');
-  sg.addColorStop(1, 'rgba(255,200,120,0)');
-  b.fillStyle = sg;
-  b.beginPath(); b.arc(w * 0.3, groundTop, h * 0.25, 0, Math.PI * 2); b.fill();
-  b.fillStyle = '#fff1b0';
-  b.beginPath(); b.arc(w * 0.3, groundTop, h * 0.08, Math.PI, 0); b.fill();
-  // Kaukaiset kukkulat
-  b.fillStyle = '#4a2a6a';
-  b.beginPath(); b.moveTo(0, groundTop);
-  for (x = 0; x <= w; x += 12) b.lineTo(x, groundTop - h * 0.05 - Math.sin(x * 0.0025) * h * 0.04 - Math.sin(x * 0.007) * h * 0.015);
-  b.lineTo(w, groundTop); b.closePath(); b.fill();
-  // Tivolin siluetti: teltat, karuselli, maailmanpyörän runko
+  drawBgSun(b, w * 0.3, groundTop, h * 0.08, 0.22, '#fff4c8', '#fffdf0', '#ffb45a');
+}
+function renderBalloonMid(b, w, h) {
+  var i, x;
+  fillHillBand(b, w, h, groundTop + h * 0.02, '#4a2a6a', function (px) {
+    return groundTop - h * 0.05 - Math.sin(px * 0.0025) * h * 0.04 - Math.sin(px * 0.007) * h * 0.015;
+  });
   var tents = [0.08, 0.2, 0.36, 0.62, 0.72, 0.86];
   for (i = 0; i < tents.length; i++) drawFairTent(b, w * tents[i], groundTop + h * 0.005, h * (0.13 + (i % 2) * 0.03), i % 2 ? '#c8323c' : '#7a3cb8');
   drawCarousel(b, w * 0.28, groundTop + h * 0.005, h * 0.14);
@@ -234,7 +239,9 @@ function renderBalloonBg(b, w, h) {
   b.strokeStyle = '#3a2a5a';
   b.lineWidth = h * 0.012;
   b.beginPath(); b.moveTo(wp.x - wp.r * 0.6, groundTop); b.lineTo(wp.x, wp.y); b.lineTo(wp.x + wp.r * 0.6, groundTop); b.stroke();
-  // Maa
+}
+function renderBalloonNear(b, w, h) {
+  var i, x, y;
   var gr = b.createLinearGradient(0, groundTop, 0, h);
   gr.addColorStop(0, '#2f6a3a');
   gr.addColorStop(1, '#173a22');
@@ -488,7 +495,7 @@ function drawHotAirBalloon(c, x, y, R, tilt, burn, t) {
 
 function drawBalloon() {
   var i, R = balR();
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawFerrisWheel(ctx);
   drawWindStreaks(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
@@ -522,7 +529,7 @@ function drawBalloon() {
       if (tx !== null) drawEdgeArrow(ctx, tx);
     }
   }
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, BAL_COUNT, function (k) { return balItems[k] && balItems[k].collected; },
     function (c, x, y, s) { drawPartyBalloon(c, x, y - s * 0.3, s * 0.7, '#ff7bac', 0); });
   drawHearts(ctx);

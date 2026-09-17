@@ -42,6 +42,9 @@ function initSky() {
 function collectMoon(m) {
   m.collected = true;
   spawnSparkles(m.ax, m.ay, 14, '#ffe9a0');
+  artPop(m.ax, m.ay, viewH * 0.05, '#ffe9a0', 'ring');
+  var idx = moons.indexOf(m);
+  if (idx >= 0) hudBump[idx] = 0.4;
   playNote(784, 0, 0.18, 'sine', 0.4);
   playNote(1175, 0.08, 0.26, 'triangle', 0.3);
   if (countCollected(moons) === PICKUP_COUNT) startCelebration();
@@ -134,37 +137,41 @@ function handleSkyTap(px, py) {
     if (dx * dx + dy * dy < viewH * 0.08 * viewH * 0.08) {
       sheep.awake = true;
       spawnSparkles(sheep.x, sheep.y, 12, '#fff6c8');
+      artPop(sheep.x, sheep.y, viewH * 0.08, '#fff6c8', 'burst');
+      artShakeStart(viewH * 0.008, 0.25);
       playNote(392, 0, 0.2, 'triangle', 0.3);
     }
   }
 }
 
 function drawMoonGem(c, x, y, r) {
-  c.fillStyle = '#ffe9a0';
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#140832';
-  c.beginPath(); c.arc(x + r * 0.35, y - r * 0.1, r * 0.78, 0, Math.PI * 2); c.fill();
+  artGlow(c, x, y, r * 2.8, '#ffe9a0', 0.5);
+  artCircle(c, x, y, r, '#ffe9a0', { shadeTo: '#e8c060', hi: 0.4 });
+  artCircle(c, x + r * 0.32, y - r * 0.08, r * 0.72, '#2a1860', { line: false });
 }
 
 function drawSheep(c) {
   var x = sheep.x - camX, y = sheep.y, s = viewH * 0.055;
+  artShadow(c, x, y + s * 0.45, s * 1.3, s * 0.28, 0.14);
   c.save();
   c.translate(x, y);
-  c.fillStyle = '#fff8ee';
-  cloudShape(c, 0, 0, s * 0.45);
-  c.fillStyle = '#333';
-  c.beginPath(); c.arc(-s * 0.15, 0, s * 0.08, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(s * 0.2, 0, s * 0.08, 0, Math.PI * 2); c.fill();
+  artCircle(c, -s * 0.35, s * 0.05, s * 0.38, '#fff8ee', { shadeTo: '#e0d4f0' });
+  artCircle(c, s * 0.35, s * 0.08, s * 0.36, '#fff8ee', { shadeTo: '#e0d4f0' });
+  artCircle(c, 0, -s * 0.12, s * 0.48, '#fff8ee', { shadeTo: '#e0d4f0', hi: 0.3 });
+  artCircle(c, s * 0.42, -s * 0.05, s * 0.22, '#fff8ee', { shadeTo: '#e0d4f0' });
+  artEye(c, -s * 0.12, 0, s * 0.1, 0.25, !sheep.awake);
+  artEye(c, s * 0.18, 0, s * 0.1, 0.25, !sheep.awake);
   c.restore();
 }
 
 function drawSky() {
-  var i, hs, pad;
-  if (!drawWorldBg()) return;
+  var i, hs, pad, bump;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < gusts.length; i++) {
-    ctx.globalAlpha = 0.25 + Math.sin(gusts[i].t * 3) * 0.12;
+    ctx.globalAlpha = 0.28 + Math.sin(gusts[i].t * 3) * 0.12;
     ctx.strokeStyle = '#c9e7ff';
     ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(gusts[i].x - camX - 30, gusts[i].y);
     ctx.bezierCurveTo(gusts[i].x - camX, gusts[i].y - 20, gusts[i].x - camX + 10, gusts[i].y + 20, gusts[i].x - camX + 40, gusts[i].y);
@@ -187,15 +194,16 @@ function drawSky() {
     ctx.fillRect(particles[i].x - camX - 2, particles[i].y - 2, particles[i].size, particles[i].size);
   }
   ctx.globalAlpha = 1;
-  drawCelebrateLayer();
+  endPlayWorld();
   hs = viewH * 0.022; pad = hs * 1.4;
   var left = hudX();
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillStyle = 'rgba(20,10,50,0.4)';
   roundRect(ctx, left, pad * 0.5, hs * 3.2 * PICKUP_COUNT + pad, hs * 3.4, hs);
   ctx.fill();
   for (i = 0; i < PICKUP_COUNT; i++) {
-    ctx.globalAlpha = moons[i] && moons[i].collected ? 1 : 0.25;
-    drawMoonGem(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.7, hs * 0.9);
+    ctx.globalAlpha = moons[i] && moons[i].collected ? 1 : 0.28;
+    bump = hudBump[i] > 0 ? 1 + Math.sin(Math.PI * hudBump[i] / 0.4) * 0.45 : 1;
+    drawMoonGem(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.7, hs * 0.9 * bump);
     ctx.globalAlpha = 1;
   }
   drawTaskOverlay(ctx);

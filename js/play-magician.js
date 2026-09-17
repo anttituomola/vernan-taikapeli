@@ -222,13 +222,26 @@ function updateMagician(dt) {
 }
 
 // ---------- Piirto ----------
+function magicianLayers() {
+  return [
+    { speed: 0.22, render: renderMagicianFar },
+    { speed: 0.55, render: renderMagicianMid },
+    { speed: 1, render: renderMagicianNear }
+  ];
+}
 function renderMagicianBg(b, w, h) {
-  var vw = viewW, i, x, y, ty = magTableY();
-  var back = b.createLinearGradient(0, 0, 0, h * 0.7);
+  renderMagicianFar(b, w, h);
+  renderMagicianMid(b, w, h);
+  renderMagicianNear(b, w, h);
+}
+function renderMagicianFar(b, w, h) {
+  var vw = viewW, i, x, y;
+  var back = b.createLinearGradient(0, 0, 0, h);
   back.addColorStop(0, '#0f0a2e');
   back.addColorStop(1, '#2a1a5a');
   b.fillStyle = back;
-  b.fillRect(0, 0, w, h * 0.7);
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, vw * 0.5, h * 0.16, h * 0.06, 0.22, '#c8d4ff', '#ffffff', '#ffe08a');
   b.fillStyle = '#fff6c8';
   for (i = 0; i < 70; i++) {
     x = (i * 173.3) % vw; y = (i * 97.1) % (h * 0.6);
@@ -236,25 +249,9 @@ function renderMagicianBg(b, w, h) {
     b.beginPath(); b.arc(x, y, 1 + (i % 3) * 0.6, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  // Lava
-  var fl = b.createLinearGradient(0, h * 0.7, 0, h);
-  fl.addColorStop(0, '#b98a5a');
-  fl.addColorStop(1, '#6b4a2a');
-  b.fillStyle = fl;
-  b.fillRect(0, h * 0.7, w, h * 0.3);
-  b.fillStyle = 'rgba(0,0,0,0.15)';
-  for (x = 0; x < vw; x += h * 0.09) b.fillRect(x, h * 0.7, 2, h * 0.3);
-  b.fillStyle = '#ffd24f';
-  b.fillRect(0, h * 0.7, w, h * 0.012);
-  // Rampin valot
-  for (x = h * 0.04; x < vw; x += h * 0.08) {
-    var g = b.createRadialGradient(x, h * 0.985, 1, x, h * 0.985, h * 0.03);
-    g.addColorStop(0, 'rgba(255,240,180,0.9)');
-    g.addColorStop(1, 'rgba(255,240,180,0)');
-    b.fillStyle = g;
-    b.beginPath(); b.arc(x, h * 0.985, h * 0.03, 0, Math.PI * 2); b.fill();
-  }
-  // Verhot sivuilla ja ylhäällä
+}
+function renderMagicianMid(b, w, h) {
+  var vw = viewW, i, x;
   var cg = b.createLinearGradient(0, 0, vw * 0.14, 0);
   cg.addColorStop(0, '#7a1020');
   cg.addColorStop(0.5, '#c8323c');
@@ -277,6 +274,27 @@ function renderMagicianBg(b, w, h) {
   for (x = h * 0.05; x < vw + h * 0.1; x += h * 0.1) { b.beginPath(); b.arc(x, h * 0.07, h * 0.05, 0, Math.PI); b.fill(); }
   b.fillStyle = '#ffd24f';
   for (x = h * 0.05; x < vw + h * 0.1; x += h * 0.1) { b.beginPath(); b.arc(x, h * 0.115, h * 0.012, 0, Math.PI * 2); b.fill(); }
+}
+function renderMagicianNear(b, w, h) {
+  var vw = viewW, x, ty = magTableY();
+  // Lava
+  var fl = b.createLinearGradient(0, h * 0.7, 0, h);
+  fl.addColorStop(0, '#b98a5a');
+  fl.addColorStop(1, '#6b4a2a');
+  b.fillStyle = fl;
+  b.fillRect(0, h * 0.7, w, h * 0.3);
+  b.fillStyle = 'rgba(0,0,0,0.15)';
+  for (x = 0; x < vw; x += h * 0.09) b.fillRect(x, h * 0.7, 2, h * 0.3);
+  b.fillStyle = '#ffd24f';
+  b.fillRect(0, h * 0.7, w, h * 0.012);
+  // Rampin valot
+  for (x = h * 0.04; x < vw; x += h * 0.08) {
+    var g = b.createRadialGradient(x, h * 0.985, 1, x, h * 0.985, h * 0.03);
+    g.addColorStop(0, 'rgba(255,240,180,0.9)');
+    g.addColorStop(1, 'rgba(255,240,180,0)');
+    b.fillStyle = g;
+    b.beginPath(); b.arc(x, h * 0.985, h * 0.03, 0, Math.PI * 2); b.fill();
+  }
   // Pöytä
   var tw = Math.min(vw * 0.82, h * 1.2);
   b.fillStyle = '#5a3a8a';
@@ -367,7 +385,7 @@ function drawMagicianBunny(c, x, y, s, t) {
 
 function drawMagician() {
   var i, cup, n = mag.cups.length, ty = magTableY(), starX = -1;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Valokeila pöydälle
   var g = ctx.createRadialGradient(viewW / 2, ty - viewH * 0.1, viewH * 0.05, viewW / 2, ty - viewH * 0.1, viewH * 0.5);
   g.addColorStop(0, 'rgba(255,240,200,0.18)');
@@ -424,7 +442,7 @@ function drawMagician() {
   }
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawHearts(ctx);
   drawTaskOverlay(ctx);
 }

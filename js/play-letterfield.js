@@ -192,32 +192,27 @@ function updateLetterfield(dt) {
 }
 
 // ---------- Piirto ----------
+function letterfieldLayers() {
+  return [
+    { speed: 0.22, render: renderLetterfieldFar },
+    { speed: 0.55, render: renderLetterfieldMid },
+    { speed: 1, render: renderLetterfieldNear }
+  ];
+}
 function renderLetterfieldBg(b, w, h) {
+  renderLetterfieldFar(b, w, h);
+  renderLetterfieldMid(b, w, h);
+  renderLetterfieldNear(b, w, h);
+}
+function renderLetterfieldFar(b, w, h) { meadowFar(b, w, h, '#7ec8ff', '#d9f3ff', '#c8e8b8'); }
+function renderLetterfieldMid(b, w, h) { meadowMid(b, w, h, '#a7dd8f'); }
+function renderLetterfieldNear(b, w, h) {
   var i, x;
-  var sky = b.createLinearGradient(0, 0, 0, groundTop);
-  sky.addColorStop(0, '#9fdcff');
-  sky.addColorStop(1, '#eaf7ff');
-  b.fillStyle = sky;
-  b.fillRect(0, 0, w, groundTop + 2);
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  for (i = 0; i < 9; i++) cloudShape(b, w * (0.05 + i * 0.11), h * (0.08 + (i % 3) * 0.06), h * 0.03);
-  b.fillStyle = '#a7dd8f';
-  for (i = 0; i < 10; i++) {
-    x = w * (i / 9);
-    b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.12 + (i % 3) * 0.04), Math.PI, 0); b.fill();
-  }
-  var grass = b.createLinearGradient(0, groundTop, 0, h);
-  grass.addColorStop(0, '#8fd97a');
-  grass.addColorStop(1, '#5fb356');
-  b.fillStyle = grass;
-  b.fillRect(0, groundTop, w, h - groundTop);
-  b.fillStyle = 'rgba(255,240,180,0.45)';
-  b.fillRect(0, groundTop + h * 0.02, w, groundBottom - groundTop - h * 0.02);
+  meadowNearGrass(b, w, h);
   for (i = 0; i < 40; i++) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, ['#ff7bac', '#ffe27a', '#c9a0ff', '#7fd4ff'][i % 4]);
   }
-  // Kyltit alueiden alussa ja portti lopussa
   for (i = 0; i < LF_ZONES.length; i++) drawSignPost(b, LF_ZONES[i][0] * w - h * 0.03, groundTop + h * 0.01, h * 0.09, String(i + 1));
   drawMoonGateFrame(b, lf.gate.x, groundTop - h * 0.02, h);
 }
@@ -328,7 +323,7 @@ function drawLfWordHud(c) {
 
 function drawLetterfield() {
   var i, l;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   drawMoonGateGlowAt(ctx, lf.gate.x, lf.gate.open);
   for (i = 0; i < lf.letters.length; i++) {
@@ -361,7 +356,7 @@ function drawLetterfield() {
     } else if (lf.gate.open) tx = lf.gate.x;
     if (tx !== null) drawEdgeArrow(ctx, tx);
   }
-  drawCelebrateLayer();
+  endPlayWorld();
   drawLfWordHud(ctx);
   drawTaskOverlay(ctx);
 }

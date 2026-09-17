@@ -124,8 +124,14 @@ function updatePen(dt) {
 }
 
 // ---------- Piirto ----------
+function penLayers() { return paperLayers({}, renderPenNear); }
 function renderPenBg(b, w, h) {
-  renderPaperScene(b, w, h, penGround, penSegY, {});
+  renderPaperFar(b, w, h, {});
+  renderPaperMid(b, w, h, {});
+  renderPenNear(b, w, h);
+}
+function renderPenNear(b, w, h) {
+  renderPaperNear(b, w, h, penGround, penSegY);
   drawPenFrame(b, penFrame.x, groundTop, h);
 }
 
@@ -167,7 +173,7 @@ function drawPenFrameGlow(c) {
 
 function drawPen() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawPenStrokesLayer(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], penGroundYAt(checkpoints[i].x));
@@ -180,7 +186,7 @@ function drawPen() {
   drawPenPrincess(ctx);
   drawParticlesLayer(ctx);
   if (penFrame.open && !celebrating) drawEdgeArrow(ctx, penFrame.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, PEN_BOTTLES, function (i2) { return penBottles[i2] && penBottles[i2].collected; },
     function (c, x, y, s2) { drawInkBottle(c, x, y, s2 * 0.75); });
   drawHearts(ctx);

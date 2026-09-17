@@ -174,10 +174,16 @@ function updateBunnyBridge(dt) {
 }
 
 // ---------- Piirto ----------
+var BB_PAPER = { paper: '#f7f6e6', hill1: '#d5ecc2', hill2: '#bfe0a3' };
+function bunnyBridgeLayers() { return paperLayers(BB_PAPER, renderBunnyBridgeNear); }
 function renderBunnyBridgeBg(b, w, h) {
+  renderPaperFar(b, w, h, BB_PAPER);
+  renderPaperMid(b, w, h, BB_PAPER);
+  renderBunnyBridgeNear(b, w, h);
+}
+function renderBunnyBridgeNear(b, w, h) {
   var i, x;
-  renderPaperScene(b, w, h, bbGround, null, { paper: '#f7f6e6', hill1: '#d5ecc2', hill2: '#bfe0a3' });
-  // Kukkia saarekkeille ja pupukolo lopussa
+  renderPaperNear(b, w, h, bbGround, null);
   for (i = 0; i < 14; i++) {
     x = w * (0.02 + i * 0.07);
     drawFlower(b, x, groundTop - h * 0.02, h * 0.012, i % 2 ? '#ff7bac' : '#ffe27a');
@@ -212,7 +218,7 @@ function drawBbBunny(c, b) {
 
 function drawBunnyBridge() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawPenStrokesLayer(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
@@ -229,7 +235,7 @@ function drawBunnyBridge() {
     for (i = 0; i < bbBunnies.length; i++) if (bbBunnies[i].state === 'stuck') allFollow = false;
     if (allFollow) drawEdgeArrow(ctx, bbBurrow.x);
   }
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, bbBunnies.length, function (i2) { return bbBunnies[i2] && bbBunnies[i2].state === 'home'; },
     function (c, x, y, s2) { drawBunny(c, x, y + s2 * 0.3, s2 * 0.9, 0, 0, true); });
   drawHearts(ctx);

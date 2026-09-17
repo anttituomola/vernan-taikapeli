@@ -133,20 +133,36 @@ function updateNaptime(dt) {
 }
 
 // ---------- Piirto ----------
+function naptimeLayers() {
+  return [
+    { speed: 0.22, render: renderNaptimeFar },
+    { speed: 0.55, render: renderNaptimeMid },
+    { speed: 1, render: renderNaptimeNear }
+  ];
+}
 function renderNaptimeBg(b, w, h) {
-  var i, x;
-  var wall = b.createLinearGradient(0, 0, 0, h * 0.6);
-  wall.addColorStop(0, '#3a3468');
+  renderNaptimeFar(b, w, h);
+  renderNaptimeMid(b, w, h);
+  renderNaptimeNear(b, w, h);
+}
+function renderNaptimeFar(b, w, h) {
+  var wall = b.createLinearGradient(0, 0, 0, h);
+  wall.addColorStop(0, '#1a1448');
+  wall.addColorStop(0.55, '#3a3468');
   wall.addColorStop(1, '#5a4a8a');
   b.fillStyle = wall;
-  b.fillRect(0, 0, w, h * 0.6);
-  // Tähtitarra-seinä
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, w * 0.5, h * 0.2, h * 0.06, 0.22, '#c8d4ff', '#fffdf0', '#ffe08a');
+}
+function renderNaptimeMid(b, w, h) {
+  var i, x;
   b.fillStyle = 'rgba(255,246,200,0.5)';
   for (i = 0; i < 24; i++) {
     x = (i * 137.3) % w;
     b.beginPath(); b.arc(x, (i * 71.7) % (h * 0.5), 1.5 + (i % 3), 0, Math.PI * 2); b.fill();
   }
-  // Ikkuna ja kuu
+}
+function renderNaptimeNear(b, w, h) {
   var wx = w * 0.5, wy = h * 0.26, ww = h * 0.22, wh = h * 0.26;
   b.fillStyle = '#8a6a9e';
   roundRect(b, wx - ww / 2 - h * 0.012, wy - wh / 2 - h * 0.012, ww + h * 0.024, wh + h * 0.024, h * 0.02);
@@ -222,12 +238,12 @@ function napDrawBunny(c, b, i) {
 
 function drawNaptime() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < NAP_BUNNIES; i++) napDrawBed(ctx, napBeds[i], i);
   for (i = 0; i < NAP_BUNNIES; i++) napDrawBunny(ctx, napBunnies[i], i);
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, NAP_BUNNIES, function (i2) { return napBunnies[i2] && napBunnies[i2].state === 'sleep'; },
     function (c, x, y, s) { drawBunny(c, x, y + s * 0.3, s * 0.9, 0, 0, true); });
   drawTaskOverlay(ctx);

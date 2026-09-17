@@ -155,7 +155,19 @@ function updateMoon(dt) {
 }
 
 // ---------- Piirto ----------
+function moonLayers() {
+  return [
+    { speed: 0.22, render: renderMoonFar },
+    { speed: 0.55, render: renderMoonMid },
+    { speed: 1, render: renderMoonNear }
+  ];
+}
 function renderMoonBg(b, w, h) {
+  renderMoonFar(b, w, h);
+  renderMoonMid(b, w, h);
+  renderMoonNear(b, w, h);
+}
+function renderMoonFar(b, w, h) {
   var i, x;
   var sky = b.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, '#05051a');
@@ -170,13 +182,18 @@ function renderMoonBg(b, w, h) {
     b.beginPath(); b.arc(x, ((i * 83) % Math.round(h * 0.65)), 1 + (i % 3) * 0.6, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  // Kaukaiset vuoret
-  b.fillStyle = '#1c1b4a';
+  drawBgSun(b, w * 0.22, h * 0.14, h * 0.06, 0.22, '#fff6c8', '#ffffff', '#ffe9a8');
+}
+function renderMoonMid(b, w, h) {
+  var i, x;
+  b.fillStyle = artMix('#1c1b4a', '#2a2860', 0.3);
   for (i = 0; i < 12; i++) {
     x = w * (i / 11);
     b.beginPath(); b.moveTo(x - h * 0.2, groundTop); b.lineTo(x, groundTop - h * (0.16 + (i % 3) * 0.05)); b.lineTo(x + h * 0.2, groundTop); b.closePath(); b.fill();
   }
-  // Kuukivipolku kraatereineen
+}
+function renderMoonNear(b, w, h) {
+  var i, x;
   var ground = b.createLinearGradient(0, groundTop, 0, h);
   ground.addColorStop(0, '#d9dcef');
   ground.addColorStop(0.15, '#a7abcf');
@@ -307,7 +324,7 @@ function drawMoonDoorGlow(c) {
 
 function drawMoon() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawMoonFace(ctx);
   drawMoonDoorGlow(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
@@ -324,7 +341,7 @@ function drawMoon() {
   for (i = 0; i < meteors.length; i++) if (meteors[i].state === 'fall') drawMeteor(ctx, meteors[i]);
   drawParticlesLayer(ctx);
   if (moonDoor.open && !celebrating) drawEdgeArrow(ctx, moonDoor.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, MSTONE_COUNT, function (i2) { return moonStones[i2] && moonStones[i2].collected; },
     function (c, x, y, s) { drawMoonStone(c, x, y, s * 0.8); });
   drawHearts(ctx);

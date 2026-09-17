@@ -37,6 +37,16 @@ function initIce() {
   playNote(880, 0.12, 0.3, 'triangle', 0.35);
 }
 
+function collectIceFlake(fl) {
+  fl.collected = true;
+  spawnSparkles(fl.ax, fl.ay, 12, '#e8f6ff');
+  artPop(fl.ax, fl.ay, viewH * 0.05, '#e8f6ff', 'ring');
+  var idx = flakes.indexOf(fl);
+  if (idx >= 0) hudBump[idx] = 0.4;
+  playNote(920 + countCollected(flakes) * 40, 0, 0.25, 'sine', 0.4);
+  if (countCollected(flakes) === PICKUP_COUNT) startCelebration();
+}
+
 function handleIceTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
   var wx = px + camX, wy = py, i, dx, dy, d, hit = viewH * 0.07;
@@ -46,10 +56,7 @@ function handleIceTap(px, py) {
     dy = wy - (flakes[i].ay + flakes[i].oy);
     d = Math.sqrt(dx * dx + dy * dy);
     if (d < hit) {
-      flakes[i].collected = true;
-      spawnSparkles(flakes[i].ax, flakes[i].ay, 12, '#e8f6ff');
-      playNote(920 + countCollected(flakes) * 40, 0, 0.25, 'sine', 0.4);
-      if (countCollected(flakes) === PICKUP_COUNT) startCelebration();
+      collectIceFlake(flakes[i]);
       return;
     }
   }
@@ -150,44 +157,39 @@ function updateIce(dt) {
 
 function drawSnowflake(c, x, y, r) {
   var i, a;
-  c.save();
-  c.strokeStyle = '#ffffff';
-  c.lineWidth = Math.max(2, r * 0.16);
-  c.beginPath();
+  artGlow(c, x, y, r * 2.4, '#e8f6ff', 0.45);
   for (i = 0; i < 6; i++) {
     a = i * Math.PI / 3;
-    c.moveTo(x, y);
-    c.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+    artLimb(c, x, y, x + Math.cos(a) * r, y + Math.sin(a) * r, Math.max(1.6, r * 0.18), '#ffffff', '#8ab4d0');
   }
-  c.stroke();
-  c.restore();
+  artCircle(c, x, y, r * 0.28, '#ffffff', { shadeTo: '#d0e4f8', hi: 0.45 });
 }
 
 function drawFox(c) {
   var x = fox.x - camX, y = groundTop + 8, s = viewH * 0.05;
+  var hop = Math.sin(fox.bounceT) * 3;
+  artShadow(c, x, y, s * 1.3, s * 0.32, 0.16);
   c.save();
-  c.translate(x, y);
+  c.translate(x, y + hop);
   c.scale(fox.dir, 1);
-  c.translate(0, Math.sin(fox.bounceT) * 3);
-  c.fillStyle = '#e88a3a';
+  artBlob(c, -s * 0.7, -s * 0.15, s * 0.28, s * 0.16, '#e88a3a', { rot: -0.4 });
+  artBlob(c, 0, -s * 0.22, s * 0.9, s * 0.45, '#e88a3a', { hi: 0.3 });
   c.beginPath();
-  if (c.ellipse) c.ellipse(0, -s * 0.2, s * 0.9, s * 0.45, 0, 0, Math.PI * 2);
-  else c.arc(0, -s * 0.2, s * 0.7, 0, Math.PI * 2);
-  c.fill();
+  c.moveTo(-s * 0.12, -s * 0.62); c.lineTo(-s * 0.38, -s * 1.12); c.lineTo(s * 0.08, -s * 0.7);
+  c.closePath();
+  artFillPath(c, '#e88a3a', -s * 1.12, -s * 0.62, s * 0.12, { lineColor: '#b45a20' });
   c.beginPath();
-  c.moveTo(-s * 0.15, -s * 0.7); c.lineTo(-s * 0.4, -s * 1.15); c.lineTo(s * 0.05, -s * 0.75);
-  c.moveTo(s * 0.25, -s * 0.7); c.lineTo(s * 0.5, -s * 1.15); c.lineTo(s * 0.05, -s * 0.7);
-  c.fill();
-  c.fillStyle = '#fff';
-  c.beginPath(); c.arc(s * 0.25, -s * 0.3, s * 0.12, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#333';
-  c.beginPath(); c.arc(s * 0.28, -s * 0.3, s * 0.06, 0, Math.PI * 2); c.fill();
+  c.moveTo(s * 0.22, -s * 0.62); c.lineTo(s * 0.48, -s * 1.12); c.lineTo(s * 0.02, -s * 0.62);
+  c.closePath();
+  artFillPath(c, '#e88a3a', -s * 1.12, -s * 0.62, s * 0.12, { lineColor: '#b45a20' });
+  artCircle(c, s * 0.22, -s * 0.32, s * 0.18, '#fff4e8', { shadeTo: '#e8d4f0' });
+  artEye(c, s * 0.28, -s * 0.32, s * 0.11, 0.3, false);
   c.restore();
 }
 
 function drawIce() {
-  var i, hs, pad;
-  if (!drawWorldBg()) return;
+  var i, hs, pad, bump;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < flakes.length; i++) {
     if (flakes[i].collected) continue;
@@ -199,19 +201,12 @@ function drawIce() {
     );
   }
   for (i = 0; i < snowballs.length; i++) {
-    ctx.fillStyle = '#f4fbff';
-    ctx.beginPath();
-    ctx.arc(snowballs[i].x - camX, snowballs[i].y, viewH * 0.03, 0, Math.PI * 2);
-    ctx.fill();
+    artCircle(ctx, snowballs[i].x - camX, snowballs[i].y, viewH * 0.03, '#f4fbff', { shadeTo: '#c8dcec', hi: 0.4 });
   }
   drawFox(ctx);
   var us = viewH / 800;
   var ux = unicorn.x - camX, uy = unicorn.y;
-  ctx.fillStyle = 'rgba(18, 42, 70, 0.45)';
-  ctx.beginPath();
-  if (ctx.ellipse) ctx.ellipse(ux, uy + us * 8, viewH * 0.07, viewH * 0.018, 0, 0, Math.PI * 2);
-  else ctx.arc(ux, uy + 6, viewH * 0.05, 0, Math.PI * 2);
-  ctx.fill();
+  artShadow(ctx, ux, uy + us * 8, viewH * 0.07, viewH * 0.018, 0.18);
   if (invulnT > 0 && Math.sin(globalT * 20) > 0) ctx.globalAlpha = 0.45;
   drawUnicorn(ctx, ux, uy, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
   ctx.globalAlpha = 1;
@@ -221,15 +216,16 @@ function drawIce() {
     ctx.fillRect(particles[i].x - camX - 2, particles[i].y - 2, particles[i].size, particles[i].size);
   }
   ctx.globalAlpha = 1;
-  drawCelebrateLayer();
+  endPlayWorld();
   hs = viewH * 0.022; pad = hs * 1.4;
   var left = hudX();
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.fillStyle = 'rgba(20,50,80,0.28)';
   roundRect(ctx, left, pad * 0.5, hs * 3.2 * PICKUP_COUNT + pad, hs * 3.4, hs);
   ctx.fill();
   for (i = 0; i < PICKUP_COUNT; i++) {
-    ctx.globalAlpha = flakes[i] && flakes[i].collected ? 1 : 0.25;
-    drawSnowflake(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.7, hs * 0.9);
+    ctx.globalAlpha = flakes[i] && flakes[i].collected ? 1 : 0.28;
+    bump = hudBump[i] > 0 ? 1 + Math.sin(Math.PI * hudBump[i] / 0.4) * 0.45 : 1;
+    drawSnowflake(ctx, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.7, hs * 0.9 * bump);
     ctx.globalAlpha = 1;
   }
   drawTaskOverlay(ctx);

@@ -149,33 +149,37 @@ function updateLighthouse(dt) {
 }
 
 // ---------- Piirto ----------
+function lighthouseLayers() {
+  return [
+    { speed: 0.22, render: renderLighthouseFar },
+    { speed: 0.55, render: renderLighthouseMid },
+    { speed: 1, render: renderLighthouseNear }
+  ];
+}
 function renderLighthouseBg(b, w, h) {
-  var i, x, vw = viewW, seaY = h * 0.78;
+  renderLighthouseFar(b, w, h);
+  renderLighthouseMid(b, w, h);
+  renderLighthouseNear(b, w, h);
+}
+function renderLighthouseFar(b, w, h) {
+  var vw = viewW, seaY = h * 0.78, i;
   var sky = b.createLinearGradient(0, 0, 0, seaY);
   sky.addColorStop(0, '#7fb8ff');
   sky.addColorStop(0.55, '#ffd9a8');
   sky.addColorStop(1, '#ffb27a');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, seaY + 2);
-  // Aurinko horisontissa
-  var sg = b.createRadialGradient(vw * 0.78, seaY - h * 0.02, h * 0.02, vw * 0.78, seaY - h * 0.02, h * 0.2);
-  sg.addColorStop(0, 'rgba(255,240,180,0.95)');
-  sg.addColorStop(0.4, 'rgba(255,200,120,0.5)');
-  sg.addColorStop(1, 'rgba(255,200,120,0)');
-  b.fillStyle = sg;
-  b.beginPath(); b.arc(vw * 0.78, seaY - h * 0.02, h * 0.2, 0, Math.PI * 2); b.fill();
-  b.fillStyle = '#fff1c8';
-  b.beginPath(); b.arc(vw * 0.78, seaY - h * 0.02, h * 0.06, Math.PI, 0); b.fill();
-  b.fillStyle = 'rgba(255,255,255,0.85)';
-  for (i = 0; i < 5; i++) cloudShape(b, vw * (0.08 + i * 0.2), h * (0.12 + (i % 2) * 0.08), h * 0.024);
-  // Lokit
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, vw * 0.78, seaY - h * 0.02, h * 0.07, 0.22, '#fff4c8', '#fffdf0', '#ffb45a');
+  for (i = 0; i < 5; i++) drawCloud(b, vw * (0.08 + i * 0.2), h * (0.12 + (i % 2) * 0.08), h * 0.024, 0.8);
+}
+function renderLighthouseMid(b, w, h) {
+  var i, x, vw = viewW, seaY = h * 0.78;
   b.strokeStyle = '#fff';
   b.lineWidth = Math.max(1.5, h * 0.004);
   for (i = 0; i < 4; i++) {
     x = vw * (0.15 + i * 0.22);
     b.beginPath(); b.moveTo(x - h * 0.02, h * 0.3 + i * h * 0.03); b.quadraticCurveTo(x, h * 0.29 + i * h * 0.03, x + h * 0.02, h * 0.3 + i * h * 0.03); b.stroke();
   }
-  // Meri
   var sea = b.createLinearGradient(0, seaY, 0, h);
   sea.addColorStop(0, '#5fb0e8');
   sea.addColorStop(1, '#2a70b8');
@@ -183,7 +187,9 @@ function renderLighthouseBg(b, w, h) {
   b.fillRect(0, seaY, w, h - seaY);
   b.fillStyle = 'rgba(255,255,255,0.18)';
   for (i = 0; i < 24; i++) b.fillRect((i * 173.3) % vw, seaY + h * 0.02 + ((i * 41) % Math.round(h * 0.18)), vw * 0.03, Math.max(1, h * 0.003));
-  // Kallioluoto tornin alla
+}
+function renderLighthouseNear(b, w, h) {
+  var i, vw = viewW;
   b.fillStyle = '#6b6478';
   b.beginPath();
   b.moveTo(vw * 0.5 - lh.base.w * 1.6, h);
@@ -241,7 +247,7 @@ function drawLhLamp(c, x, y, w, hh, lit) {
 
 function drawLighthouse() {
   var i, sc, h = lhHook(), f, tb;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Valokeila
   if (lh.lit) {
     var lx = viewW / 2, ly = lhTopY() - lh.bh * 0.45, a = lh.beamA;
@@ -305,7 +311,7 @@ function drawLighthouse() {
     drawBunny(ctx, viewW * bn.fx, lh.baseY + viewH * 0.02, viewH * 0.038, Math.sin(bn.hop * Math.PI) * viewH * 0.03, globalT * 3 + i, false);
   }
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, LH_BLOCKS, function (i2) { return i2 < lh.stack.length; },
     function (c, x, y, s2) { c.fillStyle = '#ff5f5f'; roundRect(c, x - s2 * 0.6, y - s2 * 0.45, s2 * 1.2, s2 * 0.4, s2 * 0.1); c.fill(); c.fillStyle = '#fff'; roundRect(c, x - s2 * 0.6, y, s2 * 1.2, s2 * 0.4, s2 * 0.1); c.fill(); });
   drawTaskOverlay(ctx);

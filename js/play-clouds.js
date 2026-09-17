@@ -193,8 +193,20 @@ function updateClouds(dt) {
 }
 
 // ---------- Piirto ----------
+function cloudsLayers() {
+  return [
+    { speed: 0.22, render: renderCloudsFar },
+    { speed: 0.55, render: renderCloudsMid },
+    { speed: 1, render: renderCloudsNear }
+  ];
+}
 function renderCloudsBg(b, w, h) {
-  var i, x, seg;
+  renderCloudsFar(b, w, h);
+  renderCloudsMid(b, w, h);
+  renderCloudsNear(b, w, h);
+}
+function renderCloudsFar(b, w, h) {
+  var i, x;
   var sky = b.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, '#2b2f7a');
   sky.addColorStop(0.45, '#8a7bd6');
@@ -209,11 +221,14 @@ function renderCloudsBg(b, w, h) {
     b.beginPath(); b.arc(x, ((i * 97) % Math.round(h * 0.4)), 1 + (i % 3) * 0.6, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  drawMoonGem(b, w * 0.5, h * 0.12, h * 0.05);
-  // Kaukaiset pilvet
-  b.fillStyle = 'rgba(255,255,255,0.55)';
-  for (i = 0; i < 12; i++) cloudShape(b, w * (0.02 + i * 0.085), h * (0.3 + (i % 3) * 0.1), h * 0.025);
-  // Pilvipenkat (maa) ja pikkupilvet (tasot)
+  drawBgSun(b, w * 0.5, h * 0.12, h * 0.055, 0.22, '#fff6c8', '#ffffff', '#ffe9a8');
+}
+function renderCloudsMid(b, w, h) {
+  var i;
+  for (i = 0; i < 12; i++) drawCloud(b, w * (0.02 + i * 0.085), h * (0.3 + (i % 3) * 0.1), h * 0.025, 0.45);
+}
+function renderCloudsNear(b, w, h) {
+  var i, seg;
   for (i = 0; i < cloudGround.length; i++) {
     seg = cloudGround[i];
     drawCloudBank(b, seg[0] * w, groundTop, (seg[1] - seg[0]) * w, h);
@@ -289,7 +304,7 @@ function drawRainbowGateGlow(c) {
 
 function drawClouds() {
   var i, pf;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'bounce') {
@@ -314,7 +329,7 @@ function drawClouds() {
   drawParticlesLayer(ctx);
   drawRainbowGateGlow(ctx);
   if (rainbowGate.open && !celebrating) drawEdgeArrow(ctx, rainbowGate.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, CSTAR_COUNT, function (i2) { return cloudStars[i2] && cloudStars[i2].collected; },
     function (c, x, y, s) { drawStar(c, x, y, s, 0, 0); });
   drawHearts(ctx);

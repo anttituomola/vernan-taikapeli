@@ -297,54 +297,146 @@ function renderForestNear(b, w, h) {
   }
 }
 
+// Puutarha kolmessa kerroksessa: kaukainen yötaivas/kuu/kukkulat, keski
+// (utuinen pensasaita) ja lähin (nurmi, polku, puut, sienitasot, linna).
+var GARDEN_HAZE = '#5a4a98';
+var GARDEN_TREE = { leaf: '#3d8a52', trunk: '#6a4a32', haze: GARDEN_HAZE };
+function gardenLayers() {
+  return [
+    { speed: 0.22, render: renderGardenFar },
+    { speed: 0.55, render: renderGardenMid },
+    { speed: 1, render: renderGardenNear }
+  ];
+}
 function renderGardenBg(b, w, h) {
+  renderGardenFar(b, w, h);
+  renderGardenMid(b, w, h);
+  renderGardenNear(b, w, h);
+}
+function renderGardenFar(b, w, h) {
   var horizon = h * 0.70;
   var i, x;
-  var sky = b.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#1a1448');
-  sky.addColorStop(0.55, '#3a2a78');
-  sky.addColorStop(1, '#7a4ea8');
-  b.fillStyle = sky;
-  b.fillRect(0, 0, w, horizon + 2);
 
-  var moonX = w * 0.18, moonY = h * 0.16, moonR = h * 0.07;
-  var mg = b.createRadialGradient(moonX, moonY, moonR * 0.2, moonX, moonY, moonR * 2.4);
-  mg.addColorStop(0, 'rgba(255,244,200,0.95)');
-  mg.addColorStop(0.45, 'rgba(255,230,160,0.35)');
-  mg.addColorStop(1, 'rgba(255,230,160,0)');
+  var sky = b.createLinearGradient(0, 0, 0, horizon);
+  sky.addColorStop(0, '#141038');
+  sky.addColorStop(0.55, '#3a2478');
+  sky.addColorStop(1, '#8a58b8');
+  b.fillStyle = sky;
+  b.fillRect(0, 0, w, h);
+
+  var moonX = w * 0.20, moonY = h * 0.15, moonR = h * 0.075;
+  bgSun = { x: moonX, y: moonY, r: moonR, speed: 0.22 };
+  artGlow(b, moonX, moonY, moonR * 3.4, '#fff4c8', 0.55);
+  var mg = b.createRadialGradient(moonX - moonR * 0.3, moonY - moonR * 0.3, moonR * 0.1, moonX, moonY, moonR);
+  mg.addColorStop(0, '#ffffff');
+  mg.addColorStop(1, '#ffe9a8');
   b.fillStyle = mg;
-  b.fillRect(moonX - moonR * 2.4, moonY - moonR * 2.4, moonR * 4.8, moonR * 4.8);
-  b.fillStyle = '#fff6c8';
   b.beginPath(); b.arc(moonX, moonY, moonR, 0, Math.PI * 2); b.fill();
 
-  b.fillStyle = 'rgba(255,255,220,0.9)';
-  for (i = 0; i < 40; i++) {
+  b.fillStyle = 'rgba(255,255,230,0.9)';
+  for (i = 0; i < 50; i++) {
     x = (i * 211.3) % w;
     b.beginPath();
-    b.arc(x, h * (0.06 + (i % 7) * 0.07), 1.2 + (i % 3), 0, Math.PI * 2);
+    b.arc(x, h * (0.05 + (i % 8) * 0.065), 1.1 + (i % 3) * 0.7, 0, Math.PI * 2);
     b.fill();
   }
 
-  b.fillStyle = '#2a3a5c';
+  for (i = 0; i < 7; i++) {
+    x = w * (0.08 + i * 0.14);
+    if (Math.abs(x - moonX) < moonR * 3.2) continue;
+    drawCloud(b, x, h * (0.10 + (i % 3) * 0.06), h * 0.022 + (i % 2) * h * 0.01, 0.35);
+  }
+
+  b.fillStyle = artMix('#3a3a6e', GARDEN_HAZE, 0.5);
   b.beginPath();
   b.moveTo(0, horizon);
-  for (x = 0; x <= w; x += 10) {
-    b.lineTo(x, horizon - Math.sin(x * 0.005) * h * 0.06 - h * 0.04);
+  for (x = 0; x <= w; x += 8) b.lineTo(x, horizon - h * 0.07 - Math.sin(x * 0.002 + 0.8) * h * 0.055 - Math.sin(x * 0.007) * h * 0.012);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+  b.fillStyle = artMix('#2e4a5c', GARDEN_HAZE, 0.28);
+  b.beginPath();
+  b.moveTo(0, horizon);
+  for (x = 0; x <= w; x += 8) b.lineTo(x, horizon - h * 0.02 - Math.sin(x * 0.0032 + 1.4) * h * 0.04);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+}
+function renderGardenMid(b, w, h) {
+  var horizon = h * 0.70;
+  var i, x;
+  for (i = 0; i < 22; i++) {
+    x = w * (0.01 + i * 0.046) + (i % 3) * h * 0.018;
+    drawTree(b, x, horizon + h * 0.01, h * (0.07 + (i % 4) * 0.012), 0.32, GARDEN_TREE);
   }
-  b.lineTo(w, horizon); b.closePath(); b.fill();
-
-  drawCastle(b, w * 0.06, horizon, h * 0.22);
+  b.fillStyle = artMix('#3d7a52', GARDEN_HAZE, 0.22);
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.01);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.01 - Math.sin(x * 0.004 + 0.6) * h * 0.01);
+  b.lineTo(w, horizon + h * 0.03); b.lineTo(0, horizon + h * 0.03); b.closePath(); b.fill();
+}
+function renderGardenNear(b, w, h) {
+  var horizon = h * 0.70;
+  var i, x;
 
   var grass = b.createLinearGradient(0, horizon, 0, h);
-  grass.addColorStop(0, '#3d8a55');
-  grass.addColorStop(1, '#245c38');
+  grass.addColorStop(0, '#4a9a62');
+  grass.addColorStop(0.55, '#348250');
+  grass.addColorStop(1, '#1e5a36');
   b.fillStyle = grass;
-  b.fillRect(0, horizon, w, h - horizon);
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.015);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.015 - Math.sin(x * 0.003 + 0.4) * h * 0.012);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+
+  drawCastle(b, w * 0.06, horizon + h * 0.015, h * 0.26);
+
+  b.beginPath();
+  b.moveTo(0, groundTop);
+  for (x = 0; x <= w; x += 12) b.lineTo(x, groundTop + Math.sin(x * 0.01 + 0.7) * 5);
+  b.lineTo(w, groundBottom + 8);
+  for (x = w; x >= 0; x -= 12) b.lineTo(x, groundBottom + 8 + Math.sin(x * 0.012) * 5);
+  b.closePath();
+  var pg = b.createLinearGradient(0, groundTop, 0, groundBottom);
+  pg.addColorStop(0, '#e8d8f2');
+  pg.addColorStop(1, '#c8b0d8');
+  b.fillStyle = pg;
+  b.fill();
+  b.strokeStyle = 'rgba(90,50,120,0.35)';
+  b.lineWidth = Math.max(1.5, h * 0.004);
+  b.stroke();
+  b.fillStyle = 'rgba(140,100,170,0.22)';
+  for (i = 0; i < 36; i++) {
+    x = (i * 331.7) % w;
+    var py = groundTop + 10 + ((i * 97) % Math.max(1, (groundBottom - groundTop - 16)));
+    b.beginPath();
+    if (b.ellipse) b.ellipse(x, py, h * 0.007 + (i % 3) * h * 0.003, h * 0.004, 0, 0, Math.PI * 2);
+    else b.arc(x, py, h * 0.005, 0, Math.PI * 2);
+    b.fill();
+  }
+
+  for (i = 0; i < 10; i++) {
+    x = w * (0.14 + i * 0.09) + (i % 2) * 16;
+    drawTree(b, x, horizon + h * 0.025, h * (0.11 + (i % 3) * 0.018), 0, GARDEN_TREE);
+    if (i % 3 === 1) drawGardenLantern(b, x + h * 0.028, horizon - h * 0.04, h * 0.028);
+  }
 
   var nightFlowers = ['#ff7bac', '#c9a0ff', '#ffd24f', '#7fd4ff'];
-  for (i = 0; i < 50; i++) {
+  for (i = 0; i < 55; i++) {
     x = (i * 167.7) % w;
-    drawFlower(b, x, horizon + h * 0.04 + (i % 5) * h * 0.02, h * 0.009, nightFlowers[i % nightFlowers.length]);
+    var fy2 = horizon + h * 0.035 + ((i * 53) % Math.max(1, (groundTop - horizon - h * 0.05)));
+    drawFlower(b, x, fy2, h * 0.009, nightFlowers[i % nightFlowers.length]);
+  }
+  b.strokeStyle = 'rgba(40,100,55,0.5)';
+  b.lineWidth = Math.max(1, h * 0.003);
+  b.lineCap = 'round';
+  for (i = 0; i < 70; i++) {
+    x = (i * 211.3) % w;
+    var gy = horizon + h * 0.03 + ((i * 71) % Math.max(1, (groundTop - horizon - h * 0.05)));
+    b.beginPath();
+    b.moveTo(x, gy); b.lineTo(x - h * 0.006, gy - h * 0.014);
+    b.moveTo(x, gy); b.lineTo(x + h * 0.004, gy - h * 0.016);
+    b.stroke();
+  }
+
+  for (i = 0; i < 6; i++) {
+    drawBush(b, w * (0.18 + i * 0.15), groundTop + 10, h * 0.048);
   }
 
   for (i = 1; i < platforms.length; i++) {
@@ -353,23 +445,33 @@ function renderGardenBg(b, w, h) {
 }
 
 function drawLedge(b, x, y, w, h) {
-  var cap = h * 0.028;
+  var cap = h * 0.042;
   var stem = h * 0.09;
-  b.fillStyle = '#6d3b1e';
-  b.fillRect(x + w * 0.42, y, w * 0.16, stem);
-  var g = b.createLinearGradient(x, y - cap, x, y + cap * 0.4);
-  g.addColorStop(0, '#f2a0d4');
-  g.addColorStop(1, '#c45aa0');
-  b.fillStyle = g;
+  var lw = Math.max(1.2, h * 0.004);
+  var sw = Math.max(w * 0.16, h * 0.04);
+  var sx = x + w / 2 - sw / 2;
+  b.beginPath();
+  b.rect(sx, y, sw, stem);
+  artFillPath(b, '#8a4e28', y, y + stem, sw / 2, { lineColor: '#5a3018', line: lw });
   b.beginPath();
   if (b.ellipse) b.ellipse(x + w / 2, y, w / 2, cap, 0, 0, Math.PI * 2);
   else b.arc(x + w / 2, y, w / 2, 0, Math.PI * 2);
-  b.fill();
-  b.fillStyle = '#ffe27a';
+  artFillPath(b, '#e878b8', y - cap, y + cap * 0.35, cap, { lineColor: '#a04878', line: lw });
+  artCircle(b, x + w * 0.28, y - cap * 0.2, cap * 0.28, '#ffe27a', { line: false, hi: 0.4 });
+  artCircle(b, x + w * 0.62, y - cap * 0.08, cap * 0.22, '#ffe27a', { line: false });
+  artCircle(b, x + w * 0.78, y - cap * 0.18, cap * 0.16, '#ffe27a', { line: false });
+}
+function drawGardenLantern(b, x, y, s) {
+  artGlow(b, x, y + s * 0.2, s * 2.4, '#ffd45a', 0.5);
+  b.strokeStyle = '#6a4a28';
+  b.lineWidth = Math.max(1.2, s * 0.1);
+  b.lineCap = 'round';
   b.beginPath();
-  b.arc(x + w * 0.25, y - cap * 0.2, cap * 0.35, 0, Math.PI * 2); b.fill();
-  b.beginPath();
-  b.arc(x + w * 0.7, y - cap * 0.15, cap * 0.28, 0, Math.PI * 2); b.fill();
+  b.moveTo(x, y - s * 0.55);
+  b.lineTo(x, y - s * 0.12);
+  b.stroke();
+  artRoundRect(b, x - s * 0.28, y - s * 0.12, s * 0.56, s * 0.7, s * 0.1, '#ffd45a', { lineColor: '#c48620' });
+  artHighlight(b, x - s * 0.08, y + s * 0.05, s * 0.12, s * 0.16, 0.4);
 }
 
 function cloudShape(b, x, y, s) {
@@ -445,11 +547,14 @@ function drawCastle(b, x, baseY, size) {
   b.closePath();
   artFillPath(b, '#ff7bac', baseY - size * 1.47, baseY - size * 1.33, size * 0.08, { line: Math.max(1, size * 0.01) });
 }
-// Puu: runko ja kolme lehvästöpalloa. haze 0..1 sävyttää kohti taivasta (kaukainen puu)
-function drawTree(b, x, baseY, s, haze) {
+// Puu: runko ja kolme lehvästöpalloa. haze 0..1 sävyttää kohti taivasta (kaukainen puu).
+// pal: { leaf, trunk, haze } vaihtaa paletin (yöpuutarha, suo…).
+function drawTree(b, x, baseY, s, haze, pal) {
   haze = haze || 0;
-  var trunk = artMix('#9c6b3f', FOREST_HAZE, haze);
-  var leaf = artMix('#6cc45c', FOREST_HAZE, haze);
+  pal = pal || {};
+  var hazeCol = pal.haze || FOREST_HAZE;
+  var trunk = artMix(pal.trunk || '#9c6b3f', hazeCol, haze);
+  var leaf = artMix(pal.leaf || '#6cc45c', hazeCol, haze);
   var lineOpts = haze > 0 ? { line: false } : {};
   b.beginPath(); b.rect(x - s * 0.08, baseY - s * 0.55, s * 0.16, s * 0.58);
   artFillPath(b, trunk, baseY - s * 0.55, baseY, s * 0.08, lineOpts);
@@ -483,103 +588,348 @@ function drawBush(b, x, baseY, s) {
   artCircle(b, x + s * 0.6, baseY - s * 0.6, s * 0.13, '#ff7bac', {});
 }
 
-function renderIceBg(b, w, h) {
-  var horizon = h * 0.68, i, x;
+function drawBgSun(b, x, y, r, speed, glow, inner, outer) {
+  bgSun = { x: x, y: y, r: r, speed: speed || 0.22 };
+  artGlow(b, x, y, r * 3.2, glow || '#fff4c8', 0.5);
+  var sg = b.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+  sg.addColorStop(0, inner || '#fffdf0');
+  sg.addColorStop(1, outer || '#ffd45a');
+  b.fillStyle = sg;
+  b.beginPath(); b.arc(x, y, r, 0, Math.PI * 2); b.fill();
+}
+
+function fillHillBand(b, w, h, horizon, color, waveFn) {
+  var x;
+  b.fillStyle = color;
+  b.beginPath();
+  b.moveTo(0, horizon);
+  for (x = 0; x <= w; x += 8) b.lineTo(x, waveFn(x));
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+}
+
+function meadowFar(b, w, h, c0, c1, haze) {
+  var horizon = h * 0.68, i, x, sunX = w * 0.78;
   var sky = b.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#3d6ea8');
-  sky.addColorStop(0.5, '#6a9cc8');
-  sky.addColorStop(1, '#9ec4dc');
+  sky.addColorStop(0, c0);
+  sky.addColorStop(0.55, c1);
+  sky.addColorStop(1, '#f4fff8');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, horizon + 2);
-  b.fillStyle = 'rgba(90,50,140,0.22)';
-  b.beginPath();
-  b.moveTo(0, h * 0.18);
-  for (x = 0; x <= w; x += 16) b.lineTo(x, h * 0.16 + Math.sin(x * 0.006) * h * 0.08);
-  b.lineTo(w, 0); b.lineTo(0, 0); b.fill();
-  b.fillStyle = '#3a6f94';
-  b.fillRect(0, horizon, w, h - horizon);
-  b.fillStyle = '#4d86ad';
-  b.beginPath();
-  b.moveTo(0, groundTop);
-  for (x = 0; x <= w; x += 14) b.lineTo(x, groundTop + Math.sin(x * 0.02) * 5);
-  b.lineTo(w, groundBottom + 6);
-  b.lineTo(0, groundBottom + 6);
-  b.fill();
-  b.strokeStyle = 'rgba(255,255,255,0.35)';
-  b.lineWidth = 2;
-  b.beginPath();
-  b.moveTo(0, groundTop);
-  for (x = 0; x <= w; x += 14) b.lineTo(x, groundTop + Math.sin(x * 0.02) * 5);
-  b.stroke();
-  drawCastle(b, w * 0.955, horizon, h * 0.28);
-  b.fillStyle = '#dbefff';
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, sunX, h * 0.16, h * 0.07, 0.22);
+  for (i = 0; i < 8; i++) {
+    x = w * (0.04 + i * 0.12);
+    if (Math.abs(x - sunX) < h * 0.2) continue;
+    drawCloud(b, x, h * (0.10 + (i % 3) * 0.06), h * 0.024 + (i % 2) * h * 0.01, 0.8);
+  }
+  haze = haze || '#c8e8b8';
+  fillHillBand(b, w, h, horizon, artMix(haze, '#ffffff', 0.35), function (px) {
+    return horizon - h * 0.09 - Math.sin(px * 0.002 + 0.4) * h * 0.06 - Math.sin(px * 0.007) * h * 0.02;
+  });
+  fillHillBand(b, w, h, horizon, artMix(haze, '#ffffff', 0.12), function (px) {
+    return horizon - h * 0.03 - Math.sin(px * 0.0034 + 1.1) * h * 0.04;
+  });
+}
+function meadowMid(b, w, h, hill) {
+  var i, x;
+  hill = hill || '#a7dd8f';
+  fillHillBand(b, w, h, groundTop + h * 0.05, hill, function (px) {
+    return groundTop + h * 0.01 - Math.sin(px * 0.004) * h * 0.03;
+  });
+  b.fillStyle = hill;
   for (i = 0; i < 10; i++) {
-    x = w * (0.06 + i * 0.09);
-    cloudShape(b, x, horizon - h * 0.02, h * 0.04);
+    x = w * (i / 9);
+    b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.10 + (i % 3) * 0.035), Math.PI, 0); b.fill();
+  }
+}
+function meadowNearGrass(b, w, h) {
+  var grass = b.createLinearGradient(0, groundTop, 0, h);
+  grass.addColorStop(0, '#8fd97a');
+  grass.addColorStop(1, '#5fb356');
+  b.fillStyle = grass;
+  b.fillRect(0, groundTop, w, h - groundTop);
+  b.fillStyle = 'rgba(255,240,180,0.45)';
+  if (typeof groundBottom === 'number') {
+    b.fillRect(0, groundTop + h * 0.02, w, Math.max(0, groundBottom - groundTop - h * 0.02));
   }
 }
 
+var ICE_HAZE = '#d4eaf8';
+var ICE_TREE = { leaf: '#e4f4f2', trunk: '#8a6848', haze: ICE_HAZE };
+function iceLayers() {
+  return [
+    { speed: 0.22, render: renderIceFar },
+    { speed: 0.55, render: renderIceMid },
+    { speed: 1, render: renderIceNear }
+  ];
+}
+function renderIceBg(b, w, h) {
+  renderIceFar(b, w, h);
+  renderIceMid(b, w, h);
+  renderIceNear(b, w, h);
+}
+function renderIceFar(b, w, h) {
+  var horizon = h * 0.68, i, x;
+  var sky = b.createLinearGradient(0, 0, 0, horizon);
+  sky.addColorStop(0, '#4a88c8');
+  sky.addColorStop(0.55, '#b4dcff');
+  sky.addColorStop(1, '#f4fbff');
+  b.fillStyle = sky;
+  b.fillRect(0, 0, w, h);
+
+  var sunX = w * 0.78, sunY = h * 0.16, sunR = h * 0.07;
+  bgSun = { x: sunX, y: sunY, r: sunR, speed: 0.22 };
+  artGlow(b, sunX, sunY, sunR * 3.2, '#fff4c8', 0.5);
+  var sg = b.createRadialGradient(sunX - sunR * 0.3, sunY - sunR * 0.3, sunR * 0.1, sunX, sunY, sunR);
+  sg.addColorStop(0, '#fffdf0');
+  sg.addColorStop(1, '#ffe08a');
+  b.fillStyle = sg;
+  b.beginPath(); b.arc(sunX, sunY, sunR, 0, Math.PI * 2); b.fill();
+
+  for (i = 0; i < 8; i++) {
+    x = w * (0.04 + i * 0.12);
+    if (Math.abs(x - sunX) < sunR * 3) continue;
+    drawCloud(b, x, h * (0.10 + (i % 3) * 0.06), h * 0.024 + (i % 2) * h * 0.01, 0.75);
+  }
+
+  fillHillBand(b, w, h, horizon, artMix('#c8dcec', ICE_HAZE, 0.45), function (x) {
+    return horizon - h * 0.10 - Math.sin(x * 0.002 + 0.4) * h * 0.07 - Math.sin(x * 0.007) * h * 0.02;
+  });
+  fillHillBand(b, w, h, horizon, artMix('#dceaf4', ICE_HAZE, 0.22), function (x) {
+    return horizon - h * 0.03 - Math.sin(x * 0.0034 + 1.1) * h * 0.045;
+  });
+}
+function renderIceMid(b, w, h) {
+  var horizon = h * 0.68, i, x;
+  for (i = 0; i < 22; i++) {
+    x = w * (0.01 + i * 0.046) + (i % 3) * h * 0.016;
+    drawTree(b, x, horizon + h * 0.01, h * (0.07 + (i % 4) * 0.012), 0.3, ICE_TREE);
+  }
+  b.fillStyle = artMix('#e8f4fa', ICE_HAZE, 0.18);
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.01);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.01 - Math.sin(x * 0.004) * h * 0.01);
+  b.lineTo(w, horizon + h * 0.03); b.lineTo(0, horizon + h * 0.03); b.closePath(); b.fill();
+}
+function renderIceNear(b, w, h) {
+  var horizon = h * 0.68, i, x;
+  var snow = b.createLinearGradient(0, horizon, 0, h);
+  snow.addColorStop(0, '#f4fbff');
+  snow.addColorStop(0.55, '#d4e8f4');
+  snow.addColorStop(1, '#a8c8dc');
+  b.fillStyle = snow;
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.02);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.02 - Math.sin(x * 0.003 + 0.4) * h * 0.012);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+
+  drawCastle(b, w * 0.955, horizon + h * 0.02, h * 0.28);
+
+  b.beginPath();
+  b.moveTo(0, groundTop);
+  for (x = 0; x <= w; x += 12) b.lineTo(x, groundTop + Math.sin(x * 0.012) * 5);
+  b.lineTo(w, groundBottom + 8);
+  for (x = w; x >= 0; x -= 12) b.lineTo(x, groundBottom + 8 + Math.sin(x * 0.014) * 5);
+  b.closePath();
+  var pg = b.createLinearGradient(0, groundTop, 0, groundBottom);
+  pg.addColorStop(0, '#eef8ff');
+  pg.addColorStop(1, '#b8d4e8');
+  b.fillStyle = pg;
+  b.fill();
+  b.strokeStyle = 'rgba(255,255,255,0.7)';
+  b.lineWidth = Math.max(1.5, h * 0.004);
+  b.stroke();
+  b.fillStyle = 'rgba(255,255,255,0.35)';
+  for (i = 0; i < 36; i++) {
+    x = (i * 331.7) % w;
+    var py = groundTop + 10 + ((i * 97) % Math.max(1, (groundBottom - groundTop - 16)));
+    b.beginPath();
+    if (b.ellipse) b.ellipse(x, py, h * 0.008 + (i % 3) * h * 0.003, h * 0.004, 0, 0, Math.PI * 2);
+    else b.arc(x, py, h * 0.005, 0, Math.PI * 2);
+    b.fill();
+  }
+
+  for (i = 0; i < 10; i++) {
+    x = w * (0.05 + i * 0.09) + (i % 2) * 14;
+    drawTree(b, x, horizon + h * 0.025, h * (0.10 + (i % 3) * 0.018), 0, ICE_TREE);
+  }
+  b.strokeStyle = 'rgba(255,255,255,0.7)';
+  b.lineWidth = Math.max(1, h * 0.003);
+  b.lineCap = 'round';
+  for (i = 0; i < 70; i++) {
+    x = (i * 211.3) % w;
+    var gy = horizon + h * 0.03 + ((i * 71) % Math.max(1, (groundTop - horizon - h * 0.05)));
+    b.beginPath();
+    b.moveTo(x, gy); b.lineTo(x - h * 0.005, gy - h * 0.012);
+    b.moveTo(x, gy); b.lineTo(x + h * 0.004, gy - h * 0.014);
+    b.stroke();
+  }
+}
+
+var POND_HAZE = '#9ed4d0';
+var POND_TREE = { leaf: '#3d9a58', trunk: '#6a4830', haze: POND_HAZE };
+function pondLayers() {
+  return [
+    { speed: 0.22, render: renderPondFar },
+    { speed: 0.55, render: renderPondMid },
+    { speed: 1, render: renderPondNear }
+  ];
+}
 function renderPondBg(b, w, h) {
+  renderPondFar(b, w, h);
+  renderPondMid(b, w, h);
+  renderPondNear(b, w, h);
+}
+function renderPondFar(b, w, h) {
   var horizon = h * 0.62, i, x;
   var sky = b.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#7ad8ff');
-  sky.addColorStop(1, '#c5f3e2');
+  sky.addColorStop(0, '#4ec4f0');
+  sky.addColorStop(0.55, '#a8ecf0');
+  sky.addColorStop(1, '#e4fff4');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, horizon + 2);
+  b.fillRect(0, 0, w, h);
+
+  var sunX = w * 0.18, sunY = h * 0.16, sunR = h * 0.07;
+  bgSun = { x: sunX, y: sunY, r: sunR, speed: 0.22 };
+  artGlow(b, sunX, sunY, sunR * 3.2, '#fff4c0', 0.5);
+  var sg = b.createRadialGradient(sunX - sunR * 0.3, sunY - sunR * 0.3, sunR * 0.1, sunX, sunY, sunR);
+  sg.addColorStop(0, '#fff8d0');
+  sg.addColorStop(1, '#ffd45a');
+  b.fillStyle = sg;
+  b.beginPath(); b.arc(sunX, sunY, sunR, 0, Math.PI * 2); b.fill();
+
+  for (i = 0; i < 7; i++) {
+    x = w * (0.08 + i * 0.14);
+    if (Math.abs(x - sunX) < sunR * 3) continue;
+    drawCloud(b, x, h * (0.10 + (i % 3) * 0.055), h * 0.022 + (i % 2) * h * 0.01, 0.7);
+  }
+
+  fillHillBand(b, w, h, horizon, artMix('#6cb89a', POND_HAZE, 0.5), function (x) {
+    return horizon - h * 0.06 - Math.sin(x * 0.0022 + 0.6) * h * 0.05 - Math.sin(x * 0.007) * h * 0.012;
+  });
+  fillHillBand(b, w, h, horizon, artMix('#4a9a78', POND_HAZE, 0.28), function (x) {
+    return horizon - h * 0.018 - Math.sin(x * 0.0034 + 1.3) * h * 0.035;
+  });
+}
+function renderPondMid(b, w, h) {
+  var horizon = h * 0.62, i, x;
+  for (i = 0; i < 20; i++) {
+    x = w * (0.01 + i * 0.05) + (i % 3) * h * 0.016;
+    drawTree(b, x, horizon + h * 0.012, h * (0.07 + (i % 4) * 0.012), 0.3, POND_TREE);
+  }
+  b.fillStyle = artMix('#4aaa72', POND_HAZE, 0.2);
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.01);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.01 - Math.sin(x * 0.004 + 0.5) * h * 0.01);
+  b.lineTo(w, horizon + h * 0.03); b.lineTo(0, horizon + h * 0.03); b.closePath(); b.fill();
+}
+function renderPondNear(b, w, h) {
+  var horizon = h * 0.62, i, x;
   var water = b.createLinearGradient(0, horizon, 0, h);
-  water.addColorStop(0, '#3ec6c0');
-  water.addColorStop(1, '#0a5a62');
+  water.addColorStop(0, '#5ed4c8');
+  water.addColorStop(0.5, '#2aa8a8');
+  water.addColorStop(1, '#0a5a68');
   b.fillStyle = water;
-  b.fillRect(0, horizon, w, h - horizon);
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.01);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.01 - Math.sin(x * 0.003) * h * 0.01);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+
   b.fillStyle = 'rgba(255,255,255,0.18)';
   for (i = 0; i < 18; i++) {
     x = (i * 211) % w;
-    b.fillRect(x, horizon + ((i * 37) % (h - horizon - 20)), w * 0.04, 3);
+    b.fillRect(x, horizon + ((i * 37) % (h - horizon - 20)), w * 0.035, 3);
   }
+
+  drawCastle(b, w * 0.95, horizon + h * 0.01, h * 0.24);
+
+  b.strokeStyle = 'rgba(20,80,50,0.55)';
+  b.lineWidth = Math.max(1.2, h * 0.004);
+  b.lineCap = 'round';
+  for (i = 0; i < 80; i++) {
+    x = (i * 137.5) % w;
+    var ry = horizon + h * 0.03 + ((i * 53) % Math.max(1, (groundTop - horizon - h * 0.04)));
+    b.beginPath();
+    b.moveTo(x, ry);
+    b.lineTo(x + (i % 2 ? 5 : -4), ry - h * 0.05);
+    b.stroke();
+  }
+
   for (i = 1; i < platforms.length; i++) {
     drawLilyPad(b, platforms[i].x, platforms[i].y, platforms[i].w, h);
   }
-  drawCastle(b, w * 0.95, horizon, h * 0.22);
 }
 
 function drawLilyPad(b, x, y, w, h) {
-  var cx = x + w / 2, rw = w / 2, rh = h * 0.03;
-  b.fillStyle = '#2f8a3e';
+  var cx = x + w / 2, rw = w / 2, rh = h * 0.032;
+  var lw = Math.max(1.2, h * 0.004);
   b.beginPath();
   if (b.ellipse) b.ellipse(cx, y, rw, rh, 0, 0, Math.PI * 2);
   else b.arc(cx, y, rw * 0.7, 0, Math.PI * 2);
-  b.fill();
-  b.fillStyle = '#5ed46a';
-  b.beginPath();
-  if (b.ellipse) b.ellipse(cx - rw * 0.12, y - rh * 0.15, rw * 0.72, rh * 0.72, 0, 0, Math.PI * 2);
-  else b.arc(cx, y, rw * 0.5, 0, Math.PI * 2);
-  b.fill();
-  b.fillStyle = '#ff7bac';
-  b.beginPath();
-  b.arc(cx, y, h * 0.012, 0, Math.PI * 2);
-  b.fill();
+  artFillPath(b, '#3aaa4a', y - rh, y + rh, rh, { lineColor: '#226830', line: lw });
+  artCircle(b, cx - rw * 0.18, y - rh * 0.2, rw * 0.28, '#6ed46a', { line: false, hi: 0.35 });
+  artCircle(b, cx, y, h * 0.012, '#ff7bac', {});
 }
 
+var SKY_HAZE = '#4a3088';
+function skyLayers() {
+  return [
+    { speed: 0.22, render: renderSkyFar },
+    { speed: 0.55, render: renderSkyMid },
+    { speed: 1, render: renderSkyNear }
+  ];
+}
 function renderSkyBg(b, w, h) {
+  renderSkyFar(b, w, h);
+  renderSkyMid(b, w, h);
+  renderSkyNear(b, w, h);
+}
+function renderSkyFar(b, w, h) {
   var i, x;
   var sky = b.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, '#0b0630');
   sky.addColorStop(0.55, '#2a1860');
-  sky.addColorStop(1, '#5a3488');
+  sky.addColorStop(1, '#6a3a98');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  b.fillStyle = '#fff6c8';
-  for (i = 0; i < 90; i++) {
+
+  var moonX = w * 0.22, moonY = h * 0.16, moonR = h * 0.075;
+  bgSun = { x: moonX, y: moonY, r: moonR, speed: 0.22 };
+  artGlow(b, moonX, moonY, moonR * 3.4, '#fff4c8', 0.55);
+  var mg = b.createRadialGradient(moonX - moonR * 0.3, moonY - moonR * 0.3, moonR * 0.1, moonX, moonY, moonR);
+  mg.addColorStop(0, '#ffffff');
+  mg.addColorStop(1, '#ffe9a8');
+  b.fillStyle = mg;
+  b.beginPath(); b.arc(moonX, moonY, moonR, 0, Math.PI * 2); b.fill();
+
+  b.fillStyle = 'rgba(255,246,200,0.9)';
+  for (i = 0; i < 70; i++) {
     x = (i * 173.3) % w;
-    var y = (i * 97.1) % (h * 0.7);
+    if (Math.abs(x - moonX) < moonR * 2) continue;
     b.globalAlpha = 0.35 + (i % 5) * 0.12;
-    b.beginPath(); b.arc(x, y, 1.4 + (i % 3), 0, Math.PI * 2); b.fill();
+    b.beginPath(); b.arc(x, (i * 97.1) % (h * 0.55), 1.2 + (i % 3) * 0.6, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  b.fillStyle = 'rgba(255,255,255,0.85)';
-  for (i = 0; i < 9; i++) {
-    cloudShape(b, w * (0.05 + i * 0.11), h * (0.62 + (i % 2) * 0.08), h * 0.035);
+
+  fillHillBand(b, w, h, h * 0.72, artMix('#3a2470', SKY_HAZE, 0.45), function (x) {
+    return h * 0.72 - h * 0.08 - Math.sin(x * 0.002 + 0.5) * h * 0.06;
+  });
+}
+function renderSkyMid(b, w, h) {
+  var i, x;
+  for (i = 0; i < 10; i++) {
+    x = w * (0.04 + i * 0.1);
+    drawCloud(b, x, h * (0.48 + (i % 3) * 0.06), h * 0.03 + (i % 2) * h * 0.012, 0.28);
   }
-  drawCastle(b, w * 0.94, h * 0.58, h * 0.26);
+  fillHillBand(b, w, h, h * 0.78, artMix('#5a3488', SKY_HAZE, 0.22), function (x) {
+    return h * 0.78 - h * 0.03 - Math.sin(x * 0.0032 + 1.2) * h * 0.04;
+  });
+}
+function renderSkyNear(b, w, h) {
+  var i, x;
+  for (i = 0; i < 11; i++) {
+    x = w * (0.03 + i * 0.09);
+    drawCloud(b, x, h * (0.64 + (i % 2) * 0.07), h * 0.038 + (i % 3) * h * 0.008, 0.92);
+  }
+  drawCastle(b, w * 0.94, h * 0.62, h * 0.26);
 }
 

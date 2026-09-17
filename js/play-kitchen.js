@@ -109,19 +109,36 @@ function updateKitchen(dt) {
 }
 
 // ---------- Piirto ----------
+function kitchenLayers() {
+  return [
+    { speed: 0.22, render: renderKitchenFar },
+    { speed: 0.55, render: renderKitchenMid },
+    { speed: 1, render: renderKitchenNear }
+  ];
+}
 function renderKitchenBg(b, w, h) {
-  var vw = viewW, i, x, y;
-  var wall = b.createLinearGradient(0, 0, 0, h * 0.62);
+  renderKitchenFar(b, w, h);
+  renderKitchenMid(b, w, h);
+  renderKitchenNear(b, w, h);
+}
+function renderKitchenFar(b, w, h) {
+  var wall = b.createLinearGradient(0, 0, 0, h);
   wall.addColorStop(0, '#fff1dc');
   wall.addColorStop(1, '#f5d9bd');
   b.fillStyle = wall;
-  b.fillRect(0, 0, w, h * 0.62);
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, w * 0.62, h * 0.2, h * 0.055, 0.22, '#fff4c8', '#fffdf0', '#ffd45a');
+}
+function renderKitchenMid(b, w, h) {
+  var i, x, y;
   b.fillStyle = 'rgba(255,255,255,0.35)';
   for (i = 0; i < 12; i++) for (y = 0; y < 5; y++) {
     x = h * 0.05 + i * h * 0.12 + (y % 2) * h * 0.06;
     b.beginPath(); b.arc(x, h * 0.06 + y * h * 0.11, h * 0.012, 0, Math.PI * 2); b.fill();
   }
-  // Ikkuna
+}
+function renderKitchenNear(b, w, h) {
+  var vw = viewW, i, x, y;
   var wx = vw * 0.62, wy = h * 0.26, ww = h * 0.22, wh = h * 0.24;
   b.fillStyle = '#a9743f';
   roundRect(b, wx - ww / 2 - h * 0.012, wy - wh / 2 - h * 0.012, ww + h * 0.024, wh + h * 0.024, h * 0.02);
@@ -184,7 +201,7 @@ function drawKitchenCustomer(c) {
 
 function drawKitchen() {
   var i, p, k = kitchen;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Pullot hyllyllä
   for (i = 0; i < 3; i++) {
     p = kBottlePos(i);
@@ -202,7 +219,7 @@ function drawKitchen() {
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawKitchenCustomer(ctx);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawKitchenHud(ctx);
   drawTaskOverlay(ctx);
 }

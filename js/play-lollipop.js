@@ -159,39 +159,43 @@ function updateLollipop(dt) {
 }
 
 // ---------- Piirto ----------
+function lollipopLayers() {
+  return [
+    { speed: 0.22, render: renderLollipopFar },
+    { speed: 0.55, render: renderLollipopMid },
+    { speed: 1, render: renderLollipopNear }
+  ];
+}
 function renderLollipopBg(b, w, h) {
-  var i, x;
+  renderLollipopFar(b, w, h);
+  renderLollipopMid(b, w, h);
+  renderLollipopNear(b, w, h);
+}
+function renderLollipopFar(b, w, h) {
+  var i;
   var sky = b.createLinearGradient(0, 0, 0, groundTop);
-  sky.addColorStop(0, '#ffb8dd');
+  sky.addColorStop(0, '#ff8fc8');
+  sky.addColorStop(0.55, '#ffd4ec');
   sky.addColorStop(1, '#ffe9f4');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, groundTop + 2);
-  var sunX = w * 0.16, sunY = h * 0.16, sunR = h * 0.06;
-  b.fillStyle = '#fff1a8';
-  b.beginPath(); b.arc(sunX, sunY, sunR, 0, Math.PI * 2); b.fill();
-  b.strokeStyle = 'rgba(255,241,168,0.7)';
-  b.lineWidth = h * 0.008;
-  for (i = 0; i < 8; i++) {
-    var a = i * Math.PI / 4;
-    b.beginPath();
-    b.moveTo(sunX + Math.cos(a) * sunR * 1.25, sunY + Math.sin(a) * sunR * 1.25);
-    b.lineTo(sunX + Math.cos(a) * sunR * 1.6, sunY + Math.sin(a) * sunR * 1.6);
-    b.stroke();
-  }
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  for (i = 0; i < 8; i++) cloudShape(b, w * (0.04 + i * 0.125), h * (0.1 + (i % 3) * 0.08), h * 0.03);
-  // Karkkimäet taustalla
-  b.fillStyle = '#f7a8cd';
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, w * 0.16, h * 0.16, h * 0.065, 0.22, '#fff1a8', '#ffffff', '#ffd45a');
+  for (i = 0; i < 8; i++) drawCloud(b, w * (0.04 + i * 0.125), h * (0.1 + (i % 3) * 0.08), h * 0.03, 0.8);
+}
+function renderLollipopMid(b, w, h) {
+  var i, x;
   for (i = 0; i < 9; i++) {
     x = w * (i / 8);
-    b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.13 + (i % 3) * 0.04), Math.PI, 0); b.fill();
+    b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.13 + (i % 3) * 0.04), Math.PI, 0); b.closePath();
+    artFillPath(b, '#f7a8cd', groundTop - h * 0.15, groundTop + h * 0.02, h * 0.13, { line: false });
   }
-  // Tikkaripuut
   for (i = 0; i < 7; i++) {
     x = w * (0.07 + i * 0.14) + (i % 2) * h * 0.04;
-    loBgTree(b, x, groundTop - h * 0.01, h * 0.2, LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length]);
+    loBgTree(b, x, groundTop - h * 0.01, h * 0.16, LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length]);
   }
-  // Maitokarkkimaa ja polku
+}
+function renderLollipopNear(b, w, h) {
+  var i, x;
   var ground = b.createLinearGradient(0, groundTop, 0, h);
   ground.addColorStop(0, '#c8f2d8');
   ground.addColorStop(1, '#8fd9a8');
@@ -199,11 +203,14 @@ function renderLollipopBg(b, w, h) {
   b.fillRect(0, groundTop, w, h - groundTop);
   b.fillStyle = 'rgba(255,240,250,0.55)';
   b.fillRect(0, groundTop + h * 0.02, w, groundBottom - groundTop - h * 0.02);
+  for (i = 0; i < 7; i++) {
+    x = w * (0.07 + i * 0.14) + (i % 2) * h * 0.04;
+    loBgTree(b, x, groundTop - h * 0.01, h * 0.2, LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length]);
+  }
   for (i = 0; i < 40; i++) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, LOLLY_COLORS[i % LOLLY_COLORS.length]);
   }
-  // Karkkiportti: kaksi keppiä ja kaari
   var gx = lollyGate.x, gs = h * 0.3;
   b.strokeStyle = '#ff5f7e';
   b.lineWidth = h * 0.028;
@@ -290,7 +297,7 @@ function loDrawGateGlow(c) {
 
 function drawLollipop() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   loDrawGateGlow(ctx);
@@ -306,7 +313,7 @@ function drawLollipop() {
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   if (lollyGate.open && !celebrating) drawEdgeArrow(ctx, lollyGate.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, LOLLY_COUNT, function (i2) { return lollies[i2] && lollies[i2].collected; },
     function (c, x, y, s) { loDrawLolly(c, x, y, s, '#ff5f7e'); });
   drawHearts(ctx);

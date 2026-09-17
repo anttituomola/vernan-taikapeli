@@ -256,35 +256,55 @@ function updateSwamp(dt) {
 }
 
 // ---------- Piirto ----------
+function swampLayers() {
+  return [
+    { speed: 0.22, render: renderSwampFar },
+    { speed: 0.55, render: renderSwampMid },
+    { speed: 1, render: renderSwampNear }
+  ];
+}
 function renderSwampBg(b, w, h) {
-  var i, x;
-  var horizon = h * 0.66;
+  renderSwampFar(b, w, h);
+  renderSwampMid(b, w, h);
+  renderSwampNear(b, w, h);
+}
+function renderSwampFar(b, w, h) {
+  var horizon = h * 0.66, i, x;
   var sky = b.createLinearGradient(0, 0, 0, horizon);
   sky.addColorStop(0, '#0d1a2a');
   sky.addColorStop(0.6, '#1f3a3a');
   sky.addColorStop(1, '#3d5a4a');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, horizon + 2);
-  // Kuu
+  b.fillRect(0, 0, w, h);
   var mx = w * 0.7, my = h * 0.15, mr = h * 0.06;
-  var mg = b.createRadialGradient(mx, my, mr * 0.3, mx, my, mr * 2.6);
-  mg.addColorStop(0, 'rgba(230,255,220,0.9)');
-  mg.addColorStop(1, 'rgba(230,255,220,0)');
+  bgSun = { x: mx, y: my, r: mr, speed: 0.22 };
+  artGlow(b, mx, my, mr * 3.4, '#eafff0', 0.5);
+  var mg = b.createRadialGradient(mx - mr * 0.3, my - mr * 0.3, mr * 0.1, mx, my, mr);
+  mg.addColorStop(0, '#ffffff');
+  mg.addColorStop(1, '#eafff0');
   b.fillStyle = mg;
-  b.fillRect(mx - mr * 2.6, my - mr * 2.6, mr * 5.2, mr * 5.2);
-  b.fillStyle = '#eafff0';
   b.beginPath(); b.arc(mx, my, mr, 0, Math.PI * 2); b.fill();
-  // Kuolleet puut
+  fillHillBand(b, w, h, horizon, artMix('#1a3028', '#3d5a4a', 0.4), function (x) {
+    return horizon - h * 0.05 - Math.sin(x * 0.002 + 0.8) * h * 0.04;
+  });
+}
+function renderSwampMid(b, w, h) {
+  var horizon = h * 0.66, i, x;
   for (i = 0; i < 16; i++) {
     x = w * (0.03 + i * 0.062) + (i % 3) * 20;
-    drawDeadTree(b, x, horizon + h * 0.02, h * (0.16 + (i % 3) * 0.05));
+    drawDeadTree(b, x, horizon + h * 0.02, h * (0.14 + (i % 3) * 0.04));
   }
-  // Suo ja vesi
+}
+function renderSwampNear(b, w, h) {
+  var horizon = h * 0.66, i, x;
   var marsh = b.createLinearGradient(0, horizon, 0, h);
   marsh.addColorStop(0, '#2f5a3a');
   marsh.addColorStop(1, '#183426');
   b.fillStyle = marsh;
-  b.fillRect(0, horizon, w, h - horizon);
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.01);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.01 - Math.sin(x * 0.003) * h * 0.01);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
   b.fillStyle = 'rgba(70,140,120,0.5)';
   for (i = 0; i < 14; i++) {
     x = (i * 457.3) % w;
@@ -293,28 +313,26 @@ function renderSwampBg(b, w, h) {
     else b.arc(x, horizon + h * 0.04, h * 0.03, 0, Math.PI * 2);
     b.fill();
   }
-  // Polku (lankkusilta)
-  b.fillStyle = '#6b4f3a';
   b.beginPath();
   b.moveTo(0, groundTop);
   for (x = 0; x <= w; x += 12) b.lineTo(x, groundTop + Math.sin(x * 0.01) * 5);
   b.lineTo(w, groundBottom + 8);
   for (x = w; x >= 0; x -= 12) b.lineTo(x, groundBottom + 8 + Math.sin(x * 0.013) * 5);
-  b.closePath(); b.fill();
-  b.strokeStyle = 'rgba(0,0,0,0.25)';
+  b.closePath();
+  artFillPath(b, '#6b4f3a', groundTop, groundBottom + 8, h * 0.04, { lineColor: '#3a2a18' });
+  b.strokeStyle = 'rgba(0,0,0,0.22)';
   b.lineWidth = 2;
   for (x = 0; x < w; x += h * 0.05) {
     b.beginPath(); b.moveTo(x, groundTop); b.lineTo(x + 6, groundBottom + 8); b.stroke();
   }
-  // Kaislat
   b.strokeStyle = '#5f8a4a';
   b.lineWidth = 3;
+  b.lineCap = 'round';
   for (i = 0; i < 60; i++) {
     x = (i * 137.5) % w;
     var ry = horizon + h * 0.02 + ((i * 53) % Math.max(1, (groundTop - horizon - h * 0.05)));
     b.beginPath(); b.moveTo(x, ry); b.lineTo(x + 4, ry - h * 0.05); b.stroke();
   }
-  // Portti lopussa
   drawSwampGateFrame(b, swampGate.x, groundTop, h);
 }
 
@@ -441,7 +459,7 @@ function drawSwampGateGlow(c) {
 
 function drawSwamp() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   drawSwampGateGlow(ctx);
@@ -455,7 +473,6 @@ function drawSwamp() {
   for (i = 0; i < frogs.length; i++) drawFrogProjectile(ctx, frogs[i]);
   drawWitch(ctx);
   drawParticlesLayer(ctx);
-  // Sumu kulkee etualalla
   for (i = 0; i < fogBands.length; i++) {
     var fb = fogBands[i];
     var fg = ctx.createRadialGradient(fb.x, fb.y, 0, fb.x, fb.y, fb.w / 2);
@@ -468,7 +485,7 @@ function drawSwamp() {
     ctx.fill();
   }
   if (swampGate.open && !celebrating) drawEdgeArrow(ctx, swampGate.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, WISP_COUNT, function (i2) { return wisps[i2] && wisps[i2].collected; },
     function (c, x, y, s) {
       c.fillStyle = '#eafff0';

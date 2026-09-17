@@ -178,30 +178,46 @@ function updateIcecream(dt) {
 }
 
 // ---------- Piirto ----------
+function icecreamLayers() {
+  return [
+    { speed: 0.22, render: renderIcecreamFar },
+    { speed: 0.55, render: renderIcecreamMid },
+    { speed: 1, render: renderIcecreamNear }
+  ];
+}
 function renderIcecreamBg(b, w, h) {
-  var vw = viewW, i, x, y;
-  var sky = b.createLinearGradient(0, 0, 0, h * 0.6);
-  sky.addColorStop(0, '#7fc8ff');
+  renderIcecreamFar(b, w, h);
+  renderIcecreamMid(b, w, h);
+  renderIcecreamNear(b, w, h);
+}
+function renderIcecreamFar(b, w, h) {
+  var vw = viewW;
+  var sky = b.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, '#5fa8ff');
+  sky.addColorStop(0.55, '#c8ecff');
   sky.addColorStop(1, '#e8f6ff');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, h * 0.6);
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  cloudShape(b, vw * 0.12, h * 0.12, h * 0.03);
-  cloudShape(b, vw * 0.7, h * 0.08, h * 0.025);
-  // Tivolin taustaa: maailmanpyörä ja teltta kaukana
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, vw * 0.22, h * 0.14, h * 0.06, 0.22, '#fff4c8', '#fffdf0', '#ffd45a');
+  drawCloud(b, vw * 0.12, h * 0.12, h * 0.03, 0.8);
+  drawCloud(b, vw * 0.7, h * 0.08, h * 0.025, 0.8);
+}
+function renderIcecreamMid(b, w, h) {
+  var vw = viewW, i;
   b.strokeStyle = 'rgba(255,255,255,0.7)';
   b.lineWidth = h * 0.006;
   b.beginPath(); b.arc(vw * 0.82, h * 0.3, h * 0.13, 0, Math.PI * 2); b.stroke();
   for (i = 0; i < 8; i++) { b.beginPath(); b.moveTo(vw * 0.82, h * 0.3); b.lineTo(vw * 0.82 + Math.cos(i * Math.PI / 4) * h * 0.13, h * 0.3 + Math.sin(i * Math.PI / 4) * h * 0.13); b.stroke(); }
   for (i = 0; i < 8; i++) { b.fillStyle = maneColors[i % 6]; b.beginPath(); b.arc(vw * 0.82 + Math.cos(i * Math.PI / 4) * h * 0.13, h * 0.3 + Math.sin(i * Math.PI / 4) * h * 0.13, h * 0.012, 0, Math.PI * 2); b.fill(); }
   drawFairTent(b, vw * 0.62, h * 0.46, h * 0.12, '#c8323c');
-  // Nurmi
   var gr = b.createLinearGradient(0, h * 0.44, 0, h * 0.6);
   gr.addColorStop(0, '#9fdc7f');
   gr.addColorStop(1, '#6fbb60');
   b.fillStyle = gr;
   b.fillRect(0, h * 0.44, w, h * 0.16);
-  // Kojun katos
+}
+function renderIcecreamNear(b, w, h) {
+  var vw = viewW, x, y;
   b.fillStyle = '#ff7bac';
   b.fillRect(0, h * 0.14, vw * 0.52, h * 0.09);
   b.fillStyle = '#fff';
@@ -353,7 +369,7 @@ function drawIcecreamHud(c) {
 
 function drawIcecream() {
   var i, p, jx;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Makuastiat
   for (i = 0; i < ICE_FLAVORS.length; i++) {
     p = iceTubPos(i);
@@ -386,7 +402,7 @@ function drawIcecream() {
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawIceCustomer(ctx);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawIcecreamHud(ctx);
   drawTaskOverlay(ctx);
 }

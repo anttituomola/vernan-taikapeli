@@ -168,45 +168,50 @@ function updateCandysky(dt) {
 }
 
 // ---------- Piirto ----------
+function candyskyLayers() {
+  return [
+    { speed: 0.22, render: renderCandyskyFar },
+    { speed: 0.55, render: renderCandyskyMid },
+    { speed: 1, render: renderCandyskyNear }
+  ];
+}
 function renderCandyskyBg(b, w, h) {
-  var i, x;
+  renderCandyskyFar(b, w, h);
+  renderCandyskyMid(b, w, h);
+  renderCandyskyNear(b, w, h);
+}
+function renderCandyskyFar(b, w, h) {
+  var i;
   var sky = b.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#ffb3d9');
+  sky.addColorStop(0, '#ff8fc8');
   sky.addColorStop(0.55, '#ffd9ec');
   sky.addColorStop(1, '#fff3fa');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  // Karkkipilvet
-  for (i = 0; i < 10; i++) {
-    b.fillStyle = i % 2 ? 'rgba(255,255,255,0.9)' : 'rgba(255,230,245,0.9)';
-    cloudShape(b, w * (0.05 + i * 0.1), h * (0.1 + (i % 3) * 0.08), h * 0.035);
-  }
-  // Vaahtokarkkikukkula maan rajassa
-  b.fillStyle = '#ffc4e0';
+  drawBgSun(b, w * 0.78, h * 0.15, h * 0.06, 0.22, '#fff0c8', '#ffffff', '#ffd45a');
+  for (i = 0; i < 10; i++) drawCloud(b, w * (0.05 + i * 0.1), h * (0.1 + (i % 3) * 0.08), h * 0.035, 0.75);
+}
+function renderCandyskyMid(b, w, h) {
+  var i, x;
   for (i = 0; i < 9; i++) {
     x = w * (i / 8);
-    b.beginPath(); b.arc(x, groundTop + h * 0.03, h * (0.1 + (i % 3) * 0.05), Math.PI, 0); b.fill();
+    b.beginPath(); b.arc(x, groundTop + h * 0.03, h * (0.1 + (i % 3) * 0.05), Math.PI, 0); b.closePath();
+    artFillPath(b, '#ffc4e0', groundTop - h * 0.12, groundTop + h * 0.03, h * 0.1, { line: false });
   }
-  // Maapinta: kermainen pilvi
+}
+function renderCandyskyNear(b, w, h) {
+  var i, x;
   var gr = b.createLinearGradient(0, groundTop, 0, h);
   gr.addColorStop(0, '#fff0f7');
   gr.addColorStop(1, '#ffd6ea');
   b.fillStyle = gr;
   b.fillRect(0, groundTop, w, h - groundTop);
-  // Tikkarit maisemassa
   for (i = 0; i < 7; i++) {
     x = w * (0.07 + i * 0.14);
     var s = h * (0.05 + (i % 3) * 0.015);
-    b.strokeStyle = '#fff';
-    b.lineWidth = Math.max(2, s * 0.12);
-    b.beginPath(); b.moveTo(x, groundTop); b.lineTo(x, groundTop - s * 2.2); b.stroke();
-    b.fillStyle = CANDY_WRAP_COLORS[i % CANDY_WRAP_COLORS.length];
-    b.beginPath(); b.arc(x, groundTop - s * 2.6, s, 0, Math.PI * 2); b.fill();
-    b.strokeStyle = 'rgba(255,255,255,0.8)';
-    b.lineWidth = Math.max(2, s * 0.18);
-    b.beginPath(); b.arc(x, groundTop - s * 2.6, s * 0.55, 0.5, 2.6); b.stroke();
+    artLimb(b, x, groundTop, x, groundTop - s * 2.2, Math.max(2, s * 0.12), '#ffffff', false);
+    artCircle(b, x, groundTop - s * 2.6, s, CANDY_WRAP_COLORS[i % CANDY_WRAP_COLORS.length], { hi: 0.4 });
   }
-  // Karkkiportti maailman lopussa
   var gx = candyGate.x, gs = h * 0.16;
   b.strokeStyle = '#ff6b9d';
   b.lineWidth = gs * 0.14;
@@ -215,9 +220,8 @@ function renderCandyskyBg(b, w, h) {
   b.strokeStyle = '#fff';
   b.lineWidth = gs * 0.07;
   b.beginPath(); b.arc(gx, groundTop, gs * 0.9, Math.PI, 0); b.stroke();
-  b.fillStyle = '#ff6b9d';
-  b.beginPath(); b.arc(gx - gs * 0.9, groundTop, gs * 0.12, 0, Math.PI * 2); b.fill();
-  b.beginPath(); b.arc(gx + gs * 0.9, groundTop, gs * 0.12, 0, Math.PI * 2); b.fill();
+  artCircle(b, gx - gs * 0.9, groundTop, gs * 0.12, '#ff6b9d', {});
+  artCircle(b, gx + gs * 0.9, groundTop, gs * 0.12, '#ff6b9d', {});
 }
 
 function csDrawCandy(c, x, y, s, color) {
@@ -241,7 +245,7 @@ function csDrawCandy(c, x, y, s, color) {
 
 function drawCandysky() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawSkyLantern(ctx, checkpoints[i]);
   // Portin hehku kun se odottaa
@@ -264,7 +268,7 @@ function drawCandysky() {
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   if (candyGate.ready && !celebrating) drawEdgeArrow(ctx, candyGate.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, CANDYSKY_COUNT, function (i2) { return skyCandies[i2] && skyCandies[i2].collected; },
     function (c, x, y, s) { csDrawCandy(c, x, y, s, '#ff6b9d'); });
   drawHearts(ctx);

@@ -1,6 +1,6 @@
 'use strict';
 
-// Tähti, pupu, yksisarvinen — kaikki "tarrakirja"-ilmeellä (js/art.js):
+// Tähti, pupu, yksisarvinen, prinsessa — "tarrakirja"-ilmeellä (js/art.js):
 // kaksi sävyä, reunaviiva, kiilto ja maavarjo.
 // ---------- Piirto: tähti, pupu, yksisarvinen ----------
 var STAR_COLOR = '#ffd94f';
@@ -272,5 +272,67 @@ function drawRiderPrincess(c, x, y, s, t, moving) {
   artFillPath(c, '#ffd24f', -s * 39, -s * 33, s * 4, { lineColor: '#d98a00' });
   c.fillStyle = '#ff5f7e';
   c.beginPath(); c.arc(0, -s * 34.6, s * 0.9, 0, Math.PI * 2); c.fill();
+  c.restore();
+}
+
+// Prinsessa jaloin (juoksu- ja lentokentät). Origo jalkojen kohdalla.
+function drawPrincessFree(c, x, y, s, facing, walkPhase, moving, t) {
+  artShadow(c, x, y + s * 1.2, s * 14, s * 4.2, moving ? 0.12 : 0.18);
+  c.save();
+  c.translate(x, y);
+  c.scale(facing, 1);
+  var bob = moving ? Math.abs(Math.sin(walkPhase)) * s * 3 : Math.sin(t * 2) * s * 1.2;
+  c.translate(0, -bob);
+  var swing = moving ? Math.sin(walkPhase) * s * 7 : 0;
+  // Jalat
+  artLimb(c, -s * 4, -s * 18, -s * 6 - swing, -s * 2, s * 4.4, SKIN, SKIN_LINE);
+  artLimb(c, s * 4, -s * 18, s * 6 + swing, -s * 2, s * 4.4, SKIN, SKIN_LINE);
+  // Mekko
+  c.beginPath();
+  c.moveTo(0, -s * 28);
+  c.quadraticCurveTo(-s * 16, -s * 8, -s * 12, -s * 2);
+  c.lineTo(s * 12, -s * 2);
+  c.quadraticCurveTo(s * 16, -s * 8, 0, -s * 28);
+  c.closePath();
+  artFillPath(c, DRESS, -s * 28, -s * 2, s * 12);
+  c.strokeStyle = '#ffd1e8';
+  c.lineWidth = Math.max(1, s * 1.1);
+  c.beginPath();
+  c.moveTo(-s * 10, -s * 5); c.quadraticCurveTo(0, -s * 8, s * 10, -s * 5);
+  c.stroke();
+  artBlob(c, 0, -s * 26, s * 6.2, s * 8, DRESS, {});
+  // Vapaa käsi
+  artLimb(c, -s * 4, -s * 22, -s * 8 - swing * 0.45, -s * 8, s * 3.2, SKIN, SKIN_LINE);
+  // Sauva
+  artLimb(c, s * 6, -s * 30, s * 22, -s * 48, s * 2.5, '#d9b3ff', '#9a6fc4');
+  artGlow(c, s * 24, -s * 50, s * 9, '#ffe27a', 0.4);
+  artCircle(c, s * 24, -s * 50, s * 4, '#ffe27a', { lineColor: '#d98a00', hi: 0.45 });
+  // Pää
+  artCircle(c, 0, -s * 42, s * 8, SKIN, { lineColor: SKIN_LINE, hi: 0.3 });
+  c.beginPath();
+  c.arc(0, -s * 45, s * 8.2, Math.PI * 0.95, Math.PI * 2.05);
+  c.closePath();
+  artFillPath(c, HAIR, -s * 54, -s * 42, s * 8);
+  artBlob(c, -s * 7, -s * 34, s * 3.4, s * 9, HAIR, { rot: 0.28 });
+  artCircle(c, -s * 8.5, -s * 26, s * 2, '#ff8fbe', {});
+  artEye(c, s * 3, -s * 42, s * 1.55, moving ? 0.45 : 0.25, (t % 4.1) < 0.14);
+  artBlush(c, s * 5.2, -s * 39, s * 1.8);
+  c.strokeStyle = '#c0392b';
+  c.lineWidth = Math.max(1, s * 0.9);
+  c.lineCap = 'round';
+  c.beginPath(); c.arc(s * 1.8, -s * 39.5, s * 2.4, 0.2, Math.PI - 0.7); c.stroke();
+  // Kruunu
+  c.beginPath();
+  c.moveTo(-s * 6, -s * 50);
+  c.lineTo(-s * 6, -s * 56);
+  c.lineTo(-s * 3, -s * 52);
+  c.lineTo(0, -s * 58);
+  c.lineTo(s * 3, -s * 52);
+  c.lineTo(s * 6, -s * 56);
+  c.lineTo(s * 6, -s * 50);
+  c.closePath();
+  artFillPath(c, '#ffd24f', -s * 58, -s * 50, s * 5, { lineColor: '#d98a00' });
+  c.fillStyle = '#ff5f7e';
+  c.beginPath(); c.arc(0, -s * 52.2, s * 1.1, 0, Math.PI * 2); c.fill();
   c.restore();
 }

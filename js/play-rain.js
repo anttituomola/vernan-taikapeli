@@ -168,10 +168,16 @@ function updateRain(dt) {
 }
 
 // ---------- Piirto ----------
+var RAIN_PAPER = { sky: 'rgba(200,210,235,0.35)', clouds: false, hill1: '#d3e3d0', hill2: '#c0d6bd' };
+function rainLayers() { return paperLayers(RAIN_PAPER, renderRainNear); }
 function renderRainBg(b, w, h) {
+  renderPaperFar(b, w, h, RAIN_PAPER);
+  renderPaperMid(b, w, h, RAIN_PAPER);
+  renderRainNear(b, w, h);
+}
+function renderRainNear(b, w, h) {
   var i, k, x, z;
-  renderPaperScene(b, w, h, rainGround, null, { sky: 'rgba(200,210,235,0.35)', sun: false, clouds: false, hill1: '#d3e3d0', hill2: '#c0d6bd' });
-  // Sadepilvet sadealueiden yllä ja lätäköt maassa
+  renderPaperNear(b, w, h, rainGround, null);
   for (i = 0; i < rainZones.length; i++) {
     z = rainZones[i];
     b.fillStyle = '#8a8fa8';
@@ -185,7 +191,6 @@ function renderRainBg(b, w, h) {
       b.fill();
     }
   }
-  // Aurinko-ovi lopussa
   var gx = rainGate.x, s = h * 0.12;
   b.fillStyle = '#a9743f';
   b.fillRect(gx - s * 0.75, groundTop - s * 1.6, s * 0.25, s * 1.6);
@@ -234,7 +239,7 @@ function drawRainGateGlow(c) {
 
 function drawRain() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawRainStreaks(ctx);
   drawPenStrokesLayer(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
@@ -249,7 +254,7 @@ function drawRain() {
   drawPenBubblesLayer(ctx);
   drawParticlesLayer(ctx);
   if (rainGate.open && !celebrating) drawEdgeArrow(ctx, rainGate.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, RAIN_BOTTLES, function (i2) { return rainBottles[i2] && rainBottles[i2].collected; },
     function (c, x, y, s2) { drawInkBottle(c, x, y, s2 * 0.75); });
   drawHearts(ctx);

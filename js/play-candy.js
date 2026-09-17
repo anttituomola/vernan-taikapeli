@@ -167,28 +167,40 @@ function updateCandy(dt) {
 }
 
 // ---------- Piirto ----------
+function candyLayers() {
+  return [
+    { speed: 0.22, render: renderCandyFar },
+    { speed: 0.55, render: renderCandyMid },
+    { speed: 1, render: renderCandyNear }
+  ];
+}
 function renderCandyBg(b, w, h) {
-  var i, x, seg;
+  renderCandyFar(b, w, h);
+  renderCandyMid(b, w, h);
+  renderCandyNear(b, w, h);
+}
+function renderCandyFar(b, w, h) {
+  var i;
   var sky = b.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#ffd9ec');
-  sky.addColorStop(0.6, '#ffeef7');
+  sky.addColorStop(0, '#ffb8dd');
+  sky.addColorStop(0.55, '#ffeef7');
   sky.addColorStop(1, '#ffe4c8');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  for (i = 0; i < 8; i++) cloudShape(b, w * (0.04 + i * 0.125), h * (0.1 + (i % 3) * 0.07), h * 0.03);
-  // Raidalliset karkkikukkulat
-  var horizon = h * 0.66;
+  drawBgSun(b, w * 0.2, h * 0.16, h * 0.065, 0.22, '#fff0c8', '#ffffff', '#ffd45a');
+  for (i = 0; i < 8; i++) drawCloud(b, w * (0.04 + i * 0.125), h * (0.1 + (i % 3) * 0.07), h * 0.03, 0.8);
+}
+function renderCandyMid(b, w, h) {
+  var i, x, horizon = h * 0.66;
   for (i = 0; i < 9; i++) {
     x = w * (0.05 + i * 0.115);
     var r = h * (0.12 + (i % 3) * 0.04);
-    b.fillStyle = i % 2 ? '#ffb3d9' : '#c9a0ff';
-    b.beginPath(); b.arc(x, horizon + r * 0.3, r, Math.PI, 0); b.fill();
-    b.strokeStyle = 'rgba(255,255,255,0.6)';
-    b.lineWidth = r * 0.12;
-    b.beginPath(); b.arc(x, horizon + r * 0.3, r * 0.75, Math.PI * 1.15, Math.PI * 1.85); b.stroke();
+    b.beginPath(); b.arc(x, horizon + r * 0.3, r, Math.PI, 0); b.closePath();
+    artFillPath(b, i % 2 ? '#ffb3d9' : '#c9a0ff', horizon - r, horizon + r * 0.3, r, { line: false });
   }
-  // Limonadi kuiluissa
+}
+function renderCandyNear(b, w, h) {
+  var i, x, seg;
   var liq = b.createLinearGradient(0, groundTop, 0, h);
   liq.addColorStop(0, '#ff9ec6');
   liq.addColorStop(1, '#d94f8a');
@@ -199,7 +211,6 @@ function renderCandyBg(b, w, h) {
     x = (i * 131.3) % w;
     b.beginPath(); b.arc(x, groundTop + h * 0.06 + ((i * 41) % Math.max(1, (h - groundTop - h * 0.08))), h * 0.005 + (i % 3) * h * 0.003, 0, Math.PI * 2); b.fill();
   }
-  // Keksimaa
   for (i = 0; i < candyGround.length; i++) {
     seg = candyGround[i];
     drawBiscuitSlab(b, seg[0] * w, groundTop, (seg[1] - seg[0]) * w, h - groundTop, h);
@@ -207,7 +218,6 @@ function renderCandyBg(b, w, h) {
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'ledge') drawMarshmallow(b, platforms[i].x, platforms[i].y, platforms[i].w, h * 0.055, false, 0);
   }
-  // Tikkarit maiseman puina
   for (i = 0; i < 10; i++) {
     x = w * (0.03 + i * 0.1) + (i % 2) * h * 0.06;
     drawLollipopTree(b, x, groundTop, h * (0.14 + (i % 3) * 0.03), CANDY_COLORS[i % CANDY_COLORS.length]);
@@ -325,7 +335,7 @@ function drawCandyDoorGlow(c) {
 
 function drawCandy_() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'bounce') {
@@ -345,7 +355,7 @@ function drawCandy_() {
   drawParticlesLayer(ctx);
   drawCandyDoorGlow(ctx);
   if (candyDoor.open && !celebrating) drawEdgeArrow(ctx, candyDoor.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, CANDY_COUNT, function (i2) { return candies[i2] && candies[i2].collected; },
     function (c, x, y, s) { drawCandy(c, x, y - s * 0.3, s * 0.9, '#ff5f7e', 0); });
   drawHearts(ctx);

@@ -172,17 +172,45 @@ function updateDucks(dt) {
 }
 
 // ---------- Piirto ----------
+function ducksLayers() {
+  return [
+    { speed: 0.22, render: renderDucksFar },
+    { speed: 0.55, render: renderDucksMid },
+    { speed: 1, render: renderDucksNear }
+  ];
+}
 function renderDucksBg(b, w, h) {
-  var vw = viewW, i, x, y, pt = duckPondTop();
+  renderDucksFar(b, w, h);
+  renderDucksMid(b, w, h);
+  renderDucksNear(b, w, h);
+}
+function renderDucksFar(b, w, h) {
+  var vw = viewW, pt = duckPondTop();
   var sky = b.createLinearGradient(0, 0, 0, pt);
-  sky.addColorStop(0, '#8ed3ff');
+  sky.addColorStop(0, '#5fa8ff');
+  sky.addColorStop(0.55, '#c8ecff');
   sky.addColorStop(1, '#e6f6ff');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, pt);
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  cloudShape(b, vw * 0.55, h * 0.2, h * 0.028);
-  cloudShape(b, vw * 0.85, h * 0.27, h * 0.022);
-  // Kojun katos ja kyltti ylhäällä: ankkahylly
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, vw * 0.18, h * 0.14, h * 0.06, 0.22, '#fff4c8', '#fffdf0', '#ffd45a');
+  drawCloud(b, vw * 0.55, h * 0.2, h * 0.028, 0.8);
+  drawCloud(b, vw * 0.85, h * 0.27, h * 0.022, 0.8);
+}
+function renderDucksMid(b, w, h) {
+  var vw = viewW, pt = duckPondTop();
+  var gr = b.createLinearGradient(0, pt - h * 0.05, 0, pt);
+  gr.addColorStop(0, '#9fdc7f');
+  gr.addColorStop(1, '#6fbb60');
+  b.fillStyle = gr;
+  b.fillRect(0, pt - h * 0.05, w, h * 0.05);
+  var water = b.createLinearGradient(0, pt, 0, h);
+  water.addColorStop(0, '#5fc7e8');
+  water.addColorStop(1, '#1f6fa8');
+  b.fillStyle = water;
+  b.fillRect(0, pt, w, h - pt);
+}
+function renderDucksNear(b, w, h) {
+  var vw = viewW, i, x, y, pt = duckPondTop();
   b.fillStyle = '#ffb300';
   b.fillRect(vw * 0.24, h * 0.02, vw * 0.74, h * 0.055);
   b.fillStyle = '#fff';
@@ -202,18 +230,6 @@ function renderDucksBg(b, w, h) {
     b.textBaseline = 'middle';
     b.fillText(String(i), sp.x, sp.y + h * 0.014);
   }
-  // Nurmi ja laituri
-  var gr = b.createLinearGradient(0, pt - h * 0.05, 0, pt);
-  gr.addColorStop(0, '#9fdc7f');
-  gr.addColorStop(1, '#6fbb60');
-  b.fillStyle = gr;
-  b.fillRect(0, pt - h * 0.05, w, h * 0.05);
-  // Lampi
-  var water = b.createLinearGradient(0, pt, 0, h);
-  water.addColorStop(0, '#5fc7e8');
-  water.addColorStop(1, '#1f6fa8');
-  b.fillStyle = water;
-  b.fillRect(0, pt, w, h - pt);
   b.strokeStyle = 'rgba(255,255,255,0.22)';
   b.lineWidth = Math.max(1, h * 0.004);
   for (y = pt + h * 0.03; y < h; y += h * 0.045) {
@@ -329,7 +345,7 @@ function drawDucksBubble(c) {
 
 function drawDucks() {
   var i, d, p, sp, h = ducks.hook;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Hyllyllä pyydetyt ankat
   for (i = 0; i < ducks.list.length; i++) {
     d = ducks.list[i];
@@ -367,6 +383,6 @@ function drawDucks() {
     ctx.fillText('?', duckRestPos().x + viewH * 0.07, duckRestPos().y - viewH * 0.03 - (0.6 - ducks.wrongT) * viewH * 0.05);
   }
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawTaskOverlay(ctx);
 }

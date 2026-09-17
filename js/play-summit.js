@@ -205,17 +205,32 @@ function updateSummit(dt) {
 }
 
 // ---------- Piirto ----------
+function summitLayers() {
+  return [
+    { speed: 0.22, render: renderSummitFar },
+    { speed: 0.55, render: renderSummitMid },
+    { speed: 1, render: renderSummitNear }
+  ];
+}
 function renderSummitBg(b, w, h) {
-  var i, x, seg;
+  renderSummitFar(b, w, h);
+  renderSummitMid(b, w, h);
+  renderSummitNear(b, w, h);
+}
+function renderSummitFar(b, w, h) {
+  var i, x;
   var sky = b.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#6fa8ff');
-  sky.addColorStop(0.5, '#cfe6ff');
+  sky.addColorStop(0, '#4a88c8');
+  sky.addColorStop(0.55, '#b4dcff');
   sky.addColorStop(1, '#ffffff');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  b.fillStyle = 'rgba(255,255,255,0.85)';
-  for (i = 0; i < 14; i++) cloudShape(b, w * (0.02 + i * 0.075), h * (0.12 + (i % 3) * 0.08), h * 0.03);
-  // Kaukaiset huiput
+  drawBgSun(b, w * 0.8, h * 0.14, h * 0.065, 0.22, '#fff4c8', '#fffdf0', '#ffe08a');
+  for (i = 0; i < 10; i++) {
+    x = w * (0.02 + i * 0.1);
+    if (Math.abs(x - w * 0.8) < h * 0.18) continue;
+    drawCloud(b, x, h * (0.12 + (i % 3) * 0.08), h * 0.028, 0.75);
+  }
   b.fillStyle = '#9fb8dc';
   for (i = 0; i < 16; i++) {
     x = w * (i / 15) + (i % 2) * h * 0.1;
@@ -224,7 +239,19 @@ function renderSummitBg(b, w, h) {
     b.beginPath(); b.moveTo(x - h * 0.08, groundTop - h * (0.2 + (i % 3) * 0.06)); b.lineTo(x, groundTop - h * (0.28 + (i % 3) * 0.06)); b.lineTo(x + h * 0.08, groundTop - h * (0.2 + (i % 3) * 0.06)); b.closePath(); b.fill();
     b.fillStyle = '#9fb8dc';
   }
-  // Lumiset kielekkeet (maa) rotkoineen
+}
+function renderSummitMid(b, w, h) {
+  var i, x;
+  fillHillBand(b, w, h, groundTop + h * 0.04, '#c8d8ec', function (px) {
+    return groundTop - h * 0.04 - Math.sin(px * 0.003) * h * 0.05;
+  });
+  for (i = 0; i < 12; i++) {
+    x = w * (0.04 + i * 0.08);
+    drawPine(b, x, groundTop + h * 0.02, h * (0.08 + (i % 3) * 0.03), i % 2 ? '#4a7a68' : '#5a8a78');
+  }
+}
+function renderSummitNear(b, w, h) {
+  var i, x, seg;
   for (i = 0; i < sumGround.length; i++) {
     seg = sumGround[i];
     drawSnowBank(b, seg[0] * w, groundTop, (seg[1] - seg[0]) * w, h);
@@ -407,7 +434,7 @@ function drawSummitDoorGlow(c) {
 
 function drawSummit() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawWindSpirit(ctx);
   drawSummitDoorGlow(ctx);
   drawFlags(ctx);
@@ -424,7 +451,7 @@ function drawSummit() {
   drawLeaves(ctx);
   drawParticlesLayer(ctx);
   if (sumDoor.open && !celebrating) drawEdgeArrow(ctx, sumDoor.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, SUM_CRYSTALS, function (i2) { return sumCrystals[i2] && sumCrystals[i2].collected; },
     function (c, x, y, s) { drawCrystal(c, x, y, s * 0.8, '#8fd3ff'); });
   drawHearts(ctx);

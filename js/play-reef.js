@@ -88,7 +88,7 @@ function resizeReef(ratio) {
   layoutReef();
 }
 
-function collectPearl(p) {
+function collectReefPearl(p) {
   p.collected = true;
   registerCollected(p);
   spawnSparkles(p.ax, p.ay, 14, '#ffffff');
@@ -110,7 +110,7 @@ function handleReefTap(px, py) {
     dx = wx - reefPearls[i].ax;
     dy = py - reefPearls[i].ay;
     if (dx * dx + dy * dy < viewH * 0.06 * viewH * 0.06) {
-      collectPearl(reefPearls[i]);
+      collectReefPearl(reefPearls[i]);
       return;
     }
   }
@@ -179,7 +179,7 @@ function updateReef(dt) {
     if (p.collected) continue;
     p.phase += dt * 2;
     var dx = p.ax - princess.x, dy = p.ay - (princess.y - viewH * 0.07);
-    if (dx * dx + dy * dy < viewH * 0.07 * viewH * 0.07) collectPearl(p);
+    if (dx * dx + dy * dy < viewH * 0.07 * viewH * 0.07) collectReefPearl(p);
   }
 
   if (chest.open && !celebrating && Math.abs(princess.x - chest.x) < viewH * 0.1 && princess.y > floorY - viewH * 0.22) {
@@ -195,15 +195,27 @@ function updateReef(dt) {
 }
 
 // ---------- Piirto ----------
+function reefLayers() {
+  return [
+    { speed: 0.22, render: renderReefFar },
+    { speed: 0.55, render: renderReefMid },
+    { speed: 1, render: renderReefNear }
+  ];
+}
 function renderReefBg(b, w, h) {
-  var i, x, floorY = groundBottom - h * 0.03;
+  renderReefFar(b, w, h);
+  renderReefMid(b, w, h);
+  renderReefNear(b, w, h);
+}
+function renderReefFar(b, w, h) {
+  var i, x;
   var water = b.createLinearGradient(0, 0, 0, h);
-  water.addColorStop(0, '#48bde8');
-  water.addColorStop(0.45, '#1f7fbf');
+  water.addColorStop(0, '#7ad4f0');
+  water.addColorStop(0.45, '#2a90c8');
   water.addColorStop(1, '#0b3a6b');
   b.fillStyle = water;
   b.fillRect(0, 0, w, h);
-  // Valonsäteet
+  drawBgSun(b, w * 0.5, -h * 0.02, h * 0.08, 0.22, '#c8f4ff', '#ffffff', '#fff8c8');
   b.fillStyle = 'rgba(255,255,255,0.07)';
   for (i = 0; i < 14; i++) {
     x = w * (0.03 + i * 0.075);
@@ -211,7 +223,9 @@ function renderReefBg(b, w, h) {
     b.moveTo(x, 0); b.lineTo(x + h * 0.08, 0); b.lineTo(x + h * 0.32, h * 0.8); b.lineTo(x + h * 0.1, h * 0.8);
     b.closePath(); b.fill();
   }
-  // Kaukaiset kalat
+}
+function renderReefMid(b, w, h) {
+  var i, x;
   b.fillStyle = 'rgba(255,255,255,0.18)';
   for (i = 0; i < 18; i++) {
     x = (i * 233.7) % w;
@@ -222,7 +236,9 @@ function renderReefBg(b, w, h) {
     b.fill();
     b.beginPath(); b.moveTo(x - h * 0.016, fy); b.lineTo(x - h * 0.03, fy - h * 0.01); b.lineTo(x - h * 0.03, fy + h * 0.01); b.closePath(); b.fill();
   }
-  // Hiekkapohja
+}
+function renderReefNear(b, w, h) {
+  var i, x, floorY = groundBottom - h * 0.03;
   var sand = b.createLinearGradient(0, floorY, 0, h);
   sand.addColorStop(0, '#e8d5a3');
   sand.addColorStop(1, '#b89a66');
@@ -231,7 +247,6 @@ function renderReefBg(b, w, h) {
   b.moveTo(0, floorY);
   for (x = 0; x <= w; x += 16) b.lineTo(x, floorY + Math.sin(x * 0.01) * h * 0.008);
   b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
-  // Korallit ja merilevä
   var corals = ['#ff7a9c', '#ffb46b', '#c98bff', '#6fe0d0'];
   for (i = 0; i < 16; i++) {
     x = w * (0.02 + i * 0.062) + (i % 3) * h * 0.03;
@@ -346,7 +361,7 @@ function drawChestGlow(c) {
 
 function drawReef() {
   var i, floorY = reefFloorY();
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < currents.length; i++) drawCurrentStream(ctx, currents[i]);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], floorY);
@@ -361,7 +376,7 @@ function drawReef() {
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   if (chest.open && !celebrating) drawEdgeArrow(ctx, chest.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, PEARL_COUNT, function (i2) { return reefPearls[i2] && reefPearls[i2].collected; },
     function (c, x, y, s) { drawReefPearl(c, x, y, s * 0.7); });
   drawHearts(ctx);

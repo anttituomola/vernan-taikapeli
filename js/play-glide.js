@@ -167,18 +167,27 @@ function updateGlide(dt) {
 }
 
 // ---------- Piirto ----------
+function glideLayers() {
+  return [
+    { speed: 0.22, render: renderGlideFar },
+    { speed: 0.55, render: renderGlideMid },
+    { speed: 1, render: renderGlideNear }
+  ];
+}
 function renderGlideBg(b, w, h) {
+  renderGlideFar(b, w, h);
+  renderGlideMid(b, w, h);
+  renderGlideNear(b, w, h);
+}
+function renderGlideFar(b, w, h) {
   var i, x;
   var sky = b.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#9fc8f0');
-  sky.addColorStop(0.6, '#cfe6ff');
+  sky.addColorStop(0, '#7eb8f0');
+  sky.addColorStop(0.55, '#cfe6ff');
   sky.addColorStop(1, '#eef7ff');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  // Aurinko
-  b.fillStyle = 'rgba(255,246,200,0.9)';
-  b.beginPath(); b.arc(w * 0.82, h * 0.14, h * 0.07, 0, Math.PI * 2); b.fill();
-  // Kaukoiden vuorten siluetit
+  drawBgSun(b, w * 0.82, h * 0.14, h * 0.07, 0.22, '#fff4c8', '#fffdf0', '#ffd45a');
   b.fillStyle = '#a8c4e0';
   for (i = 0; i < 8; i++) {
     x = w * (i / 7);
@@ -187,20 +196,21 @@ function renderGlideBg(b, w, h) {
     b.lineTo(x, groundTop - h * (0.18 + (i % 3) * 0.07));
     b.lineTo(x + w * 0.12, groundTop);
     b.closePath(); b.fill();
-  }
-  b.fillStyle = '#e8f2fc';
-  for (i = 0; i < 8; i++) {
-    x = w * (i / 7);
+    b.fillStyle = '#e8f2fc';
     var py = groundTop - h * (0.18 + (i % 3) * 0.07);
     b.beginPath();
     b.moveTo(x - w * 0.03, py + h * 0.045);
     b.lineTo(x, py);
     b.lineTo(x + w * 0.03, py + h * 0.045);
     b.closePath(); b.fill();
+    b.fillStyle = '#a8c4e0';
   }
-  b.fillStyle = 'rgba(255,255,255,0.85)';
-  for (i = 0; i < 8; i++) cloudShape(b, w * (0.06 + i * 0.12), h * (0.16 + (i % 3) * 0.09), h * 0.03);
-  // Maapinta: kallioinen harjanne
+}
+function renderGlideMid(b, w, h) {
+  var i;
+  for (i = 0; i < 8; i++) drawCloud(b, w * (0.06 + i * 0.12), h * (0.16 + (i % 3) * 0.09), h * 0.03, 0.8);
+}
+function renderGlideNear(b, w, h) {
   var gr = b.createLinearGradient(0, groundTop, 0, h);
   gr.addColorStop(0, '#b8cfe4');
   gr.addColorStop(1, '#7f9cbd');
@@ -244,7 +254,7 @@ function glDrawFeather(c, x, y, s) {
 
 function drawGlide() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawSkyLantern(ctx, checkpoints[i]);
   // Portin hehku kun se odottaa
@@ -269,7 +279,7 @@ function drawGlide() {
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   if (glideGate.ready && !celebrating) drawEdgeArrow(ctx, glideGate.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, GLIDE_COUNT, function (i2) { return feathers[i2] && feathers[i2].collected; }, glDrawFeather);
   drawHearts(ctx);
   drawTaskOverlay(ctx);

@@ -242,27 +242,29 @@ function updateCave(dt) {
 }
 
 // ---------- Piirto ----------
+function caveLayers() {
+  return [
+    { speed: 0.22, render: renderCaveFar },
+    { speed: 0.55, render: renderCaveMid },
+    { speed: 1, render: renderCaveNear }
+  ];
+}
 function renderCaveBg(b, w, h) {
-  var i, x, seg;
+  renderCaveFar(b, w, h);
+  renderCaveMid(b, w, h);
+  renderCaveNear(b, w, h);
+}
+function renderCaveFar(b, w, h) {
+  var i, x;
   var sky = b.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, '#07061a');
   sky.addColorStop(0.5, '#1a1440');
   sky.addColorStop(1, '#241b52');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  // Katon tippukivisiluetit
-  b.fillStyle = '#100c2a';
-  for (i = 0; i < 40; i++) {
-    x = (i * 173.3) % w;
-    var len = h * (0.05 + (i % 4) * 0.03);
-    b.beginPath();
-    b.moveTo(x - h * 0.02, 0);
-    b.lineTo(x + h * 0.02, 0);
-    b.lineTo(x, len);
-    b.closePath();
-    b.fill();
-  }
-  // Takaseinän kiteet
+  var gx = w * 0.72, gy = h * 0.22, gr = h * 0.05;
+  bgSun = { x: gx, y: gy, r: gr, speed: 0.22 };
+  artGlow(b, gx, gy, gr * 4, '#a898ff', 0.4);
   for (i = 0; i < 30; i++) {
     x = (i * 211.7) % w;
     var cy = h * (0.25 + (i % 5) * 0.09);
@@ -275,24 +277,37 @@ function renderCaveBg(b, w, h) {
     b.closePath();
     b.fill();
   }
-  // Vesi kuiluissa
+}
+function renderCaveMid(b, w, h) {
+  var i, x;
+  b.fillStyle = artMix('#100c2a', '#241b52', 0.25);
+  for (i = 0; i < 40; i++) {
+    x = (i * 173.3) % w;
+    var len = h * (0.08 + (i % 4) * 0.04);
+    b.beginPath();
+    b.moveTo(x - h * 0.02, 0);
+    b.lineTo(x + h * 0.02, 0);
+    b.lineTo(x, len);
+    b.closePath();
+    b.fill();
+  }
+}
+function renderCaveNear(b, w, h) {
+  var i, x, seg;
   var water = b.createLinearGradient(0, groundTop, 0, h);
   water.addColorStop(0, '#1f8fa8');
   water.addColorStop(1, '#0b3a4a');
   b.fillStyle = water;
   b.fillRect(0, groundTop + h * 0.03, w, h - groundTop);
-  // Maasegmentit
   for (i = 0; i < caveGround.length; i++) {
     seg = caveGround[i];
     drawStoneSlab(b, seg[0] * w, groundTop, (seg[1] - seg[0]) * w, h - groundTop, h);
   }
-  // Kiinteät kielekkeet
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'ledge') {
       drawStoneSlab(b, platforms[i].x, platforms[i].y, platforms[i].w, h * 0.05, h);
     }
   }
-  // Ovi maailman lopussa
   drawCaveDoorFrame(b, caveDoor.x, groundTop, h);
 }
 
@@ -427,7 +442,7 @@ function drawDarkness(c, lx, ly, radius) {
 
 function drawCave() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'mover') {
@@ -446,7 +461,6 @@ function drawCave() {
   drawSparks(ctx);
   drawParticlesLayer(ctx);
 
-  // Pimeys: valo prinsessan ympärillä, valonlähteet piirretään päälle
   if (!celebrating) drawDarkness(ctx, princess.x - camX, princess.y - viewH * 0.08, viewH * 0.72);
   for (i = 0; i < crystals.length; i++) {
     var cr = crystals[i];
@@ -462,7 +476,7 @@ function drawCave() {
   drawCaveDoorGlow(ctx);
   if (caveDoor.open && !celebrating) drawEdgeArrow(ctx, caveDoor.x);
 
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, CRYSTAL_COUNT, function (i2) { return crystals[i2] && crystals[i2].collected; },
     function (c, x, y, s) { drawCrystal(c, x, y, s, '#8fd3ff'); });
   drawHearts(ctx);

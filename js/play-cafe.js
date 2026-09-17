@@ -125,17 +125,30 @@ function updateCafe(dt) {
 }
 
 // ---------- Piirto ----------
+function cafeLayers() {
+  return [
+    { speed: 0.22, render: renderCafeFar },
+    { speed: 0.55, render: renderCafeMid },
+    { speed: 1, render: renderCafeNear }
+  ];
+}
 function renderCafeBg(b, w, h) {
-  var vw = viewW, i, x, y;
-  var wall = b.createLinearGradient(0, 0, 0, h * 0.62);
+  renderCafeFar(b, w, h);
+  renderCafeMid(b, w, h);
+  renderCafeNear(b, w, h);
+}
+function renderCafeFar(b, w, h) {
+  var wall = b.createLinearGradient(0, 0, 0, h);
   wall.addColorStop(0, '#ffe8f0');
   wall.addColorStop(1, '#f7d2c4');
   b.fillStyle = wall;
-  b.fillRect(0, 0, w, h * 0.62);
-  // Juovikkaat tapetin raidat
+  b.fillRect(0, 0, w, h);
+  drawBgSun(b, w * 0.62, h * 0.22, h * 0.055, 0.22, '#fff4c8', '#fffdf0', '#ffd45a');
+}
+function renderCafeMid(b, w, h) {
+  var i, x, y;
   b.fillStyle = 'rgba(255,255,255,0.4)';
   for (i = 0; i < 14; i++) b.fillRect(i * h * 0.12, 0, h * 0.04, h * 0.62);
-  // Lipputulo
   b.strokeStyle = 'rgba(160,110,90,0.5)';
   b.lineWidth = 2;
   b.beginPath(); b.moveTo(0, h * 0.10); b.quadraticCurveTo(w * 0.5, h * 0.2, w, h * 0.10); b.stroke();
@@ -146,7 +159,9 @@ function renderCafeBg(b, w, h) {
     b.fillStyle = flagColors[i % flagColors.length];
     b.beginPath(); b.moveTo(x, y); b.lineTo(x + h * 0.035, y); b.lineTo(x + h * 0.0175, y + h * 0.05); b.closePath(); b.fill();
   }
-  // Ikkuna
+}
+function renderCafeNear(b, w, h) {
+  var vw = viewW, i, x, y;
   var wx = vw * 0.62, wy = h * 0.30, ww = h * 0.2, wh = h * 0.22;
   b.fillStyle = '#a9743f';
   roundRect(b, wx - ww / 2 - h * 0.012, wy - wh / 2 - h * 0.012, ww + h * 0.024, wh + h * 0.024, h * 0.02);
@@ -281,7 +296,7 @@ function drawCafeHud(c) {
 
 function drawCafe() {
   var i, p;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   // Eväät hyllyllä
   for (i = 0; i < CAFE_FOODS.length; i++) {
     p = cafeFoodPos(i);
@@ -306,7 +321,7 @@ function drawCafe() {
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawCafeCustomer(ctx);
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawCafeHud(ctx);
   drawTaskOverlay(ctx);
 }

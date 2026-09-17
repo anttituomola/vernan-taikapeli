@@ -121,33 +121,27 @@ function updateBerry(dt) {
 }
 
 // ---------- Piirto ----------
+function berryLayers() {
+  return [
+    { speed: 0.22, render: renderBerryFar },
+    { speed: 0.55, render: renderBerryMid },
+    { speed: 1, render: renderBerryNear }
+  ];
+}
 function renderBerryBg(b, w, h) {
-  var i, x;
-  var sky = b.createLinearGradient(0, 0, 0, groundTop);
-  sky.addColorStop(0, '#b8e6ff');
-  sky.addColorStop(1, '#eefaff');
-  b.fillStyle = sky;
-  b.fillRect(0, 0, w, groundTop + 2);
-  b.fillStyle = 'rgba(255,255,255,0.9)';
-  for (i = 0; i < 9; i++) cloudShape(b, w * (0.05 + i * 0.11), h * (0.1 + (i % 3) * 0.07), h * 0.03);
-  b.fillStyle = '#a7dd8f';
-  for (i = 0; i < 10; i++) {
-    x = w * (i / 9);
-    b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.12 + (i % 3) * 0.04), Math.PI, 0); b.fill();
-  }
-  var grass = b.createLinearGradient(0, groundTop, 0, h);
-  grass.addColorStop(0, '#8fd97a');
-  grass.addColorStop(1, '#5fb356');
-  b.fillStyle = grass;
-  b.fillRect(0, groundTop, w, h - groundTop);
-  b.fillStyle = 'rgba(255,240,180,0.45)';
-  b.fillRect(0, groundTop + h * 0.02, w, groundBottom - groundTop - h * 0.02);
-  // Marjapensaat koristeina
+  renderBerryFar(b, w, h);
+  renderBerryMid(b, w, h);
+  renderBerryNear(b, w, h);
+}
+function renderBerryFar(b, w, h) { meadowFar(b, w, h, '#9fdcff', '#e8f7ff', '#d8f0c8'); }
+function renderBerryMid(b, w, h) { meadowMid(b, w, h, '#a7dd8f'); }
+function renderBerryNear(b, w, h) {
+  var i, x, k;
+  meadowNearGrass(b, w, h);
   for (i = 0; i < 6; i++) {
     x = w * (0.10 + i * 0.16) + (i % 2) * h * 0.03;
     drawBush(b, x, groundTop - h * 0.01, h * 0.08);
     b.fillStyle = i % 2 ? '#6f5cff' : '#ff5f7e';
-    var k;
     for (k = 0; k < 4; k++) {
       b.beginPath();
       b.arc(x - h * 0.03 + (k % 2) * h * 0.05, groundTop - h * (0.05 + 0.03 * (k > 1 ? 1 : 0)), h * 0.008, 0, Math.PI * 2);
@@ -158,7 +152,6 @@ function renderBerryBg(b, w, h) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, ['#ff7bac', '#ffe27a', '#c9a0ff', '#7fd4ff'][i % 4]);
   }
-  // Marjakori
   var bx = berryBasket.x, s = h * 0.09;
   b.fillStyle = '#c98b4a';
   b.beginPath();
@@ -207,7 +200,7 @@ function beDrawBerry(c, x, y, s, kind) {
 
 function drawBerry() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   // Korin hehku kun se odottaa täyttä lastia
   if (berryBasket.ready) {
@@ -227,7 +220,7 @@ function drawBerry() {
   drawUnicorn(ctx, unicorn.x - camX, unicorn.y, viewH / 800 * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
   drawParticlesLayer(ctx);
   if (berryBasket.ready && !celebrating) drawEdgeArrow(ctx, berryBasket.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, BERRY_COUNT, function (i2) { return berries[i2] && berries[i2].collected; },
     function (c, x, y, s) { beDrawBerry(c, x, y, s, 'mansikka'); });
   drawTaskOverlay(ctx);

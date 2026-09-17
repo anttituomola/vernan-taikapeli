@@ -243,10 +243,16 @@ function updateScribble(dt) {
 }
 
 // ---------- Piirto ----------
+var SC_PAPER = { paper: '#f4eef8', sky: 'rgba(120,100,160,0.08)', moon: true, sun: false, hill1: '#d9d0e8', hill2: '#c9bde0' };
+function scribbleLayers() { return paperLayers(SC_PAPER, renderScribbleNear); }
 function renderScribbleBg(b, w, h) {
+  renderPaperFar(b, w, h, SC_PAPER);
+  renderPaperMid(b, w, h, SC_PAPER);
+  renderScribbleNear(b, w, h);
+}
+function renderScribbleNear(b, w, h) {
   var i, x;
-  renderPaperScene(b, w, h, scGround, null, { paper: '#f4eef8', sky: 'rgba(120,100,160,0.08)', sun: false, hill1: '#d9d0e8', hill2: '#c9bde0' });
-  // Sotkuisia töhryjä taivaalla mörön lähellä
+  renderPaperNear(b, w, h, scGround, null);
   b.strokeStyle = 'rgba(90,74,122,0.18)';
   b.lineWidth = Math.max(2, h * 0.006);
   for (i = 0; i < 6; i++) {
@@ -256,7 +262,6 @@ function renderScribbleBg(b, w, h) {
     b.bezierCurveTo(x + h * 0.06, h * 0.25, x - h * 0.05, h * 0.3, x + h * 0.04, h * 0.4);
     b.stroke();
   }
-  // Ovi lopussa
   var s = h * 0.12, gx = scDoor.x;
   b.fillStyle = '#8f8fc0';
   b.fillRect(gx - s * 0.8, groundTop - s * 1.7, s * 0.28, s * 1.7);
@@ -406,7 +411,7 @@ function drawScShapeHud(c) {
 
 function drawScribble() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   drawScMonster(ctx);
   drawScDoorGlow(ctx);
   drawPenStrokesLayer(ctx);
@@ -422,7 +427,7 @@ function drawScribble() {
   drawPenBubblesLayer(ctx);
   drawParticlesLayer(ctx);
   if (scDoor.open && !celebrating) drawEdgeArrow(ctx, scDoor.x);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawScShapeHud(ctx);
   drawHearts(ctx);
   drawPenInk(ctx);

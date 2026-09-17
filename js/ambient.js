@@ -283,10 +283,12 @@ function drawLight(c, light) {
     var sx = bgSun.x - camX * bgSun.speed, sy = bgSun.y;
     if (sx > -viewW * 0.6 && sx < viewW * 1.6) {
       var len = viewH * 1.35;
+      var ra = light.raysAlpha || 1;
+      var ray = light.raysColor || '#fff2c8';
       var g = c.createRadialGradient(sx, sy, bgSun.r, sx, sy, len);
-      g.addColorStop(0, 'rgba(255,242,200,' + (0.18 * (light.raysAlpha || 1)) + ')');
-      g.addColorStop(0.5, 'rgba(255,242,200,' + (0.07 * (light.raysAlpha || 1)) + ')');
-      g.addColorStop(1, 'rgba(255,242,200,0)');
+      g.addColorStop(0, artRGBA(ray, 0.18 * ra));
+      g.addColorStop(0.5, artRGBA(ray, 0.07 * ra));
+      g.addColorStop(1, artRGBA(ray, 0));
       c.fillStyle = g;
       var n = 6;
       for (i = 0; i < n; i++) {

@@ -207,7 +207,19 @@ function updateBridge(dt) {
 }
 
 // ---------- Piirto ----------
+function bridgeLayers() {
+  return [
+    { speed: 0.22, render: renderBridgeFar },
+    { speed: 0.55, render: renderBridgeMid },
+    { speed: 1, render: renderBridgeNear }
+  ];
+}
 function renderBridgeBg(b, w, h) {
+  renderBridgeFar(b, w, h);
+  renderBridgeMid(b, w, h);
+  renderBridgeNear(b, w, h);
+}
+function renderBridgeFar(b, w, h) {
   var i, x;
   var sky = b.createLinearGradient(0, 0, 0, h);
   sky.addColorStop(0, '#1b1450');
@@ -215,19 +227,46 @@ function renderBridgeBg(b, w, h) {
   sky.addColorStop(1, '#8a5cc8');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
+  var moonX = w * 0.2, moonY = h * 0.16, moonR = h * 0.06;
+  bgSun = { x: moonX, y: moonY, r: moonR, speed: 0.22 };
+  artGlow(b, moonX, moonY, moonR * 3.2, '#fff4c8', 0.5);
+  var mg = b.createRadialGradient(moonX - moonR * 0.3, moonY - moonR * 0.3, moonR * 0.1, moonX, moonY, moonR);
+  mg.addColorStop(0, '#ffffff');
+  mg.addColorStop(1, '#ffe9a8');
+  b.fillStyle = mg;
+  b.beginPath(); b.arc(moonX, moonY, moonR, 0, Math.PI * 2); b.fill();
   b.fillStyle = '#fff6c8';
   for (i = 0; i < 80; i++) {
     x = (i * 173.3) % w;
+    if (Math.abs(x - moonX) < moonR * 2) continue;
     b.globalAlpha = 0.3 + (i % 5) * 0.12;
-    b.beginPath(); b.arc(x, (i * 97.1) % (h * 0.6), 1.4 + (i % 3), 0, Math.PI * 2); b.fill();
+    b.beginPath(); b.arc(x, (i * 97.1) % (h * 0.55), 1.4 + (i % 3), 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  // Sateenkaarisilta aaltoilee koko maailman läpi
-  var band = h * 0.022;
+}
+function renderBridgeMid(b, w, h) {
+  var i, x, band = h * 0.018;
   b.lineWidth = band;
+  b.lineCap = 'round';
   for (i = 0; i < maneColors.length; i++) {
     b.strokeStyle = maneColors[i];
-    b.globalAlpha = 0.55;
+    b.globalAlpha = 0.22;
+    b.beginPath();
+    for (x = 0; x <= w; x += 16) {
+      var y = h * 0.72 + Math.sin(x * 0.0025) * h * 0.05 + i * band;
+      if (x === 0) b.moveTo(x, y); else b.lineTo(x, y);
+    }
+    b.stroke();
+  }
+  b.globalAlpha = 1;
+}
+function renderBridgeNear(b, w, h) {
+  var i, x, band = h * 0.022;
+  b.lineWidth = band;
+  b.lineCap = 'round';
+  for (i = 0; i < maneColors.length; i++) {
+    b.strokeStyle = maneColors[i];
+    b.globalAlpha = 0.7;
     b.beginPath();
     for (x = 0; x <= w; x += 16) {
       var y = h * 0.78 + Math.sin(x * 0.0025) * h * 0.06 + i * band;
@@ -236,9 +275,8 @@ function renderBridgeBg(b, w, h) {
     b.stroke();
   }
   b.globalAlpha = 1;
-  b.fillStyle = 'rgba(255,255,255,0.85)';
   for (i = 0; i < 12; i++) {
-    cloudShape(b, w * (0.04 + i * 0.085), h * (0.86 + (i % 2) * 0.06), h * 0.04);
+    drawCloud(b, w * (0.04 + i * 0.085), h * (0.86 + (i % 2) * 0.06), h * 0.04, 0.9);
   }
   drawCastle(b, w * 0.95, h * 0.78, h * 0.26);
 }
@@ -313,14 +351,13 @@ function drawSkyLantern(c, cp) {
 
 function drawBridge() {
   var i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawSkyLantern(ctx, checkpoints[i]);
   for (i = 0; i < rings.length; i++) {
     if (!rings[i].collected) drawRing(ctx, rings[i]);
   }
   for (i = 0; i < thunder.length; i++) drawThunderCloud(ctx, thunder[i]);
-  // Ohitettu rengas odottaa edessä: nuoli kertoo sen, kunnes rengas on kerätty
   if (!celebrating) {
     for (i = 0; i < rings.length; i++) {
       if (rings[i].returned && !rings[i].collected) { drawEdgeArrow(ctx, rings[i].ax); break; }
@@ -330,7 +367,7 @@ function drawBridge() {
   drawPrincessFree(ctx, princess.x - camX, princess.y, viewH / 520, princess.facing, princess.walkPhase, true, globalT);
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   drawPickupHud(ctx, RING_COUNT, function (i2) { return rings[i2] && rings[i2].collected; }, drawRainbowGem);
   drawHearts(ctx);
   drawTaskOverlay(ctx);

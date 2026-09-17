@@ -507,43 +507,57 @@ function drawPaperGround(b, x, y, w, h) {
 }
 
 // opts: { paper, sky (rgba-väri taivaan sävyyn), hill1, hill2, sun (bool), clouds (bool) }
-function renderPaperScene(b, w, h, segs, segYFn, opts) {
-  var i, x, y, seg;
+function renderPaperFar(b, w, h, opts) {
+  var i, x, y;
   opts = opts || {};
   b.fillStyle = opts.paper || '#fdf6e3';
   b.fillRect(0, 0, w, h);
   if (opts.sky) { b.fillStyle = opts.sky; b.fillRect(0, 0, w, groundTop); }
+  else {
+    var sky = b.createLinearGradient(0, 0, 0, groundTop);
+    sky.addColorStop(0, '#c8e4ff');
+    sky.addColorStop(1, opts.paper || '#fdf6e3');
+    b.fillStyle = sky;
+    b.fillRect(0, 0, w, groundTop);
+  }
   b.strokeStyle = 'rgba(120,100,160,0.06)';
   b.lineWidth = 1;
   for (y = 0; y < h; y += h * 0.06) { b.beginPath(); b.moveTo(0, y); b.lineTo(w, y); b.stroke(); }
   for (x = 0; x < w; x += h * 0.06) { b.beginPath(); b.moveTo(x, 0); b.lineTo(x, h); b.stroke(); }
-  if (opts.sun !== false) {
-    var sg = b.createRadialGradient(w * 0.08, h * 0.16, h * 0.02, w * 0.08, h * 0.16, h * 0.14);
-    sg.addColorStop(0, 'rgba(255,226,122,0.7)');
-    sg.addColorStop(1, 'rgba(255,226,122,0)');
-    b.fillStyle = sg;
-    b.beginPath(); b.arc(w * 0.08, h * 0.16, h * 0.14, 0, Math.PI * 2); b.fill();
-    b.fillStyle = '#ffe27a';
-    b.beginPath(); b.arc(w * 0.08, h * 0.16, h * 0.06, 0, Math.PI * 2); b.fill();
-  }
+  if (opts.moon) drawBgSun(b, w * 0.14, h * 0.16, h * 0.055, 0.22, '#c8d4ff', '#ffffff', '#d4dcff');
+  else if (opts.sun !== false) drawBgSun(b, w * 0.12, h * 0.16, h * 0.06, 0.22, '#fff4c8', '#fffdf0', '#ffe27a');
   if (opts.clouds !== false) {
-    b.fillStyle = 'rgba(255,255,255,0.9)';
-    for (i = 0; i < 9; i++) cloudShape(b, w * (0.1 + i * 0.105), h * (0.12 + (i % 3) * 0.08), h * 0.028);
+    for (i = 0; i < 9; i++) drawCloud(b, w * (0.18 + i * 0.1), h * (0.12 + (i % 3) * 0.08), h * 0.028, 0.75);
   }
-  b.fillStyle = opts.hill1 || '#dcedc9';
-  for (i = 0; i < 10; i++) {
-    x = w * (i / 9);
-    b.beginPath(); b.arc(x, groundTop + h * 0.03, h * (0.13 + (i % 3) * 0.04), Math.PI, 0); b.fill();
-  }
-  b.fillStyle = opts.hill2 || '#c8e3b0';
-  for (i = 0; i < 12; i++) {
-    x = w * (0.04 + i * 0.085);
-    b.beginPath(); b.arc(x, groundTop + h * 0.03, h * (0.07 + (i % 2) * 0.03), Math.PI, 0); b.fill();
-  }
+  fillHillBand(b, w, h, groundTop + h * 0.04, opts.hill1 || '#dcedc9', function (px) {
+    return groundTop - h * 0.08 - Math.sin(px * 0.002) * h * 0.04;
+  });
+}
+function renderPaperMid(b, w, h, opts) {
+  opts = opts || {};
+  fillHillBand(b, w, h, groundTop + h * 0.05, opts.hill2 || '#c8e3b0', function (px) {
+    return groundTop - h * 0.02 - Math.sin(px * 0.0034 + 1) * h * 0.035;
+  });
+}
+function renderPaperNear(b, w, h, segs, segYFn) {
+  var i, seg;
   b.fillStyle = '#e4d8bd';
   b.fillRect(0, groundTop + h * 0.02, w, h - groundTop);
+  segs = segs || [];
   for (i = 0; i < segs.length; i++) {
     seg = segs[i];
     drawPaperGround(b, seg[0] * w, segYFn ? segYFn(i) : groundTop, (seg[1] - seg[0]) * w, h);
   }
+}
+function paperLayers(opts, nearFn) {
+  return [
+    { speed: 0.22, render: function (b, w, h) { renderPaperFar(b, w, h, opts); } },
+    { speed: 0.55, render: function (b, w, h) { renderPaperMid(b, w, h, opts); } },
+    { speed: 1, render: nearFn }
+  ];
+}
+function renderPaperScene(b, w, h, segs, segYFn, opts) {
+  renderPaperFar(b, w, h, opts);
+  renderPaperMid(b, w, h, opts);
+  renderPaperNear(b, w, h, segs, segYFn);
 }

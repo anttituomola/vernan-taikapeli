@@ -73,6 +73,23 @@ function drawWorldBg() {
   return true;
 }
 
+// Tärinä maailmalle, HUD ja valaistus jäävät paikoilleen. Kutsu endPlayWorld piirron lopuksi.
+function beginPlayWorld() {
+  if (!bgCanvas.width || !viewW || !viewH) return false;
+  ctx.clearRect(0, 0, viewW, viewH);
+  var sh = artShakeOffset();
+  ctx.save();
+  ctx.translate(sh.x, sh.y);
+  drawWorldBg();
+  return true;
+}
+function endPlayWorld() {
+  artPopsDraw(ctx, camX);
+  drawCelebrateLayer();
+  ctx.restore();
+  drawLight(ctx, phaseNow().light);
+}
+
 function blockPrincessAtTasks() {
   var i, lim;
   for (i = 0; i < tasks.length; i++) {

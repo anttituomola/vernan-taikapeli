@@ -234,14 +234,28 @@ function updateMine(dt) {
 }
 
 // ---------- Piirto ----------
+function mineLayers() {
+  return [
+    { speed: 0.22, render: renderMineFar },
+    { speed: 0.55, render: renderMineMid },
+    { speed: 1, render: renderMineNear }
+  ];
+}
 function renderMineBg(b, w, h) {
-  var i, x, y, vw = viewW;
+  renderMineFar(b, w, h);
+  renderMineMid(b, w, h);
+  renderMineNear(b, w, h);
+}
+function renderMineFar(b, w, h) {
   var rock = b.createLinearGradient(0, 0, 0, h);
   rock.addColorStop(0, '#3a2c3e');
   rock.addColorStop(1, '#1e1622');
   b.fillStyle = rock;
   b.fillRect(0, 0, w, h);
-  // Kallion halkeamia ja pieniä kiteitä
+  drawBgSun(b, w * 0.5, h * 0.08, h * 0.05, 0.22, '#ffe9a0', '#fff8d0', '#ffc45a');
+}
+function renderMineMid(b, w, h) {
+  var i, x, y, vw = viewW;
   b.strokeStyle = 'rgba(0,0,0,0.25)';
   b.lineWidth = Math.max(1, h * 0.004);
   for (i = 0; i < 30; i++) {
@@ -254,7 +268,9 @@ function renderMineBg(b, w, h) {
     y = h * 0.02 + ((i * 71) % Math.round(h * 0.12));
     drawCrystal(b, x, y, h * 0.014, CRYSTAL_COLORS[i % CRYSTAL_COLORS.length]);
   }
-  // Kaivoksen tukipuut yläreunassa
+}
+function renderMineNear(b, w, h) {
+  var i, x, vw = viewW;
   b.fillStyle = '#5a3a1e';
   b.fillRect(0, h * 0.145, vw, h * 0.02);
   for (i = 0; i < 9; i++) {
@@ -353,7 +369,7 @@ function drawMinePrincess(c) {
 
 function drawMine() {
   var r, k, t, pos, s = mine.cell, shake, i;
-  if (!drawWorldBg()) return;
+  if (!beginPlayWorld()) return;
   for (r = 0; r < mine.rows; r++) {
     for (k = 0; k < mine.cols; k++) {
       t = mine.grid[r][k];
@@ -395,7 +411,7 @@ function drawMine() {
     }
   }
   drawParticlesLayer(ctx);
-  drawCelebrateLayer();
+  endPlayWorld();
   i = 0;
   drawPickupHud(ctx, MINE_GEMS, function (i2) { return i2 < mine.gems; },
     function (c, x, y, s2) { drawGem(c, x, y, s2 * 0.9, GEM_COLORS[(i++) % GEM_COLORS.length]); });
