@@ -2,8 +2,15 @@
 
 // Koko, tausta ja maisemapiirto
 // ---------- Koko ja tausta ----------
+// Tausta esirenderöidään kerroksiksi (parallaksi): kerros, jonka speed < 1, on
+// kapeampi ja liikkuu kameran mukana hitaammin -> syvyysvaikutelma. bgCanvas on
+// aina pääkerros (speed 1) vanhojen kutsujen yhteensopivuuden vuoksi.
 var bgCanvas = document.createElement('canvas');
 var bgScale = 1;
+var bgLayers = [];          // [{ canvas, scale, speed, w }] takimmaisesta etummaiseen
+var bgExtraCanvases = [];
+// Aurinko/kuu taustakerroksessa valosäteitä varten: { x (kerroksen koordinaatti), y, r, speed }
+var bgSun = null;
 
 function resize() {
   viewW = window.innerWidth;
@@ -111,90 +118,177 @@ function renderBackground() {
   // Piirretään koko maailman tausta kerran valmiiksi -> kevyt piirtää joka ruudulla.
   // Vanhojen laitteiden canvas-raja ~4096 px: iso maailma piirretään
   // pienennettynä ja skaalataan ruudulle piirrettäessä.
-  bgScale = Math.min(1, 4000 / worldW);
-  bgCanvas.width = Math.round(worldW * bgScale);
-  bgCanvas.height = Math.round(viewH * bgScale);
-  var b = bgCanvas.getContext('2d');
-  b.setTransform(bgScale, 0, 0, bgScale, 0, 0);
-  phaseNow().renderBg(b, worldW, viewH);
+  var p = phaseNow();
+  var defs = p.renderBgLayers ? p.renderBgLayers() : null;
+  if (!defs) defs = [{ speed: 1, render: function (b, w, h) { p.renderBg(b, w, h); } }];
+  bgLayers = [];
+  bgSun = null;
+  var extra = 0, i, def, lw, cv, sc, b;
+  for (i = 0; i < defs.length; i++) {
+    def = defs[i];
+    // Kerroksen leveys: ruutu + maailman ylimenevä osa kerroksen nopeudella
+    lw = def.speed >= 1 ? worldW : viewW + (worldW - viewW) * def.speed;
+    if (def.speed >= 1) {
+      cv = bgCanvas;
+    } else {
+      if (!bgExtraCanvases[extra]) bgExtraCanvases[extra] = document.createElement('canvas');
+      cv = bgExtraCanvases[extra];
+      extra++;
+    }
+    sc = Math.min(1, 4000 / lw);
+    cv.width = Math.round(lw * sc);
+    cv.height = Math.round(viewH * sc);
+    b = cv.getContext('2d');
+    b.setTransform(sc, 0, 0, sc, 0, 0);
+    def.render(b, lw, viewH);
+    if (def.speed >= 1) bgScale = sc;
+    bgLayers.push({ canvas: cv, scale: sc, speed: def.speed, w: lw });
+  }
 }
 
+// Metsä kolmessa kerroksessa: kaukainen (taivas, aurinko, kukkulat), keski
+// (utuinen puurivi) ja lähin (nurmi, polku, puut, kukat, pensaat, linna).
+var FOREST_SKY_TOP = '#7cc9ff';
+var FOREST_HAZE = '#dff0ff';
+function forestLayers() {
+  return [
+    { speed: 0.22, render: renderForestFar },
+    { speed: 0.55, render: renderForestMid },
+    { speed: 1, render: renderForestNear }
+  ];
+}
 function renderForestBg(b, w, h) {
+  renderForestFar(b, w, h);
+  renderForestMid(b, w, h);
+  renderForestNear(b, w, h);
+}
+function renderForestFar(b, w, h) {
   var horizon = h * 0.68;
   var i, x;
 
   // Taivas
   var sky = b.createLinearGradient(0, 0, 0, horizon);
-  sky.addColorStop(0, '#8ed3ff');
+  sky.addColorStop(0, FOREST_SKY_TOP);
   sky.addColorStop(0.6, '#c9ecff');
-  sky.addColorStop(1, '#ffeef8');
+  sky.addColorStop(1, '#fff0f6');
   b.fillStyle = sky;
-  b.fillRect(0, 0, w, horizon + 2);
+  b.fillRect(0, 0, w, h);
 
   // Aurinko
-  var sunX = w * 0.12, sunY = h * 0.16, sunR = h * 0.07;
-  var sg = b.createRadialGradient(sunX, sunY, sunR * 0.2, sunX, sunY, sunR * 2.2);
-  sg.addColorStop(0, 'rgba(255,236,150,1)');
-  sg.addColorStop(0.4, 'rgba(255,220,110,0.85)');
-  sg.addColorStop(1, 'rgba(255,220,110,0)');
+  var sunX = w * 0.18, sunY = h * 0.17, sunR = h * 0.075;
+  bgSun = { x: sunX, y: sunY, r: sunR, speed: 0.22 };
+  artGlow(b, sunX, sunY, sunR * 3.2, '#ffdc78', 0.55);
+  var sg = b.createRadialGradient(sunX - sunR * 0.3, sunY - sunR * 0.3, sunR * 0.1, sunX, sunY, sunR);
+  sg.addColorStop(0, '#fff8c8');
+  sg.addColorStop(1, '#ffd45a');
   b.fillStyle = sg;
-  b.fillRect(sunX - sunR * 2.2, sunY - sunR * 2.2, sunR * 4.4, sunR * 4.4);
-  b.fillStyle = '#ffe27a';
   b.beginPath(); b.arc(sunX, sunY, sunR, 0, Math.PI * 2); b.fill();
 
-  // Pilvet
-  b.fillStyle = 'rgba(255,255,255,0.92)';
-  for (i = 0; i < 7; i++) {
-    x = w * (0.05 + i * 0.14);
-    var cy = h * (0.10 + (i % 3) * 0.07);
-    var cs = h * 0.030 + (i % 2) * h * 0.012;
-    cloudShape(b, x, cy, cs);
+  // Kaukaiset pilvet (haaleat)
+  for (i = 0; i < 9; i++) {
+    x = w * (0.04 + i * 0.115);
+    var cy = h * (0.09 + (i % 3) * 0.075);
+    var cs = h * 0.026 + (i % 2) * h * 0.012;
+    drawCloud(b, x, cy, cs, 0.8);
   }
 
-  // Kaukaiset kukkulat
-  b.fillStyle = '#bfe3b0';
+  // Kaukaiset kukkulat kahdessa rivissä, sävytetty kohti taivasta (ilmaperspektiivi)
+  b.fillStyle = artMix('#9fd489', FOREST_HAZE, 0.55);
   b.beginPath();
   b.moveTo(0, horizon);
-  for (x = 0; x <= w; x += 8) {
-    b.lineTo(x, horizon - Math.sin(x * 0.004) * h * 0.05 - h * 0.03);
+  for (x = 0; x <= w; x += 8) b.lineTo(x, horizon - h * 0.07 - Math.sin(x * 0.0022 + 1.2) * h * 0.06 - Math.sin(x * 0.0071) * h * 0.015);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+  b.fillStyle = artMix('#8fcc7a', FOREST_HAZE, 0.32);
+  b.beginPath();
+  b.moveTo(0, horizon);
+  for (x = 0; x <= w; x += 8) b.lineTo(x, horizon - h * 0.025 - Math.sin(x * 0.0035) * h * 0.045);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
+}
+function renderForestMid(b, w, h) {
+  var horizon = h * 0.68;
+  var i, x;
+  // Utuinen puurivi horisontissa
+  var haze = 0.28;
+  for (i = 0; i < 26; i++) {
+    x = w * (0.01 + i * 0.039) + (i % 3) * h * 0.02;
+    var ts = h * (0.075 + (i % 4) * 0.012);
+    drawTree(b, x, horizon + h * 0.012, ts, haze);
   }
-  b.lineTo(w, horizon); b.closePath(); b.fill();
+  // Nurmen kaistale puiden juurelle, jotta rivi ei leiju
+  b.fillStyle = artMix('#8fd479', FOREST_HAZE, 0.2);
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.012);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.012 - Math.sin(x * 0.004) * h * 0.012);
+  b.lineTo(w, horizon + h * 0.03); b.lineTo(0, horizon + h * 0.03); b.closePath(); b.fill();
+}
+function renderForestNear(b, w, h) {
+  var horizon = h * 0.68;
+  var i, x;
+
+  // Nurmi (läpinäkyvä horisontin yläpuolella -> kaukaiset kerrokset näkyvät)
+  var grass = b.createLinearGradient(0, horizon, 0, h);
+  grass.addColorStop(0, '#a4e084');
+  grass.addColorStop(0.5, '#7fcc63');
+  grass.addColorStop(1, '#4fae49');
+  b.fillStyle = grass;
+  b.beginPath();
+  b.moveTo(0, horizon + h * 0.02);
+  for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.02 - Math.sin(x * 0.003 + 0.5) * h * 0.012);
+  b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
 
   // Linna maailman lopussa
-  drawCastle(b, w * 0.955, horizon, h * 0.30);
+  drawCastle(b, w * 0.955, horizon + h * 0.02, h * 0.30);
 
-  // Nurmi
-  var grass = b.createLinearGradient(0, horizon, 0, h);
-  grass.addColorStop(0, '#9fdc7f');
-  grass.addColorStop(1, '#5cbb52');
-  b.fillStyle = grass;
-  b.fillRect(0, horizon, w, h - horizon);
-
-  // Polku
-  b.fillStyle = '#f0d9a8';
+  // Polku reunaviivalla
   b.beginPath();
   b.moveTo(0, groundTop);
-  for (x = 0; x <= w; x += 12) {
-    b.lineTo(x, groundTop + Math.sin(x * 0.01) * 6);
-  }
+  for (x = 0; x <= w; x += 12) b.lineTo(x, groundTop + Math.sin(x * 0.01) * 6);
   b.lineTo(w, groundBottom + 8);
-  for (x = w; x >= 0; x -= 12) {
-    b.lineTo(x, groundBottom + 8 + Math.sin(x * 0.013) * 6);
+  for (x = w; x >= 0; x -= 12) b.lineTo(x, groundBottom + 8 + Math.sin(x * 0.013) * 6);
+  b.closePath();
+  var pg = b.createLinearGradient(0, groundTop, 0, groundBottom);
+  pg.addColorStop(0, '#f6e4b8');
+  pg.addColorStop(1, '#e2c28c');
+  b.fillStyle = pg;
+  b.fill();
+  b.strokeStyle = 'rgba(120,90,40,0.35)';
+  b.lineWidth = Math.max(1.5, h * 0.004);
+  b.stroke();
+  // Polun kiviä
+  b.fillStyle = 'rgba(160,130,80,0.25)';
+  for (i = 0; i < 40; i++) {
+    x = (i * 331.7) % w;
+    var py = groundTop + 10 + ((i * 97) % Math.max(1, (groundBottom - groundTop - 16)));
+    b.beginPath();
+    if (b.ellipse) b.ellipse(x, py, h * 0.008 + (i % 3) * h * 0.003, h * 0.004 + (i % 2) * h * 0.002, 0, 0, Math.PI * 2);
+    else b.arc(x, py, h * 0.006, 0, Math.PI * 2);
+    b.fill();
   }
-  b.closePath(); b.fill();
 
   // Puut polun taakse
   for (i = 0; i < 12; i++) {
     x = w * (0.04 + i * 0.085) + (i % 3) * 18;
-    drawTree(b, x, horizon + h * 0.02, h * (0.10 + (i % 3) * 0.02));
+    drawTree(b, x, horizon + h * 0.03, h * (0.11 + (i % 3) * 0.02), 0);
   }
 
   // Kukkia
   var flowerColors = ['#ff7bac', '#ffd24f', '#b78bff', '#ff9d5c', '#7fd4ff'];
   for (i = 0; i < 60; i++) {
     x = (i * 137.5) % w;
-    var fy2 = horizon + h * 0.03 + ((i * 53) % Math.max(1, (groundTop - horizon - h * 0.05)));
-    drawFlower(b, x, fy2, h * 0.008, flowerColors[i % flowerColors.length]);
+    var fy2 = horizon + h * 0.04 + ((i * 53) % Math.max(1, (groundTop - horizon - h * 0.06)));
+    drawFlower(b, x, fy2, h * 0.009, flowerColors[i % flowerColors.length]);
+  }
+  // Ruohotupsuja
+  b.strokeStyle = 'rgba(60,140,60,0.5)';
+  b.lineWidth = Math.max(1, h * 0.003);
+  b.lineCap = 'round';
+  for (i = 0; i < 90; i++) {
+    x = (i * 211.3) % w;
+    var gy = horizon + h * 0.03 + ((i * 71) % Math.max(1, (groundTop - horizon - h * 0.05)));
+    b.beginPath();
+    b.moveTo(x, gy); b.lineTo(x - h * 0.006, gy - h * 0.014);
+    b.moveTo(x, gy); b.lineTo(x + h * 0.004, gy - h * 0.016);
+    b.stroke();
   }
 
   // Pensaat (pupujen piilot)
@@ -286,82 +380,107 @@ function cloudShape(b, x, y, s) {
   b.arc(x + s * 0.5, y - s * 0.6, s * 0.8, 0, Math.PI * 2);
   b.fill();
 }
+// Pilvi kevyellä reunaviivalla
+function drawCloud(b, x, y, s, alpha) {
+  b.globalAlpha = alpha === undefined ? 1 : alpha;
+  b.fillStyle = '#b9dcf5';
+  cloudShape(b, x, y + s * 0.12, s * 1.06);
+  var g = b.createLinearGradient(0, y - s * 1.4, 0, y + s * 1.1);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(1, '#e6f2fc');
+  b.fillStyle = g;
+  cloudShape(b, x, y, s);
+  b.globalAlpha = 1;
+}
 function drawCastle(b, x, baseY, size) {
   var tw = size * 0.22;
-  b.fillStyle = '#e8d5f2';
-  b.fillRect(x - size * 0.4, baseY - size * 0.55, size * 0.8, size * 0.55);
+  var wall = '#e8d5f2', tower = '#dcc3ee', roof = '#c286e0', lineC = '#9a6fc4';
+  var lw = Math.max(1.2, size * 0.012);
+  var i;
+  // Muuri
+  b.beginPath(); b.rect(x - size * 0.4, baseY - size * 0.55, size * 0.8, size * 0.55);
+  artFillPath(b, wall, baseY - size * 0.55, baseY, size * 0.2, { lineColor: lineC, line: lw });
+  // Muurin sakarat
+  b.fillStyle = wall;
+  for (i = -3; i <= 3; i++) b.fillRect(x + i * size * 0.115 - size * 0.035, baseY - size * 0.62, size * 0.07, size * 0.08);
   var towers = [-0.4, 0, 0.4];
-  for (var i = 0; i < towers.length; i++) {
+  for (i = 0; i < towers.length; i++) {
     var tx = x + towers[i] * size;
     var th = size * (i === 1 ? 0.95 : 0.7);
-    b.fillStyle = '#dcc3ee';
-    b.fillRect(tx - tw / 2, baseY - th, tw, th);
-    b.fillStyle = '#c286e0';
+    b.beginPath(); b.rect(tx - tw / 2, baseY - th, tw, th);
+    artFillPath(b, tower, baseY - th, baseY, tw / 2, { lineColor: lineC, line: lw });
+    // Katto
     b.beginPath();
-    b.moveTo(tx - tw * 0.75, baseY - th);
-    b.lineTo(tx + tw * 0.75, baseY - th);
-    b.lineTo(tx, baseY - th - size * 0.28);
-    b.closePath(); b.fill();
-    b.fillStyle = '#8a5cb8';
-    b.fillRect(tx - tw * 0.12, baseY - th + size * 0.12, tw * 0.24, size * 0.14);
-  }
-  b.fillStyle = '#a76fd0';
-  b.beginPath();
-  b.moveTo(x - size * 0.1, baseY);
-  b.lineTo(x + size * 0.1, baseY);
-  b.lineTo(x + size * 0.1, baseY - size * 0.3);
-  b.arc(x, baseY - size * 0.3, size * 0.1, 0, Math.PI, true);
-  b.closePath(); b.fill();
-  // Lippu
-  b.strokeStyle = '#8a5cb8'; b.lineWidth = 2;
-  b.beginPath();
-  b.moveTo(x, baseY - size * 0.95 - size * 0.28);
-  b.lineTo(x, baseY - size * 1.15 - size * 0.28);
-  b.stroke();
-  b.fillStyle = '#ff7bac';
-  b.beginPath();
-  b.moveTo(x, baseY - size * 1.15 - size * 0.28);
-  b.lineTo(x + size * 0.18, baseY - size * 1.09 - size * 0.28);
-  b.lineTo(x, baseY - size * 1.03 - size * 0.28);
-  b.closePath(); b.fill();
-}
-function drawTree(b, x, baseY, s) {
-  b.fillStyle = '#9c6b3f';
-  b.fillRect(x - s * 0.08, baseY - s * 0.5, s * 0.16, s * 0.55);
-  var lg = b.createRadialGradient(x, baseY - s * 0.9, s * 0.1, x, baseY - s * 0.9, s * 0.75);
-  lg.addColorStop(0, '#8fd977');
-  lg.addColorStop(1, '#4ea84f');
-  b.fillStyle = lg;
-  b.beginPath();
-  b.arc(x, baseY - s * 0.9, s * 0.55, 0, Math.PI * 2);
-  b.arc(x - s * 0.35, baseY - s * 0.65, s * 0.4, 0, Math.PI * 2);
-  b.arc(x + s * 0.35, baseY - s * 0.65, s * 0.4, 0, Math.PI * 2);
-  b.fill();
-}
-function drawFlower(b, x, y, s, color) {
-  b.fillStyle = color;
-  for (var i = 0; i < 5; i++) {
-    var a = (i / 5) * Math.PI * 2;
-    b.beginPath();
-    b.arc(x + Math.cos(a) * s, y + Math.sin(a) * s, s * 0.8, 0, Math.PI * 2);
+    b.moveTo(tx - tw * 0.78, baseY - th);
+    b.lineTo(tx + tw * 0.78, baseY - th);
+    b.lineTo(tx, baseY - th - size * 0.3);
+    b.closePath();
+    artFillPath(b, roof, baseY - th - size * 0.3, baseY - th, tw, { lineColor: lineC, line: lw });
+    // Ikkuna
+    b.fillStyle = '#7a4fb0';
+    roundRect(b, tx - tw * 0.13, baseY - th + size * 0.12, tw * 0.26, size * 0.15, tw * 0.13);
+    b.fill();
+    b.fillStyle = '#ffe9a8';
+    roundRect(b, tx - tw * 0.08, baseY - th + size * 0.14, tw * 0.16, size * 0.09, tw * 0.08);
     b.fill();
   }
+  // Portti
+  b.beginPath();
+  b.moveTo(x - size * 0.1, baseY);
+  b.lineTo(x - size * 0.1, baseY - size * 0.3);
+  b.arc(x, baseY - size * 0.3, size * 0.1, Math.PI, 0);
+  b.lineTo(x + size * 0.1, baseY);
+  b.closePath();
+  artFillPath(b, '#a76fd0', baseY - size * 0.4, baseY, size * 0.1, { lineColor: lineC, line: lw });
+  // Lippu
+  b.strokeStyle = lineC; b.lineWidth = Math.max(1.5, size * 0.015);
+  b.beginPath();
+  b.moveTo(x, baseY - size * 0.95 - size * 0.30);
+  b.lineTo(x, baseY - size * 1.17 - size * 0.30);
+  b.stroke();
+  b.beginPath();
+  b.moveTo(x, baseY - size * 1.17 - size * 0.30);
+  b.lineTo(x + size * 0.19, baseY - size * 1.1 - size * 0.30);
+  b.lineTo(x, baseY - size * 1.03 - size * 0.30);
+  b.closePath();
+  artFillPath(b, '#ff7bac', baseY - size * 1.47, baseY - size * 1.33, size * 0.08, { line: Math.max(1, size * 0.01) });
+}
+// Puu: runko ja kolme lehvästöpalloa. haze 0..1 sävyttää kohti taivasta (kaukainen puu)
+function drawTree(b, x, baseY, s, haze) {
+  haze = haze || 0;
+  var trunk = artMix('#9c6b3f', FOREST_HAZE, haze);
+  var leaf = artMix('#6cc45c', FOREST_HAZE, haze);
+  var lineOpts = haze > 0 ? { line: false } : {};
+  b.beginPath(); b.rect(x - s * 0.08, baseY - s * 0.55, s * 0.16, s * 0.58);
+  artFillPath(b, trunk, baseY - s * 0.55, baseY, s * 0.08, lineOpts);
+  artCircle(b, x - s * 0.36, baseY - s * 0.66, s * 0.4, leaf, lineOpts);
+  artCircle(b, x + s * 0.36, baseY - s * 0.66, s * 0.4, leaf, lineOpts);
+  artCircle(b, x, baseY - s * 0.92, s * 0.56, leaf, haze > 0 ? { line: false } : { hi: 0.3 });
+}
+function drawFlower(b, x, y, s, color) {
+  var i;
+  b.beginPath();
+  for (i = 0; i < 5; i++) {
+    var a = (i / 5) * Math.PI * 2;
+    b.moveTo(x + Math.cos(a) * s + s * 0.8, y + Math.sin(a) * s);
+    b.arc(x + Math.cos(a) * s, y + Math.sin(a) * s, s * 0.8, 0, Math.PI * 2);
+  }
+  b.fillStyle = color;
+  b.fill();
+  b.strokeStyle = artShade(color, -0.3);
+  b.lineWidth = Math.max(0.8, s * 0.15);
+  b.stroke();
   b.fillStyle = '#fff3b0';
   b.beginPath(); b.arc(x, y, s * 0.7, 0, Math.PI * 2); b.fill();
 }
 function drawBush(b, x, baseY, s) {
-  var g = b.createRadialGradient(x, baseY - s * 0.6, s * 0.2, x, baseY - s * 0.6, s * 1.4);
-  g.addColorStop(0, '#7ccb62');
-  g.addColorStop(1, '#3f9a44');
-  b.fillStyle = g;
-  b.beginPath();
-  b.arc(x, baseY - s * 0.5, s, 0, Math.PI * 2);
-  b.arc(x - s * 0.9, baseY - s * 0.3, s * 0.7, 0, Math.PI * 2);
-  b.arc(x + s * 0.9, baseY - s * 0.3, s * 0.7, 0, Math.PI * 2);
-  b.fill();
-  b.fillStyle = '#ff7bac';
-  b.beginPath(); b.arc(x - s * 0.5, baseY - s * 0.9, s * 0.12, 0, Math.PI * 2); b.fill();
-  b.beginPath(); b.arc(x + s * 0.6, baseY - s * 0.6, s * 0.12, 0, Math.PI * 2); b.fill();
+  var leaf = '#5fbf55';
+  artShadow(b, x, baseY + s * 0.1, s * 1.7, s * 0.35, 0.14);
+  artCircle(b, x - s * 0.9, baseY - s * 0.3, s * 0.7, leaf, {});
+  artCircle(b, x + s * 0.9, baseY - s * 0.3, s * 0.7, leaf, {});
+  artCircle(b, x, baseY - s * 0.5, s, leaf, { hi: 0.3 });
+  artCircle(b, x - s * 0.5, baseY - s * 0.9, s * 0.13, '#ff7bac', {});
+  artCircle(b, x + s * 0.6, baseY - s * 0.6, s * 0.13, '#ff7bac', {});
 }
 
 function renderIceBg(b, w, h) {

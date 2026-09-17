@@ -8,6 +8,7 @@
 //   scriptManifest index.html:n latauslista (script-kentistä)
 // Kentän koukut: init() alustus, update(dt) logiikka, draw() piirto,
 // tap(px, py) kosketus, resize(ratio) skaalaus, renderBg(b, w, h) tausta,
+// renderBgLayers() valinnainen parallaksi: [{ speed, render(b, w, h) }],
 // respawn() paluu tarkistuspisteelle (vain usesHearts-kentät).
 // Kutsut kääritään funktioihin, koska osa kohteista määritellään myöhemmin
 // ladattavissa tiedostoissa.
@@ -40,7 +41,8 @@ var WORLDS = [
         draw: function () { drawForest(); },
         tap: function (x, y) { handleTap(x, y); },
         resize: function (ratio) { resizeForest(ratio); },
-        renderBg: function (b, w, h) { renderForestBg(b, w, h); }
+        renderBg: function (b, w, h) { renderForestBg(b, w, h); },
+        renderBgLayers: function () { return forestLayers(); }
       },
       {
         kind: 'garden', room: '2', name: 'Puutarha', color: '#8a5cff', script: 'play-garden',
@@ -709,6 +711,8 @@ var ISLANDS = [];
       };
       if (lv.tap) p.tap = lv.tap;
       if (lv.respawn) p.respawn = lv.respawn;
+      if (lv.renderBgLayers) p.renderBgLayers = lv.renderBgLayers;
+      if (lv.light) p.light = lv.light;
       if (lv.jumpKind) p.jumpKind = lv.jumpKind;
       if (lv.unicornStyle) p.unicornStyle = lv.unicornStyle;
       if (lv.celebrateMs) p.celebrateMs = lv.celebrateMs;

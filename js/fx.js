@@ -51,7 +51,12 @@ function hudX() {
 function drawWorldBg() {
   if (!bgCanvas.width || !viewW || !viewH) return false;
   ctx.clearRect(0, 0, viewW, viewH);
-  ctx.drawImage(bgCanvas, 0, 0, bgCanvas.width, bgCanvas.height, -camX, 0, worldW, viewH);
+  // Kerrokset takimmaisesta etummaiseen; hitaampi kerros siirtyy vähemmän kameran mukana
+  var i, L;
+  for (i = 0; i < bgLayers.length; i++) {
+    L = bgLayers[i];
+    ctx.drawImage(L.canvas, 0, 0, L.canvas.width, L.canvas.height, -camX * L.speed, 0, L.w, viewH);
+  }
   return true;
 }
 

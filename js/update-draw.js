@@ -296,18 +296,13 @@ function draw() {
 function drawForest() {
   var i;
   // Piilossa oleva/0-kokoinen ikkuna: taustaa ei ole voitu piirtää
-  if (!bgCanvas.width || !viewW || !viewH) return;
-  ctx.clearRect(0, 0, viewW, viewH);
-
-  // Tausta (piirretty pienennettynä, skaalataan ruudulle)
-  ctx.drawImage(bgCanvas, 0, 0, bgCanvas.width, bgCanvas.height, -camX, 0, worldW, viewH);
+  if (!drawWorldBg()) return;
 
   // Liikkuvat pilvet
-  ctx.fillStyle = 'rgba(255,255,255,0.8)';
   var c1x = ((globalT * 12) % (viewW + 300)) - 150;
   var c2x = ((globalT * 8 + viewW * 0.6) % (viewW + 300)) - 150;
-  cloudShape(ctx, c1x, viewH * 0.08, viewH * 0.025);
-  cloudShape(ctx, c2x, viewH * 0.20, viewH * 0.020);
+  drawCloud(ctx, c1x, viewH * 0.08, viewH * 0.025, 0.9);
+  drawCloud(ctx, c2x, viewH * 0.20, viewH * 0.020, 0.9);
 
   // Kosketusrengas
   if (tapRing) {
@@ -407,17 +402,11 @@ function drawForest() {
 
 function drawBushFront(c, x, baseY, s) {
   if (x < -s * 2.5 || x > viewW + s * 2.5) return;
-  var g = c.createRadialGradient(x, baseY - s * 0.3, s * 0.2, x, baseY - s * 0.3, s * 1.3);
-  g.addColorStop(0, '#6cbe55');
-  g.addColorStop(1, '#358a3c');
-  c.fillStyle = g;
-  c.beginPath();
-  c.arc(x, baseY - s * 0.35, s * 0.85, 0, Math.PI * 2);
-  c.arc(x - s * 0.85, baseY - s * 0.2, s * 0.6, 0, Math.PI * 2);
-  c.arc(x + s * 0.85, baseY - s * 0.2, s * 0.6, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = '#ff7bac';
-  c.beginPath(); c.arc(x + s * 0.3, baseY - s * 0.75, s * 0.11, 0, Math.PI * 2); c.fill();
+  var leaf = '#54b54e';
+  artCircle(c, x - s * 0.85, baseY - s * 0.2, s * 0.6, leaf, {});
+  artCircle(c, x + s * 0.85, baseY - s * 0.2, s * 0.6, leaf, {});
+  artCircle(c, x, baseY - s * 0.35, s * 0.85, leaf, { hi: 0.25 });
+  artCircle(c, x + s * 0.3, baseY - s * 0.75, s * 0.11, '#ff7bac', {});
 }
 
 function drawGate(c, gate) {
