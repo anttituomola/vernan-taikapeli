@@ -256,6 +256,65 @@ function drawForeground(c) {
   c.drawImage(fgCanvas, 0, 0, fgCanvas.width, fgCanvas.height, -off + viewW, y, viewW, h);
 }
 
+// ---------- Valaistus ----------
+// Kentän light-määritys: { rays: true (valosäteet bgSun:sta), tint: [ylä, ala]
+// (rgba-liukuväri koko ruudulle), vignette: 0..1 (reunojen tummennus) }.
+// Piirretään maailman päälle, HUD:n alle. Vinjetti on kerran piirretty pieni
+// kuva, joka skaalataan ruudulle -> pehmeä ja halpa.
+var vignetteCanvas = null;
+function vignetteImage() {
+  if (vignetteCanvas) return vignetteCanvas;
+  var cv = document.createElement('canvas');
+  cv.width = 160; cv.height = 100;
+  var b = cv.getContext('2d');
+  var g = b.createRadialGradient(80, 50, 30, 80, 50, 96);
+  g.addColorStop(0, 'rgba(40,20,70,0)');
+  g.addColorStop(0.6, 'rgba(40,20,70,0.10)');
+  g.addColorStop(1, 'rgba(40,20,70,0.8)');
+  b.fillStyle = g;
+  b.fillRect(0, 0, 160, 100);
+  vignetteCanvas = cv;
+  return cv;
+}
+function drawLight(c, light) {
+  if (!light || mode !== 'play' || !viewW || !viewH) return;
+  var i;
+  if (light.rays && bgSun) {
+    var sx = bgSun.x - camX * bgSun.speed, sy = bgSun.y;
+    if (sx > -viewW * 0.6 && sx < viewW * 1.6) {
+      var len = viewH * 1.35;
+      var g = c.createRadialGradient(sx, sy, bgSun.r, sx, sy, len);
+      g.addColorStop(0, 'rgba(255,242,200,' + (0.18 * (light.raysAlpha || 1)) + ')');
+      g.addColorStop(0.5, 'rgba(255,242,200,' + (0.07 * (light.raysAlpha || 1)) + ')');
+      g.addColorStop(1, 'rgba(255,242,200,0)');
+      c.fillStyle = g;
+      var n = 6;
+      for (i = 0; i < n; i++) {
+        var a = Math.PI * 0.2 + i * (Math.PI * 0.6 / (n - 1)) + Math.sin(globalT * 0.22 + i) * 0.035;
+        var wdt = 0.05 + Math.sin(globalT * 0.35 + i * 1.7) * 0.02;
+        c.beginPath();
+        c.moveTo(sx, sy);
+        c.lineTo(sx + Math.cos(a - wdt) * len, sy + Math.sin(a - wdt) * len);
+        c.lineTo(sx + Math.cos(a + wdt) * len, sy + Math.sin(a + wdt) * len);
+        c.closePath();
+        c.fill();
+      }
+    }
+  }
+  if (light.tint) {
+    var tg = c.createLinearGradient(0, 0, 0, viewH);
+    tg.addColorStop(0, light.tint[0]);
+    tg.addColorStop(1, light.tint[1]);
+    c.fillStyle = tg;
+    c.fillRect(0, 0, viewW, viewH);
+  }
+  if (light.vignette) {
+    c.globalAlpha = light.vignette;
+    c.drawImage(vignetteImage(), 0, 0, viewW, viewH);
+    c.globalAlpha = 1;
+  }
+}
+
 // ---------- Alkukortti ----------
 function startIntro(kind) {
   introT = 1.4;

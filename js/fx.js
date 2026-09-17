@@ -16,6 +16,19 @@ function spawnSparkles(x, y, n, color) {
     });
   }
 }
+// Pölypilvi kavioiden alta: pyöreitä, hitaita, haaleita
+function spawnDust(x, y, n, dirX) {
+  for (var i = 0; i < n; i++) {
+    if (particles.length > 120) break;
+    particles.push({
+      x: x + (Math.random() - 0.5) * 16, y: y + (Math.random() - 0.5) * 4,
+      vx: (Math.random() - 0.5) * 40 - (dirX || 0) * 25, vy: -12 - Math.random() * 22,
+      life: 0.45 + Math.random() * 0.3, age: 0,
+      size: 4 + Math.random() * 5,
+      color: 'rgba(240,225,190,0.7)', round: true, noGravity: true
+    });
+  }
+}
 function spawnConfetti() {
   var colors = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff', '#ff9ec6'];
   for (var i = 0; i < 80; i++) {
@@ -80,7 +93,7 @@ function updateParticles(dt) {
     if (particles[i].age >= particles[i].life) { particles.splice(i, 1); continue; }
     particles[i].x += particles[i].vx * dt;
     particles[i].y += particles[i].vy * dt;
-    particles[i].vy += 60 * dt;
+    if (!particles[i].noGravity) particles[i].vy += 60 * dt;
   }
 }
 

@@ -176,15 +176,21 @@ function spellTapOrb(k) {
 function foundBunny(bn) {
   bn.state = 'found';
   bn.y = groundTop + 10;
+  bn.popT = 0.5;
   soundBunny();
   spawnSparkles(bn.bushX, bn.y - viewH * 0.08, 14, '#ff9ec6');
+  artPop(bn.bushX, bn.y - viewH * 0.07, viewH * 0.06, '#ff9ec6', 'burst');
   checkComplete();
 }
 
 function collectStar(st) {
   st.collected = true;
+  st.flying = true;
   soundStar(countStars());
-  spawnSparkles(st.px, st.py, 16, '#ffe27a');
+  spawnSparkles(st.px, st.py, 12, '#ffe27a');
+  artPop(st.px, st.py, viewH * 0.05, '#ffe27a', 'ring');
+  // Tähti lentää HUD-paikkaansa ruutukoordinaateissa
+  flyStars.push({ st: st, x: st.px - camX, y: st.py, t: 0, dur: 0.55 });
   checkComplete();
 }
 
@@ -192,6 +198,9 @@ function collectStar(st) {
 function hitUnicorn() {
   if (invulnT > 0 || celebrating) return;
   invulnT = 2.5;
+  unicorn.squashT = 0.4;
+  artShakeStart(viewH * 0.012, 0.35);
+  artPop(unicorn.x, unicorn.y - viewH * 0.10, viewH * 0.09, '#ffffff', 'burst');
   playNote(330, 0, 0.18, 'sawtooth', 0.3);
   playNote(220, 0.14, 0.3, 'sawtooth', 0.3);
   spawnSparkles(unicorn.x, unicorn.y - viewH * 0.10, 14, '#8fc7ff');
@@ -201,6 +210,7 @@ function hitUnicorn() {
     var st = stars[i];
     if (!st.collected) continue;
     st.collected = false;
+    st.flying = false;
     lost++;
     var dir2 = Math.random() < 0.5 ? -1 : 1;
     var ax2 = unicorn.x + dir2 * (0.05 + Math.random() * 0.08) * worldW;

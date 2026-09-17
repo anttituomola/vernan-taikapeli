@@ -113,6 +113,9 @@ var bunnies = [];  // {bushX, x,y, state:'hidden'|'found', hopT, earT}
 var particles = [];
 var confetti = [];
 var tapRing = null; // {x,y,t}
+// Kerätty tähti lentää HUD-paikkaansa: { st, x, y (ruutu), t, dur }
+var flyStars = [];
+var hudBump = [];   // HUD-tähden pomppu saapumisen jälkeen (indeksi = tähden indeksi)
 
 var unicorn = {
   x: 0, y: 0, tx: 0, ty: 0,

@@ -7,8 +7,28 @@ function update(dt) {
   if (hurtFlash > 0) hurtFlash -= dt;
   updateHearts(dt);
   updateAmbient(dt);
+  artShakeUpdate(dt);
+  artPopsUpdate(dt);
+  updateFlyStars(dt);
   if (introT > 0) introT -= dt;
   phaseNow().update(dt);
+}
+
+// Kerätyt tähdet lentävät HUD-paikkaansa; saapuminen pomppauttaa paikkaa
+function updateFlyStars(dt) {
+  var i, f, idx;
+  for (i = flyStars.length - 1; i >= 0; i--) {
+    f = flyStars[i];
+    if (!f.st.collected) { f.st.flying = false; flyStars.splice(i, 1); continue; }
+    f.t += dt;
+    if (f.t >= f.dur) {
+      f.st.flying = false;
+      idx = stars.indexOf(f.st);
+      if (idx >= 0) hudBump[idx] = 0.4;
+      flyStars.splice(i, 1);
+    }
+  }
+  for (i = 0; i < hudBump.length; i++) if (hudBump[i] > 0) hudBump[i] -= dt;
 }
 
 function updateForest(dt) {
@@ -19,19 +39,24 @@ function updateForest(dt) {
   var dy = unicorn.ty - unicorn.y;
   var dist = Math.sqrt(dx * dx + dy * dy);
   if (dist > 6 && !celebrating && !puzzleBusy()) {
+    if (!unicorn.moving) unicorn.stretchT = 0.3;   // lähtöventytys
     unicorn.moving = true;
     var step = Math.min(unicorn.speed * dt, dist);
     unicorn.x += (dx / dist) * step;
     unicorn.y += (dy / dist) * step;
     if (Math.abs(dx) > 4) unicorn.facing = dx > 0 ? 1 : -1;
     unicorn.walkPhase += dt * 10;
-    // Kimallejälki
+    // Kimallejälki ja pölyä kavioista
     if (Math.random() < dt * 12) {
       spawnSparkles(unicorn.x - unicorn.facing * 40, unicorn.y - 20, 1, '#d9b3ff');
     }
+    if (Math.random() < dt * 9) spawnDust(unicorn.x - unicorn.facing * 30, unicorn.y, 2, unicorn.facing);
   } else {
+    if (unicorn.moving) unicorn.squashT = Math.max(unicorn.squashT || 0, 0.22);   // pysähdyslitistys
     unicorn.moving = false;
   }
+  if (unicorn.squashT > 0) unicorn.squashT -= dt;
+  if (unicorn.stretchT > 0) unicorn.stretchT -= dt;
 
   // Kamera seuraa
   var targetCam = unicorn.x - viewW / 2;
@@ -64,6 +89,7 @@ function updateForest(dt) {
   for (i = 0; i < bunnies.length; i++) {
     var bn = bunnies[i];
     bn.earT += dt * (bn.state === 'hidden' ? 4 : 8);
+    if (bn.popT > 0) bn.popT -= dt;
     if (bn.state === 'hidden') {
       var bnear = Math.abs(unicorn.x - bn.bushX) < viewW * 0.35;
       var peekTarget = 0.12;
@@ -296,7 +322,13 @@ function draw() {
 function drawForest() {
   var i;
   // Piilossa oleva/0-kokoinen ikkuna: taustaa ei ole voitu piirtää
-  if (!drawWorldBg()) return;
+  if (!bgCanvas.width || !viewW || !viewH) return;
+  ctx.clearRect(0, 0, viewW, viewH);
+  // Tärinä osuman jälkeen koskee maailmaa, ei HUD:ia
+  var sh = artShakeOffset();
+  ctx.save();
+  ctx.translate(sh.x, sh.y);
+  drawWorldBg();
 
   // Liikkuvat pilvet
   var c1x = ((globalT * 12) % (viewW + 300)) - 150;
@@ -346,21 +378,34 @@ function drawForest() {
     drawBushFront(ctx, bunnies[i].bushX - camX, groundTop + 12, bs);
   }
 
-  // Löytyneet puput
+  // Löytyneet puput (löytyessä pomppaavat esiin)
   for (i = 0; i < bunnies.length; i++) {
     var bn2 = bunnies[i];
     if (bn2.state !== 'found') continue;
     var hop = Math.abs(Math.sin(bn2.hopT)) * viewH * 0.03;
-    drawBunny(ctx, bn2.x - camX, bn2.y, viewH * 0.045, hop, bn2.earT, false);
+    var pk = bn2.popT > 0 ? easeOutBack(1 - bn2.popT / 0.5) : 1;
+    ctx.save();
+    ctx.translate(bn2.x - camX, bn2.y);
+    ctx.scale(pk, pk);
+    drawBunny(ctx, 0, 0, viewH * 0.045, hop, bn2.earT, false);
+    ctx.restore();
   }
 
   // Peikko
   drawTroll(ctx);
 
-  // Yksisarvinen ja prinsessa (vilkkuu osuman jälkeen)
+  // Yksisarvinen ja prinsessa (vilkkuu osuman jälkeen; litistyy osumasta ja
+  // pysähtyessä, venyy lähtiessä)
   var us = viewH / 800;
+  var q = 0;
+  if (unicorn.squashT > 0) q -= Math.sin(Math.PI * Math.min(1, unicorn.squashT / 0.4)) * 0.10;
+  if (unicorn.stretchT > 0) q += Math.sin(Math.PI * Math.min(1, unicorn.stretchT / 0.3)) * 0.06;
+  ctx.save();
+  ctx.translate(unicorn.x - camX, unicorn.y);
+  artSquash(ctx, q);
   if (invulnT > 0 && Math.sin(globalT * 20) > 0) ctx.globalAlpha = 0.45;
-  drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
+  drawUnicorn(ctx, 0, 0, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
+  ctx.restore();
   ctx.globalAlpha = 1;
 
   // Salamapisarat
@@ -374,11 +419,16 @@ function drawForest() {
     ctx.globalAlpha = alpha;
     ctx.save();
     ctx.translate(p.x - camX, p.y);
-    ctx.rotate(p.age * 3);
-    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+    if (p.round) {
+      ctx.beginPath(); ctx.arc(0, 0, p.size * (0.6 + p.age / p.life * 0.6), 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.rotate(p.age * 3);
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+    }
     ctx.restore();
   }
   ctx.globalAlpha = 1;
+  artPopsDraw(ctx, camX);
 
   // Juhla: sateenkaari + konfetti
   if (celebrating) {
@@ -394,10 +444,33 @@ function drawForest() {
     }
   }
 
+  ctx.restore();   // tärinä päättyy: valaistus ja HUD pysyvät paikoillaan
+  drawLight(ctx, phaseNow().light);
   drawGuide(ctx);
   drawHUD();
+  drawFlyStars(ctx);
   drawSpellOverlay(ctx);
   drawTaskOverlay(ctx);
+}
+
+// HUD-tähden paikka ruudulla
+function hudStarSlot(i) {
+  var s = viewH * 0.022, pad = s * 1.4, left = hudX();
+  return { x: left + pad * 0.5 + s * 1.2 + i * s * 2.4, y: pad * 0.5 + s * 1.7, r: s };
+}
+function drawFlyStars(c) {
+  var i, f, k, idx, slot, x, y, r;
+  for (i = 0; i < flyStars.length; i++) {
+    f = flyStars[i];
+    idx = stars.indexOf(f.st);
+    if (idx < 0) continue;
+    slot = hudStarSlot(idx);
+    k = easeInOutSine(f.t / f.dur);
+    x = f.x + (slot.x - f.x) * k;
+    y = f.y + (slot.y - f.y) * k - Math.sin(Math.PI * k) * viewH * 0.08;
+    r = viewH * 0.038 * (1 - k) + slot.r * k;
+    drawStar(c, x, y, r, k * Math.PI * 2, 1 - k * 0.5);
+  }
 }
 
 function drawBushFront(c, x, baseY, s) {
@@ -819,12 +892,13 @@ function drawHUD() {
   ctx.fillStyle = 'rgba(255,255,255,0.45)';
   roundRect(ctx, left, pad * 0.5, s * 2.4 * STAR_COUNT + pad, s * 3.4, s);
   ctx.fill();
-  // Tähdet
+  // Tähdet (lentävä tähti täyttää paikan vasta saapuessaan, ja paikka pomppaa)
   for (i = 0; i < STAR_COUNT; i++) {
     var x = left + pad * 0.5 + s * 1.2 + i * s * 2.4;
     var y = pad * 0.5 + s * 1.7;
-    if (stars[i] && stars[i].collected) {
-      drawStar(ctx, x, y, s, 0, 0);
+    if (stars[i] && stars[i].collected && !stars[i].flying) {
+      var bump = hudBump[i] > 0 ? 1 + Math.sin(Math.PI * hudBump[i] / 0.4) * 0.45 : 1;
+      drawStar(ctx, x, y, s * bump, 0, hudBump[i] > 0 ? 0.6 : 0);
     } else {
       ctx.strokeStyle = 'rgba(150,120,40,0.55)';
       ctx.lineWidth = 1.5;

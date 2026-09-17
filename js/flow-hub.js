@@ -68,6 +68,9 @@ function levelBegin(p) {
   particles = [];
   confetti = [];
   sparks = [];
+  flyStars = [];
+  hudBump = [];
+  artFxReset();
   holding = false;
   camX = 0;
   gates = [];

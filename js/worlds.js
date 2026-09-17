@@ -9,6 +9,7 @@
 // Kentän koukut: init() alustus, update(dt) logiikka, draw() piirto,
 // tap(px, py) kosketus, resize(ratio) skaalaus, renderBg(b, w, h) tausta,
 // renderBgLayers() valinnainen parallaksi: [{ speed, render(b, w, h) }],
+// light valinnainen valaistus { rays, tint, vignette } (ambient.js drawLight),
 // respawn() paluu tarkistuspisteelle (vain usesHearts-kentät).
 // Kutsut kääritään funktioihin, koska osa kohteista määritellään myöhemmin
 // ladattavissa tiedostoissa.
@@ -42,7 +43,8 @@ var WORLDS = [
         tap: function (x, y) { handleTap(x, y); },
         resize: function (ratio) { resizeForest(ratio); },
         renderBg: function (b, w, h) { renderForestBg(b, w, h); },
-        renderBgLayers: function () { return forestLayers(); }
+        renderBgLayers: function () { return forestLayers(); },
+        light: { rays: true, tint: ['rgba(255,225,160,0.12)', 'rgba(255,190,140,0)'], vignette: 0.4 }
       },
       {
         kind: 'garden', room: '2', name: 'Puutarha', color: '#8a5cff', script: 'play-garden',
