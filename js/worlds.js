@@ -742,7 +742,7 @@ var ISLANDS = [];
 // järjestyksessä (kukin kerran), pääsilmukka viimeisenä (main aina vika).
 function scriptManifest() {
   var files = [
-    'state', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
+    'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
     'flow-hub', 'flow-sea', 'flow-home',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair',
     'platformer', 'pen-core'
