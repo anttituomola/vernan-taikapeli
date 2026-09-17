@@ -167,7 +167,9 @@ var WORLDS = [
       '#########.#',
       '#c........#',
       '#.#########',
-      '#........k#',
+      '#........N#',
+      '#########.#',
+      '#k........#',
       '###########'
     ],
     levels: [
@@ -227,6 +229,20 @@ var WORLDS = [
         respawn: function () { respawnCandysky(); }
       },
       {
+        kind: 'sweetclock', room: 'N', name: 'Karkkikello', color: '#e0a060', script: 'play-sweetclock',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#ffd4ec', ambient: 'sparkle', fg: { kind: 'grass', color: 'rgba(200,120,80,0.55)' },
+        init: function () { initSweetclock(); },
+        update: function (dt) { updateSweetclock(dt); },
+        draw: function () { drawSweetclock(); },
+        tap: function (x, y) { handleSweetclockTap(x, y); },
+        resize: function (ratio) { resizeSweetclock(ratio); },
+        renderBg: function (b, w, h) { renderSweetclockBg(b, w, h); },
+        renderBgLayers: function () { return sweetclockLayers(); },
+        light: { rays: true, raysColor: '#ffe0c0', tint: ['rgba(255,180,140,0.10)', 'rgba(255,200,160,0.06)'], vignette: 0.28 },
+        respawn: function () { respawnSweetclock(); }
+      },
+      {
         kind: 'tower', room: 'k', name: 'Arvoitusten torni', color: '#9b7bff', script: 'play-tower',
         control: 'run', usesJump: true, usesWand: false, usesHearts: true,
         bgColor: '#241c48', ambient: 'dust', fg: null,
@@ -254,7 +270,9 @@ var WORLDS = [
       '#########.#',
       '#u........#',
       '#.#########',
-      '#........p#',
+      '#........L#',
+      '#########.#',
+      '#p........#',
       '###########'
     ],
     levels: [
@@ -312,6 +330,20 @@ var WORLDS = [
         renderBgLayers: function () { return starsLayers(); },
         light: { rays: true, raysColor: '#ffe9a0', raysAlpha: 0.7, tint: ['rgba(20,30,80,0.16)', 'rgba(10,15,40,0.08)'], vignette: 0.45 },
         respawn: function () { respawnStars(); }
+      },
+      {
+        kind: 'moonword', room: 'L', name: 'Tähtisana', color: '#c8b8ff', script: 'play-moonword',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#0b1030', ambient: 'stars', fg: { kind: 'grass', color: 'rgba(16,26,60,0.9)' },
+        init: function () { initMoonword(); },
+        update: function (dt) { updateMoonword(dt); },
+        draw: function () { drawMoonword(); },
+        tap: function (x, y) { handleMoonwordTap(x, y); },
+        resize: function (ratio) { resizeMoonword(ratio); },
+        renderBg: function (b, w, h) { renderMoonwordBg(b, w, h); },
+        renderBgLayers: function () { return moonwordLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.8, tint: ['rgba(20,30,80,0.16)', 'rgba(10,15,40,0.08)'], vignette: 0.45 },
+        respawn: function () { respawnMoonword(); }
       },
       {
         kind: 'moon', room: 'p', name: 'Kuun vartija', color: '#6b5fb0', script: 'play-moon',
@@ -430,7 +462,9 @@ var WORLDS = [
       '#########.#',
       '#n........#',
       '#.#########',
-      '#........v#',
+      '#........H#',
+      '#########.#',
+      '#v........#',
       '###########'
     ],
     levels: [
@@ -489,6 +523,20 @@ var WORLDS = [
         renderBgLayers: function () { return naptimeLayers(); },
         light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.8, tint: ['rgba(40,30,90,0.16)', 'rgba(20,15,50,0.08)'], vignette: 0.45 },
         respawn: function () { respawnNaptime(); }
+      },
+      {
+        kind: 'bedtime', room: 'H', name: 'Unikello', color: '#7a6ab0', script: 'play-bedtime',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#3a2a78', ambient: 'stars', fg: { kind: 'grass', color: 'rgba(40,30,70,0.8)' },
+        init: function () { initBedtime(); },
+        update: function (dt) { updateBedtime(dt); },
+        draw: function () { drawBedtime(); },
+        tap: function (x, y) { handleBedtimeTap(x, y); },
+        resize: function (ratio) { resizeBedtime(ratio); },
+        renderBg: function (b, w, h) { renderBedtimeBg(b, w, h); },
+        renderBgLayers: function () { return bedtimeLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.75, tint: ['rgba(40,30,90,0.16)', 'rgba(20,15,50,0.08)'], vignette: 0.42 },
+        respawn: function () { respawnBedtime(); }
       },
       {
         kind: 'kitchen', room: 'v', name: 'Taikakeittiö', color: '#ff9f3a', script: 'play-kitchen',

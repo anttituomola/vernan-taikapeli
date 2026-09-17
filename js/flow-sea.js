@@ -29,6 +29,14 @@ function islandIndex(isl) {
 function islandDone(isl) {
   return !!(isl && hubCleared[isl.finaleKind]);
 }
+function islandUnplayedCount(isl) {
+  var hub = isl && HUB_WORLDS[isl.world], ch, n = 0;
+  if (!hub || !hub.rooms) return 0;
+  for (ch in hub.rooms) {
+    if (hub.rooms[ch].kind && !hubCleared[hub.rooms[ch].kind]) n++;
+  }
+  return n;
+}
 function islandUnlocked(i) {
   return i === 0 || islandDone(ISLANDS[i - 1]);
 }
@@ -171,7 +179,7 @@ function drawSea() {
   drawSeaWaves(ctx);
   drawSeaRainbow(ctx);
 
-  var i, p, isl, nx = seaNextIsland();
+  var i, p, isl, nx = seaNextIsland(), left;
   for (i = 0; i < ISLANDS.length; i++) {
     isl = ISLANDS[i];
     p = seaIslandPos(isl);
@@ -185,6 +193,8 @@ function drawSea() {
     } else if (islandDone(isl)) {
       drawStar(ctx, p.x + p.r * 0.8, p.y - p.r * 0.85, p.r * 0.16, globalT * 0.5, 0.9);
     }
+    left = islandUnlocked(i) ? islandUnplayedCount(isl) : 0;
+    if (left > 0) drawIslandUnplayed(ctx, p, left);
     if (isl === nx) {
       var gl = ctx.createRadialGradient(p.x, p.y, p.r * 0.9, p.x, p.y, p.r * 1.6);
       gl.addColorStop(0, 'rgba(255,230,140,' + (0.35 + Math.sin(globalT * 4) * 0.12) + ')');
@@ -309,6 +319,27 @@ function islandBlob(c, x, y, r) {
   c.moveTo(x - r * 0.55 + r * 0.55, y + r * 0.1); c.arc(x - r * 0.55, y + r * 0.1, r * 0.55, 0, Math.PI * 2);
   c.moveTo(x + r * 0.6 + r * 0.5, y + r * 0.05); c.arc(x + r * 0.6, y + r * 0.05, r * 0.5, 0, Math.PI * 2);
   c.moveTo(x + r * 0.1 + r * 0.6, y + r * 0.3); c.arc(x + r * 0.1, y + r * 0.3, r * 0.6, 0, Math.PI * 2);
+}
+
+function drawIslandUnplayed(c, p, n) {
+  var x = p.x - p.r * 0.78, y = p.y - p.r * 0.88;
+  var s = p.r * (0.22 + Math.sin(globalT * 4) * 0.025);
+  var g = c.createRadialGradient(x, y, s * 0.2, x, y, s * 1.8);
+  g.addColorStop(0, 'rgba(255,230,120,0.85)');
+  g.addColorStop(1, 'rgba(255,230,120,0)');
+  c.fillStyle = g;
+  c.beginPath(); c.arc(x, y, s * 1.8, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#ffe27a';
+  c.beginPath(); c.arc(x, y, s, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = '#fff';
+  c.lineWidth = Math.max(1.5, s * 0.12);
+  c.stroke();
+  c.fillStyle = '#7a3cb8';
+  c.font = 'bold ' + Math.round(s * 1.15) + 'px ' + UI_FONT;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillText(String(n), x, y + s * 0.06);
+  c.textBaseline = 'alphabetic';
 }
 
 function drawIsland(b, isl, foggy) {

@@ -38,10 +38,10 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-cave.js`, `play-swamp.js`, `play-bridge.js` — vaiheet 6–8
 - `js/play-finale.js` — linnan finaali
 - `js/tasks-drag.js` — raahaustehtävät (muoto varjoon, täydennä kuva) ja muistipeli
-- `js/play-beach.js`, `play-candy.js`, `play-lollipop.js`, `play-candysky.js`, `play-tower.js` — maailma 2
-- `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-stars.js`, `play-moon.js` — maailma 3
+- `js/play-beach.js`, `play-candy.js`, `play-lollipop.js`, `play-candysky.js`, `play-sweetclock.js`, `play-tower.js` — maailma 2
+- `js/play-reef.js`, `play-nightwood.js`, `play-clouds.js`, `play-stars.js`, `play-moonword.js`, `play-moon.js` — maailma 3
 - `js/tasks-mix.js` — värien sekoitus: 'mix'-tehtävä ja Taikakeittiön pata
-- `js/play-herd.js`, `play-berry.js`, `play-cafe.js`, `play-naptime.js`, `play-kitchen.js` — maailma 5
+- `js/play-herd.js`, `play-berry.js`, `play-cafe.js`, `play-naptime.js`, `play-bedtime.js`, `play-kitchen.js` — maailma 5
 - `js/tasks-more.js` — lajittele, järjestä koon mukaan, peilikuva, yhdistä pisteet, anna N kappaletta, puuttuva ruutu
 - `js/play-mine.js`, `play-rapids.js`, `play-lighthouse.js`, `play-glide.js`, `play-summit.js` — maailma 6
 - `js/tasks-read.js` — lukemisen tehtävät: kuva→sana, kokoa sana tavuista, alkukirjain
@@ -77,6 +77,8 @@ aukeaa, kun edellisen saaren vartijahuone on läpäisty (Linnasaari: finaali,
 Karkkisaari: Arvoitusten torni). Värisaaria on seitsemän, yksi sateenkaaren
 väriä kohti (`SEA_FOG`-taulukkoon voi lisätä sumuisen saaren vihjeeksi), ja
 kahdeksas saari (Tivolisaari) odottaa sateenkaaren päässä.
+Avatulla saaressa, jossa on vielä pelaamattomia huoneita, näkyy keltainen
+numero saaren vasemmassa yläkulmassa.
 
 **Tarina:** Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle. Jokaisen
 saaren vartija palauttaa yhden värin, ja saaristokartan sateenkaari täyttyy
@@ -133,6 +135,9 @@ Arvoitusten torni on saaren vartija.
 - **Karkkitaivas** ♥ — vapaa lento karkkipilvien välissä: kahdeksan käärekarkkia
   kerätään, ajelehtivat ukkospilvet vievät sydämen. Karkkiportti hehkuu, kun
   karkit on koossa — lennä sen luo. Tehtävät: anna N kappaletta, lasku.
+- **Karkkikello** — kiireetön ratsastus karkkileipomossa: kahdeksan
+  piparkakkukelloa kerätään sormella tai ohitse ratsastaen. Uuni hehkuu, kun
+  kellot on koossa. Ei sydämiä. Tehtävät: kello, lue sana (2 tavua).
 - **Arvoitusten torni** ♥ — neljä tehtäväovea peräkkäin (parit 4 paria,
   täydennä kuva, lue sana, muisti 4/4), jalokivet hyllyillä ja heiluvat
   kattokruunut, joiden alta kuljetaan kun ne ovat sivulla.
@@ -156,6 +161,9 @@ Aukeaa, kun Arvoitusten torni on läpäisty. Kuun vartija on saaren vartija.
   päällä: napauta pilveä puhaltaaksesi sen hetkeksi pois, ja napauta
   paljastunutta tähteä kerätäksesi sen. Kuusi tähteä; tehtävät avautuvat
   keräilyn edetessä. Tehtävät: puuttuva ruutu, muisti 4/4.
+- **Tähtisana** — kiireetön ratsastus kuutamossa: kahdeksan kirjaintähteä
+  kerätään sormella tai ohitse ratsastaen. Portti hehkuu, kun tähdet on
+  koossa. Ei sydämiä. Tehtävät: lue sana (3 tavua), kuva→sana (2 tavua).
 - **Kuun vartija** ♥ — neljä tehtäväporttia (rytmi, muoto varjoon, vähennys,
   muisti 5/4). Tähtiä putoaa: hehku maassa varoittaa 0,9 s ennen osumaa.
   Kuunkivet kerätään kiviltä, ja kuun kasvot heräävät tehtävä kerrallaan.
@@ -218,6 +226,9 @@ sydämiä. Taikakeittiö on saaren vartija.
   kuplineen): napauta pupua, niin se kävelee petiinsä, ja napauta petiä, niin
   pupu saa peiton ja tuutulaulun. Tehtävät avautuvat hoitamisen edetessä.
   Tehtävät: anna N kappaletta, laske.
+- **Unikello** — kiireetön ratsastus iltahämärässä: kahdeksan unikuuta
+  kerätään sormella tai ohitse ratsastaen ja viedään petiin. Ei sydämiä.
+  Tehtävät: kello, lue sana (2 tavua).
 - **Taikakeittiö** — ei liikkumista. Pupuasiakas tilaa kuplassa värillisen
   juoman; kaada hyllyn pulloista (punainen, keltainen, sininen) pataan. Perusväri
   on yksi kaato, sekoitus kaksi: punainen + keltainen = oranssi, keltainen +
@@ -456,9 +467,10 @@ kartalla (seuraava huone, linna).
 - **Alkukirjain** — iso kirjain kuplassa ja neljä kuvaa; valitse kuva, jonka
   sana alkaa kirjaimella. Väärä kuva himmenee; kirjaimen napautus soittaa sen.
 
-- **Mitä kello on** — kellotaulu kuplassa näyttää tasatunnin (punainen
-  tuntiviisari, harmaa minuuttiviisari kohdassa 12) ja kolme palloa numeroin;
-  väärät ovat läheisiä tunteja. Väärästä arvotaan uusi kello.
+- **Mitä kello on** — kellotaulu kuplassa näyttää ajan (punainen tuntiviisari,
+  harmaa minuuttiviisari). Tasatuntien lisäksi tulee puolia (`7:30`) ja
+  vartteja (`7:15` / `7:45`). Kolme palloa digiajoin; väärät ovat läheisiä
+  aikoja. Väärästä arvotaan uusi kello.
 - **Maksa** — lipussa hinta 3–9; pöydällä rahat 5, 2, 2, 1, 1, 1. Napautettu
   raha lentää lautaselle ja summa näkyy vieressä; lautasen rahan napautus
   palauttaa sen. Summa yli hinnan pöhähtää ja rahat palaavat pöydälle.

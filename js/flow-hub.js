@@ -712,6 +712,40 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.lineWidth = Math.max(1.5, s * 0.03);
     c.beginPath(); c.moveTo(x + s * 0.12, y + s * 0.02); c.lineTo(x + s * 0.3, y - s * 0.24); c.stroke();
     drawStar(c, x + s * 0.32, y - s * 0.28, s * 0.06, 0, 0);
+  } else if (kind === 'sweetclock') {
+    c.fillStyle = '#e8b878';
+    c.beginPath(); c.arc(x, y - s * 0.02, s * 0.18, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#5a3a8a';
+    c.lineWidth = Math.max(1.5, s * 0.04);
+    c.beginPath(); c.arc(x, y - s * 0.02, s * 0.14, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = '#ff5f7e';
+    c.lineWidth = Math.max(2, s * 0.05);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x, y - s * 0.02); c.lineTo(x, y - s * 0.12); c.stroke();
+    c.strokeStyle = '#6b5a80';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x, y - s * 0.02); c.lineTo(x + s * 0.1, y - s * 0.02); c.stroke();
+    c.lineCap = 'butt';
+  } else if (kind === 'bedtime') {
+    c.fillStyle = '#fff1a8';
+    c.beginPath(); c.arc(x - s * 0.04, y - s * 0.04, s * 0.15, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#5a4a8a';
+    c.beginPath(); c.arc(x + s * 0.04, y - s * 0.08, s * 0.13, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#fff';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x, y - s * 0.04); c.lineTo(x, y - s * 0.14); c.stroke();
+    c.fillStyle = '#fff';
+    c.font = 'bold ' + Math.round(s * 0.14) + 'px ' + UI_FONT;
+    c.textAlign = 'center';
+    c.fillText('Z', x + s * 0.16, y + s * 0.16);
+  } else if (kind === 'moonword') {
+    drawStar(c, x, y - s * 0.02, s * 0.16, 0, 0.6);
+    c.fillStyle = '#3a2460';
+    c.font = 'bold ' + Math.round(s * 0.16) + 'px ' + UI_FONT;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('A', x, y);
+    c.textBaseline = 'alphabetic';
   }
 }
 

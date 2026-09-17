@@ -1,7 +1,8 @@
 'use strict';
 
 // Tivolisaaren tehtävätyypit:
-//   clock  – mitä kello on: kellotaulu kuplassa (tasatunti), valitse tunti palloista
+//   clock  – mitä kello on: kellotaulu kuplassa (tasatunti, puoli tai vartti),
+//            valitse aika palloista
 //   pay    – maksa: hinta lipussa, napauta rahoja (1, 2, 5) lautaselle kunnes summa täsmää
 //   jigsaw – palapeli (raahaus): kuva paloina, raahaa palat kehykseen mallin mukaan
 //   route  – reitti: ohjelmoi pupu porkkanalle nuolilla ja paina ▶
@@ -10,23 +11,52 @@
 var TASK_FONT = UI_FONT;
 
 // ---------- Mitä kello on ----------
-// Tasatunti 1–12. Väärät vaihtoehdot ovat läheisiä tunteja, jotta viisarin
-// asento on luettava tarkasti. Väärästä arvotaan uusi kello.
+// Aika 1–12, minuutit 00 / 15 / 30 / 45. Väärät vaihtoehdot ovat läheisiä
+// aikoja, jotta viisarien asento on luettava tarkasti. Väärästä arvotaan uusi kello.
+function clockWrapHour(h) {
+  return ((h - 1 + 12) % 12) + 1;
+}
+function clockLabel(h, m) {
+  return String(h) + ':' + (m < 10 ? '0' : '') + m;
+}
+function clockKey(h, m) {
+  return h * 60 + m;
+}
 function makeClockProblem(t) {
   var hour = 1 + randInt(12);
-  var pool = shuffleNums([hour - 2, hour - 1, hour + 1, hour + 2, hour + 3]);
-  var wrong = [], i, h;
-  for (i = 0; i < pool.length && wrong.length < 2; i++) {
-    h = ((pool[i] - 1 + 12) % 12) + 1;
-    if (h !== hour && wrong.indexOf(h) < 0) wrong.push(h);
+  var roll = Math.random(), minute;
+  if (roll < 0.35) minute = 0;
+  else if (roll < 0.80) minute = 30;
+  else minute = Math.random() < 0.5 ? 15 : 45;
+  var cands = [
+    { h: hour, m: minute },
+    { h: clockWrapHour(hour - 1), m: minute },
+    { h: clockWrapHour(hour + 1), m: minute },
+    { h: hour, m: (minute + 30) % 60 },
+    { h: hour, m: minute === 0 ? 30 : 0 },
+    { h: clockWrapHour(hour + 1), m: 0 },
+    { h: clockWrapHour(hour - 1), m: 0 }
+  ];
+  var seen = {}, uniq = [], i, k, wrong, answers;
+  for (i = 0; i < cands.length; i++) {
+    k = clockKey(cands[i].h, cands[i].m);
+    if (seen[k]) continue;
+    seen[k] = true;
+    uniq.push(cands[i]);
   }
-  var answers = shuffleNums([hour, wrong[0], wrong[1]]);
+  wrong = [];
+  for (i = 1; i < uniq.length && wrong.length < 2; i++) wrong.push(uniq[i]);
+  answers = shuffleNums([{ h: hour, m: minute }, wrong[0], wrong[1]]);
   t.orbs = 3;
-  return { hour: hour, answers: answers, correct: answers.indexOf(hour) };
+  for (i = 0; i < answers.length; i++) {
+    if (answers[i].h === hour && answers[i].m === minute) break;
+  }
+  return { hour: hour, minute: minute, answers: answers, correct: i };
 }
 
 function drawClockFace(c, x, y, r, hour, minute) {
   var i, a;
+  if (minute === undefined) minute = 0;
   c.fillStyle = 'rgba(0,0,0,0.15)';
   c.beginPath(); c.arc(x + r * 0.05, y + r * 0.07, r, 0, Math.PI * 2); c.fill();
   c.fillStyle = '#8a4dff';
@@ -59,17 +89,18 @@ function drawClockFace(c, x, y, r, hour, minute) {
 }
 
 function orbClockContent(c, t, i, x, y, r) {
+  var a = t.data.answers[i];
   c.fillStyle = '#5a3a8a';
-  c.font = 'bold ' + Math.round(r * 0.9) + 'px ' + TASK_FONT;
+  c.font = 'bold ' + Math.round(r * 0.42) + 'px ' + TASK_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
-  c.fillText(String(t.data.answers[i]), x, y + r * 0.05);
+  c.fillText(clockLabel(a.h, a.m), x, y + r * 0.04);
 }
 
 function drawClockOverlay(c, t, shake, op) {
   var r = Math.min(viewH * 0.15, viewW * 0.12);
   var cx = viewW / 2 + shake, cy = viewH * 0.2;
-  drawClockFace(c, cx - r * 0.5, cy, r, t.data.hour, 0);
+  drawClockFace(c, cx - r * 0.5, cy, r, t.data.hour, t.data.minute);
   c.fillStyle = '#ffe27a';
   c.font = 'bold ' + Math.round(viewH * 0.08) + 'px ' + TASK_FONT;
   c.textAlign = 'center';
