@@ -7,7 +7,7 @@
 // Sanat ja kuvat: WORD_LIST (tasks-extra.js). Lukeminen ääneen: wordSay.
 
 function readFont(c, size) {
-  c.font = 'bold ' + Math.round(size) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(size) + 'px ' + UI_FONT;
 }
 
 // Sanat, joissa tavuja on min..max

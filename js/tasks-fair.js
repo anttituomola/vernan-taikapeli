@@ -7,7 +7,7 @@
 //   route  – reitti: ohjelmoi pupu porkkanalle nuolilla ja paina ▶
 // Perusrunko (taskStart, handleTaskTap, taskDrop, drawTaskOverlay) haarautuu näihin.
 
-var TASK_FONT = '"Comic Sans MS", "Segoe UI", sans-serif';
+var TASK_FONT = UI_FONT;
 
 // ---------- Mitä kello on ----------
 // Tasatunti 1–12. Väärät vaihtoehdot ovat läheisiä tunteja, jotta viisarin

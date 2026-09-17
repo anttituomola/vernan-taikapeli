@@ -197,7 +197,7 @@ function napDrawBunny(c, b, i) {
     var bob = Math.sin(globalT * 1.6 + i) * viewH * 0.004;
     drawBunny(c, bed.x - viewH * 0.055, bed.y - viewH * 0.055 + bob, viewH * 0.032, 0, b.earT, true);
     c.fillStyle = 'rgba(255,255,255,0.8)';
-    c.font = 'bold ' + Math.round(viewH * 0.035) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.font = 'bold ' + Math.round(viewH * 0.035) + 'px ' + UI_FONT;
     c.textAlign = 'center';
     var zx = bed.x + viewH * 0.06 + Math.sin(globalT * 0.9 + i) * viewH * 0.01;
     c.fillText('Z', zx, bed.y - viewH * 0.16 - (globalT * 8 + i * 13) % 20);
@@ -212,7 +212,7 @@ function napDrawBunny(c, b, i) {
     c.fillStyle = 'rgba(255,255,255,0.85)';
     c.beginPath(); c.arc(b.x + viewH * 0.05, y - viewH * 0.13, viewH * 0.02, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#8a6a9e';
-    c.font = 'bold ' + Math.round(viewH * 0.028) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.font = 'bold ' + Math.round(viewH * 0.028) + 'px ' + UI_FONT;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
     c.fillText('z', b.x + viewH * 0.05, y - viewH * 0.128);

@@ -6,6 +6,8 @@
 var canvas = document.getElementById('game');
 var ctx = canvas.getContext('2d');
 var DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+// Canvas-tekstin fonttipino; sama kuin css/game.css:n body-fontti
+var UI_FONT = '"Fredoka", "Comic Sans MS", "Segoe UI", sans-serif';
 
 var viewW = 0, viewH = 0;   // ruudun koko CSS-pikseleinä
 var worldW = 0;             // maailman leveys

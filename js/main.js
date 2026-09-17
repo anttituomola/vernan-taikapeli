@@ -182,7 +182,7 @@ document.getElementById('penBtn').addEventListener('mousedown', penPress);
 
 document.getElementById('muteBtn').addEventListener('click', function () {
   muted = !muted;
-  this.innerHTML = muted ? '&#128263;' : '&#128266;';
+  this.className = muted ? 'muted' : '';
 });
 
 // Debug-kahva testausta varten
@@ -291,5 +291,13 @@ loadProgress();
 hubWorld = lastIsland;
 resize();
 showSea();
+// Kun fontti on ladattu, esirenderöidyt taustat (sokkelo, meri, koti, etuala)
+// piirretään uudestaan, jotta canvas-teksti käyttää oikeaa fonttia.
+if (document.fonts && document.fonts.load) {
+  document.fonts.load('bold 20px Fredoka').then(function () {
+    hubBgKey = ''; seaBgKey = ''; homeBgKey = ''; fgKey = '';
+    resize();
+  }).catch(function () {});
+}
 if (/[?&]unlock/.test(location.search)) unlockAll();
 requestAnimationFrame(loop);

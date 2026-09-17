@@ -567,7 +567,7 @@ function drawQuestionStone(c, x, y, s) {
   roundRect(c, x - s * 0.5, y - s * 0.7, s, s * 0.9, s * 0.25);
   c.fill();
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(s * 0.7) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(s * 0.7) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', x, y - s * 0.22);

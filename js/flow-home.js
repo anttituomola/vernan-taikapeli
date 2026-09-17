@@ -823,7 +823,7 @@ function drawNote(c, n) {
 function drawStarBalance(c, x, y) {
   var s = viewH * 0.03;
   var txt = String(starCoins);
-  c.font = 'bold ' + Math.round(s * 1.6) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(s * 1.6) + 'px ' + UI_FONT;
   var tw = c.measureText(txt).width;
   c.fillStyle = 'rgba(255,255,255,0.75)';
   roundRect(c, x, y - s * 1.2, s * 2.6 + tw + s * 0.8, s * 2.4, s * 1.2);

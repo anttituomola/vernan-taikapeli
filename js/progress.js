@@ -74,7 +74,7 @@ function drawStarGain(c) {
   roundRect(c, x - s * 3.2, y - s * 1.1, s * 6.4, s * 2.2, s);
   c.fill();
   c.fillStyle = '#7a3cb8';
-  c.font = 'bold ' + Math.round(s * 1.5) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(s * 1.5) + 'px ' + UI_FONT;
   c.textAlign = 'left';
   c.textBaseline = 'middle';
   c.fillText('+' + starGain.n, x - s * 2.6, y + s * 0.05);

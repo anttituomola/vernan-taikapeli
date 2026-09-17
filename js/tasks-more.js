@@ -103,7 +103,7 @@ function drawSortOverlay(c, t, shake) {
     }
   }
   c.fillStyle = '#ffe27a';
-  c.font = 'bold ' + Math.round(viewH * 0.08) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.08) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', viewW / 2 + shake, viewH * 0.3);
@@ -178,7 +178,7 @@ function drawOrderOverlay(c, t, shake) {
   for (i = 0; i < 3; i++) {
     c.beginPath(); c.arc(hx - viewH * 0.09 + i * viewH * 0.055, hy, viewH * (0.012 + i * 0.008), 0, Math.PI * 2); c.fill();
   }
-  c.font = 'bold ' + Math.round(viewH * 0.06) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.06) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', hx + viewH * 0.09, hy + viewH * 0.005);
@@ -259,7 +259,7 @@ function drawMirrorOverlay(c, t, shake) {
   drawPromptBubble(c, hx, hy, viewH * 0.26, viewH * 0.11);
   drawButterfly(c, hx - viewH * 0.05, hy, viewH * 0.035, globalT, '#c9a0ff');
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(viewH * 0.06) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.06) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', hx + viewH * 0.06, hy + viewH * 0.005);
@@ -370,7 +370,7 @@ function drawDotsOverlay(c, t, shake) {
   if (d.done) c.closePath();
   c.stroke();
   // Haaleat apuviivat seuraavasta pisteestä eteenpäin eivät paljasta; vain seuraava hehkuu
-  c.font = 'bold ' + Math.round(r * 1.3) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(r * 1.3) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   for (i = 0; i < n; i++) {
@@ -588,7 +588,7 @@ function drawMatrixPrompt(c, t, shake) {
   drawTaskGlyph(c, d.cells[0].kind, hx - viewH * 0.07, hy, viewH * 0.024, TASK_BF_COLORS[d.cells[0].color], 0);
   drawTaskGlyph(c, d.cells[1].kind, hx, hy, viewH * 0.024, TASK_BF_COLORS[d.cells[1].color], 0);
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(viewH * 0.055) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.055) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', hx + viewH * 0.08, hy + viewH * 0.005);
@@ -605,7 +605,7 @@ function drawMatrixPrompt(c, t, shake) {
       c.stroke();
       c.setLineDash([]);
       c.fillStyle = '#8a2be2';
-      c.font = 'bold ' + Math.round(p.cs * 0.5 * (1 + Math.sin(globalT * 5) * 0.06)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+      c.font = 'bold ' + Math.round(p.cs * 0.5 * (1 + Math.sin(globalT * 5) * 0.06)) + 'px ' + UI_FONT;
       c.fillText('?', p.x + shake, p.y + p.cs * 0.03);
     } else {
       drawTaskGlyph(c, d.cells[k].kind, p.x + shake, p.y, p.cs * 0.3, TASK_BF_COLORS[d.cells[k].color], 0);

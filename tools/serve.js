@@ -1,16 +1,17 @@
 // Pieni staattinen kehityspalvelin ilman riippuvuuksia:
 //   node tools/serve.js            -> http://localhost:8765
-//   node tools/serve.js . 3000     -> toinen portti
+//   node tools/serve.js . 3000     -> toinen portti (myös PORT-ympäristömuuttuja)
 // Tarvitaan, koska peli lataa js/ ja css/ erillisinä tiedostoina.
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
 var root = path.resolve(process.argv[2] || path.join(__dirname, '..'));
-var port = parseInt(process.argv[3] || '8765', 10);
+var port = parseInt(process.argv[3] || process.env.PORT || '8765', 10);
 var types = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json',
-  '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon'
+  '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2', '.woff': 'font/woff'
 };
 http.createServer(function (req, res) {
   var urlPath = decodeURIComponent(req.url.split('?')[0]);

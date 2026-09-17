@@ -546,7 +546,7 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     else if (kind === 'sylrapids') { c.fillStyle = '#8a5a30'; roundRect(c, x - s * 0.24, y + s * 0.08, s * 0.48, s * 0.1, s * 0.05); c.fill(); }
     else { c.fillStyle = '#fff6d8'; roundRect(c, x - s * 0.2, y - s * 0.18, s * 0.4, s * 0.34, s * 0.06); c.fill(); }
     c.fillStyle = '#8a2be2';
-    c.font = 'bold ' + Math.round(s * (txt.length > 1 ? 0.2 : 0.28)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.font = 'bold ' + Math.round(s * (txt.length > 1 ? 0.2 : 0.28)) + 'px ' + UI_FONT;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
     c.fillText(txt, x, y + (kind === 'sylrapids' ? -s * 0.04 : 0));
@@ -628,7 +628,7 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.fillStyle = '#5a4a8a';
     c.beginPath(); c.arc(x + s * 0.02, y - s * 0.08, s * 0.11, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#fff';
-    c.font = 'bold ' + Math.round(s * 0.16) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.font = 'bold ' + Math.round(s * 0.16) + 'px ' + UI_FONT;
     c.textAlign = 'center';
     c.fillText('Z', x + s * 0.14, y + s * 0.16);
   } else if (kind === 'glide') {
@@ -651,7 +651,7 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath(); c.arc(x - s * 0.1, y + s * 0.05, s * 0.09, 0, Math.PI * 2); c.fill();
     c.beginPath(); c.arc(x + s * 0.1, y + s * 0.05, s * 0.09, 0, Math.PI * 2); c.fill();
     c.fillStyle = '#fff';
-    c.font = 'bold ' + Math.round(s * 0.16) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.font = 'bold ' + Math.round(s * 0.16) + 'px ' + UI_FONT;
     c.textAlign = 'center';
     c.fillText('A', x, y + s * 0.1);
   } else if (kind === 'circus') {
@@ -980,7 +980,7 @@ function drawHubTile(b, band, x, y, s, c, r) {
   } else if (band === 'letters') {
     // Kirjasivu: haaleita tikkukirjaimia ja pieni kukka
     b.fillStyle = 'rgba(138,43,226,' + (0.12 + rnd * 0.15) + ')';
-    b.font = 'bold ' + Math.round(s * 0.45) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    b.font = 'bold ' + Math.round(s * 0.45) + 'px ' + UI_FONT;
     b.textAlign = 'center';
     b.textBaseline = 'middle';
     b.fillText('ABCDEFGHIJKLMNOPRSTUVYÄÖ'.charAt(Math.floor(rnd * 24)), cx + (rnd2 - 0.5) * s * 0.3, cy);

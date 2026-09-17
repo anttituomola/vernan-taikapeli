@@ -7,7 +7,7 @@
 <script>
 // Versioleima: nosta tätä, kun julkaiset uuden version, niin selain lataa
 // kaikki tiedostot uudestaan eikä yhdistä vanhaa index.html:ää uusiin skripteihin.
-var VT_VERSION = '2026-09-16c';
+var VT_VERSION = '2026-09-17a';
 document.write('<link rel="stylesheet" href="css/game.css?v=' + VT_VERSION + '">');
 </script>
 </head>
@@ -17,13 +17,13 @@ document.write('<link rel="stylesheet" href="css/game.css?v=' + VT_VERSION + '">
 <div id="hubChrome">
   <h1>&#10024; VERNAN TAIKAPOLKU &#10024;</h1>
 </div>
-<button id="karttaBtn" aria-label="KARTTA">&#127968;</button>
-<button id="seaBtn" aria-label="MERELLE">&#9973;</button>
-<button id="replayBtn" aria-label="UUDESTAAN">&#8635;</button>
-<button id="continueBtn" aria-label="JATKA">&#129412;</button>
-<button id="jumpBtn" aria-label="HYPPAA">&#8593;</button>
-<button id="penBtn" aria-label="KYNA">&#9999;</button>
-<button id="muteBtn" aria-label="AANI">&#128266;</button>
+<button id="karttaBtn" aria-label="KARTTA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></button>
+<button id="seaBtn" aria-label="MERELLE"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M3 16h18l-2.5 4.5h-13z"/><path d="M12 3v13"/><path class="fill" d="M12.5 4.5 19 13h-6.5z"/><path d="M11.5 7 7 13h4.5"/></svg></button>
+<button id="replayBtn" aria-label="UUDESTAAN"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3.5v5h-5"/></svg></button>
+<button id="continueBtn" aria-label="JATKA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15"/><path d="M13 5l7 7-7 7"/></svg></button>
+<button id="jumpBtn" aria-label="HYPPAA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V5"/><path d="M5 12l7-7 7 7"/></svg></button>
+<button id="penBtn" aria-label="KYNA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1-4.5 10-10 3.5 3.5-10 10z"/><path d="M13.5 7l3.5 3.5"/><path d="M4 20l4.5-1"/></svg></button>
+<button id="muteBtn" aria-label="AANI"><svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
 
 <script>
 // Saarirekisteri ensin: se rakentaa PHASES/HUB_WORLDS/ISLANDS-näkymät ja

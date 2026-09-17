@@ -224,7 +224,7 @@ function groveDrawBush(c, p, ch, wrong) {
   c.lineWidth = Math.max(2, viewH * 0.005);
   c.stroke();
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(viewH * 0.05) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.05) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText(ch, p.x + jx, p.y - viewH * 0.017);
@@ -242,7 +242,7 @@ function drawGrove() {
   var sayIdx = grove.sayT >= 0 ? Math.floor(grove.sayT / WORD_SYL_T) : -1;
   var sylOf = [], acc = 0;
   for (i = 0; i < syl.length; i++) { acc += syl[i].length; sylOf.push(acc); }
-  ctx.font = 'bold ' + Math.round(viewH * 0.052) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  ctx.font = 'bold ' + Math.round(viewH * 0.052) + 'px ' + UI_FONT;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   for (i = 0; i < lay.letters.length; i++) {
@@ -276,7 +276,7 @@ function drawGrove() {
     var ax = an.x0 + (an.x1 - an.x0) * f;
     var ay = an.y0 + (an.y1 - an.y0) * f - Math.sin(f * Math.PI) * viewH * 0.1;
     ctx.fillStyle = '#ff5f7e';
-    ctx.font = 'bold ' + Math.round(viewH * 0.055) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    ctx.font = 'bold ' + Math.round(viewH * 0.055) + 'px ' + UI_FONT;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(an.ch, ax, ay);

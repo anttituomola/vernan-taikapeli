@@ -98,7 +98,7 @@ function drawMixOverlay(c, t, shake) {
   drawPromptBubble(c, cx, cy, viewH * 0.26, viewH * 0.16);
   drawPotionBottle(c, cx - viewH * 0.045, cy + viewH * 0.01, viewH * 0.042, mixColorOf(m.target));
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(viewH * 0.07) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.07) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.fillText('?', cx + viewH * 0.06, cy + viewH * 0.025);
   var p = mixCauldronPos(), key = mixKey(m.pour);

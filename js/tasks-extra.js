@@ -158,7 +158,7 @@ function drawPatternPrompt(c, t, shake) {
     drawTaskGlyph(c, items[i].kind, x0 + i * gap, y, gs, TASK_BF_COLORS[items[i].color]);
   }
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(gs * 2.2) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(gs * 2.2) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', x0 + items.length * gap, y + gs * 0.1);
@@ -195,7 +195,7 @@ function drawComparePrompt(c, t, op, shake) {
     }
   }
   // Kysymysmerkki laatikoiden valiin, reunaviivalla jotta erottuu laatikoista
-  c.font = 'bold ' + Math.round(viewH * 0.085) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.085) + 'px ' + UI_FONT;
   c.lineWidth = viewH * 0.012;
   c.strokeStyle = '#4a2a6e';
   c.strokeText('?', viewW / 2 + shake, viewH * 0.24);
@@ -322,7 +322,7 @@ function drawMatchPrompt(c, t, shake) {
   drawPromptBubble(c, cx, cy, w, h);
   drawGlyphRow(c, t.data.prompt.items, cx - gs * 1.1, cy, gs, gap);
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(gs * 2.2) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(gs * 2.2) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', cx + w / 2 - gs * 1.3, cy + gs * 0.1);
@@ -346,7 +346,7 @@ function drawCountPrompt(c, t, shake) {
   drawPromptBubble(c, bx, by, bw, bh);
   drawTaskGlyph(c, prompt.kind, bx - gs * 1.1, by, gs * 1.1, TASK_BF_COLORS[prompt.color], 0);
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(gs * 2.2) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(gs * 2.2) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', bx + gs * 1.4, by + gs * 0.1);
@@ -369,7 +369,7 @@ function drawOddPrompt(c, shake) {
   c.beginPath(); c.arc(cx - s * 0.3, cy - s * 0.2, s * 0.8, 0, Math.PI * 2); c.stroke();
   c.beginPath(); c.moveTo(cx + s * 0.28, cy + s * 0.38); c.lineTo(cx + s * 1.0, cy + s * 1.1); c.stroke();
   c.fillStyle = '#ffe27a';
-  c.font = 'bold ' + Math.round(viewH * 0.09) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.09) + 'px ' + UI_FONT;
   c.textAlign = 'center';
   c.textBaseline = 'middle';
   c.fillText('?', cx + s * 2.2, cy);
@@ -454,7 +454,7 @@ function wordSay(t) {
 }
 
 function wordFont(c) {
-  c.font = 'bold ' + Math.round(viewH * 0.085) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.085) + 'px ' + UI_FONT;
 }
 
 function wordPromptRect(c, t) {
@@ -702,14 +702,14 @@ function makeOddProblem(t) {
 
 function drawNumberPrompt(c, t, shake) {
   c.fillStyle = '#ffe27a';
-  c.font = 'bold ' + Math.round(viewH * 0.09) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(viewH * 0.09) + 'px ' + UI_FONT;
   c.fillText(t.data.a + (t.type === 'math' ? ' + ' : ' − ') + t.data.b + ' = ?', viewW / 2 + shake, viewH * 0.32);
 }
 
 function orbNumberContent(c, t, i, x, y, r) {
   var ans = String(t.data.answers[i]);
   c.fillStyle = '#8a2be2';
-  c.font = 'bold ' + Math.round(r * (ans.length > 1 ? 0.7 : 0.9)) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+  c.font = 'bold ' + Math.round(r * (ans.length > 1 ? 0.7 : 0.9)) + 'px ' + UI_FONT;
   c.fillText(ans, x, y + r * 0.08);
 }
 

@@ -247,7 +247,7 @@ function drawDragTaskOverlay(c, t, shake) {
       if (!tg.filled) drawShape(c, tg.kind, tg.x + shake, tg.y, viewH * 0.05, 'rgba(20,10,40,0.85)', 0);
     }
     c.fillStyle = '#ffe27a';
-    c.font = 'bold ' + Math.round(viewH * 0.08) + 'px "Comic Sans MS", "Segoe UI", sans-serif';
+    c.font = 'bold ' + Math.round(viewH * 0.08) + 'px ' + UI_FONT;
     c.textAlign = 'center';
     c.textBaseline = 'middle';
     c.fillText('?', viewW / 2 + shake, viewH * 0.5);

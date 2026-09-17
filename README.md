@@ -13,17 +13,19 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
   (`?v=…`). Skriptien latauslista johdetaan `js/worlds.js`:n `scriptManifest()`-funktiosta.
   **Nosta leimaa julkaistessa**, muuten
   tabletin välimuisti voi yhdistää vanhan `index.html`:n uusiin skripteihin ja kenttä jää jumiin.
-- `css/game.css` — napit ja karttanäyttö
+- `css/game.css` — napit (SVG-ikonit), fontti ja karttanäyttö
+- `fonts/` — pelin fontti Fredoka (SIL Open Font License, `OFL.txt`), paketoitu mukaan
 - `js/worlds.js` — **saarirekisteri (`WORLDS`)**: pelin ainoa totuus maailmoista ja kentistä.
-  Vaiheen sauma: `init/update/draw/tap/resize/renderBg/respawn`. Rekisteristä johdetaan
+  Vaiheen sauma: `init/update/draw/tap/resize/renderBg/renderBgLayers/light/respawn`. Rekisteristä johdetaan
   `PHASES` (kenttäkoukut), `HUB_WORLDS` (sokkelot), `ISLANDS` (saaristokartta) ja `scriptManifest()`.
-- `js/state.js` — jaettu tila, sokkelon ajonaikainen tila
+- `js/state.js` — jaettu tila, sokkelon ajonaikainen tila, fonttipino `UI_FONT`
+- `js/art.js` — **piirtokirjasto**: tarrakirja-ilmeen muodot, värit, pehmennykset, tärinä ja pop-efektit (ks. Tyyliopas)
 - `js/audio.js` — WebAudio
 - `js/progress.js` — edistymisen tallennus (localStorage), sydämet, tarkistuspisteet
-- `js/world.js` — koko, taustojen esirenderöinti
+- `js/world.js` — koko, taustojen esirenderöinti kerroksiksi (parallaksi), maiseman yhteiset muodot (puu, pensas, kukka, linna, pilvi)
 - `js/draw-actors.js` — tähti, pupu, yksisarvinen
 - `js/fx.js` — kipinät, konfetti, opastenuoli
-- `js/ambient.js` — tunnelmahiukkaset, etualan siluetit ja kentän alkukortti (PHASES: `ambient`, `fg`)
+- `js/ambient.js` — tunnelmahiukkaset, etualan siluetit, valaistus (`drawLight`) ja kentän alkukortti (PHASES: `ambient`, `fg`, `light`)
 - `js/flow-sea.js` — saaristokartta (ylin navigaatio), saaret ja sateenkaari
 - `js/flow-hub.js` — saaren karttalabyrintti, vaiheen käynnistys ja kentän elinkaaren
   yhteinen alku (`levelBegin`: tilan nollaus ja nappien ilme rekisterin lipuista; skipTo
@@ -521,12 +523,51 @@ väärästä vastauksesta tulee vain ravistus.
 - Taikurin teltta: kierrokset `MAG_ROUNDS` (kupit, vaihdot, vaihdon kesto)
 - Maksa: rahat `PAY_COINS`, hinta `3 + randInt(7)`; Reitti: ruudukko `ROUTE_N`, askeleita `ROUTE_MAX`, askelaika `0.5` s; Palapeli: kuvat `JIGSAW_PICS`
 
+## Tyyliopas
+
+Pelin ilme on **tarrakirja**: pehmeät pyöreät muodot, joilla on tummempi
+reunaviiva, kaksi sävyä ja kiilto, ja jotka seisovat maavarjon päällä.
+Kaikki piirretään koodilla `js/art.js`:n apufunktioilla, jotta jokainen kenttä
+näyttää samalta perheeltä. Metsä on mallikenttä; muut saaret siirretään samaan
+ilmeeseen kenttä kerrallaan.
+
+Säännöt:
+
+- **Muoto**: `artBlob`/`artCircle`/`artRoundRect` tai oma polku + `artFillPath`.
+  Liukuväri ylhäältä vaaleampi (`ART.shadeUp`), alhaalta tummempi (`ART.shadeDown`),
+  reunaviiva perusväristä tummennettu (`ART.lineDark`), paksuus `ART.lineW` × säde.
+- **Valkoiset hahmot** varjostetaan laventeliin (`shadeTo`), ei harmaaseen; reunaviiva
+  annetaan `lineColor`-optiolla (yksisarvinen `UNI_LINE`, pupu `BUNNY_LINE`).
+- **Raajat** ovat `artLimb`-viivoja (pyöreät päät, reunaviiva). Takimmaiset raajat
+  varjosävyllä -> syvyys.
+- **Kasvot**: `artEye` (valkuainen, pupilli, kiilto; `look` katseen suunta, `blink`),
+  `artBlush` posket. Hahmo räpäyttää silmiä paikallaan.
+- **Maavarjo** (`artShadow`) jokaisen hahmon ja ison esineen alla; ilmassa pienempi ja haaleampi.
+- **Hehku** (`artGlow`) keräiltävissä, lyhdyissä ja taiassa — ei `shadowBlur`ia eikä
+  `filter`-suodattimia (hidas vanhalla tabletilla).
+- **Syvyys**: tausta kerroksiksi `renderBgLayers`-koukulla (`speed` 0.2 kaukainen,
+  0.5–0.6 keski, 1 lähin). Kaukaiset kerrokset sävytetään taivaan väriin
+  (`artMix(color, haze, t)`, ilmaperspektiivi) ja piirretään ilman reunaviivaa.
+- **Valaistus**: kentän `light: { rays, tint, vignette }` piirretään maailman päälle,
+  HUD:n alle. Aurinko/kuu ilmoittaa paikkansa `bgSun`-muuttujassa säteitä varten.
+- **Liike**: pehmennykset (`easeOutCubic`, `easeOutBack`, `easeInOutSine`), litistys ja
+  venytys (`artSquash`) lähtiessä, pysähtyessä ja osumasta, tärinä (`artShakeStart`)
+  vain maailmalle, ei HUD:lle, pop-efektit (`artPop`) kerätessä ja löydettäessä.
+  Kerätty esine lentää HUD-paikkaansa ja pomppauttaa sen.
+- **Teksti** aina `UI_FONT`-pinolla (Fredoka), isoilla kirjaimilla; napit ovat
+  SVG-ikoneita `index.html`:ssä, ei emojeja.
+- **Paletti per saari**: pehmeät, kylläiset päävärit; taivaan yläreuna tummempi kuin
+  horisontti; polku ja maa lämpimiä.
+
 ## Tekniikka
 
-Canvas 2D, ei riippuvuuksia. Tausta esirenderöidään (isot maailmat
+Canvas 2D, ei riippuvuuksia. Tausta esirenderöidään kerroksiksi (isot maailmat
 pienennettynä vanhojen laitteiden canvas-rajan takia). Äänet WebAudiolla.
 
 Testaus: `window.VT` on testauskahva — `VT.play('cave')`, `VT.tick(dt)`,
 `VT.hold(true, x, y)`, `VT.jump()`, `VT.taskTap(x, y)`, `VT.hearts()`,
 `VT.showHub()`, `VT.info()`. Paikallinen palvelin tarvitaan (tiedostot
-ladataan erillisinä): `node tools/serve.js` ja avaa http://localhost:8765.
+ladataan erillisinä): `node tools/serve.js` ja avaa http://localhost:8765
+(toinen portti: `node tools/serve.js . 3000` tai `PORT`-ympäristömuuttuja).
+Piilotetussa selainpaneelissa `requestAnimationFrame` ei etene: aja kehyksiä
+`for (i = 0; i < 120; i++) VT.tick(1/60)`.
