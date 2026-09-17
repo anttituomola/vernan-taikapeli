@@ -1,8 +1,8 @@
 'use strict';
 
 // Kirjainpuutarha: kiireetön lukukenttä ilman sydämiä ja ilman liikkumista.
-// Pensaissa kylpee kirjaimia; sanakupla ylhäällä näyttää tavutettuna, mikä
-// sana on vuorossa. Napauta pensasta, jossa on sanan seuraava kirjain —
+// Pensaissa kylpee kirjaimia; ylhäällä näkyy tavutettu sana ja sen kuva.
+// Napauta pensasta, jossa on sanan seuraava kirjain —
 // kirjain lentää sanaan ja pensaat sekoittuvat. Kolme sanaa.
 // Tehtävät avautuvat sanojen valmistuessa (käsin, kuten Kaivoksessa).
 
@@ -12,7 +12,7 @@ var grove = {
   words: [], wi: 0, next: 0, done: 0,
   letters: [], // pensaiden kirjaimet
   anims: [],   // liikkuvat kirjaimet {ch, x0, y0, x1, y1, t}
-  wrongT: 0, wrongIdx: -1, sayT: -1
+  wrongT: 0, wrongIdx: -1, sayT: -1, hudRect: null
 };
 var GROVE_DISTRACTORS = 'AEIOUYHKLMNPRSTV';
 
@@ -82,21 +82,67 @@ function resizeGrove() {
   princess.y = viewH * 0.92;
 }
 
-// Sanan kirjainpaikkojen asettelu kuplassa
+// Sana-HUD: tavutettu sana + kuva, kerätyt kirjaimet värillisinä, seuraava hehkuu
+function groveHudGeom() {
+  var w = grove.words[grove.wi], h = viewH * 0.085;
+  readFont(ctx, h * 0.62);
+  var bw = ctx.measureText(w.w).width + h * 1.6 + h * 1.1;
+  return { w: w, syl: w.w.split('-'), h: h, bw: bw, bx: viewW / 2, by: viewH * 0.17 };
+}
+
 function groveWordLayout() {
-  var letters = groveLettersOf(grove.words[grove.wi]);
-  var syl = grove.words[grove.wi].w.split('-');
-  var gap = viewH * 0.055, dash = viewH * 0.03, total = 0, i, j, k = 0, xs = [];
-  for (i = 0; i < syl.length; i++) {
-    total += syl[i].length * gap;
-    if (i < syl.length - 1) total += dash;
+  var g = groveHudGeom(), letters = groveLettersOf(g.w), xs = [], i, k, cw;
+  var x = g.bx - g.bw / 2 + g.h * 0.5;
+  readFont(ctx, g.h * 0.62);
+  for (i = 0; i < g.syl.length; i++) {
+    for (k = 0; k < g.syl[i].length; k++) {
+      cw = ctx.measureText(g.syl[i].charAt(k)).width;
+      xs.push(x + cw / 2);
+      x += cw;
+    }
+    if (i < g.syl.length - 1) x += ctx.measureText('-').width;
   }
-  var x = viewW / 2 - total / 2 + gap / 2;
+  grove.hudRect = { x: g.bx - g.bw / 2, y: g.by - g.h / 2, w: g.bw, h: g.h };
+  return { xs: xs, letters: letters, y: g.by };
+}
+
+function drawGroveWordHud(c) {
+  var g = groveHudGeom(), w = g.w, syl = g.syl, h = g.h, bx = g.bx, by = g.by, i, k, x, li = 0;
+  var sayIdx = grove.sayT >= 0 ? Math.floor(grove.sayT / WORD_SYL_T) : -1;
+  groveWordLayout();
+  c.fillStyle = 'rgba(255,255,255,0.92)';
+  roundRect(c, bx - g.bw / 2, by - h / 2, g.bw, h, h * 0.4);
+  c.fill();
+  c.textAlign = 'left';
+  c.textBaseline = 'middle';
+  x = bx - g.bw / 2 + h * 0.5;
+  readFont(c, h * 0.62);
   for (i = 0; i < syl.length; i++) {
-    for (j = 0; j < syl[i].length; j++) { xs.push(x); x += gap; k++; }
-    x += dash;
+    for (k = 0; k < syl[i].length; k++) {
+      var ch = syl[i].charAt(k), cw = c.measureText(ch).width;
+      var done = li < grove.next, isNext = li === grove.next;
+      if (isNext) {
+        var glow = c.createRadialGradient(x + cw / 2, by, h * 0.05, x + cw / 2, by, h * 0.55);
+        glow.addColorStop(0, 'rgba(255,230,140,' + (0.6 + Math.sin(globalT * 5) * 0.25) + ')');
+        glow.addColorStop(1, 'rgba(255,230,140,0)');
+        c.fillStyle = glow;
+        c.beginPath(); c.arc(x + cw / 2, by, h * 0.55, 0, Math.PI * 2); c.fill();
+      }
+      readFont(c, h * 0.62);
+      c.fillStyle = done ? '#ff5f7e' : (isNext ? '#8a2be2' : 'rgba(138,43,226,0.55)');
+      if (sayIdx >= 0) c.fillStyle = i === sayIdx ? '#ff5f7e' : (done ? '#c94f7e' : '#8a2be2');
+      c.fillText(ch, x, by + h * 0.03);
+      x += cw;
+      li++;
+    }
+    if (i < syl.length - 1) { c.fillStyle = '#c9a0ff'; c.fillText('-', x, by + h * 0.03); x += c.measureText('-').width; }
   }
-  return { xs: xs, letters: letters, y: viewH * 0.17 };
+  c.textAlign = 'center';
+  c.textBaseline = 'alphabetic';
+  var ix = bx + g.bw / 2 - h * 0.6;
+  c.fillStyle = '#fff6d8';
+  c.beginPath(); c.arc(ix, by, h * 0.42, 0, Math.PI * 2); c.fill();
+  drawWordIcon(c, w.icon, ix, by, h * 0.42);
 }
 
 function groveWordDone() {
@@ -120,7 +166,8 @@ function handleGroveTap(px, py) {
   var i, p, dx, dy;
   // Sanakuplan napautus lukee sanan uudelleen
   var lay = groveWordLayout();
-  if (Math.abs(py - lay.y) < viewH * 0.08 && Math.abs(px - viewW / 2) < viewW * 0.3) {
+  var hr = grove.hudRect;
+  if (hr && px >= hr.x && px <= hr.x + hr.w && py >= hr.y && py <= hr.y + hr.h) {
     groveWordSay();
     return;
   }
@@ -235,37 +282,6 @@ function groveDrawBush(c, p, ch, wrong) {
 function drawGrove() {
   var i, p;
   if (!beginPlayWorld()) return;
-  // Sanakupla: kerätyt kirjaimet paikoillaan, seuraava hehkuu
-  var lay = groveWordLayout();
-  var totalW = lay.xs.length * viewH * 0.055 + viewH * 0.1;
-  drawPromptBubble(ctx, viewW / 2, lay.y, totalW, viewH * 0.11);
-  var syl = grove.words[grove.wi].w.split('-');
-  var sayIdx = grove.sayT >= 0 ? Math.floor(grove.sayT / WORD_SYL_T) : -1;
-  var sylOf = [], acc = 0;
-  for (i = 0; i < syl.length; i++) { acc += syl[i].length; sylOf.push(acc); }
-  ctx.font = 'bold ' + Math.round(viewH * 0.052) + 'px ' + UI_FONT;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  for (i = 0; i < lay.letters.length; i++) {
-    var si = 0;
-    while (i >= sylOf[si]) si++;
-    var isNext = i === grove.next;
-    if (isNext) {
-      var g = ctx.createRadialGradient(lay.xs[i], lay.y, viewH * 0.005, lay.xs[i], lay.y, viewH * 0.04);
-      g.addColorStop(0, 'rgba(255,240,160,' + (0.7 + Math.sin(globalT * 5) * 0.3) + ')');
-      g.addColorStop(1, 'rgba(255,240,160,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(lay.xs[i], lay.y, viewH * 0.04, 0, Math.PI * 2); ctx.fill();
-    }
-    if (i < grove.next) {
-      ctx.fillStyle = si === sayIdx ? '#ff5f7e' : '#8a2be2';
-      ctx.fillText(lay.letters[i], lay.xs[i], lay.y);
-    } else {
-      ctx.fillStyle = 'rgba(138,43,226,0.35)';
-      ctx.fillText(isNext ? '·' : '_', lay.xs[i], lay.y);
-    }
-  }
-  ctx.textBaseline = 'alphabetic';
   // Pensaat kirjaimineen
   for (i = 0; i < GROVE_BUSHES; i++) {
     p = groveBushPos(i);
@@ -286,6 +302,7 @@ function drawGrove() {
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawParticlesLayer(ctx);
   endPlayWorld();
+  drawGroveWordHud(ctx);
   drawPickupHud(ctx, GROVE_WORDS, function (i2) { return i2 < grove.done; },
     function (c, x, y, s) { drawWordIcon(c, 'book', x, y, s); });
   drawTaskOverlay(ctx);
