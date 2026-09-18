@@ -933,3 +933,69 @@ function renderSkyNear(b, w, h) {
   drawCastle(b, w * 0.94, h * 0.62, h * 0.26);
 }
 
+// Revontulimaan jaettu taivas, hohtokaari ja lumeen piirretyt tunturit
+function renderNorthSky(b, w, h) {
+  var i, x, sky = b.createLinearGradient(0, 0, 0, h * 0.72);
+  sky.addColorStop(0, '#081428');
+  sky.addColorStop(0.45, '#123048');
+  sky.addColorStop(1, '#1a3a50');
+  b.fillStyle = sky;
+  b.fillRect(0, 0, w, h);
+  b.fillStyle = '#fff8d0';
+  for (i = 0; i < 28; i++) {
+    x = w * ((i * 0.11 + 0.03) % 1);
+    b.globalAlpha = 0.35 + (i % 4) * 0.15;
+    b.beginPath(); b.arc(x, h * (0.05 + (i % 7) * 0.06), 1.1 + (i % 3) * 0.5, 0, Math.PI * 2); b.fill();
+  }
+  b.globalAlpha = 1;
+  drawBgSun(b, w * 0.82, h * 0.12, h * 0.045, 0.22, '#c8f0ff', '#f4fbff', '#d0e8ff');
+}
+function renderNorthHills(b, w, h) {
+  fillHillBand(b, w, h, h * 0.62, '#1a3850', function (px) {
+    return h * 0.62 - h * 0.08 - Math.sin(px * 0.0018 + 0.4) * h * 0.05;
+  });
+  fillHillBand(b, w, h, h * 0.70, '#245068', function (px) {
+    return h * 0.70 - h * 0.04 - Math.sin(px * 0.0026 + 1.1) * h * 0.035;
+  });
+}
+function renderNorthGround(b, w, h) {
+  var g = b.createLinearGradient(0, groundTop, 0, h);
+  g.addColorStop(0, '#d8eef8');
+  g.addColorStop(1, '#b0d0e0');
+  b.fillStyle = g;
+  b.fillRect(0, groundTop, w, h - groundTop);
+  b.fillStyle = 'rgba(255,255,255,0.55)';
+  b.fillRect(0, groundTop + h * 0.015, w, Math.max(0, groundBottom - groundTop - h * 0.02));
+}
+function drawAuroraCurtain(c, w, h, t, cam) {
+  var i, x0, cols = ['rgba(80,255,170,0.22)', 'rgba(120,200,255,0.18)', 'rgba(180,120,255,0.16)'];
+  c.save();
+  c.globalCompositeOperation = 'lighter';
+  for (i = 0; i < 3; i++) {
+    x0 = ((Math.sin(t * (0.22 + i * 0.07) + i) * 0.5 + 0.5) * 0.7 + 0.1) * w - (cam || 0) * 0.22;
+    c.strokeStyle = cols[i];
+    c.lineWidth = h * (0.09 - i * 0.018);
+    c.beginPath();
+    c.moveTo(x0 - h * 0.4, h * 0.04);
+    c.quadraticCurveTo(x0 + Math.sin(t * 0.8 + i) * h * 0.2, h * 0.22, x0 + h * 0.15, h * 0.42);
+    c.stroke();
+  }
+  c.restore();
+}
+function northRideUnicorn(dt, busy) {
+  var dx = unicorn.tx - unicorn.x, dy = unicorn.ty - unicorn.y;
+  var dist = Math.sqrt(dx * dx + dy * dy), step;
+  if (dist > 6 && !celebrating && !busy) {
+    unicorn.moving = true;
+    step = Math.min(unicorn.speed * dt, dist);
+    unicorn.x += (dx / dist) * step;
+    unicorn.y += (dy / dist) * step;
+    if (Math.abs(dx) > 4) unicorn.facing = dx > 0 ? 1 : -1;
+    unicorn.walkPhase += dt * 10;
+  } else unicorn.moving = false;
+  followCam(unicorn.x, dt);
+}
+function northGateAt(fx) {
+  return { fx: fx, x: fx * worldW, open: false };
+}
+

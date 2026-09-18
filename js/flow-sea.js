@@ -7,6 +7,7 @@
 // Saaret (ISLANDS) johdetaan js/worlds.js:n WORLDS-rekisteristä.
 // Sumuiset saaret vihjaavat tulevista maailmoista. Sateenkaaren 7 väriä ovat
 // kaikki käytössä; kahdeksas saari (Tivolisaari) kruunaa kaaren kultatähdellä.
+// Yhdeksäs saari (Revontulimaa) ei lisää kaistetta.
 var SEA_FOG = [];
 var RAINBOW_COLORS = ['#ff5a5a', '#ff9f3a', '#ffe14d', '#5fd36b', '#4aa8ff', '#6f5cff', '#c46bff'];
 
@@ -41,9 +42,9 @@ function islandUnlocked(i) {
   return i === 0 || islandDone(ISLANDS[i - 1]);
 }
 function rainbowEarned() {
-  var n = 0, i;
+  var n = 0, i, cap = RAINBOW_COLORS.length + 1;
   for (i = 0; i < ISLANDS.length; i++) if (islandDone(ISLANDS[i])) n++;
-  return n;
+  return n > cap ? cap : n;
 }
 function seaNextIsland() {
   var i;

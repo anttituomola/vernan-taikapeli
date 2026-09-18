@@ -7,10 +7,12 @@ function randInt(n) {
   return Math.floor(Math.random() * n);
 }
 
-// a − b = ?  (a 6..15, tulos vähintään 2)
+// a − b = ?  (a 8..19, tulos vähintään 3)
 function makeMinusProblem(t) {
-  var a = 6 + randInt(10);
-  var b = 1 + randInt(a - 2);
+  var a = 8 + randInt(12);
+  var b = 1 + randInt(a - 3);
+  if (a - b < 3) b = a - 3;
+  t.orbs = 3;
   return { a: a, b: b, correct: a - b, answers: pickNumberAnswers(a - b, [a, b]) };
 }
 
@@ -26,9 +28,12 @@ function makePatternProblem(t) {
     [A, A, B, A, A],
     [A, B, C, A, B],
     [A, B, B, A, B],
-    [A, A, B, B, A]
+    [A, A, B, B, A],
+    [A, B, C, B, A],
+    [A, B, A, C, A]
   ];
   var seq = forms[randInt(forms.length)];
+  t.orbs = 3;
   var correct = seq[4];
   var pool = [A, B, C], distract = [], i;
   for (i = 0; i < pool.length; i++) {
@@ -41,8 +46,8 @@ function makePatternProblem(t) {
 // Kummalla puolella on enemmän? Kaksi ryhmää, kaksi valintapalloa.
 // Kummalla puolella on enemmän? Kuviot hajallaan ja ero vain 1–2, jotta pitää laskea.
 function makeCompareProblem(t) {
-  var n1 = 4 + randInt(6);
-  var delta = 1 + randInt(2);
+  var n1 = 7 + randInt(5);
+  var delta = 1;
   var n2 = Math.random() < 0.5 ? n1 + delta : n1 - delta;
   if (n2 < 3) n2 = n1 + delta;
   if (n2 > 10) n2 = n1 - delta;
@@ -424,7 +429,10 @@ var WORD_LIST = [
   { w: 'KA-LA', icon: 'fish' }, { w: 'PAL-LO', icon: 'ball' }, { w: 'KRUU-NU', icon: 'crown' },
   { w: 'KARK-KI', icon: 'candy' }, { w: 'LU-MI', icon: 'snow' }, { w: 'O-ME-NA', icon: 'apple' },
   { w: 'KIR-JA', icon: 'book' }, { w: 'A-VAIN', icon: 'key' }, { w: 'PER-HO-NEN', icon: 'butterfly' },
-  { w: 'SA-TEEN-KAA-RI', icon: 'rainbow' }
+  { w: 'SA-TEEN-KAA-RI', icon: 'rainbow' },
+  { w: 'PO-RO', icon: 'reindeer' }, { w: 'KET-TU', icon: 'fox' },
+  { w: 'TU-LI', icon: 'fire' }, { w: 'TAI-VAS', icon: 'sky' }, { w: 'KELK-KA', icon: 'sled' },
+  { w: 'KI-VI', icon: 'gem' }
 ];
 var WORD_SYL_T = 0.5;
 
@@ -607,6 +615,53 @@ function drawWordIcon(c, id, x, y, r) {
     c.lineCap = 'butt';
   } else if (id === 'butterfly') {
     drawButterfly(c, x, y, s * 0.85, globalT, '#c9a0ff');
+  } else if (id === 'reindeer') {
+    c.fillStyle = '#8a5a30';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y + s * 0.15, s * 0.7, s * 0.38, 0, 0, Math.PI * 2);
+    else c.arc(x, y + s * 0.15, s * 0.5, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.arc(x + s * 0.55, y - s * 0.15, s * 0.28, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#5a3a18';
+    c.lineWidth = Math.max(2, s * 0.12);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x + s * 0.5, y - s * 0.3); c.lineTo(x + s * 0.25, y - s * 0.85); c.lineTo(x + s * 0.45, y - s * 1.05); c.moveTo(x + s * 0.25, y - s * 0.85); c.lineTo(x + s * 0.05, y - s * 0.95); c.stroke();
+    c.beginPath(); c.moveTo(x + s * 0.65, y - s * 0.3); c.lineTo(x + s * 0.85, y - s * 0.85); c.lineTo(x + s * 1.05, y - s * 1.0); c.moveTo(x + s * 0.85, y - s * 0.85); c.lineTo(x + s * 0.7, y - s * 1.0); c.stroke();
+    c.lineCap = 'butt';
+    c.fillStyle = '#222';
+    c.beginPath(); c.arc(x + s * 0.65, y - s * 0.18, s * 0.07, 0, Math.PI * 2); c.fill();
+  } else if (id === 'fox') {
+    c.fillStyle = '#e88a3a';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y + s * 0.1, s * 0.7, s * 0.38, 0, 0, Math.PI * 2);
+    else c.arc(x, y + s * 0.1, s * 0.5, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.moveTo(x + s * 0.15, y - s * 0.15); c.lineTo(x + s * 0.05, y - s * 0.75); c.lineTo(x + s * 0.4, y - s * 0.25); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(x + s * 0.45, y - s * 0.15); c.lineTo(x + s * 0.7, y - s * 0.75); c.lineTo(x + s * 0.7, y - s * 0.2); c.closePath(); c.fill();
+    c.fillStyle = '#fff4e8';
+    c.beginPath(); c.arc(x + s * 0.45, y - s * 0.05, s * 0.2, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#222';
+    c.beginPath(); c.arc(x + s * 0.52, y - s * 0.08, s * 0.07, 0, Math.PI * 2); c.fill();
+  } else if (id === 'fire') {
+    c.fillStyle = '#ff6b3a';
+    c.beginPath(); c.moveTo(x, y + s * 0.7); c.quadraticCurveTo(x - s * 0.8, y + s * 0.1, x - s * 0.15, y - s * 0.5); c.quadraticCurveTo(x, y - s * 0.1, x + s * 0.2, y - s * 0.85); c.quadraticCurveTo(x + s * 0.15, y - s * 0.1, x + s * 0.75, y + s * 0.05); c.quadraticCurveTo(x + s * 0.5, y + s * 0.7, x, y + s * 0.7); c.fill();
+    c.fillStyle = '#ffe27a';
+    c.beginPath(); c.moveTo(x, y + s * 0.55); c.quadraticCurveTo(x - s * 0.35, y + s * 0.15, x, y - s * 0.15); c.quadraticCurveTo(x + s * 0.35, y + s * 0.15, x, y + s * 0.55); c.fill();
+  } else if (id === 'sky') {
+    c.fillStyle = '#5a8cff';
+    c.beginPath(); c.arc(x, y, s * 0.95, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff6c8';
+    c.beginPath(); c.arc(x - s * 0.25, y - s * 0.2, s * 0.22, 0, Math.PI * 2); c.fill();
+    drawStar(c, x + s * 0.35, y + s * 0.15, s * 0.22, 0, 0);
+  } else if (id === 'sled') {
+    c.strokeStyle = '#8a5a30';
+    c.lineWidth = Math.max(3, s * 0.18);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x - s * 0.85, y + s * 0.35); c.quadraticCurveTo(x, y + s * 0.55, x + s * 0.9, y + s * 0.2); c.stroke();
+    c.fillStyle = '#c46b3a';
+    roundRect(c, x - s * 0.7, y - s * 0.25, s * 1.35, s * 0.45, s * 0.12);
+    c.fill();
+    c.lineCap = 'butt';
   } else if (id === 'rainbow') {
     var cols = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'];
     c.lineWidth = Math.max(2, s * 0.16);
@@ -621,18 +676,19 @@ function drawWordIcon(c, id, x, y, r) {
 // Nämä neljä asuivat aiemmin play-forest.js:ssä; kuuluvat muiden generaattoreiden luo.
 
 function makeMathProblem(t) {
-  var a = 3 + Math.floor(Math.random() * 7);
-  var b = 2 + Math.floor(Math.random() * 8);
-  if (a + b > 15) b = 15 - a;
-  if (b < 2) b = 2;
+  var a = 5 + Math.floor(Math.random() * 8);
+  var b = 4 + Math.floor(Math.random() * 8);
+  if (a + b > 18) b = 18 - a;
+  if (b < 3) b = 3;
+  t.orbs = 3;
   return { a: a, b: b, correct: a + b, answers: pickNumberAnswers(a + b, [a, b]) };
 }
 
 // Laske vain mallin mukaiset: joukossa on myös hämääjiä (eri muoto tai eri väri)
 function makeCountProblem(t) {
   var target = { kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)], color: randInt(TASK_BF_COLORS.length), variant: 0 };
-  var count = 4 + randInt(5);
-  var extra = 3 + randInt(3);
+  var count = 6 + randInt(5);
+  var extra = 4 + randInt(3);
   var items = [], i, e;
   for (i = 0; i < count; i++) items.push(target);
   for (i = 0; i < extra; i++) {
@@ -643,6 +699,7 @@ function makeCountProblem(t) {
     }
     items.push(e);
   }
+  t.orbs = 3;
   return {
     items: shuffleNums(items),
     prompt: target,
@@ -656,7 +713,7 @@ function makeCountProblem(t) {
 
 // Etsi samanlainen kuva: malli on 2–3 kuvion ryhmä, väärät eroavat yhdellä yksityiskohdalla
 function makeMatchProblem(t) {
-  var n = 2 + randInt(2), i, tries = 0, ok, d, idx, keys, kk;
+  var n = 3, i, tries = 0, ok, d, idx, keys, kk;
   var base = [];
   for (i = 0; i < n; i++) {
     base.push({ kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)], color: randInt(TASK_BF_COLORS.length), variant: 0 });

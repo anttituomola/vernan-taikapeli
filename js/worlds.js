@@ -853,6 +853,113 @@ var WORLDS = [
         respawn: function () { respawnMagician(); }
       }
     ]
+  },
+  {
+    // Horisontin takana: aukeaa Tivolisaaren jälkeen. Sateenkaari jää
+    // seitsemään väriin + kultatähteen; tämä saari ei lisää kaistetta.
+    id: 9, name: 'Revontulimaa',
+    island: { fx: 0.16, fy: 0.90, size: 0.68, finaleKind: 'foxguard', deco: ['voyage', 'aurora', 'foxguard'] },
+    map: [
+      '###########',
+      '#B.......H#',
+      '#########.#',
+      '#R........#',
+      '#.#########',
+      '#........P#',
+      '#########.#',
+      '#K........#',
+      '#.#########',
+      '#........L#',
+      '#########.#',
+      '#........F#',
+      '###########'
+    ],
+    levels: [
+      {
+        kind: 'voyage', room: 'H', name: 'Horisontti', color: '#3a88a8', script: 'play-voyage',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#1a4060', ambient: 'sparkle', fg: null,
+        init: function () { initVoyage(); },
+        update: function (dt) { updateVoyage(dt); },
+        draw: function () { drawVoyage(); },
+        tap: function (x, y) { handleVoyageTap(x, y); },
+        resize: function (ratio) { resizeVoyage(ratio); },
+        renderBg: function (b, w, h) { renderVoyageBg(b, w, h); },
+        renderBgLayers: function () { return voyageLayers(); },
+        light: { rays: true, raysColor: '#c8f0ff', raysAlpha: 0.7, tint: ['rgba(20,50,80,0.14)', 'rgba(10,30,50,0.08)'], vignette: 0.4 },
+        respawn: function () { respawnVoyage(); }
+      },
+      {
+        kind: 'aurora', room: 'R', name: 'Revontulipolku', color: '#7cffc4', script: 'play-aurora',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#123048', ambient: 'sparkle', fg: { kind: 'snow', color: 'rgba(200,230,240,0.75)' },
+        init: function () { initAurora(); },
+        update: function (dt) { updateAurora(dt); },
+        draw: function () { drawAurora(); },
+        tap: function (x, y) { handleAuroraTap(x, y); },
+        resize: function (ratio) { resizeAurora(ratio); },
+        renderBg: function (b, w, h) { renderAuroraBg(b, w, h); },
+        renderBgLayers: function () { return auroraLayers(); },
+        light: { rays: true, raysColor: '#a8ffe0', raysAlpha: 0.75, tint: ['rgba(20,60,70,0.14)', 'rgba(10,30,50,0.08)'], vignette: 0.42 },
+        respawn: function () { respawnAurora(); }
+      },
+      {
+        kind: 'reindeer', room: 'P', name: 'Porolaakso', color: '#8a5a30', script: 'play-reindeer',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#1a3a50', ambient: 'sparkle', fg: { kind: 'snow', color: 'rgba(200,230,240,0.75)' },
+        init: function () { initReindeer(); },
+        update: function (dt) { updateReindeer(dt); },
+        draw: function () { drawReindeer(); },
+        tap: function (x, y) { handleReindeerTap(x, y); },
+        resize: function (ratio) { resizeReindeer(ratio); },
+        renderBg: function (b, w, h) { renderReindeerBg(b, w, h); },
+        renderBgLayers: function () { return reindeerLayers(); },
+        light: { rays: true, raysColor: '#ffe9c8', tint: ['rgba(30,50,70,0.12)', 'rgba(20,40,60,0.06)'], vignette: 0.36 },
+        respawn: function () { respawnReindeer(); }
+      },
+      {
+        kind: 'sled', room: 'K', name: 'Kelkkamäki', color: '#c46b3a', script: 'play-sled',
+        control: 'fly', usesJump: true, jumpKind: 'flap', usesWand: false, usesHearts: true,
+        bgColor: '#123048', ambient: 'sparkle', fg: null,
+        init: function () { initSled(); },
+        update: function (dt) { updateSled(dt); },
+        draw: function () { drawSled(); },
+        tap: function (x, y) { handleSledTap(x, y); },
+        resize: function (ratio) { resizeSled(ratio); },
+        renderBg: function (b, w, h) { renderSledBg(b, w, h); },
+        renderBgLayers: function () { return sledLayers(); },
+        light: { rays: true, raysColor: '#c8f0ff', tint: ['rgba(30,50,80,0.12)', 'rgba(20,40,70,0.06)'], vignette: 0.38 },
+        respawn: function () { respawnSled(); }
+      },
+      {
+        kind: 'snowword', room: 'L', name: 'Lumisana', color: '#c8b8ff', script: 'play-snowword',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
+        bgColor: '#123048', ambient: 'sparkle', fg: null,
+        init: function () { initSnowword(); },
+        update: function (dt) { updateSnowword(dt); },
+        draw: function () { drawSnowword(); },
+        tap: function (x, y) { handleSnowwordTap(x, y); },
+        resize: function () { resizeSnowword(); },
+        renderBg: function (b, w, h) { renderSnowwordBg(b, w, h); },
+        renderBgLayers: function () { return snowwordLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.75, tint: ['rgba(30,40,80,0.14)', 'rgba(20,30,60,0.06)'], vignette: 0.4 },
+        respawn: function () { respawnSnowword(); }
+      },
+      {
+        kind: 'foxguard', room: 'F', name: 'Revontulikettu', color: '#e88a3a', script: 'play-foxguard',
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5000,
+        bgColor: '#0e2438', ambient: 'stars', fg: { kind: 'snow', color: 'rgba(200,230,240,0.75)' },
+        init: function () { initFoxguard(); },
+        update: function (dt) { updateFoxguard(dt); },
+        draw: function () { drawFoxguard(); },
+        tap: function (x, y) { handleFoxguardTap(x, y); },
+        resize: function (ratio) { resizeFoxguard(ratio); },
+        renderBg: function (b, w, h) { renderFoxguardBg(b, w, h); },
+        renderBgLayers: function () { return foxguardLayers(); },
+        light: { rays: true, raysColor: '#ffe08a', raysAlpha: 0.7, tint: ['rgba(40,30,20,0.12)', 'rgba(20,20,40,0.08)'], vignette: 0.42 },
+        respawn: function () { respawnFoxguard(); }
+      }
+    ]
   }
 ];
 
@@ -916,7 +1023,7 @@ function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
     'flow-hub', 'flow-sea', 'flow-home',
-    'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair',
+    'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north',
     'platformer', 'pen-core'
   ];
   var seen = {}, wi, li, s;

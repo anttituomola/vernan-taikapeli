@@ -779,6 +779,62 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.textBaseline = 'middle';
     c.fillText('A', x, y);
     c.textBaseline = 'alphabetic';
+  } else if (kind === 'voyage') {
+    drawBoat(c, x, y + s * 0.04, s * 0.42);
+  } else if (kind === 'aurora') {
+    c.strokeStyle = '#7cffc4';
+    c.lineWidth = Math.max(2, s * 0.05);
+    c.beginPath();
+    c.moveTo(x - s * 0.22, y + s * 0.08);
+    c.quadraticCurveTo(x - s * 0.04, y - s * 0.28, x + s * 0.08, y + s * 0.04);
+    c.stroke();
+    c.strokeStyle = '#c9a0ff';
+    c.beginPath();
+    c.moveTo(x - s * 0.08, y + s * 0.1);
+    c.quadraticCurveTo(x + s * 0.08, y - s * 0.22, x + s * 0.22, y + s * 0.06);
+    c.stroke();
+  } else if (kind === 'reindeer') {
+    c.fillStyle = '#8a5a30';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y + s * 0.04, s * 0.16, s * 0.09, 0, 0, Math.PI * 2);
+    else c.arc(x, y + s * 0.04, s * 0.12, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.arc(x + s * 0.14, y - s * 0.04, s * 0.07, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#5a3a18';
+    c.lineWidth = Math.max(2, s * 0.035);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x + s * 0.12, y - s * 0.08); c.lineTo(x, y - s * 0.22); c.lineTo(x - s * 0.04, y - s * 0.26); c.stroke();
+    c.beginPath(); c.moveTo(x + s * 0.18, y - s * 0.08); c.lineTo(x + s * 0.28, y - s * 0.22); c.lineTo(x + s * 0.32, y - s * 0.26); c.stroke();
+    c.lineCap = 'butt';
+  } else if (kind === 'sled') {
+    c.strokeStyle = '#8a5a30';
+    c.lineWidth = Math.max(2, s * 0.04);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x - s * 0.18, y + s * 0.08); c.quadraticCurveTo(x, y + s * 0.14, x + s * 0.2, y + s * 0.04); c.stroke();
+    c.lineCap = 'butt';
+    c.fillStyle = '#c46b3a';
+    roundRect(c, x - s * 0.14, y - s * 0.06, s * 0.28, s * 0.1, s * 0.04);
+    c.fill();
+  } else if (kind === 'snowword') {
+    c.fillStyle = '#fff6d8';
+    roundRect(c, x - s * 0.2, y - s * 0.16, s * 0.4, s * 0.3, s * 0.06);
+    c.fill();
+    c.fillStyle = '#5a2a9a';
+    c.font = 'bold ' + Math.round(s * 0.16) + 'px ' + UI_FONT;
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('Ä', x, y);
+    c.textBaseline = 'alphabetic';
+  } else if (kind === 'foxguard') {
+    c.fillStyle = '#e88a3a';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y + s * 0.04, s * 0.18, s * 0.1, 0, 0, Math.PI * 2);
+    else c.arc(x, y + s * 0.04, s * 0.14, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath(); c.moveTo(x - s * 0.04, y - s * 0.04); c.lineTo(x - s * 0.12, y - s * 0.22); c.lineTo(x + s * 0.04, y - s * 0.06); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(x + s * 0.08, y - s * 0.04); c.lineTo(x + s * 0.18, y - s * 0.22); c.lineTo(x + s * 0.02, y - s * 0.06); c.closePath(); c.fill();
+    c.fillStyle = '#fff4e8';
+    c.beginPath(); c.arc(x + s * 0.08, y, s * 0.05, 0, Math.PI * 2); c.fill();
   }
 }
 

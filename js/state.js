@@ -69,7 +69,7 @@ function makeTask(fx, type, opts) {
     mode: 'idle',
     timer: 0, shakeT: 0, litT: 0,
     seq: [], inputIdx: 0, litOrb: -1, lastShown: -1,
-    seqLen: opts.seqLen || 3, orbs: opts.orbs || 3, pairs: opts.pairs || 3,
+    seqLen: opts.seqLen || 4, orbs: opts.orbs || 4, pairs: opts.pairs || 4,
     regenT: 0,
     word: null, sayT: -1, maxSyl: opts.maxSyl || 3,
     mixLevel: opts.mixLevel || 1,

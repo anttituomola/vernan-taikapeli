@@ -48,6 +48,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-letterfield.js`, `play-wordshop.js`, `play-grove.js` — maailma 7; Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
 - `js/tasks-fair.js` — Tivolisaaren tehtävät: mitä kello on, maksa rahoilla, palapeli, ohjelmoi reitti
 - `js/play-circus.js`, `play-wire.js`, `play-balloon.js`, `play-icecream.js`, `play-ducks.js`, `play-magician.js` — maailma 8; Trapetsi käyttää `play-circus.js`-moottoria (tila `hard`)
+- `js/tasks-north.js` — Revontulimaan lukutehtävät: loppusointu, loppukirjain, puuttuva tavu
+- `js/play-voyage.js`, `play-aurora.js`, `play-reindeer.js`, `play-sled.js`, `play-snowword.js`, `play-foxguard.js` — maailma 9
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -76,7 +78,9 @@ labyrintin; labyrintin satamaruutu (**B**) palauttaa saaristoon. Seuraava saari
 aukeaa, kun edellisen saaren vartijahuone on läpäisty (Linnasaari: finaali,
 Karkkisaari: Arvoitusten torni). Värisaaria on seitsemän, yksi sateenkaaren
 väriä kohti (`SEA_FOG`-taulukkoon voi lisätä sumuisen saaren vihjeeksi), ja
-kahdeksas saari (Tivolisaari) odottaa sateenkaaren päässä.
+kahdeksas saari (Tivolisaari) odottaa sateenkaaren päässä. Sen jälkeen
+aukeaa horisontin takainen **Revontulimaa** (maailma 9); se ei lisää
+sateenkaareen yhdeksättä väriä.
 Avatulla saaressa, jossa on vielä pelaamattomia huoneita, näkyy keltainen
 numero saaren vasemmassa yläkulmassa.
 
@@ -85,7 +89,8 @@ saaren vartija palauttaa yhden värin, ja saaristokartan sateenkaari täyttyy
 väri kerrallaan (paljastus animoituu, kun kartalle palataan). Kun kaikki
 seitsemän väriä on koossa, sateenkaaren päästä löytyy Tivolisaari, jonka
 vartija kruunaa kaaren **kultatähdellä** (`RAINBOW_COLORS.length`:n jälkeinen
-paljastus piirretään tähtenä).
+paljastus piirretään tähtenä). Tähti ei kasva: `rainbowEarned()` rajataan
+seitsemään väriin plus kultatähteen, vaikka saaria olisi enemmän.
 
 Linnasaaren labyrintissä huoneet ovat portteja: jokainen on läpäistävä, jotta
 tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.
@@ -355,6 +360,32 @@ vartija; sen läpäisy nostaa kultatähden sateenkaaren huipulle.
 palataan viimeiselle sytytetylle lyhdylle ja lyhdyn jälkeen kerätyt esineet
 palautuvat. Kenttä itse ei ala alusta.
 
+### Revontulimaa (maailma 9)
+
+Aukeaa, kun Taikurin teltta on läpäisty. Prinsessa seilaa horisonttiin ja
+löytää revontulten maan. Pelimekaniikka on tuttua (vene, ratsastus, lento,
+napautus), mutta tehtävät painottavat päättelyä, hahmotusta, matematiikkaa
+ja lukemista Kirjainsaaren jälkeen: loppusointu, loppukirjain ja puuttuva
+tavu.
+
+- **Horisontti** ♥ — vene kulkee itse eteenpäin; pidä sormea ylös tai alas
+  väistääksesi ahtojäitä. Kahdeksan tähteä, laituri hehkuu perillä.
+  Tehtävät: laske, kummalla enemmän.
+- **Revontulipolku** ♥ — ratsastus. Valopallot syttyvät vain, kun revontuli
+  on niiden yllä; kerää ne loistaessaan. Tuulenpuuskat vievät sydämen.
+  Tehtävät: kuviosarja, muistiloitsu 5/4.
+- **Porolaakso** — ratsastus. Kolme poroa seuraa; revontulipulssi pelästyttää
+  ne kivien taa. Napauta piilossa olevaa poroa ja vie kaikki aitaukseen.
+  Tehtävät: anna N, vähennys.
+- **Kelkkamäki** ♥ — ruutu vierii itse. Ohjaa kelkkaa pidolla, lennä
+  revontulirenkaiden läpi, väistä kiviä. Tehtävät: peilikuva, yhdistä pisteet.
+- **Lumisana** — ei liikkumista. Kuusi kierrosta vuorottelee loppusointua,
+  loppukirjainta ja puuttuvaa tavua. Tehtäväkaaret (laske, vähennys) toisen
+  ja neljännen kierroksen jälkeen.
+- **Revontulikettu** — vartija. Ratsastus tunturissa, neljä tehtäväporttia
+  (loppusointu, loppukirjain, puuttuva tavu, muisti 5/4) ja kuusi
+  revontulikidettä. Kettu herää, kun portteja on avattu.
+
 ### Linnan sisustus
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
@@ -543,7 +574,13 @@ väärästä vastauksesta tulee vain ravistus.
 - Jäätelökoju: tilaukset `ICE_ORDERS` ja koot `initIcecream`, maut `ICE_FLAVORS`
 - Ankkaonginta: kaistat `DUCK_LANES` (suunta, nopeus), koukun sukellus `0.35` s, pyyntisäde `viewH * 0.065`
 - Taikurin teltta: kierrokset `MAG_ROUNDS` (kupit, vaihdot, vaihdon kesto)
-- Maksa: rahat `PAY_COINS`, hinta `3 + randInt(7)`; Reitti: ruudukko `ROUTE_N`, askeleita `ROUTE_MAX`, askelaika `0.5` s; Palapeli: kuvat `JIGSAW_PICS`
+- Maksa: rahat `PAY_COINS`, hinta `6 + randInt(8)`; Reitti: ruudukko `ROUTE_N`, askeleita `4–6`, askelaika `0.5` s; Palapeli: kuvat `JIGSAW_PICS`
+- Horisontti: tähdet `VOY_STARS`, jäät `voyIceDefs`, veneen nopeus `viewW * 0.20`
+- Revontulipolku: valoja `AUR_COUNT`, verhon leveys `viewW * 0.20`, tuulenpuuskat `aurWind`
+- Porolaakso: poroja `REIN_N`, pulssiväli `5.2 + Math.random() * 1.4`
+- Kelkkamäki: renkaat `SLED_RINGS`, vieritys `SLED_SPEEDS`, kivet `sledRocks`
+- Lumisana: kierrokset `SW_ROUNDS`, tyypit `SW_KINDS`
+- Revontulikettu: kiteet `FOX_STONES`
 
 ## Tyyliopas
 

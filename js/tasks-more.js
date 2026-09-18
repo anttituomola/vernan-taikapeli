@@ -214,7 +214,7 @@ function makeMirrorProblem(t) {
         filled += left[r][c];
       }
     }
-  } while (filled < 3 || filled > 5);
+  } while (filled < 4 || filled > 6);
   right = [];
   for (r = 0; r < n; r++) { right.push([]); for (c = 0; c < n; c++) right[r].push(0); }
   return { grid: { n: n, left: left, right: right, color: randInt(TASK_BF_COLORS.length), kind: TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)] } };
@@ -431,7 +431,7 @@ TASK_TYPES.dots = {
 // Prompt-kuplassa näkyy montako kappaletta koriin pitää viedä.
 function makeGiveProblem(t) {
   var i, hx, gap;
-  var n = 2 + randInt(3); // 2–4 annettavaa
+  var n = 3 + randInt(3); // 3–5 annettavaa
   var kind = TASK_GLYPH_KINDS[randInt(TASK_GLYPH_KINDS.length)];
   var color = randInt(TASK_BF_COLORS.length);
   var items = [];

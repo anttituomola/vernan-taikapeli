@@ -25,8 +25,8 @@ function clockKey(h, m) {
 function makeClockProblem(t) {
   var hour = 1 + randInt(12);
   var roll = Math.random(), minute;
-  if (roll < 0.35) minute = 0;
-  else if (roll < 0.80) minute = 30;
+  if (roll < 0.18) minute = 0;
+  else if (roll < 0.50) minute = 30;
   else minute = Math.random() < 0.5 ? 15 : 45;
   var cands = [
     { h: hour, m: minute },
@@ -131,7 +131,7 @@ TASK_TYPES.clock = {
 // ja kaikki rahat palaavat pöydälle.
 var PAY_COINS = [5, 2, 2, 1, 1, 1];
 function makePayProblem(t) {
-  var price = 3 + randInt(7);
+  var price = 6 + randInt(8);
   var vals = shuffleNums(PAY_COINS.slice());
   var gap = Math.min(viewW * 0.13, viewH * 0.17), i, hx;
   var coins = [];
@@ -452,7 +452,7 @@ function makeRouteProblem(t) {
   var blocks = [];
   do {
     tries++;
-    len = 3 + randInt(3);
+    len = 4 + randInt(3);
     c = randInt(n); r = randInt(n);
     path = [];
     cells = {};
