@@ -21,8 +21,8 @@ var CIRC_GRAB = 0.12;    // tarttumissäde (u)
 var CIRC_MAG = 0.32;     // tangon vetosäde lennossa (u)
 var CIRC_MAG_S = 10;     // vedon voima (1/s²)
 var CIRC_JUMP = [0.75, -0.45]; // loikka korokkeelta (u/s)
-// Vaikeampi rata: nopeampi heilahdus, pienempi veto, pidemmät ketjut
-var CIRC_HARD = { W: 1.6, G: 0.74, GRAB: 0.10, MAG: 0.24, MAG_S: 8.5 };
+// Vaikeampi rata: nopea heilahdus, vähän vetoa, pitkät ketjut — irrotus pitää ajoittaa
+var CIRC_HARD = { A: 0.88, W: 1.95, G: 0.85, GRAB: 0.08, MAG: 0.14, MAG_S: 5.5 };
 
 var circ = {
   mode: 'easy', A: CIRC_A, W: CIRC_W, L: CIRC_L, K: CIRC_K, G: CIRC_G,
@@ -54,35 +54,38 @@ var CIRC_EASY_STARS = [
   { x: 3.47, dy: 0.035 }, { x: 4.32, dy: 0.0 }, { x: 5.17, dy: 0.0 },
   { x: 6.03, dy: 0.0 }, { x: 7.72, dy: 0.0 }
 ];
-// Vaikeampi rata: 3 + 4 + 4 tankoa, hieman harvempi väli (0.90 u)
+// Vaikeampi rata: 4 + 5 + 5 tankoa, harvempi väli (1.00 u)
 var CIRC_HARD_DEFS = [
   { kind: 'ped', x: 0.50 },
-  { kind: 'bar', x: 1.40, ph: 0 },
-  { kind: 'bar', x: 2.30, ph: Math.PI },
-  { kind: 'bar', x: 3.20, ph: 0 },
-  { kind: 'ped', x: 4.10, task: 0 },
-  { kind: 'bar', x: 5.00, ph: Math.PI },
-  { kind: 'bar', x: 5.90, ph: 0 },
-  { kind: 'bar', x: 6.80, ph: Math.PI },
-  { kind: 'bar', x: 7.70, ph: 0 },
-  { kind: 'ped', x: 8.60, task: 1 },
+  { kind: 'bar', x: 1.50, ph: 0 },
+  { kind: 'bar', x: 2.50, ph: Math.PI },
+  { kind: 'bar', x: 3.50, ph: 0 },
+  { kind: 'bar', x: 4.50, ph: Math.PI },
+  { kind: 'ped', x: 5.50, task: 0 },
+  { kind: 'bar', x: 6.50, ph: 0 },
+  { kind: 'bar', x: 7.50, ph: Math.PI },
+  { kind: 'bar', x: 8.50, ph: 0 },
   { kind: 'bar', x: 9.50, ph: Math.PI },
-  { kind: 'bar', x: 10.40, ph: 0 },
-  { kind: 'bar', x: 11.30, ph: Math.PI },
-  { kind: 'bar', x: 12.20, ph: 0 },
-  { kind: 'ped', x: 13.10, door: true }
+  { kind: 'bar', x: 10.50, ph: 0 },
+  { kind: 'ped', x: 11.50, task: 1 },
+  { kind: 'bar', x: 12.50, ph: Math.PI },
+  { kind: 'bar', x: 13.50, ph: 0 },
+  { kind: 'bar', x: 14.50, ph: Math.PI },
+  { kind: 'bar', x: 15.50, ph: 0 },
+  { kind: 'bar', x: 16.50, ph: Math.PI },
+  { kind: 'ped', x: 17.50, door: true }
 ];
 var CIRC_HARD_STARS = [
-  { x: 0.95, dy: 0.035 }, { x: 1.85, dy: 0.0 }, { x: 2.75, dy: 0.0 },
-  { x: 4.55, dy: 0.035 }, { x: 5.45, dy: 0.0 }, { x: 6.35, dy: 0.0 }, { x: 7.25, dy: 0.0 },
-  { x: 9.05, dy: 0.035 }, { x: 9.95, dy: 0.0 }, { x: 10.85, dy: 0.0 }
+  { x: 1.00, dy: 0.035 }, { x: 2.00, dy: 0.0 }, { x: 3.00, dy: 0.0 }, { x: 4.00, dy: 0.0 },
+  { x: 6.00, dy: 0.035 }, { x: 7.50, dy: 0.0 }, { x: 8.50, dy: 0.0 }, { x: 9.50, dy: 0.0 },
+  { x: 12.00, dy: 0.035 }, { x: 13.50, dy: 0.0 }, { x: 14.50, dy: 0.0 }, { x: 15.50, dy: 0.0 }
 ];
 
 function circHard() { return circ.mode === 'hard'; }
 
 function circLoadCourse(mode) {
   circ.mode = mode === 'hard' ? 'hard' : 'easy';
-  circ.A = CIRC_A;
+  circ.A = circHard() ? CIRC_HARD.A : CIRC_A;
   circ.W = circHard() ? CIRC_HARD.W : CIRC_W;
   circ.L = CIRC_L;
   circ.K = CIRC_K;

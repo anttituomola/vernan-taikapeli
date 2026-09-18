@@ -315,8 +315,9 @@ vartija; sen läpäisy nostaa kultatähden sateenkaaren huipulle.
   Ohi lentävä putoaa turvaverkkoon (sydän) ja palaa viimeiselle korokkeelle;
   korokkeelta napautus loikkaa ensimmäiseen tankoon. Kahdeksan tähteä kerätään
   lennossa (bonus, ei vaadita). Tehtävät korokkeilla: kello, palapeli.
-- **Trapetsi** ♥ — sama verbi, vaikeampi rata. Pidempi ketju (3 + 4 + 4 tankoa
-  ilman lepoa), nopeampi heilahdus ja pienempi veto, joten ajoitus on tiukempi.
+- **Trapetsi** ♥ — sama verbi, vaikeampi rata. Pidempi ketju (4 + 5 + 5 tankoa
+  ilman lepoa), harvempi väli, nopeampi heilahdus ja vähän vetoa, joten irrotus
+  pitää ajoittaa eteenpäin heilahtavaan hetkeen.
   Kultainen teltta erottaa kentän Sirkusteltasta. Tehtävät korokkeilla: maksa, reitti.
 - **Kuumailmapallo** ♥ — uusi verbi: **korkeuden valinta**. Pidä pohjassa:
   sormi pallon yläpuolella = poltin (nousu), alapuolella = venttiili (lasku).
