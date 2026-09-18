@@ -664,6 +664,24 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.fillRect(x - s * 0.05, y + s * 0.02, s * 0.1, s * 0.14);
     c.fillStyle = '#ffd24f';
     c.beginPath(); c.moveTo(x, y - s * 0.24); c.lineTo(x, y - s * 0.34); c.lineTo(x + s * 0.1, y - s * 0.31); c.lineTo(x, y - s * 0.27); c.closePath(); c.fill();
+  } else if (kind === 'trapeze') {
+    // Kultainen teltta ja trapetsitanko
+    c.fillStyle = '#2a2060';
+    c.beginPath(); c.moveTo(x - s * 0.24, y + s * 0.16); c.lineTo(x + s * 0.24, y + s * 0.16); c.lineTo(x + s * 0.2, y - s * 0.02); c.lineTo(x - s * 0.2, y - s * 0.02); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(x - s * 0.26, y - s * 0.02); c.lineTo(x + s * 0.26, y - s * 0.02); c.lineTo(x, y - s * 0.24); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(232,192,74,0.9)';
+    for (i = -1; i <= 1; i += 2) { c.beginPath(); c.moveTo(x + i * s * 0.1 - s * 0.03, y - s * 0.02); c.lineTo(x + i * s * 0.1 + s * 0.03, y - s * 0.02); c.lineTo(x, y - s * 0.24); c.closePath(); c.fill(); }
+    c.fillRect(x - s * 0.05, y + s * 0.02, s * 0.1, s * 0.14);
+    c.strokeStyle = '#f2e2c0';
+    c.lineWidth = Math.max(1.5, s * 0.025);
+    c.beginPath(); c.moveTo(x - s * 0.12, y - s * 0.08); c.lineTo(x - s * 0.16, y + s * 0.08); c.moveTo(x + s * 0.12, y - s * 0.08); c.lineTo(x + s * 0.16, y + s * 0.08); c.stroke();
+    c.strokeStyle = '#5a3a1e';
+    c.lineWidth = Math.max(2, s * 0.04);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x - s * 0.16, y + s * 0.08); c.lineTo(x + s * 0.16, y + s * 0.08); c.stroke();
+    c.lineCap = 'butt';
+    c.fillStyle = '#ffd24f';
+    c.beginPath(); c.moveTo(x, y - s * 0.24); c.lineTo(x, y - s * 0.34); c.lineTo(x + s * 0.1, y - s * 0.31); c.lineTo(x, y - s * 0.27); c.closePath(); c.fill();
   } else if (kind === 'balloon') {
     // Kuumailmapallo
     c.strokeStyle = '#8a5a30';

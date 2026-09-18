@@ -740,13 +740,15 @@ var WORLDS = [
       '###########',
       '#B.......T#',
       '#########.#',
-      '#P........#',
+      '#R........#',
       '#.#########',
-      '#........J#',
+      '#........P#',
       '#########.#',
-      '#O........#',
+      '#J........#',
       '#.#########',
-      '#........M#',
+      '#........O#',
+      '#########.#',
+      '#M........#',
       '###########'
     ],
     levels: [
@@ -762,6 +764,20 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderCircusBg(b, w, h); },
         renderBgLayers: function () { return circusLayers(); },
         light: { rays: true, raysColor: '#ffd24f', raysAlpha: 0.7, tint: ['rgba(120,20,50,0.16)', 'rgba(40,10,30,0.08)'], vignette: 0.42 },
+        respawn: function () { respawnCircus(); }
+      },
+      {
+        kind: 'trapeze', room: 'R', name: 'Trapetsi', color: '#e8c04a', script: 'play-circus',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#120c32', ambient: 'sparkle', fg: null,
+        init: function () { initCircus('hard'); },
+        update: function (dt) { updateCircus(dt); },
+        draw: function () { drawCircus(); },
+        tap: function (x, y) { handleCircusTap(x, y); },
+        resize: function (ratio) { resizeCircus(ratio); },
+        renderBg: function (b, w, h) { renderCircusBg(b, w, h); },
+        renderBgLayers: function () { return circusLayers(); },
+        light: { rays: true, raysColor: '#ffe08a', raysAlpha: 0.75, tint: ['rgba(40,20,90,0.16)', 'rgba(20,10,50,0.08)'], vignette: 0.44 },
         respawn: function () { respawnCircus(); }
       },
       {

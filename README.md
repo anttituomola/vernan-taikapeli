@@ -47,7 +47,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/tasks-read.js` — lukemisen tehtävät: kuva→sana, kokoa sana tavuista, alkukirjain
 - `js/play-letterfield.js`, `play-wordshop.js`, `play-grove.js` — maailma 7; Tavukoski ja Kirjainpilvet käyttävät `play-rapids.js`-moottoria (tilat `syl` ja `letters`)
 - `js/tasks-fair.js` — Tivolisaaren tehtävät: mitä kello on, maksa rahoilla, palapeli, ohjelmoi reitti
-- `js/play-circus.js`, `play-balloon.js`, `play-icecream.js`, `play-ducks.js`, `play-magician.js` — maailma 8
+- `js/play-circus.js`, `play-balloon.js`, `play-icecream.js`, `play-ducks.js`, `play-magician.js` — maailma 8; Trapetsi käyttää `play-circus.js`-moottoria (tila `hard`)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -315,6 +315,9 @@ vartija; sen läpäisy nostaa kultatähden sateenkaaren huipulle.
   Ohi lentävä putoaa turvaverkkoon (sydän) ja palaa viimeiselle korokkeelle;
   korokkeelta napautus loikkaa ensimmäiseen tankoon. Kahdeksan tähteä kerätään
   lennossa (bonus, ei vaadita). Tehtävät korokkeilla: kello, palapeli.
+- **Trapetsi** ♥ — sama verbi, vaikeampi rata. Pidempi ketju (3 + 4 + 4 tankoa
+  ilman lepoa), nopeampi heilahdus ja pienempi veto, joten ajoitus on tiukempi.
+  Kultainen teltta erottaa kentän Sirkusteltasta. Tehtävät korokkeilla: maksa, reitti.
 - **Kuumailmapallo** ♥ — uusi verbi: **korkeuden valinta**. Pidä pohjassa:
   sormi pallon yläpuolella = poltin (nousu), alapuolella = venttiili (lasku).
   Kolme tuulikerrosta, joita erottavat katkoviivat: ylin ja alin vievät
@@ -528,7 +531,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Uniaika: pupujen määrä `NAP_BUNNIES`, haukotusväli `2.5 + Math.random() * 2.5`
 - Kotkalento: sulkien määrä `GLIDE_COUNT`, ukkospilvet `tFx` (initGlide)
 - Kirjainpuutarha: sanojen määrä `GROVE_WORDS`, pensaita `GROVE_BUSHES`, hämääjät `GROVE_DISTRACTORS`
-- Sirkusteltta: heilahdus `CIRC_A`/`CIRC_W`, irrotuksen voima `CIRC_K`, lennon painovoima `CIRC_G`, tarttumis- ja vetosäde `CIRC_GRAB`/`CIRC_MAG`, rata `circDefs` (play-circus.js; tarttumisikkunan voi mitata simuloimalla `circBarPos`/`circBarVel`-funktioilla)
+- Sirkusteltta / Trapetsi: heilahdus `CIRC_A`/`CIRC_W`, irrotuksen voima `CIRC_K`, lennon painovoima `CIRC_G`, tarttumis- ja vetosäde `CIRC_GRAB`/`CIRC_MAG`; vaikeampi rata `CIRC_HARD` + `CIRC_HARD_DEFS` (play-circus.js; tarttumisikkunan voi mitata simuloimalla `circBarPos`/`circBarVel`-funktioilla)
 - Kuumailmapallo: tuulikerrokset `BAL_BANDS`, leijat `balKiteDefs`, polttimen voima `viewH * 0.8`, vajoaminen `viewH * 0.3`
 - Jäätelökoju: tilaukset `ICE_ORDERS` ja koot `initIcecream`, maut `ICE_FLAVORS`
 - Ankkaonginta: kaistat `DUCK_LANES` (suunta, nopeus), koukun sukellus `0.35` s, pyyntisäde `viewH * 0.065`

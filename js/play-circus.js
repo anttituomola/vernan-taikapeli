@@ -1,13 +1,14 @@
 'use strict';
 
-// Sirkusteltta: uusi verbi, trapetsi. Prinsessa roikkuu heilahtelevassa
+// Sirkusteltta / Trapetsi: uusi verbi, trapetsi. Prinsessa roikkuu heilahtelevassa
 // trapetsissa; napautus irrottaa, ja hän lentää kaaressa seuraavaan tankoon.
 // Ohi lentävä putoaa turvaverkkoon (sydän) ja palaa viimeiselle korokkeelle.
 // Korokkeelta napautus loikkaa kohti ensimmäistä tankoa. Haalea pistekaari
 // näyttää, mihin irrotus juuri nyt veisi — ajoitus tankoon nähden on pelaajan.
 // Tähdet kerätään lennossa. Sydämet ja korokkeet (lyhdyt) käytössä.
 // Mitat u-yksiköissä (u ≈ ruudun korkeus), jotta heilahdus ja lento skaalautuvat.
-
+// Kaksi kenttää käyttää samaa moottoria: 'easy' Sirkusteltta, 'hard' Trapetsi.
+//
 // Simuloitu tarttumisikkuna (tools: VT.circus + circBarPos): eteenpäin
 // heilahtaessa irrotus onnistuu n. 0,8 s:n ajan jaksosta; hidas heilahdus ja
 // vetävä tanko (CIRC_MAG) tekevät ajoituksesta 6-vuotiaalle opittavan.
@@ -20,16 +21,20 @@ var CIRC_GRAB = 0.12;    // tarttumissäde (u)
 var CIRC_MAG = 0.32;     // tangon vetosäde lennossa (u)
 var CIRC_MAG_S = 10;     // vedon voima (1/s²)
 var CIRC_JUMP = [0.75, -0.45]; // loikka korokkeelta (u/s)
-var CIRC_STARS = 8;
+// Vaikeampi rata: nopeampi heilahdus, pienempi veto, pidemmät ketjut
+var CIRC_HARD = { W: 1.6, G: 0.74, GRAB: 0.10, MAG: 0.24, MAG_S: 8.5 };
 
 var circ = {
+  mode: 'easy', A: CIRC_A, W: CIRC_W, L: CIRC_L, K: CIRC_K, G: CIRC_G,
+  GRAB: CIRC_GRAB, MAG: CIRC_MAG, MAG_S: CIRC_MAG_S, JUMP: CIRC_JUMP,
+  defs: null, starDefs: null,
   u: 0, nodes: [], stars: [], state: 'stand', node: 0, t: 0,
   x: 0, y: 0, vx: 0, vy: 0, flyT: 0, fromBar: -1, lastPed: 0,
   netT: 0, spotX: 0, taskDelay: 0, doorDelay: 0, prevFeet: 0
 };
 
 // Rata vasemmalta oikealle (x u-yksiköissä): korokkeet ja trapetsit
-var circDefs = [
+var CIRC_EASY_DEFS = [
   { kind: 'ped', x: 0.5 },
   { kind: 'bar', x: 1.35, ph: 0 },
   { kind: 'bar', x: 2.2, ph: Math.PI },
@@ -44,24 +49,65 @@ var circDefs = [
 ];
 // Tähdet lentoratojen varrella: x u-yksiköissä, dy = korkeus tangon alapisteestä (osuus ruudusta)
 // (mitattu: onnistuneet lennot kulkevat puolivälissä n. 0,085 ruutua tangon alapisteen yllä)
-var circStarDefs = [
+var CIRC_EASY_STARS = [
   { x: 0.93, dy: 0.035 }, { x: 1.78, dy: 0.0 }, { x: 2.63, dy: 0.0 },
   { x: 3.47, dy: 0.035 }, { x: 4.32, dy: 0.0 }, { x: 5.17, dy: 0.0 },
   { x: 6.03, dy: 0.0 }, { x: 7.72, dy: 0.0 }
 ];
+// Vaikeampi rata: 3 + 4 + 4 tankoa, hieman harvempi väli (0.90 u)
+var CIRC_HARD_DEFS = [
+  { kind: 'ped', x: 0.50 },
+  { kind: 'bar', x: 1.40, ph: 0 },
+  { kind: 'bar', x: 2.30, ph: Math.PI },
+  { kind: 'bar', x: 3.20, ph: 0 },
+  { kind: 'ped', x: 4.10, task: 0 },
+  { kind: 'bar', x: 5.00, ph: Math.PI },
+  { kind: 'bar', x: 5.90, ph: 0 },
+  { kind: 'bar', x: 6.80, ph: Math.PI },
+  { kind: 'bar', x: 7.70, ph: 0 },
+  { kind: 'ped', x: 8.60, task: 1 },
+  { kind: 'bar', x: 9.50, ph: Math.PI },
+  { kind: 'bar', x: 10.40, ph: 0 },
+  { kind: 'bar', x: 11.30, ph: Math.PI },
+  { kind: 'bar', x: 12.20, ph: 0 },
+  { kind: 'ped', x: 13.10, door: true }
+];
+var CIRC_HARD_STARS = [
+  { x: 0.95, dy: 0.035 }, { x: 1.85, dy: 0.0 }, { x: 2.75, dy: 0.0 },
+  { x: 4.55, dy: 0.035 }, { x: 5.45, dy: 0.0 }, { x: 6.35, dy: 0.0 }, { x: 7.25, dy: 0.0 },
+  { x: 9.05, dy: 0.035 }, { x: 9.95, dy: 0.0 }, { x: 10.85, dy: 0.0 }
+];
+
+function circHard() { return circ.mode === 'hard'; }
+
+function circLoadCourse(mode) {
+  circ.mode = mode === 'hard' ? 'hard' : 'easy';
+  circ.A = CIRC_A;
+  circ.W = circHard() ? CIRC_HARD.W : CIRC_W;
+  circ.L = CIRC_L;
+  circ.K = CIRC_K;
+  circ.G = circHard() ? CIRC_HARD.G : CIRC_G;
+  circ.GRAB = circHard() ? CIRC_HARD.GRAB : CIRC_GRAB;
+  circ.MAG = circHard() ? CIRC_HARD.MAG : CIRC_MAG;
+  circ.MAG_S = circHard() ? CIRC_HARD.MAG_S : CIRC_MAG_S;
+  circ.JUMP = CIRC_JUMP;
+  circ.defs = circHard() ? CIRC_HARD_DEFS : CIRC_EASY_DEFS;
+  circ.starDefs = circHard() ? CIRC_HARD_STARS : CIRC_EASY_STARS;
+}
+circLoadCourse('easy');
 
 function circPivotY() { return viewH * 0.10; }
-function circBarY0() { return circPivotY() + CIRC_L * circ.u; }     // tangon alin piste
+function circBarY0() { return circPivotY() + circ.L * circ.u; }     // tangon alin piste
 function circPedTop() { return circBarY0() + viewH * 0.12; }         // käsien korkeus = tangon korkeus
 function circNetY() { return viewH * 0.80; }
 function circHandsToFeet() { return viewH * 0.12; }
 
 function layoutCircus() {
   var i, d;
-  circ.u = Math.min(viewH, (worldW - viewW * 0.35) / 9.4);
+  circ.u = Math.min(viewH, (worldW - viewW * 0.35) / (circ.defs[circ.defs.length - 1].x + 0.4));
   circ.nodes = [];
-  for (i = 0; i < circDefs.length; i++) {
-    d = circDefs[i];
+  for (i = 0; i < circ.defs.length; i++) {
+    d = circ.defs[i];
     circ.nodes.push({ kind: d.kind, x: d.x * circ.u, ph: d.ph || 0, task: d.task, door: !!d.door, w: 0.5 * circ.u });
   }
   checkpoints = [];
@@ -71,13 +117,13 @@ function layoutCircus() {
 }
 
 function circBarPos(n, t) {
-  var th = CIRC_A * Math.sin(CIRC_W * t + n.ph);
-  return { x: n.x + CIRC_L * circ.u * Math.sin(th), y: circPivotY() + CIRC_L * circ.u * Math.cos(th), th: th };
+  var th = circ.A * Math.sin(circ.W * t + n.ph);
+  return { x: n.x + circ.L * circ.u * Math.sin(th), y: circPivotY() + circ.L * circ.u * Math.cos(th), th: th };
 }
 function circBarVel(n, t) {
-  var th = CIRC_A * Math.sin(CIRC_W * t + n.ph);
-  var dth = CIRC_A * CIRC_W * Math.cos(CIRC_W * t + n.ph);
-  return { x: CIRC_L * circ.u * Math.cos(th) * dth, y: -CIRC_L * circ.u * Math.sin(th) * dth };
+  var th = circ.A * Math.sin(circ.W * t + n.ph);
+  var dth = circ.A * circ.W * Math.cos(circ.W * t + n.ph);
+  return { x: circ.L * circ.u * Math.cos(th) * dth, y: -circ.L * circ.u * Math.sin(th) * dth };
 }
 
 function circStandOn(i) {
@@ -93,14 +139,17 @@ function circStandOn(i) {
   princess.facing = 1;
 }
 
-function initCircus() {
+function initCircus(mode) {
   var i;
+  circLoadCourse(mode);
   layoutCircus();
-  tasks = [makeTask(-5, 'clock'), makeTask(-5, 'jigsaw')];
+  tasks = circHard()
+    ? [makeTask(-5, 'pay'), makeTask(-5, 'route')]
+    : [makeTask(-5, 'clock'), makeTask(-5, 'jigsaw')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   circ.stars = [];
-  for (i = 0; i < CIRC_STARS; i++) {
-    circ.stars.push({ ax: circStarDefs[i].x * circ.u, ay: circBarY0() - circStarDefs[i].dy * viewH, collected: false, phase: Math.random() * Math.PI * 2 });
+  for (i = 0; i < circ.starDefs.length; i++) {
+    circ.stars.push({ ax: circ.starDefs[i].x * circ.u, ay: circBarY0() - circ.starDefs[i].dy * viewH, collected: false, phase: Math.random() * Math.PI * 2 });
   }
   circ.t = 0;
   circ.flyT = 0;
@@ -129,8 +178,8 @@ function resizeCircus() {
   var i, wasNode = circ.node, st = circ.state;
   layoutCircus();
   for (i = 0; i < circ.stars.length; i++) {
-    circ.stars[i].ax = circStarDefs[i].x * circ.u;
-    circ.stars[i].ay = circBarY0() - circStarDefs[i].dy * viewH;
+    circ.stars[i].ax = circ.starDefs[i].x * circ.u;
+    circ.stars[i].ay = circBarY0() - circ.starDefs[i].dy * viewH;
   }
   if (st === 'stand') circStandOn(wasNode);
   else circStandOn(circ.lastPed);
@@ -144,8 +193,8 @@ function handleCircusTap(px, py) {
     n = circ.nodes[circ.node];
     if (n.door) return;
     circ.state = 'fly';
-    circ.vx = CIRC_JUMP[0] * circ.u;
-    circ.vy = CIRC_JUMP[1] * circ.u;
+    circ.vx = circ.JUMP[0] * circ.u;
+    circ.vy = circ.JUMP[1] * circ.u;
     circ.flyT = 0;
     circ.fromBar = -1;
     circ.prevFeet = circ.y + circHandsToFeet();
@@ -157,8 +206,8 @@ function handleCircusTap(px, py) {
     n = circ.nodes[circ.node];
     v = circBarVel(n, circ.t);
     circ.state = 'fly';
-    circ.vx = v.x * CIRC_K;
-    circ.vy = v.y * CIRC_K;
+    circ.vx = v.x * circ.K;
+    circ.vy = v.y * circ.K;
     circ.flyT = 0;
     circ.fromBar = circ.node;
     circ.prevFeet = circ.y + circHandsToFeet();
@@ -212,7 +261,7 @@ function updateCircus(dt) {
       circ.x = bp.x; circ.y = bp.y;
     } else if (circ.state === 'fly') {
       circ.flyT += dt;
-      circ.vy += CIRC_G * circ.u * dt;
+      circ.vy += circ.G * circ.u * dt;
       // Lähellä oleva tanko "vetää" käsiä puoleensa: anteeksiantava tarttuminen
       if (circ.flyT > 0.3) {
         for (i = 0; i < circ.nodes.length; i++) {
@@ -220,9 +269,9 @@ function updateCircus(dt) {
           if (n.kind !== 'bar' || i === circ.fromBar) continue;
           bp = circBarPos(n, circ.t);
           dx = bp.x - circ.x; dy = bp.y - circ.y;
-          if (dx * dx + dy * dy < CIRC_MAG * circ.u * CIRC_MAG * circ.u) {
-            circ.vx += dx * CIRC_MAG_S * dt;
-            circ.vy += dy * CIRC_MAG_S * dt;
+          if (dx * dx + dy * dy < circ.MAG * circ.u * circ.MAG * circ.u) {
+            circ.vx += dx * circ.MAG_S * dt;
+            circ.vy += dy * circ.MAG_S * dt;
           }
         }
       }
@@ -236,7 +285,7 @@ function updateCircus(dt) {
         if (i === circ.fromBar && circ.flyT < 0.45) continue;
         bp = circBarPos(n, circ.t);
         dx = bp.x - circ.x; dy = bp.y - circ.y;
-        if (dx * dx + dy * dy < CIRC_GRAB * circ.u * CIRC_GRAB * circ.u) {
+        if (dx * dx + dy * dy < circ.GRAB * circ.u * circ.GRAB * circ.u) {
           circ.state = 'hang';
           circ.node = i;
           circ.x = bp.x; circ.y = bp.y;
@@ -302,20 +351,28 @@ function renderCircusBg(b, w, h) {
 }
 function renderCircusFar(b, w, h) {
   var wall = b.createLinearGradient(0, 0, 0, h);
-  wall.addColorStop(0, '#5a1430');
-  wall.addColorStop(0.35, '#3a1030');
-  wall.addColorStop(1, '#1c0a22');
+  if (circHard()) {
+    wall.addColorStop(0, '#1a1448');
+    wall.addColorStop(0.35, '#120c32');
+    wall.addColorStop(1, '#08061a');
+  } else {
+    wall.addColorStop(0, '#5a1430');
+    wall.addColorStop(0.35, '#3a1030');
+    wall.addColorStop(1, '#1c0a22');
+  }
   b.fillStyle = wall;
   b.fillRect(0, 0, w, h);
   drawBgSun(b, w * 0.5, h * 0.08, h * 0.05, 0.22, '#ffe9a0', '#fff8d0', '#ffd24f');
 }
 function renderCircusMid(b, w, h) {
   var i, x, y, sw = h * 0.07;
+  var stripeA = circHard() ? '#2a2060' : '#c8323c';
+  var stripeB = circHard() ? '#e8c04a' : '#fff3e0';
   for (i = 0, x = 0; x < w; i++, x += sw) {
-    b.fillStyle = i % 2 ? '#c8323c' : '#fff3e0';
+    b.fillStyle = i % 2 ? stripeA : stripeB;
     b.fillRect(x, 0, sw + 1, h * 0.2);
   }
-  b.fillStyle = '#c8323c';
+  b.fillStyle = stripeA;
   for (x = sw / 2; x < w + sw; x += sw) { b.beginPath(); b.arc(x, h * 0.2, sw / 2, 0, Math.PI); b.fill(); }
   b.strokeStyle = '#ffd24f';
   b.lineWidth = Math.max(2, h * 0.006);
@@ -342,6 +399,7 @@ function renderCircusMid(b, w, h) {
 function renderCircusNear(b, w, h) {
   var i, x, y, n, pt = circPedTop(), ny = circNetY();
   var rows = 3;
+  var hard = circHard();
   for (i = 0; i < rows; i++) {
     y = h * (0.86 + i * 0.035);
     b.fillStyle = i === 0 ? '#2a1a44' : (i === 1 ? '#231538' : '#1b1030');
@@ -356,9 +414,9 @@ function renderCircusNear(b, w, h) {
     }
   }
   // Areenan reunus
-  b.fillStyle = '#c8323c';
+  b.fillStyle = hard ? '#2a2060' : '#c8323c';
   b.fillRect(0, h * 0.955, w, h * 0.045);
-  b.fillStyle = '#fff3e0';
+  b.fillStyle = hard ? '#e8c04a' : '#fff3e0';
   for (x = 0; x < w; x += h * 0.12) b.fillRect(x, h * 0.955, h * 0.06, h * 0.045);
   // Turvaverkko
   b.strokeStyle = 'rgba(200,200,255,0.45)';
@@ -380,9 +438,15 @@ function renderCircusNear(b, w, h) {
     b.lineWidth = Math.max(1, h * 0.003);
     for (y = pt + h * 0.05; y < h * 0.84; y += h * 0.05) { b.beginPath(); b.moveTo(n.x - h * 0.03, y); b.lineTo(n.x + h * 0.03, y); b.stroke(); }
     var dg = b.createLinearGradient(n.x - n.w / 2, 0, n.x + n.w / 2, 0);
-    dg.addColorStop(0, '#a8263a');
-    dg.addColorStop(0.5, '#e84a5a');
-    dg.addColorStop(1, '#a8263a');
+    if (hard) {
+      dg.addColorStop(0, '#8a6a18');
+      dg.addColorStop(0.5, '#e8c04a');
+      dg.addColorStop(1, '#8a6a18');
+    } else {
+      dg.addColorStop(0, '#a8263a');
+      dg.addColorStop(0.5, '#e84a5a');
+      dg.addColorStop(1, '#a8263a');
+    }
     b.fillStyle = dg;
     roundRect(b, n.x - n.w / 2, pt, n.w, h * 0.07, h * 0.015);
     b.fill();
@@ -394,7 +458,7 @@ function renderCircusNear(b, w, h) {
       b.fillStyle = '#ffd24f';
       roundRect(b, n.x - n.w * 0.45, pt - h * 0.34, n.w * 0.9, h * 0.34, h * 0.03);
       b.fill();
-      b.fillStyle = '#7a3cb8';
+      b.fillStyle = hard ? '#3a2060' : '#7a3cb8';
       roundRect(b, n.x - n.w * 0.38, pt - h * 0.31, n.w * 0.76, h * 0.31, h * 0.025);
       b.fill();
       drawStar(b, n.x, pt - h * 0.2, h * 0.05, 0, 0);
@@ -499,12 +563,12 @@ function drawCircusGhostArc(c) {
   if (circ.state === 'hang') {
     n = circ.nodes[circ.node];
     v = circBarVel(n, circ.t);
-    vx = v.x * CIRC_K; vy = v.y * CIRC_K;
+    vx = v.x * circ.K; vy = v.y * circ.K;
   } else if (circ.state === 'stand' && !circ.nodes[circ.node].door) {
-    vx = CIRC_JUMP[0] * circ.u; vy = CIRC_JUMP[1] * circ.u;
+    vx = circ.JUMP[0] * circ.u; vy = circ.JUMP[1] * circ.u;
   } else return;
   for (i = 1; i <= 18; i++) {
-    vy += CIRC_G * circ.u * dt;
+    vy += circ.G * circ.u * dt;
     x += vx * dt; y += vy * dt;
     if (y > circNetY() - viewH * 0.1) break;
     a = 0.5 * (1 - i / 18);
@@ -582,7 +646,7 @@ function drawCircus() {
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   endPlayWorld();
-  drawPickupHud(ctx, CIRC_STARS, function (k) { return circ.stars[k] && circ.stars[k].collected; },
+  drawPickupHud(ctx, circ.stars.length, function (k) { return circ.stars[k] && circ.stars[k].collected; },
     function (c, x, y, sz) { drawStar(c, x, y, sz, 0, 0); });
   drawHearts(ctx);
   drawTaskOverlay(ctx);
