@@ -22,7 +22,7 @@ var CIRC_MAG = 0.32;     // tangon vetosäde lennossa (u)
 var CIRC_MAG_S = 10;     // vedon voima (1/s²)
 var CIRC_JUMP = [0.75, -0.45]; // loikka korokkeelta (u/s)
 // Vaikeampi rata: nopea heilahdus, vähän vetoa, pitkät ketjut — irrotus pitää ajoittaa
-var CIRC_HARD = { A: 0.88, W: 1.95, G: 0.85, GRAB: 0.08, MAG: 0.14, MAG_S: 5.5 };
+var CIRC_HARD = { A: 0.88, W: 1.85, G: 0.83, GRAB: 0.09, MAG: 0.17, MAG_S: 6.2 };
 
 var circ = {
   mode: 'easy', A: CIRC_A, W: CIRC_W, L: CIRC_L, K: CIRC_K, G: CIRC_G,
@@ -560,6 +560,52 @@ function drawPrincessPose(c, x, y, s, facing, pose, tilt, t) {
   c.restore();
 }
 
+// Loikka korokkeelta: origo jaloissa, molemmat kädet ylhäällä kohti tankoa
+function drawPrincessJump(c, x, y, s, facing, tilt, t) {
+  c.save();
+  c.translate(x, y);
+  c.rotate(tilt);
+  c.scale(facing, 1);
+  var kick = Math.sin(t * 14) * s * 4;
+  artLimb(c, -s * 4, -s * 18, -s * 10, -s * 2 - kick, s * 4.4, SKIN, SKIN_LINE);
+  artLimb(c, s * 4, -s * 18, s * 9, -s * 2 + kick * 0.6, s * 4.4, SKIN, SKIN_LINE);
+  c.beginPath();
+  c.moveTo(0, -s * 28);
+  c.quadraticCurveTo(-s * 16, -s * 8, -s * 12, -s * 2);
+  c.lineTo(s * 12, -s * 2);
+  c.quadraticCurveTo(s * 16, -s * 8, 0, -s * 28);
+  c.closePath();
+  artFillPath(c, DRESS, -s * 28, -s * 2, s * 12);
+  artBlob(c, 0, -s * 26, s * 6.2, s * 8, DRESS, {});
+  artCircle(c, 0, -s * 42, s * 8, SKIN, { lineColor: SKIN_LINE, hi: 0.3 });
+  c.beginPath();
+  c.arc(0, -s * 45, s * 8.2, Math.PI * 0.95, Math.PI * 2.05);
+  c.closePath();
+  artFillPath(c, HAIR, -s * 54, -s * 42, s * 8);
+  artBlob(c, -s * 7, -s * 34, s * 3.4, s * 9, HAIR, { rot: 0.28 });
+  artEye(c, s * 3, -s * 42, s * 1.55, 0.45, (t % 4.1) < 0.14);
+  artBlush(c, s * 5.2, -s * 39, s * 1.8);
+  c.strokeStyle = '#c0392b';
+  c.lineWidth = Math.max(1, s * 0.9);
+  c.lineCap = 'round';
+  c.beginPath(); c.arc(s * 1.8, -s * 39.5, s * 2.4, 0.2, Math.PI - 0.7); c.stroke();
+  c.beginPath();
+  c.moveTo(-s * 6, -s * 50);
+  c.lineTo(-s * 6, -s * 56);
+  c.lineTo(-s * 3, -s * 52);
+  c.lineTo(0, -s * 58);
+  c.lineTo(s * 3, -s * 52);
+  c.lineTo(s * 6, -s * 56);
+  c.lineTo(s * 6, -s * 50);
+  c.closePath();
+  artFillPath(c, '#ffd24f', -s * 58, -s * 50, s * 5, { lineColor: '#d98a00' });
+  c.fillStyle = '#ff5f7e';
+  c.beginPath(); c.arc(0, -s * 52.2, s * 1.1, 0, Math.PI * 2); c.fill();
+  artLimb(c, -s * 5, -s * 24, -s * 12, -s * 54, s * 3.4, SKIN, SKIN_LINE);
+  artLimb(c, s * 5, -s * 24, s * 11, -s * 56, s * 3.4, SKIN, SKIN_LINE);
+  c.restore();
+}
+
 // Haalea kaari: mihin irrotus (tai loikka) juuri nyt veisi
 function drawCircusGhostArc(c) {
   var vx, vy, n, v, x = circ.x, y = circ.y, i, dt = 0.06, a;
@@ -634,7 +680,7 @@ function drawCircus() {
     drawPrincessPose(ctx, circ.x - camX, circ.y, ps, 1, 'hang', -th * 0.6, globalT);
   } else if (circ.state === 'fly') {
     var tilt = Math.atan2(circ.vy, Math.abs(circ.vx) + 1) * 0.35;
-    drawPrincessPose(ctx, circ.x - camX, circ.y, ps, princess.facing, 'fly', tilt * princess.facing, globalT);
+    drawPrincessJump(ctx, circ.x - camX, circ.y + circHandsToFeet(), ps, princess.facing, tilt * princess.facing, globalT);
   } else {
     var bounce = Math.sin(Math.min(1, circ.netT) * Math.PI) * viewH * 0.06;
     drawPrincessPose(ctx, circ.x - camX, circ.y - bounce, ps, 1, 'fly', Math.sin(circ.netT * 8) * 0.2, globalT);

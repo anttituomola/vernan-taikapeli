@@ -682,6 +682,21 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.lineCap = 'butt';
     c.fillStyle = '#ffd24f';
     c.beginPath(); c.moveTo(x, y - s * 0.24); c.lineTo(x, y - s * 0.34); c.lineTo(x + s * 0.1, y - s * 0.31); c.lineTo(x, y - s * 0.27); c.closePath(); c.fill();
+  } else if (kind === 'wire') {
+    // Nuorallakävely: pylväät, nuora ja tasapainotanko
+    c.fillStyle = '#5a4a78';
+    c.fillRect(x - s * 0.22, y - s * 0.12, s * 0.05, s * 0.3);
+    c.fillRect(x + s * 0.17, y - s * 0.12, s * 0.05, s * 0.3);
+    c.strokeStyle = '#e8d4a8';
+    c.lineWidth = Math.max(1.5, s * 0.03);
+    c.beginPath(); c.moveTo(x - s * 0.2, y - s * 0.1); c.quadraticCurveTo(x, y - s * 0.02, x + s * 0.2, y - s * 0.1); c.stroke();
+    c.strokeStyle = '#8a5a30';
+    c.lineWidth = Math.max(2, s * 0.04);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x - s * 0.16, y - s * 0.2); c.lineTo(x + s * 0.16, y - s * 0.08); c.stroke();
+    c.lineCap = 'butt';
+    c.fillStyle = '#ff6fb0';
+    c.beginPath(); c.arc(x, y - s * 0.16, s * 0.07, 0, Math.PI * 2); c.fill();
   } else if (kind === 'balloon') {
     // Kuumailmapallo
     c.strokeStyle = '#8a5a30';

@@ -742,13 +742,15 @@ var WORLDS = [
       '#########.#',
       '#R........#',
       '#.#########',
-      '#........P#',
+      '#........W#',
       '#########.#',
-      '#J........#',
+      '#P........#',
       '#.#########',
-      '#........O#',
+      '#........J#',
       '#########.#',
-      '#M........#',
+      '#O........#',
+      '#.#########',
+      '#........M#',
       '###########'
     ],
     levels: [
@@ -779,6 +781,20 @@ var WORLDS = [
         renderBgLayers: function () { return circusLayers(); },
         light: { rays: true, raysColor: '#ffe08a', raysAlpha: 0.75, tint: ['rgba(40,20,90,0.16)', 'rgba(20,10,50,0.08)'], vignette: 0.44 },
         respawn: function () { respawnCircus(); }
+      },
+      {
+        kind: 'wire', room: 'W', name: 'Nuorallakävely', color: '#4ec4c8', script: 'play-wire',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+        bgColor: '#162040', ambient: 'sparkle', fg: null,
+        init: function () { initWire(); },
+        update: function (dt) { updateWire(dt); },
+        draw: function () { drawWire(); },
+        tap: function (x, y) { handleWireTap(x, y); },
+        resize: function (ratio) { resizeWire(ratio); },
+        renderBg: function (b, w, h) { renderWireBg(b, w, h); },
+        renderBgLayers: function () { return wireLayers(); },
+        light: { rays: true, raysColor: '#b8f0e8', raysAlpha: 0.7, tint: ['rgba(20,40,80,0.14)', 'rgba(10,20,50,0.08)'], vignette: 0.4 },
+        respawn: function () { respawnWire(); }
       },
       {
         kind: 'balloon', room: 'P', name: 'Kuumailmapallo', color: '#ff9d5c', script: 'play-balloon',

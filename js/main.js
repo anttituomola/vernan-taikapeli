@@ -243,6 +243,8 @@ window.VT = {
   wordshop: function () { return wshop; },
   circus: function () { return circ; },
   circusTap: handleCircusTap,
+  wire: function () { return wire; },
+  wireTap: handleWireTap,
   balloon: function () { return { bal: bal, items: balItems, kites: balKites, pad: balPad }; },
   icecream: function () { return ice; },
   ducks: function () { return ducks; },
