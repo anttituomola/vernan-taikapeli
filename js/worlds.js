@@ -967,12 +967,17 @@ var WORLDS = [
     // sokkelon maaston teema. Lohikäärmelaakso on mantereen ensimmäinen alue.
     id: 10, name: 'Lohikäärmelaakso', region: 'land', band: 'dragon',
     place: { fx: 0.34, fy: 0.55, size: 1.0, finaleKind: 'nest', deco: ['nest'] },
+    // '?' = tuleva huone usvan peitossa (paikanpitäjä tuleville kentille)
     map: [
-      '##########',
-      '#B.......#',
-      '#.########',
-      '#.......D#',
-      '##########'
+      '###########',
+      '#B.......D#',
+      '#########.#',
+      '#?........#',
+      '#.#########',
+      '#........?#',
+      '#########.#',
+      '#?.......?#',
+      '###########'
     ],
     levels: [
       {

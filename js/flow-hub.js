@@ -172,6 +172,10 @@ function showHub() {
 function hubWalkable(ch) {
   return ch && ch !== '#';
 }
+// Kartan '?' on tuleva huone: usvan peitossa, lapsi näkee että lisää on tulossa
+function hubIsFog(ch) {
+  return ch === '?';
+}
 
 function hubAt(c, r) {
   var m = hubMap();
@@ -297,6 +301,13 @@ function hubArrive(ch) {
       beginPlay(room.kind);
       return;
     }
+    hubToast.kind = 'lock';
+    hubToast.t = 1.8;
+    playNote(392, 0, 0.18, 'triangle', 0.28);
+    return;
+  }
+  if (hubIsFog(ch)) {
+    // Tuleva huone usvan peitossa: näytä lukko, huonetta ei vielä ole
     hubToast.kind = 'lock';
     hubToast.t = 1.8;
     playNote(392, 0, 0.18, 'triangle', 0.28);
@@ -894,6 +905,8 @@ function drawHub() {
         if (castleReady) drawHintArrow(ctx, x, y - s * 1.1);
       } else if (room) {
         drawHubMedallion(ctx, room, x, y, s, !!(room.kind && hubCleared[room.kind]), room.kind === nextKind);
+      } else if (hubIsFog(ch)) {
+        drawHubFogRoom(ctx, x, y, s, c + r * 3);
       }
     }
   }
@@ -1261,7 +1274,7 @@ function renderHubBg(lay) {
   for (r = 0; r < lay.rows; r++) {
     for (c = 0; c < lay.cols; c++) {
       ch = hubAt(c, r);
-      if (!hubWalkable(ch) || hubRooms()[ch] || ch === 'G' || ch === 'B') continue;
+      if (!hubWalkable(ch) || hubRooms()[ch] || ch === 'G' || ch === 'B' || hubIsFog(ch)) continue;
       cx = lay.ox + (c + 0.5) * s;
       cy = lay.oy + (r + 0.5) * s;
       for (i = 0; i < 3; i++) {
@@ -1279,6 +1292,26 @@ function renderHubBg(lay) {
   if (hubWorld === 1) {
     var st = hubFind('B');
     drawCottage(b, lay.ox + (st.c + 1.5) * s, lay.oy + (st.r - 0.5) * s + s * 0.42, s * 0.85);
+  }
+}
+
+// Tuleva huone: harmaa mitali usvapilvien alla ja haalea lukko
+function drawHubFogRoom(c, x, y, s, seed) {
+  var rad = s * 0.32, i, px, py;
+  c.fillStyle = 'rgba(0,0,0,0.12)';
+  c.beginPath(); c.arc(x + s * 0.03, y + s * 0.06, rad, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#d9d4e4';
+  c.beginPath(); c.arc(x, y, rad, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#c3bdd3';
+  c.beginPath(); c.arc(x, y, rad * 0.8, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = 0.55;
+  drawHubLock(c, x, y + rad * 0.05, rad * 1.4);
+  c.globalAlpha = 1;
+  c.fillStyle = 'rgba(245,248,255,0.72)';
+  for (i = 0; i < 5; i++) {
+    px = x + (i - 2) * rad * 0.42 + Math.sin(globalT * 0.5 + seed + i) * rad * 0.08;
+    py = y - rad * 0.1 + (i % 2) * rad * 0.3 + Math.cos(globalT * 0.4 + seed + i * 1.3) * rad * 0.05;
+    c.beginPath(); c.arc(px, py, rad * 0.46, 0, Math.PI * 2); c.fill();
   }
 }
 

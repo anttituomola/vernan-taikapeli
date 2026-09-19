@@ -59,7 +59,9 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 
 **Uusi vaihe** = tiedosto `js/play-….js` ja yksi `levels`-alkio js/worlds.js:n
 `WORLDS`-rekisteriin (`kind`, `script`, huoneen kirjain `room`, ohjaus ja koukut;
-kirjain myös saaren `map`-karttaan). Kentän numero, `next`-ketju,
+kirjain myös saaren `map`-karttaan). Kartan merkki `?` on **tuleva huone**:
+se piirretään usvan peittämänä mitalina lukolla, ja nappulan saapuminen näyttää
+lukon. Kun kenttä valmistuu, `?` vaihdetaan huoneen kirjaimeksi. Kentän numero, `next`-ketju,
 `HUB_ROOMS`/`HUB_ORDER` ja skriptien latauslista johdetaan rekisteristä.
 **Uusi saari** = yksi `WORLDS`-alkio: nimi, `island`-tiedot (sijainti,
 vartijahuone `finaleKind`, koristeet), `map` ja `levels`.
