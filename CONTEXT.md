@@ -49,6 +49,12 @@ Kaukamaan maailma (esim. Lohikäärmelaakso): saaren vastine mantereella, jolla
 on nimi, sokkelo ja vartija. Yksisarvinen kävelee paikkojen välillä polkua.
 _Vältä_: alue, laakso yleisnimenä, saari (mantereella)
 
+**Liekki**:
+Tulilennon tulihengityksen varanto: kolme liekkiä, joista puhallus kuluttaa
+yhden; liekit palautuvat ajan kanssa ja tulimarja täyttää ne. Tulinappi on
+hyppynapin paikalla.
+_Vältä_: ammus, mana, energia
+
 **Purjehdus**:
 Lyhyt siirtymäkohtaus saaristosta Kaukamaalle ja takaisin: vene avomerellä,
 manner nousee usvasta. Napautus ohittaa.

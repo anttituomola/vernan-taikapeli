@@ -60,7 +60,7 @@ function pointerDown(e) {
   if (e.touches && e.touches.length > 1 && holdTouchId !== null) {
     // Toinen sormi, kun ohjaussormi on yhä ruudulla: juostessa hyppy mihin tahansa
     // tähtäämättä; tehtävän (esim. raahauksen) aikana toinen sormi ei tee mitään
-    if (mode === 'play' && holding && !taskActive()) tryJump();
+    if (mode === 'play' && holding && !taskActive()) { if (phaseNow().usesFire) tryFire(); else tryJump(); }
     return;
   }
   holdTouchId = newTouch ? newTouch.identifier : null;
@@ -86,8 +86,8 @@ function pointerDown(e) {
     handleTaskTap(p.x, p.y);
     return;
   }
-  if (phaseNow().usesJump && inJumpZone(p.x, p.y)) {
-    tryJump();
+  if ((phaseNow().usesJump || phaseNow().usesFire) && inJumpZone(p.x, p.y)) {
+    if (phaseNow().usesFire) tryFire(); else tryJump();
     return;
   }
   holding = true;
@@ -181,6 +181,15 @@ function jumpPress(e) {
 document.getElementById('jumpBtn').addEventListener('touchstart', jumpPress, { passive: false });
 document.getElementById('jumpBtn').addEventListener('mousedown', jumpPress);
 
+// Tulinappi (Tulilento): lohikäärme puhaltaa tulta; myös toinen sormi ja vasen alakulma
+function firePress(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  tryFire();
+}
+document.getElementById('fireBtn').addEventListener('touchstart', firePress, { passive: false });
+document.getElementById('fireBtn').addEventListener('mousedown', firePress);
+
 function penPress(e) {
   e.preventDefault();
   e.stopPropagation();
@@ -231,6 +240,8 @@ window.VT = {
   landTick: function (dt) { updateLand(dt); drawLand(); },
   places: LAND_PLACES,
   nest: function () { return nest; },
+  fly: function () { return fly; },
+  fire: function () { tryFire(); },
   nestTap: handleNestTap,
   islandPos: seaIslandPos,
   reveal: function () { return seaReveal; },

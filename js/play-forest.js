@@ -251,6 +251,7 @@ function startCelebration() {
   markPhaseCleared();
   awardStars();
   document.getElementById('jumpBtn').style.display = 'none';
+  document.getElementById('fireBtn').style.display = 'none';
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';
   soundFanfare();

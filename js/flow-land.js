@@ -83,7 +83,7 @@ function seaExitPos() {
 
 // ---------- Näkymän vaihto ----------
 function showLand(opts) {
-  var i, pl, p, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'penBtn', 'karttaBtn', 'seaBtn'];
+  var i, pl, p, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'fireBtn', 'penBtn', 'karttaBtn', 'seaBtn'];
   opts = opts || {};
   mode = 'land';
   running = false;

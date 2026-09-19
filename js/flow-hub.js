@@ -81,6 +81,7 @@ function levelBegin(p) {
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';
   document.getElementById('jumpBtn').style.display = p.usesJump ? 'block' : 'none';
+  document.getElementById('fireBtn').style.display = p.usesFire ? 'block' : 'none';
   document.getElementById('penBtn').style.display = 'none';
   document.getElementById('karttaBtn').style.display = 'block';
 }
@@ -151,6 +152,7 @@ function showHub() {
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';
   document.getElementById('jumpBtn').style.display = 'none';
+  document.getElementById('fireBtn').style.display = 'none';
   document.getElementById('penBtn').style.display = 'none';
   document.getElementById('karttaBtn').style.display = 'none';
   document.getElementById('seaBtn').style.display = 'block';

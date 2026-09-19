@@ -13,7 +13,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
   (`?v=…`). Skriptien latauslista johdetaan `js/worlds.js`:n `scriptManifest()`-funktiosta.
   **Nosta leimaa julkaistessa**, muuten
   tabletin välimuisti voi yhdistää vanhan `index.html`:n uusiin skripteihin ja kenttä jää jumiin.
-- `css/game.css` — napit (SVG-ikonit), fontti ja karttanäyttö
+- `css/game.css` — napit (SVG-ikonit: kartta, vene, uudestaan, jatka, hyppy, tuli, kynä, ääni), fontti ja karttanäyttö
 - `fonts/` — pelin fontti Fredoka (SIL Open Font License, `OFL.txt`), paketoitu mukaan
 - `js/worlds.js` — **saarirekisteri (`WORLDS`)**: pelin ainoa totuus maailmoista ja kentistä.
   Vaiheen sauma: `init/update/draw/tap/resize/renderBg/renderBgLayers/light/respawn`. Rekisteristä johdetaan
@@ -53,6 +53,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/tasks-north.js` — Revontulimaan lukutehtävät: loppusointu, loppukirjain, puuttuva tavu
 - `js/play-voyage.js`, `play-aurora.js`, `play-reindeer.js`, `play-sled.js`, `play-snowword.js`, `play-foxguard.js` — maailma 9
 - `js/play-nest.js` — Kaukamaa, Lohikäärmelaakso (maailma 10): Pesäkallio (ritsa), lohikäärmeenpoikasten piirto
+- `js/play-dragonfly.js` — Lohikäärmelaakso: Tulilento (lento lohikäärmeellä + tulihengitys, tulinappi `fireBtn` / `usesFire`)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -432,6 +433,19 @@ joka on myös alueen vartija (`finaleKind: 'nest'`).
   emolohikäärme herää kallion laella. Kuusi bonustähteä kerätään osumalla niihin
   marjalla. Ei sydämiä. Tehtäväkaaret kallioiden välissä: anna N kappaletta,
   laske.
+- **Tulilento** ♥ — uusi verbi: **tulihengitys**. Prinsessa lentää
+  lohikäärmeenpoikasella laavakanjonissa yössä: pidä pohjassa lentääksesi
+  sormea kohti (irti päästettynä lohikäärme liitää ja vajoaa hitaasti), ja
+  **tulinappi** (hyppynapin paikalla; myös toinen sormi ja vasen alakulma)
+  puhaltaa liekin eteenpäin. Tulella sytytetään kahdeksan soihtua, sulatetaan
+  kolme kanjonin tukkivaa jääporttia (kaksi puhallusta: ensin halkeama, sitten
+  höyry) ja hajotetaan ajelehtivia tuhkapilviä. Liekkejä on kolme (HUD:n
+  liekit): yksi palautuu 2,2 sekunnissa, ja tulimarja täyttää kaikki heti.
+  Laava alhaalla, kivipilarit ja tippukivet sekä tuhkapilvet vievät sydämen;
+  lyhdyt ovat tarkistuspisteitä (lyhdyn jälkeen sytytetyt soihdut sammuvat, jos
+  sydämet loppuvat). Opastenuoli näyttää seuraavan sammuneen soihdun. Kun
+  kaikki soihdut palavat, kanjonin päässä oleva lohikäärmeiden **rovio** hehkuu:
+  sytytä se. Tehtävät: vähennys, puuttuva ruutu.
 
 ### Linnan sisustus
 
@@ -477,6 +491,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 - Metsä, jää, suo, rannikko, tikkumetsä, paimen ja marjaniitty: pidä sormea pohjassa ratsastaaksesi, napauta kerätäksesi.
 - Pesäkallio: paina mihin tahansa, vedä taakse ja päästä irti — ritsa laukaisee
   marjan vedon vastaiseen suuntaan; pistekaari näyttää lentoradan vetäessä.
+- Tulilento: pidä pohjassa lentääksesi sormea kohti; tulinappi (tai toinen
+  sormi / vasen alakulma) puhaltaa tulta lentosuuntaan.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -631,6 +647,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Lumisana: kierrokset `SW_ROUNDS`, tyypit `SW_KINDS`
 - Revontulikettu: kiteet `FOX_STONES`
 - Pesäkallio: asemat `NEST_STATIONS` (pesien paikat, toiveet, `peek`, `swing`, `overhang`, pilarit `rocks`), laukaisu `NEST_VMAX` / veto `NEST_PULL`, painovoima `NEST_G`, kurkistus `NEST_PEEK_UP` / `NEST_PEEK_DOWN`, suun säde `nestMouth` (`s * 1.1`), ennakkokaaren osumatarkkuus `nestPreview` (`m.r * m.r * 0.6`), harakan väli `3.5 + Math.random() * 2`; osumaikkunat voi mitata selaimessa käymällä vedot läpi `nestLaunchVel` + `nestPreview`
+- Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `viewW * 0.30` / vajoaminen `viewH * 0.28`
 
 ## Tyyliopas
 

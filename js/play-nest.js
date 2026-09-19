@@ -685,13 +685,15 @@ function drawNestCrystal(b, x, baseY, s) {
 
 // ---------- Piirto: hahmot ----------
 // Lohikäärmeenpoikanen: origo jalkojen alla, katsoo vasemmalle (prinsessaa kohti).
-// o: { mouth 0..1, flap -1..1, look, blink, squash, sleep }
+// o: { mouth 0..1, flap -1..1, look, blink, squash, sleep, facing: -1 peilaa oikealle, noShadow }
 function drawBabyDragon(c, x, y, s, color, o) {
   o = o || {};
   var dark = artShade(color, -0.45), light = artShade(color, 0.45), flap = o.flap || 0;
   var lo = { lineColor: dark };
+  if (!o.noShadow) artShadow(c, x, y + s * 0.1, s * 1.6, s * 0.35, 0.14);
   c.save();
   c.translate(x, y);
+  if (o.facing) c.scale(o.facing, 1);
   if (o.squash) artSquash(c, o.squash);
   // Häntä
   c.strokeStyle = dark;
@@ -959,7 +961,7 @@ function drawNest() {
     d = nest.dragons[i];
     if (!d.fly) continue;
     drawBabyDragon(ctx, d.fx2 - cx, d.fy2 + Math.sin(globalT * 4 + i) * s * 0.2, s * 0.85, d.color, {
-      mouth: 0, flap: Math.sin(globalT * 11 + i) * 0.9, look: 0.2, blink: d.blinkT < 0
+      mouth: 0, flap: Math.sin(globalT * 11 + i) * 0.9, look: 0.2, blink: d.blinkT < 0, noShadow: true
     });
   }
 

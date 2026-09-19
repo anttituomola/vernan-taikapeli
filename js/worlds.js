@@ -972,7 +972,7 @@ var WORLDS = [
       '###########',
       '#B.......D#',
       '#########.#',
-      '#?........#',
+      '#T........#',
       '#.#########',
       '#........?#',
       '#########.#',
@@ -993,6 +993,20 @@ var WORLDS = [
         renderBgLayers: function () { return nestLayers(); },
         light: { rays: true, raysColor: '#ffd8a0', raysAlpha: 0.9, tint: ['rgba(120,40,110,0.10)', 'rgba(255,150,80,0.08)'], vignette: 0.38 },
         respawn: function () { respawnNest(); }
+      },
+      {
+        kind: 'dragonfly', room: 'T', name: 'Tulilento', color: '#ff6a2a', script: 'play-dragonfly',
+        control: 'fly', usesJump: false, usesWand: false, usesHearts: true, usesFire: true,
+        bgColor: '#080820', ambient: 'sparkle', fg: null,
+        init: function () { initDragonfly(); },
+        update: function (dt) { updateDragonfly(dt); },
+        draw: function () { drawDragonfly(); },
+        fire: function () { flyFire(); },
+        resize: function (ratio) { resizeDragonfly(ratio); },
+        renderBg: function (b, w, h) { renderDragonflyBg(b, w, h); },
+        renderBgLayers: function () { return dragonflyLayers(); },
+        light: { rays: true, raysColor: '#b8c8ff', raysAlpha: 0.5, tint: ['rgba(20,10,60,0.16)', 'rgba(255,120,40,0.10)'], vignette: 0.5 },
+        respawn: function () { respawnDragonfly(); }
       }
     ]
   }
@@ -1022,6 +1036,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
         resize: lv.resize, renderBg: lv.renderBg
       };
       if (lv.tap) p.tap = lv.tap;
+      if (lv.usesFire) { p.usesFire = true; p.fire = lv.fire; }
       if (lv.respawn) p.respawn = lv.respawn;
       if (lv.renderBgLayers) p.renderBgLayers = lv.renderBgLayers;
       if (lv.light) p.light = lv.light;

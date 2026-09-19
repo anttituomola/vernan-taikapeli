@@ -147,6 +147,24 @@
     display: none;
   }
   #jumpBtn:active { transform: translateY(0.8vmin); box-shadow: 0 0.4vmin 0 #2a9a4c; }
+  /* Tulinappi (Tulilento): sama paikka kuin hyppynapilla */
+  #fireBtn {
+    position: fixed;
+    left: 2.5vmin; bottom: 4vmin;
+    width: 16vmin; height: 16vmin;
+    border-radius: 50%;
+    border: 0.8vmin solid #fff;
+    background: radial-gradient(circle at 35% 30%, #ffd98a, #ff6a2a);
+    color: #fff;
+    font-size: 7vmin;
+    box-shadow: 0 1.2vmin 0 #b83a10;
+    cursor: pointer;
+    z-index: 5;
+    display: none;
+    padding: 0;
+    line-height: 1;
+  }
+  #fireBtn:active { transform: translateY(0.8vmin); box-shadow: 0 0.4vmin 0 #b83a10; }
   /* Kynänappi (Taikakynä): sama paikka kuin hyppynapilla, hehkuu kun kynä on kädessä */
   #penBtn {
     position: fixed;

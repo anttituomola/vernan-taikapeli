@@ -134,7 +134,7 @@ function homeDoorAt(px, py, pad) {
 }
 
 function showHome() {
-  var i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'penBtn', 'seaBtn'];
+  var i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'fireBtn', 'penBtn', 'seaBtn'];
   mode = 'home';
   running = false;
   holding = false;
