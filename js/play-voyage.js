@@ -1,8 +1,9 @@
 'use strict';
 
 // Horisontti: merimatka Revontulimaan rantaan. Vene kulkee itse eteenpäin;
-// pidä sormea ylös/alas väistääksesi ahtojäitä. Tähdet kerätään, laituri
-// hehkuu perillä. Sydämet ja lyhdyt käytössä.
+// pidä sormea ohjataksesi: vasemmalla palaa, oikealla jatkaa, ylös/alas
+// väistää jäitä. Tähdet jotka jäävät taakse tulevat uudelleen eteen.
+// Laituri pysäyttää veneen; jäljellä olevat tähdet leijuvat luo.
 
 var VOY_STARS = 8;
 var voy = { x: 0, y: 0, vy: 0 };
@@ -82,6 +83,10 @@ function resizeVoyage(ratio) {
 
 function handleVoyageTap() {}
 
+function voyXMin() { return viewW * 0.1; }
+function voyXMax() { return voyDock.x; }
+function voyAtDock() { return voy.x >= voyDock.x - viewH * 0.12; }
+
 function voyCollect(s) {
   s.collected = true;
   registerCollected(s);
@@ -90,11 +95,26 @@ function voyCollect(s) {
   if (countCollected(voyStars) === VOY_STARS) voyDock.ready = true;
 }
 
+function voyPlaceStar(s, ahead) {
+  var top = voyWaterTop() + viewH * 0.04, bot = voyWaterBot() - viewH * 0.04;
+  s.ax = Math.min(ahead, voyDock.x - viewW * 0.06);
+  s.ay = top + Math.random() * Math.max(24, bot - top);
+}
+
+function voyMissedStar() {
+  var i;
+  for (i = 0; i < voyStars.length; i++) {
+    if (!voyStars[i].collected) return voyStars[i];
+  }
+  return null;
+}
+
 function updateVoyage(dt) {
-  var i, n, dx, dy, busy, blocked, wantY, rr;
+  var i, n, dx, dy, busy, blocked, wantY, wantX, rr, atEnd;
   updateTasks(dt);
   busy = puzzleBusy();
   blocked = false;
+  atEnd = voyAtDock();
   if (!busy && !celebrating) {
     for (i = 0; i < tasks.length; i++) {
       n = tasks[i];
@@ -105,7 +125,16 @@ function updateVoyage(dt) {
         if (!activeTask) taskStart(n);
       }
     }
-    if (!blocked) voy.x += viewW * 0.20 * dt;
+    if (!blocked) {
+      if (holding) {
+        wantX = lastPX + camX;
+        voy.x += ((wantX > voy.x ? 1 : -1) * viewW * 0.22) * dt;
+      } else if (!atEnd) {
+        voy.x += viewW * 0.20 * dt;
+      }
+    }
+    voy.x = Math.min(Math.max(voy.x, voyXMin()), voyXMax());
+    atEnd = voyAtDock();
     wantY = holding ? lastPY : voy.y;
     voy.vy += ((wantY > voy.y ? 1 : -1) * viewH * 0.7 - voy.vy * 0.8) * dt;
     voy.y += voy.vy * dt;
@@ -126,15 +155,25 @@ function updateVoyage(dt) {
       n = voyStars[i];
       n.phase += dt * 2;
       if (n.collected) continue;
+      if (atEnd) {
+        if (n.ax < voy.x - viewW * 0.18 || n.ax > voy.x + viewW * 0.28) {
+          voyPlaceStar(n, voy.x + viewW * (0.12 + (i % 3) * 0.08));
+          spawnSparkles(n.ax, n.ay, 6, '#ffe27a');
+        }
+      } else if (n.ax < voy.x - viewW * 0.16) {
+        voyPlaceStar(n, voy.x + viewW * (0.32 + Math.random() * 0.22));
+      }
       dx = n.ax - voy.x; dy = n.ay - voy.y;
       if (dx * dx + dy * dy < viewH * 0.08 * viewH * 0.08) voyCollect(n);
     }
   }
   princess.x = voy.x;
   princess.y = voy.y;
+  if (holding && lastPX + camX < voy.x - 8) princess.facing = -1;
+  else princess.facing = 1;
   followCam(voy.x, dt);
   updateCheckpoints(voy.x, voy.y);
-  if (voyDock.ready && !celebrating && voy.x > voyDock.x - viewH * 0.1) startCelebration();
+  if (voyDock.ready && !celebrating && atEnd) startCelebration();
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -176,7 +215,7 @@ function renderVoyageNear(b, w, h) {
 }
 
 function drawVoyage() {
-  var i, s, ice, ps;
+  var i, s, ice, ps, miss;
   if (!beginPlayWorld()) return;
   drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
@@ -208,10 +247,14 @@ function drawVoyage() {
   ps = viewH / 520;
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
   drawBoat(ctx, voy.x - camX, voy.y + viewH * 0.04, viewH * 0.12);
-  drawPrincessFree(ctx, voy.x - camX, voy.y, ps, 1, globalT * 4, true, globalT);
+  drawPrincessFree(ctx, voy.x - camX, voy.y, ps, princess.facing, globalT * 4, true, globalT);
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
-  if (voyDock.ready && !celebrating) drawEdgeArrow(ctx, voyDock.x);
+  if (!celebrating) {
+    miss = voyMissedStar();
+    if (voyDock.ready) drawEdgeArrow(ctx, voyDock.x);
+    else if (miss && miss.ax < camX + viewW * 0.08) drawEdgeArrow(ctx, miss.ax);
+  }
   endPlayWorld();
   drawPickupHud(ctx, VOY_STARS, function (k) { return voyStars[k] && voyStars[k].collected; },
     function (c, x, y, sz) { drawStar(c, x, y, sz, 0, 0); });

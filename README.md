@@ -368,9 +368,10 @@ napautus), mutta tehtävät painottavat päättelyä, hahmotusta, matematiikkaa
 ja lukemista Kirjainsaaren jälkeen: loppusointu, loppukirjain ja puuttuva
 tavu.
 
-- **Horisontti** ♥ — vene kulkee itse eteenpäin; pidä sormea ylös tai alas
-  väistääksesi ahtojäitä. Kahdeksan tähteä, laituri hehkuu perillä.
-  Tehtävät: laske, kummalla enemmän.
+- **Horisontti** ♥ — vene kulkee itse eteenpäin; pidä sormea ohjataksesi
+  (vasemmalla palaa, oikealla jatkaa, ylös/alas väistää jäitä). Kahdeksan
+  tähteä: ohi mennyt tähti ilmestyy uudelleen eteen, laituri pysäyttää veneen
+  ja jäljellä olevat leijuvat luo. Tehtävät: laske, kummalla enemmän.
 - **Revontulipolku** ♥ — ratsastus. Valopallot syttyvät vain, kun revontuli
   on niiden yllä; kerää ne loistaessaan. Tuulenpuuskat vievät sydämen.
   Tehtävät: kuviosarja, muistiloitsu 5/4.
