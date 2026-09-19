@@ -12,13 +12,14 @@ var aurDefs = [
   { fx: 0.55, fy: 0.12 }, { fx: 0.66, fy: 0.24 }, { fx: 0.78, fy: 0.15 }, { fx: 0.88, fy: 0.27 }
 ];
 
-var AUR_GLOW = 4.2;
+var AUR_GLOW = 1.8;
+var AUR_BAND = 0.28;
 
 function aurCurtainX() {
-  return (0.12 + 0.76 * (0.5 + 0.5 * Math.sin(globalT * 0.15))) * worldW;
+  return (0.12 + 0.76 * (0.5 + 0.5 * Math.sin(globalT * 0.24))) * worldW;
 }
 function aurUnderCurtain(g) {
-  return Math.abs(g.ax - aurCurtainX()) < viewW * 0.38;
+  return Math.abs(g.ax - aurCurtainX()) < viewW * AUR_BAND;
 }
 function aurLit(g) {
   return !g.collected && g.glowT > 0;
@@ -200,7 +201,7 @@ function drawAuroraGust(c, x, y, t, dir) {
 }
 
 function drawAuroraFollow(c) {
-  var x = aurCurtainX() - camX, half = viewW * 0.38, g;
+  var x = aurCurtainX() - camX, half = viewW * AUR_BAND, g;
   g = c.createLinearGradient(x - half, 0, x + half, 0);
   g.addColorStop(0, 'rgba(140,255,210,0)');
   g.addColorStop(0.5, 'rgba(140,255,210,0.2)');
