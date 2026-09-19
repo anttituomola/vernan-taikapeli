@@ -126,12 +126,20 @@ TASK_TYPES.clock = {
 };
 
 // ---------- Maksa ----------
-// Lipun hinta 3–9. Pöydällä rahoja: 1, 1, 1, 2, 2, 5. Napautettu raha lentää
-// lautaselle; lautasen rahan napautus palauttaa sen. Summa yli hinnan pöhähtää
-// ja kaikki rahat palaavat pöydälle.
+// Pöydällä rahoja: 1, 1, 1, 2, 2, 5 (yhteensä 12). Hinta 4–12, ei koskaan
+// yli pöydän summan, jotta täsmä maksaminen on aina mahdollista.
+// Napautettu raha lentää lautaselle; lautasen rahan napautus palauttaa sen.
+// Summa yli hinnan pöhähtää ja kaikki rahat palaavat pöydälle.
 var PAY_COINS = [5, 2, 2, 1, 1, 1];
+function payCoinTotal() {
+  var i, n = 0;
+  for (i = 0; i < PAY_COINS.length; i++) n += PAY_COINS[i];
+  return n;
+}
 function makePayProblem(t) {
-  var price = 6 + randInt(8);
+  var total = payCoinTotal();
+  var lo = 4;
+  var price = lo + randInt(total - lo + 1);
   var vals = shuffleNums(PAY_COINS.slice());
   var gap = Math.min(viewW * 0.13, viewH * 0.17), i, hx;
   var coins = [];
