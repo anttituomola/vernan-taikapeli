@@ -7,11 +7,17 @@ function randInt(n) {
   return Math.floor(Math.random() * n);
 }
 
-// a − b = ?  (a 8..19, tulos vähintään 3)
+// a − b = ?  Useimmiten 5–9. Joskus 10–12, mutta vain 1–2 pois (ei lainausta).
 function makeMinusProblem(t) {
-  var a = 8 + randInt(12);
-  var b = 1 + randInt(a - 3);
-  if (a - b < 3) b = a - 3;
+  var a, b;
+  if (Math.random() < 0.28) {
+    a = 10 + randInt(3);
+    b = 1 + randInt(2);
+  } else {
+    a = 5 + randInt(5);
+    b = 1 + randInt(Math.max(1, a - 3));
+    if (a - b < 2) b = a - 2;
+  }
   t.orbs = 3;
   return { a: a, b: b, correct: a - b, answers: pickNumberAnswers(a - b, [a, b]) };
 }

@@ -51,7 +51,7 @@ function tryJump() {
   var p = phaseNow();
   if (!p.usesJump) return;
   if (p.jumpKind === 'flap') {
-    princess.vy = -viewH * 0.58;
+    princess.vy = -viewH * (hubPlaying === 'sled' ? 0.36 : 0.58);
     princess.onGround = false;
     playNote(880, 0, 0.1, 'sine', 0.3);
     return;

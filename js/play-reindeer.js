@@ -163,54 +163,122 @@ function renderReindeerMid(b, w, h) {
 function renderReindeerNear(b, w, h) {
   var i, x;
   renderNorthGround(b, w, h);
-  for (i = 0; i < reinRockDefs.length; i++) {
-    x = reinRockDefs[i] * w;
-    b.fillStyle = '#6a8498';
+  b.fillStyle = 'rgba(190,215,230,0.4)';
+  for (i = 0; i < 18; i++) {
+    x = (i * 211.3) % w;
     b.beginPath();
-    b.moveTo(x - h * 0.05, groundTop + h * 0.04);
-    b.lineTo(x - h * 0.02, groundTop - h * 0.04);
-    b.lineTo(x + h * 0.04, groundTop + h * 0.04);
-    b.closePath(); b.fill();
+    if (b.ellipse) b.ellipse(x, groundTop + h * 0.07 + (i % 3) * h * 0.018, h * 0.014, h * 0.007, 0, 0, Math.PI * 2);
+    else b.arc(x, groundTop + h * 0.08, h * 0.008, 0, Math.PI * 2);
+    b.fill();
   }
-  b.strokeStyle = '#8a5a30';
-  b.lineWidth = h * 0.012;
-  b.strokeRect(reinPen.x - h * 0.1, groundTop - h * 0.12, h * 0.2, h * 0.18);
+}
+
+function drawDeerAntler(c, x, y, s, dir) {
+  var col = '#d8b888';
+  artLimb(c, x, y, x + dir * s * 0.05, y - s * 0.4, s * 0.075, col);
+  artLimb(c, x + dir * s * 0.02, y - s * 0.16, x + dir * s * 0.28, y - s * 0.3, s * 0.055, col);
+  artLimb(c, x + dir * s * 0.03, y - s * 0.28, x + dir * s * 0.1, y - s * 0.52, s * 0.05, col);
 }
 
 function drawNorthDeer(c, x, y, s, facing, hop) {
+  var body = '#b06a38', cream = '#f0d2aa';
   c.save();
-  c.translate(x, y + Math.sin(hop) * s * 0.08);
+  c.translate(x, y);
+  artShadow(c, 0, s * 0.08, s * 1.15, s * 0.28, 0.16);
+  c.translate(0, -Math.sin(hop) * s * 0.08);
   c.scale(facing, 1);
-  artShadow(c, 0, s * 0.2, s * 1.1, s * 0.25, 0.18);
-  artBlob(c, 0, -s * 0.15, s * 0.7, s * 0.35, '#8a5a30', { hi: 0.25 });
-  artCircle(c, s * 0.55, -s * 0.35, s * 0.22, '#8a5a30', {});
-  c.strokeStyle = '#5a3a18';
-  c.lineWidth = Math.max(2, s * 0.12);
-  c.lineCap = 'round';
-  c.beginPath(); c.moveTo(s * 0.5, -s * 0.5); c.lineTo(s * 0.2, -s * 0.95); c.lineTo(s * 0.05, -s * 1.05); c.stroke();
-  c.beginPath(); c.moveTo(s * 0.62, -s * 0.5); c.lineTo(s * 0.85, -s * 0.95); c.lineTo(s * 1.0, -s * 1.05); c.stroke();
-  c.lineCap = 'butt';
-  artEye(c, s * 0.62, -s * 0.38, s * 0.07, 0.3, false);
+  artLimb(c, -s * 0.28, -s * 0.18, -s * 0.36, s * 0.1, s * 0.11, '#8a5228');
+  artLimb(c, s * 0.18, -s * 0.16, s * 0.28, s * 0.1, s * 0.11, '#8a5228');
+  artLimb(c, -s * 0.1, -s * 0.12, -s * 0.16, s * 0.14, s * 0.12, body);
+  artLimb(c, s * 0.36, -s * 0.1, s * 0.4, s * 0.14, s * 0.12, body);
+  artCircle(c, -s * 0.52, -s * 0.42, s * 0.1, cream, { hi: 0.3 });
+  artBlob(c, 0, -s * 0.4, s * 0.58, s * 0.34, body, { hi: 0.28 });
+  artBlob(c, s * 0.06, -s * 0.24, s * 0.3, s * 0.15, cream, { line: false });
+  artLimb(c, s * 0.36, -s * 0.5, s * 0.56, -s * 0.74, s * 0.17, body);
+  drawDeerAntler(c, s * 0.46, -s * 0.9, s, -1);
+  drawDeerAntler(c, s * 0.62, -s * 0.9, s, 1);
+  artBlob(c, s * 0.48, -s * 0.9, s * 0.07, s * 0.13, body, { rot: -0.45 });
+  artBlob(c, s * 0.66, -s * 0.9, s * 0.07, s * 0.13, body, { rot: 0.4 });
+  artBlob(c, s * 0.58, -s * 0.74, s * 0.24, s * 0.2, body, { hi: 0.3 });
+  artBlob(c, s * 0.78, -s * 0.64, s * 0.15, s * 0.11, cream, { hi: 0.25 });
+  artCircle(c, s * 0.88, -s * 0.62, s * 0.04, '#6a3018', { line: false });
+  artEye(c, s * 0.6, -s * 0.78, s * 0.055, 0.35, false);
+  artBlush(c, s * 0.7, -s * 0.68, s * 0.05);
   c.restore();
 }
 
+function drawNorthRock(c, x, y, s) {
+  artShadow(c, x, y + s * 0.1, s * 1.05, s * 0.28, 0.15);
+  artBlob(c, x - s * 0.22, y, s * 0.4, s * 0.3, '#7a8ea0', { hi: 0.12 });
+  artBlob(c, x + s * 0.2, y + s * 0.04, s * 0.46, s * 0.34, '#8aa0b2', { hi: 0.16 });
+  artBlob(c, x, y - s * 0.2, s * 0.4, s * 0.2, '#ffffff', { shadeTo: '#dce8f4', lineColor: '#b8c8d8', hi: 0.4 });
+}
+
+function drawNorthPen(c, x, y, s) {
+  var i, px;
+  artShadow(c, x, y + s * 0.12, s * 1.15, s * 0.28, 0.12);
+  for (i = 0; i < 3; i++) {
+    artRoundRect(c, x - s * 0.55, y - s * 0.52 + i * s * 0.2, s * 1.35, s * 0.07, s * 0.035, '#c48a48', {});
+  }
+  for (i = 0; i < 4; i++) {
+    px = x - s * 0.5 + i * s * 0.38;
+    artRoundRect(c, px - s * 0.055, y - s * 0.78, s * 0.11, s * 0.88, s * 0.04, '#a86e38', {});
+    artBlob(c, px, y - s * 0.82, s * 0.09, s * 0.055, '#ffffff', { shadeTo: '#e8f0f8', lineColor: '#c8d4e0' });
+  }
+}
+
 function drawReindeer() {
-  var i, b, us;
+  var i, r, b, us, hid, hx, hy, order = [];
   if (!beginPlayWorld()) return;
   drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
+  drawNorthPen(ctx, reinPen.x - camX, groundTop + viewH * 0.02, viewH * 0.12);
+  us = viewH / 800;
   for (i = 0; i < reinDeer.length; i++) {
     b = reinDeer[i];
-    if (b.state === 'hid') ctx.globalAlpha = 0.4;
-    drawNorthDeer(ctx, b.x - camX, b.y, viewH * 0.065, b.facing, b.hop);
-    ctx.globalAlpha = 1;
+    if (b.state === 'hid' || b.state === 'hiding') continue;
+    order.push({ y: b.y, d: b });
   }
-  us = viewH / 800;
-  drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
+  order.push({ y: unicorn.y, u: true });
+  order.sort(function (a, c2) { return a.y - c2.y; });
+  for (i = 0; i < order.length; i++) {
+    if (order[i].u) {
+      drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
+    } else {
+      b = order[i].d;
+      drawNorthDeer(ctx, b.x - camX, b.y, viewH * 0.07, b.facing, b.hop);
+    }
+  }
+  for (i = 0; i < reinRocks.length; i++) {
+    hid = null;
+    for (r = 0; r < reinDeer.length; r++) {
+      b = reinDeer[r];
+      if ((b.state === 'hid' || b.state === 'hiding') && b.rock === i) hid = b;
+    }
+    if (hid) {
+      drawNorthDeer(ctx, hid.x - camX, hid.y + (hid.state === 'hid' ? viewH * 0.012 : 0),
+        viewH * (hid.state === 'hid' ? 0.055 : 0.07), hid.facing, hid.state === 'hid' ? 0 : hid.hop);
+    }
+    drawNorthRock(ctx, reinRocks[i].x - camX, groundTop + viewH * 0.02, viewH * 0.075);
+    if (hid && hid.state === 'hid') {
+      hx = hid.x - camX;
+      hy = groundTop - viewH * 0.09 + Math.sin(globalT * 3) * viewH * 0.006;
+      ctx.fillStyle = '#ff5f7e';
+      ctx.fillRect(hx - 3, hy, 6, viewH * 0.028);
+      ctx.beginPath(); ctx.arc(hx, hy + viewH * 0.038, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+  }
   drawParticlesLayer(ctx);
-  if (reinHomeCount() === REIN_N && !celebrating) drawEdgeArrow(ctx, reinPen.x);
+  if (!celebrating) {
+    hid = null;
+    for (i = 0; i < reinDeer.length; i++) {
+      if (reinDeer[i].state === 'hid' || reinDeer[i].state === 'hiding') { hid = reinDeer[i]; break; }
+    }
+    if (hid) drawEdgeArrow(ctx, hid.x);
+    else if (reinHomeCount() < REIN_N) drawEdgeArrow(ctx, reinPen.x);
+  }
   endPlayWorld();
   drawPickupHud(ctx, REIN_N, function (k) { return reinDeer[k] && reinDeer[k].state === 'home'; },
-    function (c, x, y, sz) { drawNorthDeer(c, x, y + sz * 0.3, sz * 0.7, 1, 0); });
+    function (c, x, y, sz) { drawNorthDeer(c, x, y + sz * 0.3, sz * 0.55, 1, 0); });
   drawTaskOverlay(ctx);
 }

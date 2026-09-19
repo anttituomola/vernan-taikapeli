@@ -116,13 +116,14 @@ function updateSled(dt) {
     else if (holdWorldX < princess.x - 8) princess.facing = -1;
   } else {
     princess.vx *= Math.max(0, 1 - dt * 1.8);
-    princess.vy += viewH * 0.32 * dt;
+    princess.vy += viewH * 0.88 * dt;
   }
   princess.vx = Math.min(Math.max(princess.vx, -viewW * 0.3), viewW * 0.3);
-  princess.vy = Math.min(Math.max(princess.vy, -viewH * 0.65), viewH * 0.5);
+  princess.vy = Math.min(Math.max(princess.vy, -viewH * 0.40), viewH * 0.72);
   if (!busy) { princess.x += princess.vx * dt; princess.y += princess.vy * dt; }
   princess.x = Math.min(Math.max(princess.x, camX + viewW * 0.08), camX + viewW * 0.7);
   princess.x = Math.min(Math.max(princess.x, pw), worldW - pw);
+  if (princess.y <= viewH * 0.12 && princess.vy < 0) princess.vy = 0;
   princess.y = Math.min(Math.max(princess.y, viewH * 0.12), groundTop);
   blockPrincessAtTasks();
   princess.walkPhase += dt * 8;
