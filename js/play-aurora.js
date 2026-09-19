@@ -156,7 +156,7 @@ function renderAuroraMid(b, w, h) {
   renderNorthHills(b, w, h);
   for (i = 0; i < 7; i++) {
     x = w * (0.08 + i * 0.14);
-    drawPine(b, x, groundTop - h * 0.01, h * (0.14 + (i % 3) * 0.04), i % 2 ? '#1a3850' : '#245068');
+    drawNorthPine(b, x, groundTop - h * 0.01, h * (0.16 + (i % 3) * 0.04), i % 2 ? '#1a3850' : '#245068');
   }
 }
 function renderAuroraNear(b, w, h) {
@@ -164,8 +164,10 @@ function renderAuroraNear(b, w, h) {
   renderNorthGround(b, w, h);
   for (i = 0; i < 5; i++) {
     x = w * (0.1 + i * 0.18);
-    drawPine(b, x, groundTop, h * 0.14, '#1a3850');
+    drawNorthPine(b, x, groundTop, h * 0.16, '#1a3850');
   }
+  drawNorthRock(b, w * 0.34, groundTop + h * 0.02, h * 0.045);
+  drawNorthRock(b, w * 0.68, groundTop + h * 0.015, h * 0.038);
 }
 
 function drawAuroraGust(c, x, y, t, dir) {
@@ -235,14 +237,7 @@ function drawAurora() {
   for (i = 0; i < aurWind.length; i++) {
     drawAuroraGust(ctx, aurWind[i].x - camX, aurWind[i].y, globalT, aurWind[i].dir);
   }
-  if (aurGate.open) {
-    var bx = aurGate.x - camX;
-    var gg = ctx.createRadialGradient(bx, groundTop - viewH * 0.12, 4, bx, groundTop - viewH * 0.12, viewH * 0.16);
-    gg.addColorStop(0, 'rgba(140,255,210,0.85)');
-    gg.addColorStop(1, 'rgba(140,255,210,0)');
-    ctx.fillStyle = gg;
-    ctx.beginPath(); ctx.arc(bx, groundTop - viewH * 0.12, viewH * 0.16, 0, Math.PI * 2); ctx.fill();
-  }
+  drawNorthGate(ctx, aurGate.x - camX, groundTop + viewH * 0.02, viewH * 0.16, aurGate.open);
   us = viewH / 800;
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
   drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);

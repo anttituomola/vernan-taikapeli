@@ -189,29 +189,82 @@ function renderVoyageBg(b, w, h) {
   renderVoyageFar(b, w, h); renderVoyageMid(b, w, h); renderVoyageNear(b, w, h);
 }
 function renderVoyageFar(b, w, h) {
-  var sky = b.createLinearGradient(0, 0, 0, h);
-  sky.addColorStop(0, '#102038');
-  sky.addColorStop(0.4, '#1a4060');
-  sky.addColorStop(1, '#2a6a88');
+  var i, x, sky = b.createLinearGradient(0, 0, 0, h * 0.28);
+  sky.addColorStop(0, '#061018');
+  sky.addColorStop(0.55, '#102838');
+  sky.addColorStop(1, '#1a4860');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
-  drawBgSun(b, w * 0.78, h * 0.14, h * 0.05, 0.22, '#ffe9a0', '#fff8d0', '#ffd24f');
+  b.fillStyle = '#fff8d8';
+  for (i = 0; i < 36; i++) {
+    x = w * ((i * 0.137 + 0.04) % 1);
+    b.globalAlpha = 0.28 + (i % 5) * 0.14;
+    b.beginPath(); b.arc(x, h * (0.03 + (i * 0.061) % 0.16), 1.0 + (i % 4) * 0.45, 0, Math.PI * 2); b.fill();
+  }
+  b.globalAlpha = 1;
+  drawBgSun(b, w * 0.82, h * 0.07, h * 0.04, 0.18, '#c8f0ff', '#f4fbff', '#d8eeff');
+  fillHillBand(b, w, h, h * 0.22, '#1a3848', function (px) {
+    return h * 0.168 - Math.sin(px * 0.0016 + 0.4) * h * 0.028 - Math.sin(px * 0.004) * h * 0.012;
+  });
+  b.fillStyle = 'rgba(236,246,255,0.7)';
+  b.beginPath();
+  b.moveTo(0, h * 0.155);
+  for (x = 0; x <= w; x += 12) b.lineTo(x, h * 0.155 - Math.sin(x * 0.0016 + 0.4) * h * 0.016);
+  for (x = w; x >= 0; x -= 12) b.lineTo(x, h * 0.188 - Math.sin(x * 0.0016 + 0.4) * h * 0.01);
+  b.closePath(); b.fill();
+  for (i = 0; i < 8; i++) {
+    drawNorthPine(b, w * (0.04 + i * 0.12), h * 0.195, h * (0.055 + (i % 3) * 0.015), '#142838');
+  }
 }
 function renderVoyageMid(b, w, h) {
-  fillHillBand(b, w, h, h * 0.72, '#245a70', function (px) {
-    return h * 0.72 - h * 0.04 - Math.sin(px * 0.002) * h * 0.03;
-  });
+  var i, x, water = b.createLinearGradient(0, h * 0.20, 0, h);
+  water.addColorStop(0, '#4aa8c8');
+  water.addColorStop(0.35, '#2a7090');
+  water.addColorStop(1, '#143848');
+  b.fillStyle = water;
+  b.fillRect(0, h * 0.20, w, h * 0.80);
+  b.fillStyle = 'rgba(210,240,255,0.18)';
+  for (i = 0; i < 14; i++) {
+    x = (i * 277.1) % w;
+    b.beginPath();
+    if (b.ellipse) b.ellipse(x, h * (0.28 + (i % 5) * 0.1), h * 0.11, h * 0.012, 0, 0, Math.PI * 2);
+    else b.arc(x, h * 0.4, h * 0.05, 0, Math.PI * 2);
+    b.fill();
+  }
 }
 function renderVoyageNear(b, w, h) {
-  var g = b.createLinearGradient(0, h * 0.68, 0, h);
-  g.addColorStop(0, '#3a88a8');
-  g.addColorStop(1, '#1a4860');
-  b.fillStyle = g;
-  b.fillRect(0, h * 0.68, w, h * 0.32);
-  b.fillStyle = '#d8eef0';
-  b.fillRect(voyDock.x - h * 0.12, h * 0.62, h * 0.28, h * 0.08);
-  b.fillStyle = '#8a5a30';
-  b.fillRect(voyDock.x + h * 0.08, h * 0.48, h * 0.02, h * 0.16);
+  var i, x, water = b.createLinearGradient(0, h * 0.58, 0, h);
+  water.addColorStop(0, 'rgba(42,112,144,0)');
+  water.addColorStop(0.25, 'rgba(26,80,104,0.45)');
+  water.addColorStop(1, '#122830');
+  b.fillStyle = water;
+  b.fillRect(0, h * 0.58, w, h * 0.42);
+  b.fillStyle = 'rgba(200,236,248,0.16)';
+  for (i = 0; i < 10; i++) {
+    x = (i * 241.1) % w;
+    b.beginPath();
+    if (b.ellipse) b.ellipse(x, h * 0.78 + (i % 3) * h * 0.04, h * 0.09, h * 0.014, 0, 0, Math.PI * 2);
+    else b.arc(x, h * 0.8, h * 0.04, 0, Math.PI * 2);
+    b.fill();
+  }
+  fillHillBand(b, w, h, h, '#d8e8f4', function (px) {
+    var edge = voyDock.x - h * 0.08;
+    if (px < edge) return h + 4;
+    return h * 0.52 + Math.sin((px - edge) * 0.012) * h * 0.02;
+  });
+  b.fillStyle = '#eef6fc';
+  b.beginPath();
+  b.moveTo(voyDock.x - h * 0.04, h * 0.52);
+  b.quadraticCurveTo(voyDock.x + h * 0.18, h * 0.46, w, h * 0.5);
+  b.lineTo(w, h); b.lineTo(voyDock.x - h * 0.08, h);
+  b.closePath(); b.fill();
+  for (i = 0; i < 5; i++) {
+    artRoundRect(b, voyDock.x - h * 0.22, h * 0.50 + i * h * 0.018, h * 0.38, h * 0.014, 3, i % 2 ? '#d2b080' : '#b89060', {});
+  }
+  artRoundRect(b, voyDock.x + h * 0.08, h * 0.34, h * 0.028, h * 0.2, 4, '#8a5a30', {});
+  artBlob(b, voyDock.x + h * 0.094, h * 0.32, h * 0.04, h * 0.02, '#eef6fc', { line: false });
+  drawNorthPine(b, voyDock.x + h * 0.2, h * 0.52, h * 0.16, '#1a3850');
+  drawNorthPine(b, voyDock.x + h * 0.32, h * 0.54, h * 0.12, '#245068');
 }
 
 function drawVoyage() {
@@ -227,14 +280,7 @@ function drawVoyage() {
   }
   for (i = 0; i < voyIce.length; i++) {
     ice = voyIce[i];
-    ctx.fillStyle = 'rgba(230,245,255,0.92)';
-    ctx.beginPath();
-    ctx.moveTo(ice.x - camX, ice.y + ice.r * 0.4);
-    ctx.lineTo(ice.x - camX - ice.r, ice.y + ice.r * 0.5);
-    ctx.lineTo(ice.x - camX - ice.r * 0.2, ice.y - ice.r);
-    ctx.lineTo(ice.x - camX + ice.r * 0.35, ice.y - ice.r * 0.7);
-    ctx.lineTo(ice.x - camX + ice.r, ice.y + ice.r * 0.45);
-    ctx.closePath(); ctx.fill();
+    drawNorthIce(ctx, ice.x - camX, ice.y, ice.r * 1.15);
   }
   if (voyDock.ready) {
     var gx = voyDock.x - camX, gy = viewH * 0.55;
@@ -246,7 +292,7 @@ function drawVoyage() {
   }
   ps = viewH / 520;
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
-  drawBoat(ctx, voy.x - camX, voy.y + viewH * 0.04, viewH * 0.12);
+  drawNorthBoat(ctx, voy.x - camX, voy.y + viewH * 0.04, viewH * 0.12);
   drawPrincessFree(ctx, voy.x - camX, voy.y, ps, princess.facing, globalT * 4, true, globalT);
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);

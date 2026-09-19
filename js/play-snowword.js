@@ -1,10 +1,10 @@
 'use strict';
 
-// Lumisana: ei liikkumista. Kuusi kierrosta vuorottelee loppusointua,
+// Lumisana: ei liikkumista. Kuusi kierrosta vuorottelee sana–kuvaa,
 // loppukirjainta ja puuttuvaa tavua. Tehtäväkaaret avautuvat keräilyn edetessä.
 
 var SW_ROUNDS = 6;
-var SW_KINDS = ['rhyme', 'lastletter', 'gapsyl', 'rhyme', 'lastletter', 'gapsyl'];
+var SW_KINDS = ['word', 'lastletter', 'gapsyl', 'word', 'lastletter', 'gapsyl'];
 var sw = { done: 0, current: null, waiting: false };
 
 function initSnowword() {
@@ -76,8 +76,18 @@ function renderSnowwordBg(b, w, h) {
   renderSnowwordFar(b, w, h); renderSnowwordMid(b, w, h); renderSnowwordNear(b, w, h);
 }
 function renderSnowwordFar(b, w, h) { renderNorthSky(b, w, h); }
-function renderSnowwordMid(b, w, h) { renderNorthHills(b, w, h); }
-function renderSnowwordNear(b, w, h) { renderNorthGround(b, w, h); }
+function renderSnowwordMid(b, w, h) {
+  renderNorthHills(b, w, h);
+  drawNorthPine(b, w * 0.12, groundTop - h * 0.01, h * 0.2, '#1a3850');
+  drawNorthPine(b, w * 0.84, groundTop - h * 0.01, h * 0.18, '#245068');
+}
+function renderSnowwordNear(b, w, h) {
+  renderNorthGround(b, w, h);
+  drawNorthKota(b, w * 0.78, groundTop + h * 0.02, h * 0.22);
+  drawNorthSnowman(b, w * 0.18, groundTop - h * 0.02, h * 0.1);
+  drawNorthPine(b, w * 0.32, groundTop, h * 0.15, '#1a3850');
+  drawNorthRock(b, w * 0.58, groundTop + h * 0.02, h * 0.04);
+}
 
 function drawSnowword() {
   var i;

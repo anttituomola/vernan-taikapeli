@@ -14,7 +14,7 @@ var foxStoneDefs = [
 function initFoxguard() {
   var i;
   tasks = [
-    makeTask(0.22, 'rhyme'),
+    makeTask(0.22, 'word'),
     makeTask(0.42, 'lastletter'),
     makeTask(0.62, 'gapsyl'),
     makeTask(0.82, 'memory', { seqLen: 5, orbs: 4 })
@@ -118,37 +118,31 @@ function renderFoxguardBg(b, w, h) {
 }
 function renderFoxguardFar(b, w, h) { renderNorthSky(b, w, h); }
 function renderFoxguardMid(b, w, h) {
+  var i;
   renderNorthHills(b, w, h);
-  drawPine(b, w * 0.2, groundTop - h * 0.01, h * 0.18, '#1a3850');
-  drawPine(b, w * 0.72, groundTop - h * 0.01, h * 0.2, '#245068');
+  for (i = 0; i < 4; i++) drawNorthPine(b, w * (0.14 + i * 0.22), groundTop - h * 0.01, h * (0.16 + (i % 2) * 0.04), i % 2 ? '#1a3850' : '#245068');
 }
 function renderFoxguardNear(b, w, h) {
   renderNorthGround(b, w, h);
-  b.fillStyle = '#6a8498';
-  b.beginPath();
-  b.moveTo(foxDoor.x - h * 0.1, groundTop);
-  b.lineTo(foxDoor.x - h * 0.08, groundTop - h * 0.28);
-  b.lineTo(foxDoor.x + h * 0.08, groundTop - h * 0.28);
-  b.lineTo(foxDoor.x + h * 0.1, groundTop);
-  b.closePath(); b.fill();
+  drawNorthPine(b, w * 0.08, groundTop, h * 0.14, '#1a3850');
+  drawNorthPine(b, w * 0.9, groundTop, h * 0.16, '#245068');
 }
 
 function drawFoxShrine(c, x, y, s, awake) {
-  c.fillStyle = awake ? '#e88a3a' : '#6a8498';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(x, y, s * 0.7, s * 0.4, 0, 0, Math.PI * 2);
-  else c.arc(x, y, s * 0.5, 0, Math.PI * 2);
-  c.fill();
-  c.beginPath();
-  c.moveTo(x - s * 0.15, y - s * 0.25); c.lineTo(x - s * 0.35, y - s * 0.85); c.lineTo(x + s * 0.05, y - s * 0.3);
-  c.closePath(); c.fill();
-  c.beginPath();
-  c.moveTo(x + s * 0.2, y - s * 0.25); c.lineTo(x + s * 0.45, y - s * 0.85); c.lineTo(x + s * 0.05, y - s * 0.3);
-  c.closePath(); c.fill();
-  c.fillStyle = awake ? '#fff4e8' : '#c8d4e0';
-  c.beginPath(); c.arc(x + s * 0.18, y - s * 0.08, s * 0.16, 0, Math.PI * 2); c.fill();
-  if (awake) {
-    artEye(c, x + s * 0.22, y - s * 0.08, s * 0.08, 0.35, false);
+  var fur = '#e88a3a';
+  artBlob(c, x - s * 0.42, y + s * 0.06, s * 0.28, s * 0.16, fur, { rot: -0.55, hi: 0.2 });
+  artBlob(c, x, y + s * 0.1, s * 0.42, s * 0.24, fur, { hi: 0.24 });
+  artBlob(c, x + s * 0.34, y - s * 0.06, s * 0.24, s * 0.2, fur, { hi: 0.26 });
+  artBlob(c, x + s * 0.24, y - s * 0.28, s * 0.075, s * 0.13, fur, { rot: -0.4 });
+  artBlob(c, x + s * 0.42, y - s * 0.28, s * 0.075, s * 0.13, fur, { rot: 0.35 });
+  artBlob(c, x + s * 0.5, y, s * 0.13, s * 0.08, '#fff4e8', { line: false });
+  artCircle(c, x + s * 0.6, y + s * 0.01, s * 0.028, '#4a2810', { line: false });
+  if (awake) artEye(c, x + s * 0.3, y - s * 0.1, s * 0.055, 0.28, false);
+  else {
+    c.strokeStyle = '#4a2810';
+    c.lineWidth = Math.max(1.6, s * 0.045);
+    c.lineCap = 'round';
+    c.beginPath(); c.arc(x + s * 0.3, y - s * 0.08, s * 0.04, 0.15, 2.9); c.stroke();
   }
 }
 
@@ -164,7 +158,8 @@ function drawFoxguard() {
     drawStar(ctx, s.ax - camX, s.ay + Math.sin(s.phase) * 4, viewH * 0.026, s.phase, 0.8);
   }
   awake = foxTasksSolved() >= 2;
-  drawFoxShrine(ctx, foxDoor.x - camX, groundTop - viewH * 0.18, viewH * 0.08, awake);
+  drawNorthGate(ctx, foxDoor.x - camX, groundTop + viewH * 0.02, viewH * 0.18, foxDoor.open);
+  drawFoxShrine(ctx, foxDoor.x - camX + viewH * 0.01, groundTop - viewH * 0.2, viewH * 0.11, awake);
   us = viewH / 800;
   drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
   drawParticlesLayer(ctx);

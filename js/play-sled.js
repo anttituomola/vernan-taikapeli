@@ -163,8 +163,23 @@ function renderSledBg(b, w, h) {
   renderSledFar(b, w, h); renderSledMid(b, w, h); renderSledNear(b, w, h);
 }
 function renderSledFar(b, w, h) { renderNorthSky(b, w, h); }
-function renderSledMid(b, w, h) { renderNorthHills(b, w, h); }
+function renderSledMid(b, w, h) {
+  var i;
+  renderNorthHills(b, w, h);
+  for (i = 0; i < 5; i++) drawNorthPine(b, w * (0.08 + i * 0.2), groundTop - h * 0.01, h * (0.12 + (i % 3) * 0.03), '#1a3850');
+}
 function renderSledNear(b, w, h) { renderNorthGround(b, w, h); }
+
+function drawSledBody(c, x, y, s, facing) {
+  c.save();
+  c.translate(x, y);
+  c.scale(facing || 1, 1);
+  artLimb(c, -s * 20, s * 8, s * 14, s * 8, s * 3.4, '#6a4020');
+  artLimb(c, s * 14, s * 8, s * 22, s * 0, s * 3.4, '#6a4020');
+  artRoundRect(c, -s * 18, -s * 2, s * 34, s * 9, s * 2.4, '#e24a3a', { hi: 0.2 });
+  artRoundRect(c, -s * 8, -s * 4, s * 12, s * 4, s * 1.5, '#ffd24f', { line: false });
+  c.restore();
+}
 
 function drawSled() {
   var i, r, ry, us;
@@ -176,24 +191,14 @@ function drawSled() {
     r = sledRings[i];
     if (r.collected) continue;
     ry = r.ay + Math.sin(r.phase) * viewH * 0.01;
-    ctx.strokeStyle = r.color;
-    ctx.lineWidth = Math.max(3, viewH * 0.012);
-    ctx.beginPath(); ctx.arc(r.ax - camX, ry, viewH * 0.055, 0, Math.PI * 2); ctx.stroke();
+    drawNorthHoop(ctx, r.ax - camX, ry, viewH * 0.055, r.color, r.phase);
   }
   for (i = 0; i < sledRocks.length; i++) {
-    ctx.fillStyle = '#6a8498';
-    ctx.beginPath();
-    ctx.arc(sledRocks[i].x - camX, sledRocks[i].y, viewH * 0.04, 0, Math.PI * 2);
-    ctx.fill();
+    drawNorthIce(ctx, sledRocks[i].x - camX, sledRocks[i].y, viewH * 0.05);
   }
   us = viewH / 520;
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
-  ctx.strokeStyle = '#8a5a30';
-  ctx.lineWidth = Math.max(3, us * 3);
-  ctx.beginPath();
-  ctx.moveTo(princess.x - camX - us * 18, princess.y + us * 4);
-  ctx.quadraticCurveTo(princess.x - camX, princess.y + us * 10, princess.x - camX + us * 20, princess.y + us * 2);
-  ctx.stroke();
+  drawSledBody(ctx, princess.x - camX, princess.y + us * 6, us, princess.facing);
   drawPrincessFree(ctx, princess.x - camX, princess.y, us, princess.facing, princess.walkPhase, true, globalT);
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);

@@ -1,10 +1,9 @@
 'use strict';
 
 // Revontulimaan lukutehtävät (Kirjainsaaren jälkeen):
-//   rhyme      – loppusointu: näytetään sana, valitse kuva jonka sana päättyy samaan tavuun
 //   lastletter – loppukirjain: iso kirjain kuplassa, valitse kuva jonka sana LOPPUU sillä
 //   gapsyl     – puuttuva tavu: TA-?-VAS, valitse oikea tavu kolmesta
-// Perusrunko haarautuu näihin. Sanat TIKKUKIRJAIMIN ja tavutettuina.
+// Sana–kuva käyttää TASK_TYPES.word. Sanat TIKKUKIRJAIMIN ja tavutettuina.
 
 function wordBare(w) {
   return w.w.replace(/-/g, '');
@@ -13,94 +12,6 @@ function wordLastCh(w) {
   var b = wordBare(w);
   return b.charAt(b.length - 1);
 }
-function wordLastSyl(w) {
-  var p = w.w.split('-');
-  return p[p.length - 1];
-}
-
-function wordsRhymingWith(word) {
-  var syl = wordLastSyl(word), out = [], i;
-  for (i = 0; i < WORD_LIST.length; i++) {
-    if (WORD_LIST[i].w === word.w) continue;
-    if (wordLastSyl(WORD_LIST[i]) === syl) out.push(WORD_LIST[i]);
-  }
-  return out;
-}
-
-function rhymePool() {
-  var out = [], i, w;
-  for (i = 0; i < WORD_LIST.length; i++) {
-    w = WORD_LIST[i];
-    if (wordsRhymingWith(w).length > 0) out.push(w);
-  }
-  return out;
-}
-
-// ---------- Loppusointu ----------
-function makeRhymeProblem(t) {
-  var pool = rhymePool(), target, mates, others, picks, slot, i, choices;
-  if (pool.length < 1) pool = WORD_LIST.slice();
-  target = pool[randInt(pool.length)];
-  mates = wordsRhymingWith(target);
-  others = [];
-  for (i = 0; i < WORD_LIST.length; i++) {
-    if (WORD_LIST[i].w === target.w) continue;
-    if (wordLastSyl(WORD_LIST[i]) === wordLastSyl(target)) continue;
-    others.push(WORD_LIST[i]);
-  }
-  others = shuffleNums(others);
-  picks = [mates[randInt(mates.length)] || others[0], others[0], others[1]];
-  if (!picks[1]) picks[1] = WORD_LIST[0];
-  if (!picks[2] || picks[2].w === picks[1].w) picks[2] = others[2] || WORD_LIST[1];
-  picks = shuffleNums(picks);
-  slot = 0;
-  for (i = 0; i < picks.length; i++) {
-    if (wordLastSyl(picks[i]) === wordLastSyl(target)) { slot = i; break; }
-  }
-  choices = [];
-  for (i = 0; i < 3; i++) choices.push({ icon: picks[i].icon, w: picks[i].w, wrong: false });
-  t.word = target;
-  t.orbs = 3;
-  t.sayT = -1;
-  return { choices: choices, correct: slot };
-}
-
-function drawRhymePrompt(c, t, shake) {
-  var cx = viewW / 2 + shake, cy = viewH * 0.22;
-  drawPromptBubble(c, cx, cy, viewH * 0.42, viewH * 0.18);
-  c.fillStyle = 'rgba(255,255,255,0.92)';
-  c.beginPath(); c.arc(cx - viewH * 0.12, cy, viewH * 0.055, 0, Math.PI * 2); c.fill();
-  drawWordIcon(c, t.word.icon, cx - viewH * 0.12, cy, viewH * 0.055);
-  drawWordCard(c, cx + viewH * 0.08, cy, Math.min(viewW * 0.42, viewH * 0.38), viewH * 0.12, t.word.w,
-    t.sayT >= 0 ? Math.floor(t.sayT / WORD_SYL_T) : -1, false, false);
-}
-
-function tapRhymeTask(t, px, py) {
-  var rc = { x: viewW / 2 - viewH * 0.21, y: viewH * 0.13, w: viewH * 0.42, h: viewH * 0.18 };
-  if (px >= rc.x && px <= rc.x + rc.w && py >= rc.y && py <= rc.y + rc.h) { wordSay(t); return; }
-  var i = orbHit(t, px, py);
-  if (i < 0) return;
-  if (t.data.choices[i].wrong) return;
-  t.litOrb = i;
-  t.litT = 0.3;
-  if (i === t.data.correct) {
-    wordSay(t);
-    taskSolved();
-  } else {
-    playNote(170, 0, 0.3, 'sawtooth', 0.2);
-    t.shakeT = 0.5;
-    t.data.choices[i].wrong = true;
-  }
-}
-
-TASK_TYPES.rhyme = {
-  make: makeRhymeProblem, start: wordSay, pitch: 659,
-  tap: tapRhymeTask,
-  draw: function (c, t, shake, op) {
-    drawRhymePrompt(c, t, shake);
-    drawTaskOrbs(c, t, shake, op, orbWordIconContent);
-  }
-};
 
 // ---------- Loppukirjain ----------
 function makeLastLetterProblem(t) {
@@ -191,8 +102,8 @@ function drawGapsylOverlay(c, t, shake) {
   for (i = 0; i < d.syls.length; i++) shown.push(i === d.hide ? '?' : d.syls[i]);
   drawPromptBubble(c, cx, cy, viewH * 0.5, viewH * 0.2);
   c.fillStyle = 'rgba(255,255,255,0.9)';
-  c.beginPath(); c.arc(cx - viewH * 0.16, cy, viewH * 0.055, 0, Math.PI * 2); c.fill();
-  drawWordIcon(c, t.word.icon, cx - viewH * 0.16, cy, viewH * 0.055);
+  c.beginPath(); c.arc(cx - viewH * 0.16, cy, viewH * 0.078, 0, Math.PI * 2); c.fill();
+  drawWordIcon(c, t.word.icon, cx - viewH * 0.16, cy, viewH * 0.078);
   drawWordCard(c, cx + viewH * 0.1, cy, Math.min(viewW * 0.42, viewH * 0.4), viewH * 0.13, shown.join('-'),
     sayIdx, false, false);
   for (i = 0; i < d.choices.length; i++) {

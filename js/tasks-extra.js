@@ -622,32 +622,16 @@ function drawWordIcon(c, id, x, y, r) {
   } else if (id === 'butterfly') {
     drawButterfly(c, x, y, s * 0.85, globalT, '#c9a0ff');
   } else if (id === 'reindeer') {
-    c.fillStyle = '#8a5a30';
-    c.beginPath();
-    if (c.ellipse) c.ellipse(x, y + s * 0.15, s * 0.7, s * 0.38, 0, 0, Math.PI * 2);
-    else c.arc(x, y + s * 0.15, s * 0.5, 0, Math.PI * 2);
-    c.fill();
-    c.beginPath(); c.arc(x + s * 0.55, y - s * 0.15, s * 0.28, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = '#5a3a18';
-    c.lineWidth = Math.max(2, s * 0.12);
-    c.lineCap = 'round';
-    c.beginPath(); c.moveTo(x + s * 0.5, y - s * 0.3); c.lineTo(x + s * 0.25, y - s * 0.85); c.lineTo(x + s * 0.45, y - s * 1.05); c.moveTo(x + s * 0.25, y - s * 0.85); c.lineTo(x + s * 0.05, y - s * 0.95); c.stroke();
-    c.beginPath(); c.moveTo(x + s * 0.65, y - s * 0.3); c.lineTo(x + s * 0.85, y - s * 0.85); c.lineTo(x + s * 1.05, y - s * 1.0); c.moveTo(x + s * 0.85, y - s * 0.85); c.lineTo(x + s * 0.7, y - s * 1.0); c.stroke();
-    c.lineCap = 'butt';
-    c.fillStyle = '#222';
-    c.beginPath(); c.arc(x + s * 0.65, y - s * 0.18, s * 0.07, 0, Math.PI * 2); c.fill();
+    drawNorthDeer(c, x, y + s * 0.4, s * 0.85, 1, 0);
   } else if (id === 'fox') {
-    c.fillStyle = '#e88a3a';
-    c.beginPath();
-    if (c.ellipse) c.ellipse(x, y + s * 0.1, s * 0.7, s * 0.38, 0, 0, Math.PI * 2);
-    else c.arc(x, y + s * 0.1, s * 0.5, 0, Math.PI * 2);
-    c.fill();
-    c.beginPath(); c.moveTo(x + s * 0.15, y - s * 0.15); c.lineTo(x + s * 0.05, y - s * 0.75); c.lineTo(x + s * 0.4, y - s * 0.25); c.closePath(); c.fill();
-    c.beginPath(); c.moveTo(x + s * 0.45, y - s * 0.15); c.lineTo(x + s * 0.7, y - s * 0.75); c.lineTo(x + s * 0.7, y - s * 0.2); c.closePath(); c.fill();
-    c.fillStyle = '#fff4e8';
-    c.beginPath(); c.arc(x + s * 0.45, y - s * 0.05, s * 0.2, 0, Math.PI * 2); c.fill();
-    c.fillStyle = '#222';
-    c.beginPath(); c.arc(x + s * 0.52, y - s * 0.08, s * 0.07, 0, Math.PI * 2); c.fill();
+    artBlob(c, x - s * 0.08, y + s * 0.18, s * 0.55, s * 0.32, '#e88a3a', { hi: 0.22 });
+    artBlob(c, x + s * 0.38, y - s * 0.08, s * 0.28, s * 0.22, '#e88a3a', { hi: 0.25 });
+    artBlob(c, x + s * 0.22, y - s * 0.42, s * 0.1, s * 0.16, '#e88a3a', { rot: -0.35 });
+    artBlob(c, x + s * 0.5, y - s * 0.4, s * 0.1, s * 0.16, '#e88a3a', { rot: 0.4 });
+    artBlob(c, x + s * 0.48, y - s * 0.02, s * 0.14, s * 0.1, '#fff4e8', { line: false });
+    artCircle(c, x - s * 0.55, y + s * 0.12, s * 0.12, '#e88a3a', { hi: 0.2 });
+    artEye(c, x + s * 0.4, y - s * 0.12, s * 0.07, 0.3, false);
+    artBlush(c, x + s * 0.5, y + s * 0.02, s * 0.05);
   } else if (id === 'fire') {
     c.fillStyle = '#ff6b3a';
     c.beginPath(); c.moveTo(x, y + s * 0.7); c.quadraticCurveTo(x - s * 0.8, y + s * 0.1, x - s * 0.15, y - s * 0.5); c.quadraticCurveTo(x, y - s * 0.1, x + s * 0.2, y - s * 0.85); c.quadraticCurveTo(x + s * 0.15, y - s * 0.1, x + s * 0.75, y + s * 0.05); c.quadraticCurveTo(x + s * 0.5, y + s * 0.7, x, y + s * 0.7); c.fill();
@@ -660,13 +644,13 @@ function drawWordIcon(c, id, x, y, r) {
     c.beginPath(); c.arc(x - s * 0.25, y - s * 0.2, s * 0.22, 0, Math.PI * 2); c.fill();
     drawStar(c, x + s * 0.35, y + s * 0.15, s * 0.22, 0, 0);
   } else if (id === 'sled') {
-    c.strokeStyle = '#8a5a30';
-    c.lineWidth = Math.max(3, s * 0.18);
-    c.lineCap = 'round';
-    c.beginPath(); c.moveTo(x - s * 0.85, y + s * 0.35); c.quadraticCurveTo(x, y + s * 0.55, x + s * 0.9, y + s * 0.2); c.stroke();
-    c.fillStyle = '#c46b3a';
-    roundRect(c, x - s * 0.7, y - s * 0.25, s * 1.35, s * 0.45, s * 0.12);
-    c.fill();
+    s = r * 0.7;
+    artShadow(c, x, y + s * 0.55, s * 0.9, s * 0.2, 0.14);
+    artLimb(c, x - s * 0.72, y + s * 0.32, x + s * 0.42, y + s * 0.08, s * 0.16, '#6a4020');
+    artLimb(c, x - s * 0.55, y + s * 0.58, x + s * 0.62, y + s * 0.32, s * 0.16, '#8a5a30');
+    artRoundRect(c, x - s * 0.58, y - s * 0.28, s * 1.1, s * 0.52, s * 0.16, '#e24a3a', { hi: 0.22 });
+    artCircle(c, x + s * 0.48, y - s * 0.02, s * 0.26, '#e24a3a', { line: false });
+    artCircle(c, x - s * 0.12, y - s * 0.04, s * 0.16, '#ffd24f', { line: false });
     c.lineCap = 'butt';
   } else if (id === 'rainbow') {
     var cols = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'];

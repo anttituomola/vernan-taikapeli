@@ -158,7 +158,7 @@ function renderReindeerFar(b, w, h) { renderNorthSky(b, w, h); }
 function renderReindeerMid(b, w, h) {
   var i;
   renderNorthHills(b, w, h);
-  for (i = 0; i < 6; i++) drawPine(b, w * (0.07 + i * 0.16), groundTop - h * 0.01, h * 0.15, '#1a3850');
+  for (i = 0; i < 6; i++) drawNorthPine(b, w * (0.07 + i * 0.16), groundTop - h * 0.01, h * 0.17, '#1a3850');
 }
 function renderReindeerNear(b, w, h) {
   var i, x;
@@ -171,6 +171,9 @@ function renderReindeerNear(b, w, h) {
     else b.arc(x, groundTop + h * 0.08, h * 0.008, 0, Math.PI * 2);
     b.fill();
   }
+  drawNorthPine(b, w * 0.05, groundTop, h * 0.14, '#1a3850');
+  drawNorthKota(b, w * 0.88, groundTop + h * 0.01, h * 0.16);
+  drawNorthSnowman(b, w * 0.24, groundTop - h * 0.01, h * 0.08);
 }
 
 function drawDeerAntler(c, x, y, s, dir) {
@@ -205,13 +208,6 @@ function drawNorthDeer(c, x, y, s, facing, hop) {
   artEye(c, s * 0.6, -s * 0.78, s * 0.055, 0.35, false);
   artBlush(c, s * 0.7, -s * 0.68, s * 0.05);
   c.restore();
-}
-
-function drawNorthRock(c, x, y, s) {
-  artShadow(c, x, y + s * 0.1, s * 1.05, s * 0.28, 0.15);
-  artBlob(c, x - s * 0.22, y, s * 0.4, s * 0.3, '#7a8ea0', { hi: 0.12 });
-  artBlob(c, x + s * 0.2, y + s * 0.04, s * 0.46, s * 0.34, '#8aa0b2', { hi: 0.16 });
-  artBlob(c, x, y - s * 0.2, s * 0.4, s * 0.2, '#ffffff', { shadeTo: '#dce8f4', lineColor: '#b8c8d8', hi: 0.4 });
 }
 
 function drawNorthPen(c, x, y, s) {
