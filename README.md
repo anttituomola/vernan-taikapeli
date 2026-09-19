@@ -440,7 +440,7 @@ joka on myös alueen vartija (`finaleKind: 'nest'`).
   puhaltaa liekin eteenpäin. Tulella sytytetään kahdeksan soihtua, sulatetaan
   kolme kanjonin tukkivaa jääporttia (kaksi puhallusta: ensin halkeama, sitten
   höyry) ja hajotetaan ajelehtivia tuhkapilviä. Liekkejä on kolme (HUD:n
-  liekit): yksi palautuu 2,2 sekunnissa, ja tulimarja täyttää kaikki heti.
+  liekit): yksi palautuu 1,6 sekunnissa, ja tulimarja täyttää kaikki heti.
   Laava alhaalla, kivipilarit ja tippukivet sekä tuhkapilvet vievät sydämen;
   lyhdyt ovat tarkistuspisteitä (lyhdyn jälkeen sytytetyt soihdut sammuvat, jos
   sydämet loppuvat). Opastenuoli näyttää seuraavan sammuneen soihdun. Kun
@@ -647,7 +647,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Lumisana: kierrokset `SW_ROUNDS`, tyypit `SW_KINDS`
 - Revontulikettu: kiteet `FOX_STONES`
 - Pesäkallio: asemat `NEST_STATIONS` (pesien paikat, toiveet, `peek`, `swing`, `overhang`, pilarit `rocks`), laukaisu `NEST_VMAX` / veto `NEST_PULL`, painovoima `NEST_G`, kurkistus `NEST_PEEK_UP` / `NEST_PEEK_DOWN`, suun säde `nestMouth` (`s * 1.1`), ennakkokaaren osumatarkkuus `nestPreview` (`m.r * m.r * 0.6`), harakan väli `3.5 + Math.random() * 2`; osumaikkunat voi mitata selaimessa käymällä vedot läpi `nestLaunchVel` + `nestPreview`
-- Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `viewW * 0.30` / vajoaminen `viewH * 0.28`
+- Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `FLY_SPEED`, ohjauksen pehmeys `FLY_ACCEL` (kiihtyvyys sormen etäisyyden mukaan), vajoaminen `FLY_SINK`, osumasäde `R = s * 0.62` (updateDragonfly)
 
 ## Tyyliopas
 

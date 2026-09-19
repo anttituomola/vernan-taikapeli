@@ -11,9 +11,14 @@
 // Tehtävät: vähennys, puuttuva ruutu.
 
 var FLY_FLAMES = 3;
-var FLY_RECHARGE = 2.2;        // sekuntia per liekki
-var FLY_CONE = 0.30;           // liekin pituus (× viewW)
-var FLY_CONE_ANG = 0.42;       // liekin puolikulma (rad)
+var FLY_RECHARGE = 1.6;        // sekuntia per liekki
+var FLY_CONE = 0.36;           // liekin pituus (× viewW)
+var FLY_CONE_ANG = 0.5;        // liekin puolikulma (rad)
+// Lento: rauhallinen ja pehmeä, jotta 6-vuotias hallitsee sen. Kiihtyvyys on
+// verrannollinen sormen etäisyyteen (ei nykivä), nopeus ja vajoaminen maltillisia.
+var FLY_SPEED = 0.20;          // enimmäisnopeus (× viewW / s)
+var FLY_ACCEL = 2.6;           // kiihtyvyys per etäisyys (1/s²)
+var FLY_SINK = 0.14;           // vajoaminen irti päästettynä (× viewH / s²)
 var FLY_BURST_T = 0.6;
 var FLY_TORCHES = [
   { fx: 0.10, fy: 0.34 }, { fx: 0.19, fy: 0.62 }, { fx: 0.27, fy: 0.26 }, { fx: 0.41, fy: 0.56 },
@@ -22,11 +27,10 @@ var FLY_TORCHES = [
 var FLY_GATES = [0.34, 0.58, 0.81];
 // Pilarit: pohjasta nousevat kivet ja katosta laskeutuvat tippukivet (korkeus × viewH)
 var FLY_PILLARS = [
-  { fx: 0.15, top: false, h: 0.34 }, { fx: 0.23, top: true, h: 0.36 }, { fx: 0.37, top: false, h: 0.30 },
-  { fx: 0.45, top: true, h: 0.40 }, { fx: 0.53, top: false, h: 0.40 }, { fx: 0.67, top: true, h: 0.34 },
-  { fx: 0.76, top: false, h: 0.36 }, { fx: 0.91, top: true, h: 0.30 }
+  { fx: 0.15, top: false, h: 0.24 }, { fx: 0.24, top: true, h: 0.26 }, { fx: 0.45, top: true, h: 0.28 },
+  { fx: 0.53, top: false, h: 0.28 }, { fx: 0.67, top: true, h: 0.24 }, { fx: 0.76, top: false, h: 0.26 }
 ];
-var FLY_CLOUDS = [0.30, 0.50, 0.70, 0.86];
+var FLY_CLOUDS = [0.30, 0.64, 0.88];
 var FLY_BERRIES = [{ fx: 0.21, fy: 0.40 }, { fx: 0.43, fy: 0.30 }, { fx: 0.60, fy: 0.42 }, { fx: 0.78, fy: 0.58 }, { fx: 0.93, fy: 0.30 }];
 var FLY_DRAGON = '#7fe0c8';
 
@@ -57,7 +61,7 @@ function flyBuild() {
   }
   fly.clouds = [];
   for (i = 0; i < FLY_CLOUDS.length; i++) {
-    fly.clouds.push({ fx: FLY_CLOUDS[i], x: FLY_CLOUDS[i] * worldW, baseY: viewH * (0.30 + (i % 2) * 0.22), y: 0, amp: viewH * (0.06 + (i % 2) * 0.05), t: i * 1.9, f: 0.9 + (i % 3) * 0.3, gone: 0 });
+    fly.clouds.push({ fx: FLY_CLOUDS[i], x: FLY_CLOUDS[i] * worldW, baseY: viewH * (0.30 + (i % 2) * 0.2), y: 0, amp: viewH * 0.04, t: i * 1.9, f: 0.6 + (i % 2) * 0.15, gone: 0 });
   }
   fly.berries = [];
   for (i = 0; i < FLY_BERRIES.length; i++) fly.berries.push({ x: FLY_BERRIES[i].fx * worldW, y: FLY_BERRIES[i].fy * viewH, collected: false, phase: i * 1.3 });
@@ -199,7 +203,7 @@ function flySteam(x, y, n) {
 
 // ---------- Päivitys ----------
 function updateDragonfly(dt) {
-  var i, j, s = flyS(), R = s * 0.85, busy, b, k, t, g, c, m, dx, dy;
+  var i, j, s = flyS(), R = s * 0.62, busy, b, k, t, g, c, m, dx, dy;
   updateTasks(dt);
   busy = puzzleBusy();
   if (fly.bumpT > 0) fly.bumpT -= dt;
@@ -207,21 +211,27 @@ function updateDragonfly(dt) {
 
   // Lento: sormea kohti; irti päästettynä lohikäärme liitää ja vajoaa hitaasti
   if (!celebrating && holding && !busy) {
-    var tx = holdWorldX, ty = lastPY;
-    princess.vx += ((tx - princess.x) > 0 ? 1 : -1) * viewW * 0.6 * dt;
-    princess.vy += ((ty - princess.y) > 0 ? 1 : -1) * viewH * 0.75 * dt;
-    if (tx > princess.x + 8) princess.facing = 1;
-    else if (tx < princess.x - 8) princess.facing = -1;
+    var tx = holdWorldX, ty = lastPY, ax, ay, lim = viewW * 0.7;
+    ax = Math.max(-lim, Math.min(lim, (tx - princess.x) * FLY_ACCEL));
+    ay = Math.max(-lim, Math.min(lim, (ty - princess.y) * FLY_ACCEL));
+    princess.vx += ax * dt;
+    princess.vy += ay * dt;
+    // Vaimennus pitää liikkeen pehmeänä eikä heilahtele sormen yli
+    princess.vx *= Math.max(0, 1 - dt * 2.2);
+    princess.vy *= Math.max(0, 1 - dt * 2.2);
+    if (tx > princess.x + viewH * 0.04) princess.facing = 1;
+    else if (tx < princess.x - viewH * 0.04) princess.facing = -1;
     fly.flap += dt * 10;
   } else {
-    princess.vx *= Math.max(0, 1 - dt * 1.6);
-    princess.vy += viewH * 0.28 * dt;
+    princess.vx *= Math.max(0, 1 - dt * 1.4);
+    princess.vy *= Math.max(0, 1 - dt * 1.4);
+    princess.vy += viewH * FLY_SINK * dt;
     fly.flap += dt * 5;
   }
-  if (princess.vx > viewW * 0.30) princess.vx = viewW * 0.30;
-  if (princess.vx < -viewW * 0.30) princess.vx = -viewW * 0.30;
-  if (princess.vy > viewH * 0.5) princess.vy = viewH * 0.5;
-  if (princess.vy < -viewH * 0.7) princess.vy = -viewH * 0.7;
+  if (princess.vx > viewW * FLY_SPEED) princess.vx = viewW * FLY_SPEED;
+  if (princess.vx < -viewW * FLY_SPEED) princess.vx = -viewW * FLY_SPEED;
+  if (princess.vy > viewH * 0.36) princess.vy = viewH * 0.36;
+  if (princess.vy < -viewH * 0.42) princess.vy = -viewH * 0.42;
   if (!busy && !celebrating) {
     princess.x += princess.vx * dt;
     princess.y += princess.vy * dt;
@@ -231,7 +241,7 @@ function updateDragonfly(dt) {
   // Laava
   if (princess.y > flyLavaY() - s * 0.9) {
     princess.y = flyLavaY() - s * 0.9;
-    princess.vy = -viewH * 0.45;
+    princess.vy = -viewH * 0.35;
     if (!celebrating && loseHeart()) {
       spawnSparkles(princess.x, flyLavaY(), 16, '#ff9a3a');
       artShakeStart(viewH * 0.01, 0.3);
@@ -249,10 +259,10 @@ function updateDragonfly(dt) {
         spawnSparkles(princess.x, princess.y, 12, '#c9a98a');
         artShakeStart(viewH * 0.008, 0.25);
       }
-      princess.vx = (princess.x < cx ? -1 : 1) * viewW * 0.22;
+      princess.vx = (princess.x < cx ? -1 : 1) * viewW * 0.14;
       princess.x = princess.x < cx ? k.x0 - R : k.x1 + R;
-      if (k.top) { princess.vy = viewH * 0.3; princess.y = Math.max(princess.y, k.y1 + R * 0.5); }
-      else { princess.vy = -viewH * 0.3; princess.y = Math.min(princess.y, k.y0 - R * 0.5); }
+      if (k.top) { princess.vy = viewH * 0.2; princess.y = Math.max(princess.y, k.y1 + R * 0.5); }
+      else { princess.vy = -viewH * 0.2; princess.y = Math.min(princess.y, k.y0 - R * 0.5); }
     }
   }
   // Jääportit tukkivat kanjonin, kunnes ne on sulatettu
@@ -276,10 +286,10 @@ function updateDragonfly(dt) {
     c.y = c.baseY + Math.sin(c.t * c.f) * c.amp;
     if (c.gone > 0) { c.gone -= dt; continue; }
     dx = c.x - princess.x; dy = c.y - princess.y;
-    if (!celebrating && dx * dx + dy * dy < viewH * 0.085 * viewH * 0.085) {
+    if (!celebrating && dx * dx + dy * dy < viewH * 0.07 * viewH * 0.07) {
       if (loseHeart()) {
-        princess.vx = (dx > 0 ? -1 : 1) * viewW * 0.25;
-        princess.vy = viewH * 0.25;
+        princess.vx = (dx > 0 ? -1 : 1) * viewW * 0.16;
+        princess.vy = viewH * 0.16;
         spawnSparkles(princess.x, princess.y, 12, '#8a8a9a');
       }
     }
