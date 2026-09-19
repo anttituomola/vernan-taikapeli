@@ -858,7 +858,7 @@ var WORLDS = [
     // Horisontin takana: aukeaa Tivolisaaren jälkeen. Sateenkaari jää
     // seitsemään väriin + kultatähteen; tämä saari ei lisää kaistetta.
     id: 9, name: 'Revontulimaa',
-    island: { fx: 0.16, fy: 0.90, size: 0.68, finaleKind: 'foxguard', deco: ['voyage', 'aurora', 'foxguard'] },
+    island: { fx: 0.16, fy: 0.90, size: 0.68, finaleKind: 'northpath', deco: ['voyage', 'aurora', 'foxguard'] },
     map: [
       '###########',
       '#B.......H#',
@@ -872,6 +872,8 @@ var WORLDS = [
       '#........L#',
       '#########.#',
       '#........F#',
+      '#########.#',
+      '#N........#',
       '###########'
     ],
     levels: [
@@ -958,6 +960,20 @@ var WORLDS = [
         renderBgLayers: function () { return foxguardLayers(); },
         light: { rays: true, raysColor: '#ffe08a', raysAlpha: 0.7, tint: ['rgba(40,30,20,0.12)', 'rgba(20,20,40,0.08)'], vignette: 0.42 },
         respawn: function () { respawnFoxguard(); }
+      },
+      {
+        kind: 'northpath', room: 'N', name: 'Tunturipolku', color: '#7cffc4', script: 'play-northpath',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5000,
+        bgColor: '#123048', ambient: 'sparkle', fg: { kind: 'snow', color: 'rgba(200,230,240,0.75)' },
+        init: function () { initNorthpath(); },
+        update: function (dt) { updateNorthpath(dt); },
+        draw: function () { drawNorthpath(); },
+        tap: function (x, y) { handleNorthpathTap(x, y); },
+        resize: function () { resizeNorthpath(); },
+        renderBg: function (b, w, h) { renderNorthpathBg(b, w, h); },
+        renderBgLayers: function () { return northpathLayers(); },
+        light: { rays: true, raysColor: '#a8ffe0', raysAlpha: 0.75, tint: ['rgba(20,60,70,0.14)', 'rgba(10,30,50,0.08)'], vignette: 0.42 },
+        respawn: function () { respawnNorthpath(); }
       }
     ]
   }

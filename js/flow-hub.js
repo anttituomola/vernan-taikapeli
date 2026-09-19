@@ -835,6 +835,19 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath(); c.moveTo(x + s * 0.08, y - s * 0.04); c.lineTo(x + s * 0.18, y - s * 0.22); c.lineTo(x + s * 0.02, y - s * 0.06); c.closePath(); c.fill();
     c.fillStyle = '#fff4e8';
     c.beginPath(); c.arc(x + s * 0.08, y, s * 0.05, 0, Math.PI * 2); c.fill();
+  } else if (kind === 'northpath') {
+    c.fillStyle = '#ffffff';
+    c.beginPath();
+    c.moveTo(x - s * 0.18, y + s * 0.16);
+    c.lineTo(x, y - s * 0.2);
+    c.lineTo(x + s * 0.18, y + s * 0.16);
+    c.closePath();
+    c.fill();
+    c.fillStyle = '#e88a3a';
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y + s * 0.04, s * 0.08, s * 0.06, 0, 0, Math.PI * 2);
+    else c.arc(x, y + s * 0.04, s * 0.06, 0, Math.PI * 2);
+    c.fill();
   }
 }
 
