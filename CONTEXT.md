@@ -38,6 +38,22 @@ Pelin ylin navigaatio: vene kulkee saarten välillä, ja sateenkaari täyttyy
 värillä aina kun saaren vartija on läpäisty.
 _Vältä_: merikartta, pääkartta
 
+**Kaukamaa**:
+Saariston takainen manner, jonne pääsee saaristokartan avomerimerkistä kun
+kultatähti loistaa. Sen kartta on saaristokartan rinnakkainen ylätason
+näkymä; alueet ovat siellä paikkoja.
+_Vältä_: manner yksinään, uusi maailma, toinen kartta
+
+**Paikka**:
+Kaukamaan maailma (esim. Lohikäärmelaakso): saaren vastine mantereella, jolla
+on nimi, sokkelo ja vartija. Yksisarvinen kävelee paikkojen välillä polkua.
+_Vältä_: alue, laakso yleisnimenä, saari (mantereella)
+
+**Purjehdus**:
+Lyhyt siirtymäkohtaus saaristosta Kaukamaalle ja takaisin: vene avomerellä,
+manner nousee usvasta. Napautus ohittaa.
+_Vältä_: välianimaatio, cutscene
+
 ### Pelin käsitteet
 
 **Tehtävä**:

@@ -11,7 +11,9 @@
 var SEA_FOG = [];
 var RAINBOW_COLORS = ['#ff5a5a', '#ff9f3a', '#ffe14d', '#5fd36b', '#4aa8ff', '#6f5cff', '#c46bff'];
 
-var seaBoat = { x: 0, y: 0, island: 1, target: null, facing: 1, moving: false };
+// exit: vene matkalla itäreunan avomerimerkille (Kaukamaa, flow-land.js);
+// enterOnArrive false = saapuminen saarelle ei avaa sokkeloa (paluu mantereelta)
+var seaBoat = { x: 0, y: 0, island: 1, target: null, facing: 1, moving: false, exit: false, enterOnArrive: true };
 var seaReveal = null;               // { idx, t }: sateenkaaren värin paljastus
 var seaToast = { t: 0, x: 0, y: 0 };
 var seaBgCanvas = document.createElement('canvas');
@@ -111,6 +113,21 @@ function handleSeaTap(px, py) {
     dy = py - (p.y + p.r * 0.15);
     if (dx * dx + dy * dy <= p.r * p.r * 1.8) { isl = ISLANDS[i]; idx = i; break; }
   }
+  if (!isl && landUnlocked()) {
+    p = seaExitPos();
+    dx = px - p.x;
+    dy = py - (p.y - p.r * 0.6);
+    if (dx * dx + dy * dy <= p.r * p.r * 6) {
+      if (seaBoat.exit) return;
+      seaBoat.target = null;
+      seaBoat.exit = true;
+      seaBoat.moving = true;
+      playNote(523, 0, 0.12, 'triangle', 0.3);
+      playNote(659, 0.1, 0.16, 'triangle', 0.3);
+      playNote(784, 0.2, 0.2, 'triangle', 0.3);
+      return;
+    }
+  }
   if (!isl) {
     for (i = 0; i < SEA_FOG.length; i++) {
       p = seaIslandPos(SEA_FOG[i]);
@@ -150,8 +167,14 @@ function updateSea(dt) {
       }
     }
   }
-  if (seaBoat.target) {
-    var h = seaHarbor(seaBoat.target);
+  if (seaBoat.target || seaBoat.exit) {
+    var h;
+    if (seaBoat.exit) {
+      h = seaExitPos();
+      h = { x: h.x, y: h.y + h.r * 0.8 };
+    } else {
+      h = seaHarbor(seaBoat.target);
+    }
     var dx = h.x - seaBoat.x, dy = h.y - seaBoat.y;
     var dist = Math.sqrt(dx * dx + dy * dy);
     var sp = viewH * 0.32 * dt;
@@ -160,10 +183,18 @@ function updateSea(dt) {
     if (dist <= sp || dist < 1) {
       seaBoat.x = h.x;
       seaBoat.y = h.y;
+      if (seaBoat.exit) {
+        // Avomerelle: purjehdus Kaukamaalle
+        seaBoat.exit = false;
+        seaBoat.moving = false;
+        showLand({ sail: true, dir: 1 });
+        return;
+      }
       seaBoat.island = seaBoat.target.world;
       seaBoat.target = null;
       seaBoat.moving = false;
-      hubEnterIsland(seaBoat.island);
+      if (seaBoat.enterOnArrive === false) seaBoat.enterOnArrive = true;
+      else hubEnterIsland(seaBoat.island);
     } else {
       seaBoat.x += (dx / dist) * sp;
       seaBoat.y += (dy / dist) * sp;
@@ -205,6 +236,8 @@ function drawSea() {
       drawHintArrow(ctx, p.x, p.y - p.r * 1.45);
     }
   }
+
+  drawSeaExit(ctx);
 
   // Vene ja ratsastajat
   var bob = Math.sin(globalT * 2.5) * viewH * 0.005;
@@ -390,7 +423,7 @@ function drawSeaRoute(b, a, c2, alpha) {
 }
 
 function renderSeaBg() {
-  var key = viewW + 'x' + viewH;
+  var key = viewW + 'x' + viewH + '|' + (landUnlocked() ? 'L' : '');
   if (seaBgKey === key) return;
   seaBgKey = key;
   seaBgCanvas.width = Math.round(viewW * DPR);
@@ -450,6 +483,11 @@ function renderSeaBg() {
   if (SEA_FOG.length > 0 && ISLANDS.length > 0) {
     var fp = seaIslandPos(SEA_FOG[0]);
     drawSeaRoute(b, seaHarbor(ISLANDS[ISLANDS.length - 1]), { x: fp.x, y: fp.y + fp.r }, 0.22);
+  }
+  // Reitti avomerimerkille (Kaukamaa), kun se on auki
+  if (landUnlocked() && ISLANDS.length > 0) {
+    var ep = seaExitPos();
+    drawSeaRoute(b, seaHarbor(ISLANDS[ISLANDS.length - 1]), { x: ep.x, y: ep.y + ep.r * 0.8 }, 0.55);
   }
 
   // Saaret

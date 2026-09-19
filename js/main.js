@@ -9,6 +9,9 @@ function loop(ts) {
   if (mode === 'sea') {
     updateSea(dt);
     drawSea();
+  } else if (mode === 'land') {
+    updateLand(dt);
+    drawLand();
   } else if (mode === 'home') {
     updateHome(dt);
     drawHome();
@@ -65,6 +68,10 @@ function pointerDown(e) {
   lastPX = p.x; lastPY = p.y;
   if (mode === 'sea') {
     handleSeaTap(p.x, p.y);
+    return;
+  }
+  if (mode === 'land') {
+    handleLandTap(p.x, p.y);
     return;
   }
   if (mode === 'home') {
@@ -148,9 +155,11 @@ document.getElementById('karttaBtn').addEventListener('click', function () {
   showHub();
 });
 
-// Vene-nappi: saaren sokkelosta takaisin saaristokartalle
+// Vene-nappi: saaren sokkelosta takaisin saaristokartalle (mantereella Kaukamaan kartalle)
 document.getElementById('seaBtn').addEventListener('click', function () {
-  if (mode === 'hub') showSea();
+  if (mode !== 'hub') return;
+  if (worldRegion(hubWorld) === 'land') showLand();
+  else showSea();
 });
 
 document.getElementById('replayBtn').addEventListener('click', function () {
@@ -216,6 +225,13 @@ window.VT = {
   seaTick: function (dt) { updateSea(dt); drawSea(); },
   boat: seaBoat,
   islands: ISLANDS,
+  land: showLand,
+  landState: function () { return land; },
+  landTap: handleLandTap,
+  landTick: function (dt) { updateLand(dt); drawLand(); },
+  places: LAND_PLACES,
+  nest: function () { return nest; },
+  nestTap: handleNestTap,
   islandPos: seaIslandPos,
   reveal: function () { return seaReveal; },
   rainbow: function () { return { earned: rainbowEarned(), shown: rainbowShown }; },
@@ -255,14 +271,12 @@ window.VT = {
   sled: function () { return { rings: sledRings, rocks: sledRocks }; },
   snowword: function () { return sw; },
   foxguard: function () { return { stones: foxStones, door: foxDoor }; },
-  northpath: function () { return { np: np, lights: npLights, rocks: npRocks, peak: npPeak }; },
   voyageTap: handleVoyageTap,
   auroraTap: handleAuroraTap,
   reindeerTap: handleReindeerTap,
   sledTap: handleSledTap,
   snowwordTap: handleSnowwordTap,
   foxguardTap: handleFoxguardTap,
-  northpathTap: handleNorthpathTap,
   taskStart: function (i) { if (tasks[i]) taskStart(tasks[i]); },
   penMode: function (on) { if (on !== undefined) penSetMode(on); return penMode; },
   penMove: penMove,
@@ -306,7 +320,9 @@ function unlockAll() {
 loadProgress();
 hubWorld = lastIsland;
 resize();
-showSea();
+// Peli alkaa siltä kartalta, jolla viimeksi oltiin: saaristo tai Kaukamaa
+if (worldRegion(hubWorld) === 'land' && landUnlocked()) showLand();
+else showSea();
 // Kun fontti on ladattu, esirenderöidyt taustat (sokkelo, meri, koti, etuala)
 // piirretään uudestaan, jotta canvas-teksti käyttää oikeaa fonttia.
 if (document.fonts && document.fonts.load) {

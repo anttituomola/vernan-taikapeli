@@ -282,8 +282,9 @@ function hubRoute(sc, sr, tc, tr) {
 function hubArrive(ch) {
   var room = hubRooms()[ch];
   if (ch === 'B') {
-    // Satama: vene vie saaristokartalle
-    showSea();
+    // Satama: vene vie saaristokartalle; mantereella tienviitta vie Kaukamaan kartalle
+    if (worldRegion(hubWorld) === 'land') showLand();
+    else showSea();
     return;
   }
   if (room) {
@@ -370,8 +371,18 @@ function updateHub(dt) {
   }
 }
 
+// Huonekuvakkeiden rekisteri: kenttä voi rekisteröidä oman kuvakkeensa omassa
+// tiedostossaan (HUB_ICONS[kind] = function (c, x, y, s)) ilman muutoksia tänne.
+// Samoin sokkelon maaston koristeet vyöhykkeelle: HUB_TILE_DECOR[band].
+var HUB_ICONS = {};
+var HUB_TILE_DECOR = {};
+
 function drawHubRoomIcon(c, kind, x, y, s) {
   var i, a;
+  if (HUB_ICONS[kind]) {
+    HUB_ICONS[kind](c, x, y, s);
+    return;
+  }
   if (kind === 'start') {
     c.fillStyle = '#6d3b1e';
     c.fillRect(x - s * 0.07, y - s * 0.02, s * 0.14, s * 0.2);
@@ -835,19 +846,6 @@ function drawHubRoomIcon(c, kind, x, y, s) {
     c.beginPath(); c.moveTo(x + s * 0.08, y - s * 0.04); c.lineTo(x + s * 0.18, y - s * 0.22); c.lineTo(x + s * 0.02, y - s * 0.06); c.closePath(); c.fill();
     c.fillStyle = '#fff4e8';
     c.beginPath(); c.arc(x + s * 0.08, y, s * 0.05, 0, Math.PI * 2); c.fill();
-  } else if (kind === 'northpath') {
-    c.fillStyle = '#ffffff';
-    c.beginPath();
-    c.moveTo(x - s * 0.18, y + s * 0.16);
-    c.lineTo(x, y - s * 0.2);
-    c.lineTo(x + s * 0.18, y + s * 0.16);
-    c.closePath();
-    c.fill();
-    c.fillStyle = '#e88a3a';
-    c.beginPath();
-    if (c.ellipse) c.ellipse(x, y + s * 0.04, s * 0.08, s * 0.06, 0, 0, Math.PI * 2);
-    else c.arc(x, y + s * 0.04, s * 0.06, 0, Math.PI * 2);
-    c.fill();
   }
 }
 
@@ -879,7 +877,8 @@ function drawHub() {
       y = lay.oy + (r + 0.5) * s;
       room = hubRooms()[ch];
       if (ch === 'B') {
-        drawHarbor(ctx, x, y, s);
+        if (worldRegion(hubWorld) === 'land') drawLandSign(ctx, x, y, s);
+        else drawHarbor(ctx, x, y, s);
         if (seaHarborHint()) drawHintArrow(ctx, x, y - s * 0.95);
       } else if (ch === 'G') {
         var castleReady = !nextKind && !finaleDone;
@@ -953,6 +952,8 @@ function hubHash(c, r) {
 
 // Maaston vyöhyke rivin (ja alarivillä sarakkeen) mukaan: vastaa huoneiden teemoja
 function hubBand(c, r) {
+  var wi = WORLD_INFO[hubWorld];
+  if (wi && wi.band) return wi.band;
   if (hubWorld === 8) return 'fair';
   if (hubWorld === 7) return 'letters';
   if (hubWorld === 6) return r <= 2 ? 'mine' : 'mountain';
@@ -995,7 +996,8 @@ var HUB_TILE_COLORS = {
   mine: ['#6b5a4a', '#5f4f40'],
   mountain: ['#dfe9f5', '#cfdcee'],
   letters: ['#fff6e3', '#f7ead2'],
-  fair: ['#ffe6f2', '#fff3d6']
+  fair: ['#ffe6f2', '#fff3d6'],
+  dragon: ['#e9a374', '#e09a6a']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
@@ -1014,6 +1016,10 @@ function drawHubTile(b, band, x, y, s, c, r) {
   var cx = x + s / 2, cy = y + s / 2;
   b.fillStyle = cols[(c + r) % 2];
   b.fillRect(x, y, s + 1, s + 1);
+  if (HUB_TILE_DECOR[band]) {
+    HUB_TILE_DECOR[band](b, x, y, s, rnd, rnd2);
+    return;
+  }
   if (band === 'forest') {
     if (rnd < 0.6) drawTree(b, cx + (rnd2 - 0.5) * s * 0.3, y + s * 0.95, s * 0.6);
     else drawFlower(b, cx + (rnd2 - 0.5) * s * 0.4, cy, s * 0.07, rnd2 < 0.5 ? '#ff7bac' : '#ffe27a');

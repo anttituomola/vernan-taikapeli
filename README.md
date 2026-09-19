@@ -27,6 +27,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/fx.js` — kipinät, konfetti, opastenuoli
 - `js/ambient.js` — tunnelmahiukkaset, etualan siluetit, valaistus (`drawLight`) ja kentän alkukortti (PHASES: `ambient`, `fg`, `light`)
 - `js/flow-sea.js` — saaristokartta (ylin navigaatio), saaret ja sateenkaari
+- `js/flow-land.js` — **Kaukamaa**: mantereen kartta (toinen ylätason kartta), purjehdus
+  saaristosta mantereelle ja takaisin, saaristokartan avomerimerkki ja sokkelon tienviitta
 - `js/flow-hub.js` — saaren karttalabyrintti, vaiheen käynnistys ja kentän elinkaaren
   yhteinen alku (`levelBegin`: tilan nollaus ja nappien ilme rekisterin lipuista; skipTo
   ja uusinta kutsuvat sitä ennen kentän omaa init-koukkua)
@@ -50,6 +52,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-circus.js`, `play-wire.js`, `play-balloon.js`, `play-icecream.js`, `play-ducks.js`, `play-magician.js` — maailma 8; Trapetsi käyttää `play-circus.js`-moottoria (tila `hard`)
 - `js/tasks-north.js` — Revontulimaan lukutehtävät: loppusointu, loppukirjain, puuttuva tavu
 - `js/play-voyage.js`, `play-aurora.js`, `play-reindeer.js`, `play-sled.js`, `play-snowword.js`, `play-foxguard.js` — maailma 9
+- `js/play-nest.js` — Kaukamaa, Lohikäärmelaakso (maailma 10): Pesäkallio (ritsa), lohikäärmeenpoikasten piirto
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -60,6 +63,11 @@ kirjain myös saaren `map`-karttaan). Kentän numero, `next`-ketju,
 `HUB_ROOMS`/`HUB_ORDER` ja skriptien latauslista johdetaan rekisteristä.
 **Uusi saari** = yksi `WORLDS`-alkio: nimi, `island`-tiedot (sijainti,
 vartijahuone `finaleKind`, koristeet), `map` ja `levels`.
+**Uusi paikka Kaukamaalla** = sama, mutta `region: 'land'`, `place`-tiedot
+(`island`-kentän vastine mantereen kartalla) ja `band` (sokkelon maaston teema,
+värit `HUB_TILE_COLORS`). Huoneen kuvake rekisteröidään kentän omassa
+tiedostossa `HUB_ICONS[kind] = function (c, x, y, s)` ja maaston koristeet
+`HUB_TILE_DECOR[band]`, joten flow-hub.js:ää ei tarvitse muokata.
 Silmukka, syöte ja koko kulkevat `PHASES`-koukkujen kautta, joten muuta
 koodia ei tarvitse muokata.
 
@@ -83,6 +91,20 @@ aukeaa horisontin takainen **Revontulimaa** (maailma 9); se ei lisää
 sateenkaareen yhdeksättä väriä.
 Avatulla saaressa, jossa on vielä pelaamattomia huoneita, näkyy keltainen
 numero saaren vasemmassa yläkulmassa.
+
+**Kaukamaa** on saariston takainen manner ja pelin toinen ylätason kartta
+(`js/flow-land.js`). Kun kultatähti loistaa kaaren huipulla (Taikurin teltta
+läpäisty), saaristokartan itäreunaan ilmestyy **avomerimerkki**: poiju, jossa on
+nuolikyltti ja lohikäärmeen pää. Sen napautus purjehduttaa veneen avomerelle, ja
+lyhyen purjehduksen jälkeen (delfiinit, manner nousee usvasta; napautus
+ohittaa) aukeaa mantereen kartta. Mantereella **paikat** (`LAND_PLACES`,
+rekisterin `place`-kentästä) ovat maailmoja kuten saaret: paikan napautus
+kävelyttää yksisarvisen polkua pitkin sinne ja avaa paikan sokkelon; seuraava
+paikka aukeaa, kun edellisen vartija on läpäisty. Usvaiset laikut (`LAND_FOG`)
+vihjaavat tulevista alueista. Länsirannan vene palauttaa saaristoon (vene
+ilmestyy avomerimerkille eikä avaa saarta itsestään). Mantereen sokkelossa
+lähtöruutu **B** on tienviitta, joka palauttaa mantereen kartalle; vene-nappi
+tekee saman. Peli avautuu sille kartalle, jolla viimeksi oltiin.
 
 **Tarina:** Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle. Jokaisen
 saaren vartija palauttaa yhden värin, ja saaristokartan sateenkaari täyttyy
@@ -387,6 +409,28 @@ tavu.
   (loppusointu, loppukirjain, puuttuva tavu, muisti 5/4) ja kuusi
   revontulikidettä. Kettu herää, kun portteja on avattu.
 
+### Kaukamaa: Lohikäärmelaakso (maailma 10)
+
+Mantereen ensimmäinen alue. Aukeaa avomerimerkistä, kun Taikurin teltta on
+läpäisty. Sokkelon maasto on lämmintä punamultaa saniaisin, tulikristallein ja
+munakivin; tienviitta palauttaa mantereen kartalle. Toistaiseksi yksi kenttä,
+joka on myös alueen vartija (`finaleKind: 'nest'`).
+
+- **Pesäkallio** — uusi verbi: **ritsa**. Prinsessa ruokkii pesissä odottavia
+  lohikäärmeenpoikasia tulimarjoilla: paina mihin tahansa, vedä taakse ja päästä
+  irti. Vetäessä haalea pistekaari näyttää lentoradan ja pysähtyy kiveen, johon
+  marja osuisi; kaari muuttuu kultaiseksi ja suu saa renkaan, kun marja menisi
+  suuhun. Ennen ensimmäistä laukausta käsi näyttää vedon. Kolme kalliota
+  (asemaa): ensimmäisellä kaksi pesää; toisella kurkkiva poikanen (suu auki vain
+  ylhäällä, 2,6 s / 1,2 s) ja pilari, jonka yli täytyy lobata; kolmannella
+  köynnöksessä keinuva pesä, kielekkeen alla oleva pesä (matala heitto) ja
+  **harakka**, joka nappaa lennossa olevan marjan. Pesän yllä näkyy, montako
+  marjaa poikanen vielä haluaa (2–3). Kylläinen poikanen lähtee lentoon ja
+  seuraa prinsessaa seuraavalle kalliolle; kun kaikki kahdeksan on ruokittu,
+  emolohikäärme herää kallion laella. Kuusi bonustähteä kerätään osumalla niihin
+  marjalla. Ei sydämiä. Tehtäväkaaret kallioiden välissä: anna N kappaletta,
+  laske.
+
 ### Linnan sisustus
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
@@ -429,6 +473,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 ## Ohjaus
 
 - Metsä, jää, suo, rannikko, tikkumetsä, paimen ja marjaniitty: pidä sormea pohjassa ratsastaaksesi, napauta kerätäksesi.
+- Pesäkallio: paina mihin tahansa, vedä taakse ja päästä irti — ritsa laukaisee
+  marjan vedon vastaiseen suuntaan; pistekaari näyttää lentoradan vetäessä.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -582,6 +628,7 @@ väärästä vastauksesta tulee vain ravistus.
 - Kelkkamäki: renkaat `SLED_RINGS`, vieritys `SLED_SPEEDS`, kivet `sledRocks`
 - Lumisana: kierrokset `SW_ROUNDS`, tyypit `SW_KINDS`
 - Revontulikettu: kiteet `FOX_STONES`
+- Pesäkallio: asemat `NEST_STATIONS` (pesien paikat, toiveet, `peek`, `swing`, `overhang`, pilarit `rocks`), laukaisu `NEST_VMAX` / veto `NEST_PULL`, painovoima `NEST_G`, kurkistus `NEST_PEEK_UP` / `NEST_PEEK_DOWN`, suun säde `nestMouth` (`s * 1.1`), ennakkokaaren osumatarkkuus `nestPreview` (`m.r * m.r * 0.6`), harakan väli `3.5 + Math.random() * 2`; osumaikkunat voi mitata selaimessa käymällä vedot läpi `nestLaunchVel` + `nestPreview`
 
 ## Tyyliopas
 

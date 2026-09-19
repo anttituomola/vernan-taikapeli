@@ -858,7 +858,7 @@ var WORLDS = [
     // Horisontin takana: aukeaa Tivolisaaren jälkeen. Sateenkaari jää
     // seitsemään väriin + kultatähteen; tämä saari ei lisää kaistetta.
     id: 9, name: 'Revontulimaa',
-    island: { fx: 0.16, fy: 0.90, size: 0.68, finaleKind: 'northpath', deco: ['voyage', 'aurora', 'foxguard'] },
+    island: { fx: 0.16, fy: 0.90, size: 0.68, finaleKind: 'foxguard', deco: ['voyage', 'aurora', 'foxguard'] },
     map: [
       '###########',
       '#B.......H#',
@@ -872,8 +872,6 @@ var WORLDS = [
       '#........L#',
       '#########.#',
       '#........F#',
-      '#########.#',
-      '#N........#',
       '###########'
     ],
     levels: [
@@ -960,20 +958,36 @@ var WORLDS = [
         renderBgLayers: function () { return foxguardLayers(); },
         light: { rays: true, raysColor: '#ffe08a', raysAlpha: 0.7, tint: ['rgba(40,30,20,0.12)', 'rgba(20,20,40,0.08)'], vignette: 0.42 },
         respawn: function () { respawnFoxguard(); }
-      },
+      }
+    ]
+  },
+  {
+    // Kaukamaa: saariston takainen manner (region 'land'), oma kartta
+    // flow-land.js:ssä. Paikka (place) vastaa saaren island-kenttää; band on
+    // sokkelon maaston teema. Lohikäärmelaakso on mantereen ensimmäinen alue.
+    id: 10, name: 'Lohikäärmelaakso', region: 'land', band: 'dragon',
+    place: { fx: 0.34, fy: 0.55, size: 1.0, finaleKind: 'nest', deco: ['nest'] },
+    map: [
+      '##########',
+      '#B.......#',
+      '#.########',
+      '#.......D#',
+      '##########'
+    ],
+    levels: [
       {
-        kind: 'northpath', room: 'N', name: 'Tunturipolku', color: '#7cffc4', script: 'play-northpath',
-        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5000,
-        bgColor: '#123048', ambient: 'sparkle', fg: { kind: 'snow', color: 'rgba(200,230,240,0.75)' },
-        init: function () { initNorthpath(); },
-        update: function (dt) { updateNorthpath(dt); },
-        draw: function () { drawNorthpath(); },
-        tap: function (x, y) { handleNorthpathTap(x, y); },
-        resize: function () { resizeNorthpath(); },
-        renderBg: function (b, w, h) { renderNorthpathBg(b, w, h); },
-        renderBgLayers: function () { return northpathLayers(); },
-        light: { rays: true, raysColor: '#a8ffe0', raysAlpha: 0.75, tint: ['rgba(20,60,70,0.14)', 'rgba(10,30,50,0.08)'], vignette: 0.42 },
-        respawn: function () { respawnNorthpath(); }
+        kind: 'nest', room: 'D', name: 'Pesäkallio', color: '#ff8a5a', script: 'play-nest',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#43297a', ambient: 'sparkle', fg: { kind: 'grass', color: 'rgba(110,50,40,0.7)' },
+        init: function () { initNest(); },
+        update: function (dt) { updateNest(dt); },
+        draw: function () { drawNest(); },
+        tap: function (x, y) { handleNestTap(x, y); },
+        resize: function (ratio) { resizeNest(ratio); },
+        renderBg: function (b, w, h) { renderNestBg(b, w, h); },
+        renderBgLayers: function () { return nestLayers(); },
+        light: { rays: true, raysColor: '#ffd8a0', raysAlpha: 0.9, tint: ['rgba(120,40,110,0.10)', 'rgba(255,150,80,0.08)'], vignette: 0.38 },
+        respawn: function () { respawnNest(); }
       }
     ]
   }
@@ -982,7 +996,9 @@ var WORLDS = [
 // Johdetut näkymät rekisteriin. Älä muokkaa näitä käsin — muuta WORLDS-listaa.
 var PHASES = {};
 var HUB_WORLDS = {};
-var ISLANDS = [];
+var ISLANDS = [];       // saaristokartan saaret (region 'sea')
+var LAND_PLACES = [];   // Kaukamaan paikat (region 'land')
+var WORLD_INFO = {};    // id -> { name, region, band }
 (function () {
   var lvl = 0, wi, li, ni, w, lv, p, rooms, order, nxt;
   for (wi = 0; wi < WORLDS.length; wi++) {
@@ -1025,11 +1041,21 @@ var ISLANDS = [];
       PHASES[w.levels[li].kind].next = nxt;
     }
     HUB_WORLDS[w.id] = { map: w.map, rooms: rooms, order: order };
-    ISLANDS.push({
-      world: w.id, name: w.name,
-      fx: w.island.fx, fy: w.island.fy, size: w.island.size,
-      finaleKind: w.island.finaleKind, deco: w.island.deco
-    });
+    WORLD_INFO[w.id] = { name: w.name, region: w.region || 'sea', band: w.band || null };
+    if (w.island) {
+      ISLANDS.push({
+        world: w.id, name: w.name,
+        fx: w.island.fx, fy: w.island.fy, size: w.island.size,
+        finaleKind: w.island.finaleKind, deco: w.island.deco
+      });
+    }
+    if (w.place) {
+      LAND_PLACES.push({
+        world: w.id, name: w.name,
+        fx: w.place.fx, fy: w.place.fy, size: w.place.size,
+        finaleKind: w.place.finaleKind, deco: w.place.deco
+      });
+    }
   }
 })();
 
@@ -1038,7 +1064,7 @@ var ISLANDS = [];
 function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
-    'flow-hub', 'flow-sea', 'flow-home',
+    'flow-hub', 'flow-sea', 'flow-land', 'flow-home',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north',
     'platformer', 'pen-core'
   ];
