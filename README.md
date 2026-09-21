@@ -54,6 +54,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-voyage.js`, `play-aurora.js`, `play-reindeer.js`, `play-sled.js`, `play-snowword.js`, `play-foxguard.js` — maailma 9
 - `js/play-nest.js` — Kaukamaa, Lohikäärmelaakso (maailma 10): Pesäkallio (ritsa), lohikäärmeenpoikasten piirto
 - `js/play-dragonfly.js` — Lohikäärmelaakso: Tulilento (lento lohikäärmeellä + tulihengitys, tulinappi `fireBtn` / `usesFire`)
+- `js/play-eggs.js`, `js/play-scale.js` — Lohikäärmelaakso: Munapesä (raahaa munat kuvion mukaan, hauto pitämällä) ja Aarrevaaka (tasapainota vaaka raahaamalla jalokiviä)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -416,8 +417,11 @@ tavu.
 
 Mantereen ensimmäinen alue. Aukeaa avomerimerkistä, kun Taikurin teltta on
 läpäisty. Sokkelon maasto on lämmintä punamultaa saniaisin, tulikristallein ja
-munakivin; tienviitta palauttaa mantereen kartalle. Toistaiseksi yksi kenttä,
-joka on myös alueen vartija (`finaleKind: 'nest'`).
+munakivin; tienviitta palauttaa mantereen kartalle. Neljä kenttää ja yksi
+usvahuone; alueen vartija on toistaiseksi Aarrevaaka (`finaleKind: 'scale'`,
+siirretään viimeiseen kenttään kun kenttiä tulee lisää). Kentät vuorottelevat
+vauhdikasta ja rauhallista: Pesäkallio (ritsa), Tulilento (lento, sydämet),
+Munapesä ja Aarrevaaka (rauhalliset, raahaus, ei sydämiä).
 
 - **Pesäkallio** — uusi verbi: **ritsa**. Prinsessa ruokkii pesissä odottavia
   lohikäärmeenpoikasia tulimarjoilla: paina mihin tahansa, vedä taakse ja päästä
@@ -446,6 +450,23 @@ joka on myös alueen vartija (`finaleKind: 'nest'`).
   sydämet loppuvat). Opastenuoli näyttää seuraavan sammuneen soihdun. Kun
   kaikki soihdut palavat, kanjonin päässä oleva lohikäärmeiden **rovio** hehkuu:
   sytytä se. Tehtävät: vähennys, puuttuva ruutu.
+- **Munapesä** — ei liikkumista, ei sydämiä. Luolan hyllyillä on kuusi
+  lohikäärmeenmunaa kolmella kuviolla (pilkut, raidat, siksak), ja lattialla
+  kolme pesää, joiden kyltissä on kuvio. **Raahaa** muna pesään, jonka kuvio on
+  sama; väärään pesään pudotettu muna keikahtaa takaisin hyllylle. Kun pesässä on
+  kaksi munaa, **pidä sormea pesän päällä**: Minttu lentää viereen ja puhaltaa
+  lämpöä, lämpörengas täyttyy 2,6 sekunnissa ja munat halkeilevat vaihe
+  vaiheelta, kunnes poikaset kuoriutuvat. Irti päästettynä lämpö hiipuu, joten
+  hautominen tehdään yhdellä pidolla. Käsi näyttää sekä raahauksen että pidon.
+  Tehtävät kuoriutumisten jälkeen: järjestä koon mukaan, samanlainen.
+- **Aarrevaaka** — ei liikkumista, ei sydämiä. Vanha lohikäärme Vaari laittaa
+  kultaisen vaa'an vasempaan kuppiin jalokiviä; raahaa lattian jalokiviä oikeaan
+  kuppiin, kunnes vaaka on tasan. Pieni jalokivi painaa yhden ja iso kaksi, ja
+  vaaka **kallistuu heti** painavamman puolen mukaan, joten liian painavan kupin
+  näkee ja kiven voi raahata takaisin lattialle. Osoitin muuttuu vihreäksi
+  tasapainossa. Viisi kierrosta (3, 2, 4, 5, 7); joka kierroksesta Vaarin kasaan
+  tulee uusi aarre. Tehtävät toisen ja neljännen kierroksen jälkeen: kummalla
+  enemmän, lasku.
 
 ### Linnan sisustus
 
@@ -493,6 +514,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   marjan vedon vastaiseen suuntaan; pistekaari näyttää lentoradan vetäessä.
 - Tulilento: pidä pohjassa lentääksesi sormea kohti; tulinappi (tai toinen
   sormi / vasen alakulma) puhaltaa tulta lentosuuntaan.
+- Munapesä ja Aarrevaaka: raahaa (paina, vedä, päästä irti); Munapesässä pito
+  pesän päällä hautoo.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -648,6 +671,8 @@ väärästä vastauksesta tulee vain ravistus.
 - Revontulikettu: kiteet `FOX_STONES`
 - Pesäkallio: asemat `NEST_STATIONS` (pesien paikat, toiveet, `peek`, `swing`, `overhang`, pilarit `rocks`), laukaisu `NEST_VMAX` / veto `NEST_PULL`, painovoima `NEST_G`, kurkistus `NEST_PEEK_UP` / `NEST_PEEK_DOWN`, suun säde `nestMouth` (`s * 1.1`), ennakkokaaren osumatarkkuus `nestPreview` (`m.r * m.r * 0.6`), harakan väli `3.5 + Math.random() * 2`; osumaikkunat voi mitata selaimessa käymällä vedot läpi `nestLaunchVel` + `nestPreview`
 - Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `FLY_SPEED`, ohjauksen pehmeys `FLY_ACCEL` (kiihtyvyys sormen etäisyyden mukaan), vajoaminen `FLY_SINK`, osumasäde `R = s * 0.62` (updateDragonfly)
+- Munapesä: munat ja kuviot `EGG_SHELVES` / `EGG_PATTERNS`, pesät `EGG_NEST_FX`, hautomisaika `EGG_WARM_T`, hiipuminen `EGG_COOL`
+- Aarrevaaka: kierrokset `SCALE_ROUNDS` (vasemman kupin painot), lattian kivet `SCALE_FLOOR`, kallistus `(sumR - sumL) * 0.075`, tasapainon odotus `stableT > 0.9`
 
 ## Tyyliopas
 

@@ -966,7 +966,8 @@ var WORLDS = [
     // flow-land.js:ssä. Paikka (place) vastaa saaren island-kenttää; band on
     // sokkelon maaston teema. Lohikäärmelaakso on mantereen ensimmäinen alue.
     id: 10, name: 'Lohikäärmelaakso', region: 'land', band: 'dragon',
-    place: { fx: 0.34, fy: 0.55, size: 1.0, finaleKind: 'nest', deco: ['nest'] },
+    // finaleKind on alueen viimeinen kenttä; siirrä sitä, kun kenttiä tulee lisää
+    place: { fx: 0.34, fy: 0.55, size: 1.0, finaleKind: 'scale', deco: ['nest', 'dragonfly', 'scale'] },
     // '?' = tuleva huone usvan peitossa (paikanpitäjä tuleville kentille)
     map: [
       '###########',
@@ -974,9 +975,9 @@ var WORLDS = [
       '#########.#',
       '#T........#',
       '#.#########',
-      '#........?#',
+      '#........M#',
       '#########.#',
-      '#?.......?#',
+      '#A.......?#',
       '###########'
     ],
     levels: [
@@ -1007,6 +1008,34 @@ var WORLDS = [
         renderBgLayers: function () { return dragonflyLayers(); },
         light: { rays: true, raysColor: '#b8c8ff', raysAlpha: 0.5, tint: ['rgba(20,10,60,0.16)', 'rgba(255,120,40,0.10)'], vignette: 0.5 },
         respawn: function () { respawnDragonfly(); }
+      },
+      {
+        kind: 'eggs', room: 'M', name: 'Munapesä', color: '#ffb0e0', script: 'play-eggs',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5000,
+        bgColor: '#2a1428', ambient: 'sparkle', fg: null,
+        init: function () { initEggs(); },
+        update: function (dt) { updateEggs(dt); },
+        draw: function () { drawEggs(); },
+        tap: function (x, y) { handleEggsTap(x, y); },
+        resize: function () { resizeEggs(); },
+        renderBg: function (b, w, h) { renderEggsBg(b, w, h); },
+        renderBgLayers: function () { return eggsLayers(); },
+        light: { rays: true, raysColor: '#c8d4ff', raysAlpha: 0.5, tint: ['rgba(40,20,60,0.14)', 'rgba(255,140,120,0.08)'], vignette: 0.45 },
+        respawn: function () { respawnEggs(); }
+      },
+      {
+        kind: 'scale', room: 'A', name: 'Aarrevaaka', color: '#ffd24f', script: 'play-scale',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#1a1438', ambient: 'sparkle', fg: null,
+        init: function () { initScale(); },
+        update: function (dt) { updateScale(dt); },
+        draw: function () { drawScale(); },
+        tap: function (x, y) { handleScaleTap(x, y); },
+        resize: function () { resizeScale(); },
+        renderBg: function (b, w, h) { renderScaleBg(b, w, h); },
+        renderBgLayers: function () { return scaleLayers(); },
+        light: { rays: true, raysColor: '#ffe0a0', raysAlpha: 0.6, tint: ['rgba(30,20,70,0.14)', 'rgba(255,190,80,0.10)'], vignette: 0.45 },
+        respawn: function () { respawnScale(); }
       }
     ]
   }
