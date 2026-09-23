@@ -504,7 +504,13 @@ Puput tulevat perässä.
 **Pankkiholvi:** takaseinän pyöreässä holvissa säilytetään tähtiä. Kultainen nappi
 (tähti ja nuoli holviin) vie yhden tähden kukkarosta holviin, hopeinen nappi
 nostaa yhden takaisin; tähti lentää kaupan saldon ja holvin väliä. Napin
-pitäminen pohjassa siirtää tähtiä yhä nopeammin. Holvin kyltti näyttää
+pitäminen pohjassa siirtää tähtiä yhä nopeammin. Ylin, hehkuva nappi (kolme
+tähteä) **tallettaa kaikki**: koko kukkaro lentää tähtiparvena holviin.
+**Oven sulkeminen:** napautus auki olevaan oveen kääntää sen kiinni, jolloin
+salvat napsahtavat ja pyörä näkyy; napautus suljettuun oveen pyörittää pyörää,
+vetää salvat ja avaa oven. Suljetusta holvista ei voi tallettaa eikä nostaa
+(napeissa lukko, painallus tärähdyttää ovea). Oven asento tallentuu ja näkyy
+linnakartalla. Napautus avoimen holvin sisään hypäyttää tähtikasaa. Holvin kyltti näyttää
 talletuksen, ja tähtikasa kasvaa sen mukaan. **Korko:** joka vuorokausi holvi
 antaa 1 tähden jokaista kymmentä talletettua kohden (vähintään 1), ja korko
 lisätään talletukseen (korkoa korolle). Holvin kehällä kiertävä aurinko näyttää,

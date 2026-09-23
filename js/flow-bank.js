@@ -19,6 +19,12 @@ var bankHold = null;               // { dir: 1 talletus / -1 nosto, next, rate }
 var bankFly = [];                  // lentävät tähdet { x0, y0, x1, y1, t, dur }
 var bankShake = { dir: 0, t: 0 };
 var bankCeleb = null;              // korkojuhla { n, t }
+// Holvin ovi: napautus auki olevaan oveen sulkee holvin (ovi kääntyy kiinni,
+// salvat napsahtavat), napautus suljettuun oveen pyörittää pyörää ja avaa sen.
+// Suljetusta holvista ei voi tallettaa eikä nostaa (napit ravistavat).
+var bankClosed = false;            // tallennetaan
+var bankDoor = { state: 'open', t: 0, e: 0, bolt: 0, wheel: 0, shake: 0, sfx: 0 };
+var bankPileJump = 0;              // tähtikasan hypähdys (napautus holvin sisään)
 
 function bankInterestFor(n) {
   return n > 0 ? Math.max(1, Math.round(n * BANK_RATE)) : 0;
@@ -65,10 +71,12 @@ function bankVault() {
   var cy = room.wallTop + h * 0.29;
   var bx = Math.min(cx + r + h * 0.15, room.x1 - h * 0.09);
   var br = h * 0.068;
+  // Ylhäältä alas: talleta kaikki, talleta yksi, nosta yksi
   return {
     cx: cx, cy: cy, r: r,
-    dep: { x: bx, y: cy - h * 0.085, r: br },
-    wd: { x: bx, y: cy + h * 0.1, r: br }
+    all: { x: bx, y: cy - h * 0.17, r: br },
+    dep: { x: bx, y: cy, r: br },
+    wd: { x: bx, y: cy + h * 0.17, r: br }
   };
 }
 // Kukkaron tähti kaupan yläreunassa (drawStarBalance)
@@ -86,10 +94,60 @@ function bankTap(px, py) {
   if (dx * dx + dy * dy <= b.r * b.r * 1.5) dir = 1;
   b = v.wd; dx = px - b.x; dy = py - b.y;
   if (!dir && dx * dx + dy * dy <= b.r * b.r * 1.5) dir = -1;
-  if (!dir) return false;
-  bankStep(dir);
+  b = v.all; dx = px - b.x; dy = py - b.y;
+  if (!dir && dx * dx + dy * dy <= b.r * b.r * 1.5) {
+    bankDepositAll();
+    return true;
+  }
+  if (!dir) return bankDoorTap(px, py);
   bankHold = { dir: dir, next: 0.5, rate: 0.4 };
+  bankStep(dir);
   return true;
+}
+
+// Ovi ja holvin sisus: sulje, avaa tai hypäytä tähtikasaa
+function bankDoorTap(px, py) {
+  var v = bankVault(), d = bankDoor, dx = px - v.cx, dy = py - v.cy;
+  var inVault = dx * dx + dy * dy <= v.r * v.r * 1.1;
+  var onOpenDoor = Math.abs(px - (v.cx - v.r * 1.12)) < v.r * 0.34 && Math.abs(dy) < v.r * 0.95;
+  if (d.state === 'open') {
+    if (onOpenDoor) {
+      d.state = 'closing';
+      d.t = 0;
+      d.sfx = 0;
+      bankHold = null;
+      playNote(196, 0, 0.35, 'triangle', 0.2);
+      playNote(175, 0.2, 0.3, 'triangle', 0.18);
+      return true;
+    }
+    if (inVault) {
+      bankPileJump = 1;
+      for (var i = 0; i < 4; i++) playNote(1568 + (i % 2) * 400, i * 0.06, 0.06, 'sine', 0.14);
+      spawnSparkles(v.cx, v.cy + v.r * 0.35, 10, '#ffe27a');
+      return true;
+    }
+    return false;
+  }
+  if (d.state === 'closed' && (inVault || onOpenDoor)) {
+    d.state = 'opening';
+    d.t = 0;
+    d.sfx = 0;
+    playNote(1200, 0, 0.04, 'square', 0.07);
+    playNote(1000, 0.12, 0.04, 'square', 0.07);
+    playNote(1200, 0.24, 0.04, 'square', 0.07);
+    return true;
+  }
+  // Oven liikkuessa napautus holviin ei tee mitään muuta
+  return inVault;
+}
+
+// Oven asento tallennuksesta (ei animaatiota)
+function bankDoorSync() {
+  var d = bankDoor;
+  if (d.state === 'closing' || d.state === 'opening') return;
+  d.state = bankClosed ? 'closed' : 'open';
+  d.e = bankClosed ? 1 : 0;
+  d.bolt = d.e;
 }
 
 function bankRelease() {
@@ -100,6 +158,12 @@ function bankRelease() {
 function bankStep(dir) {
   var v = bankVault(), w = bankWalletPos();
   var inV = { x: v.cx + (Math.random() - 0.5) * v.r * 0.5, y: v.cy + v.r * 0.35 };
+  if (bankDoor.state !== 'open') {
+    // Holvi on kiinni: ovi tärähtää, mutta ei aukea itsestään
+    bankDoor.shake = 0.4;
+    bankRefuse(dir);
+    return;
+  }
   if (dir > 0) {
     if (starCoins <= 0) { bankRefuse(dir); return; }
     starCoins--;
@@ -120,6 +184,25 @@ function bankStep(dir) {
   saveProgress();
 }
 
+// Koko kukkaro holviin: tähtiparvi lentää holviin ja soi nouseva sävelkulku
+function bankDepositAll() {
+  var v = bankVault(), w = bankWalletPos(), n = starCoins, k, fly;
+  if (bankDoor.state !== 'open') { bankDoor.shake = 0.4; bankRefuse(2); return; }
+  if (n <= 0) { bankRefuse(2); return; }
+  starCoins = 0;
+  bankStars += n;
+  if (!bankT) bankT = Date.now();
+  fly = Math.min(n, 24);
+  for (k = 0; k < fly; k++) {
+    // Negatiivinen t viivästää lähtöä: tähdet lähtevät jonossa
+    bankFly.push({ x0: w.x, y0: w.y, x1: v.cx + (Math.random() - 0.5) * v.r * 0.9, y1: v.cy + v.r * (0.15 + Math.random() * 0.35), t: -k * 0.05, dur: 0.6 });
+  }
+  for (k = 0; k < 8; k++) playNote(784 * Math.pow(2, k / 7), k * 0.09, 0.12, 'sine', 0.22);
+  playNote(1568, 0.8, 0.4, 'triangle', 0.2);
+  bankPileJump = 1;
+  saveProgress();
+}
+
 function bankRefuse(dir) {
   bankShake.dir = dir;
   bankShake.t = 0.5;
@@ -132,6 +215,8 @@ function bankOnEnter() {
   bankAccrue();
   bankFly = [];
   bankHold = null;
+  bankPileJump = 0;
+  bankDoorSync();
   if (bankUnseen > 0) {
     bankCeleb = { n: bankUnseen, t: 0 };
     bankUnseen = 0;
@@ -146,6 +231,8 @@ function bankOnEnter() {
 function updateBank(dt) {
   var i, f, v;
   if (bankShake.t > 0) bankShake.t -= dt;
+  if (bankPileJump > 0) bankPileJump = Math.max(0, bankPileJump - dt * 1.4);
+  updateBankDoor(dt);
   if (bankHold) {
     bankHold.next -= dt;
     if (bankHold.next <= 0) {
@@ -170,6 +257,118 @@ function updateBank(dt) {
     if (bankCeleb.t < 1.6 && Math.random() < dt * 14) spawnSparkles(v.cx + (Math.random() - 0.5) * v.r, v.cy + (Math.random() - 0.3) * v.r, 3, '#ffe27a');
     if (bankCeleb.t > 3.6) bankCeleb = null;
   }
+}
+
+// Oven liike: sulkeutuessa ovi kääntyy eteen (0,7 s) ja salvat liukuvat kiinni;
+// avautuessa pyörä pyörähtää, salvat vetäytyvät ja ovi kääntyy sivuun
+var BANK_SWING_T = 0.7;
+function updateBankDoor(dt) {
+  var d = bankDoor, T = BANK_SWING_T;
+  if (d.shake > 0) d.shake = Math.max(0, d.shake - dt);
+  if (d.state === 'closing') {
+    d.t += dt;
+    d.e = easeInOutSine(d.t / T);
+    d.bolt = Math.min(1, Math.max(0, (d.t - T) / 0.25));
+    if (d.t < T) d.wheel += dt * 5;
+    if (d.sfx === 0 && d.t >= T) {
+      d.sfx = 1;
+      playNote(98, 0, 0.25, 'square', 0.12);
+      playNote(147, 0, 0.2, 'triangle', 0.2);
+    }
+    if (d.t >= T + 0.25) {
+      d.state = 'closed';
+      d.e = 1;
+      d.bolt = 1;
+      bankClosed = true;
+      saveProgress();
+      playNote(1400, 0, 0.04, 'square', 0.08);
+      playNote(1400, 0.08, 0.04, 'square', 0.08);
+      var v = bankVault();
+      spawnSparkles(v.cx, v.cy, 10, '#d4d0e0');
+    }
+  } else if (d.state === 'opening') {
+    d.t += dt;
+    if (d.t < 0.6) d.wheel -= dt * 10;
+    d.bolt = 1 - Math.min(1, d.t / 0.5);
+    d.e = 1 - easeInOutSine((d.t - 0.6) / T);
+    if (d.sfx === 0 && d.t >= 0.6) {
+      d.sfx = 1;
+      playNote(175, 0, 0.3, 'triangle', 0.18);
+      playNote(220, 0.2, 0.3, 'triangle', 0.18);
+    }
+    if (d.t >= 0.6 + T) {
+      d.state = 'open';
+      d.e = 0;
+      bankClosed = false;
+      saveProgress();
+      bankPileJump = 1;
+      playNote(1047, 0, 0.12, 'sine', 0.25);
+      playNote(1319, 0.1, 0.2, 'sine', 0.25);
+      var v2 = bankVault();
+      spawnSparkles(v2.cx, v2.cy + v2.r * 0.3, 16, '#ffe27a');
+    }
+  }
+}
+
+// Holvin ovi: e 0 = auki (kapea, sivulla), 1 = kiinni (täysi pyöreä ovi pyörineen)
+function drawBankDoor(c, cx, cy, r) {
+  var d = bankDoor, e = d.e, i;
+  var sh = d.shake > 0 ? Math.sin(globalT * 55) * r * 0.03 * (d.shake / 0.4) : 0;
+  var x = cx - r * 1.12 + (r * 1.12) * e + sh;
+  var rx = r * (0.2 + 0.66 * e), ry = r * (0.92 - 0.06 * e);
+  // Salvat kehyksessä (liukuvat ulos ovesta)
+  if (d.bolt > 0) {
+    c.fillStyle = '#9aa6c0';
+    for (i = 0; i < 4; i++) {
+      var a = i * Math.PI / 2 + Math.PI / 4;
+      c.save();
+      c.translate(cx + sh, cy);
+      c.rotate(a);
+      roundRect(c, r * 0.78, -r * 0.06, r * 0.2 * d.bolt, r * 0.12, r * 0.03);
+      c.fill();
+      c.restore();
+    }
+  }
+  c.fillStyle = '#8a8298';
+  c.beginPath();
+  if (c.ellipse) c.ellipse(x, cy, rx, ry, 0, 0, Math.PI * 2); else c.arc(x, cy, rx, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = '#b9b4c8';
+  c.beginPath();
+  if (c.ellipse) c.ellipse(x - r * 0.04 * (1 - e), cy, rx * 0.8, ry * 0.9, 0, 0, Math.PI * 2); else c.arc(x, cy, rx * 0.8, 0, Math.PI * 2);
+  c.fill();
+  if (e < 0.5) {
+    // Auki: oven syrjä ja poikkiraudat
+    c.globalAlpha = 1 - e * 2;
+    c.strokeStyle = '#6a6278';
+    c.lineWidth = Math.max(2, r * 0.035);
+    for (i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(x - rx * 0.6, cy + i * r * 0.3); c.lineTo(x + rx * 0.25, cy + i * r * 0.3); c.stroke(); }
+    c.globalAlpha = 1;
+  }
+  if (e > 0.3) {
+    // Kiinni: pyörä kolmella puolalla, kultainen napa ja tähtimerkki
+    var fa = Math.min(1, (e - 0.3) / 0.7), wr = rx * 0.42;
+    c.globalAlpha = fa;
+    c.strokeStyle = 'rgba(90,80,110,0.5)';
+    c.lineWidth = Math.max(1.5, r * 0.02);
+    c.beginPath(); c.arc(x, cy, rx * 0.66, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = '#6a6278';
+    c.lineWidth = Math.max(2, r * 0.05);
+    c.beginPath(); c.arc(x, cy, wr, 0, Math.PI * 2); c.stroke();
+    for (i = 0; i < 3; i++) {
+      var sa = d.wheel + i * Math.PI * 2 / 3;
+      c.beginPath(); c.moveTo(x, cy); c.lineTo(x + Math.cos(sa) * wr * 1.25, cy + Math.sin(sa) * wr * 1.25); c.stroke();
+      artCircle(c, x + Math.cos(sa) * wr * 1.3, cy + Math.sin(sa) * wr * 1.3, r * 0.06, '#d9a93a', { lineColor: '#8a6420' });
+    }
+    artCircle(c, x, cy, r * 0.1, '#ffd24f', { lineColor: '#b8860b' });
+    drawStar(c, x, cy + rx * 0.72, r * 0.07, 0, 0);
+    c.globalAlpha = 1;
+  }
+  // Saranat oven vasemmassa reunassa
+  c.fillStyle = '#d9a93a';
+  var hx = x - rx * (e > 0.5 ? 1.05 : -0.5);
+  c.fillRect(hx - r * 0.07, cy - r * 0.55, r * 0.14, r * 0.12);
+  c.fillRect(hx - r * 0.07, cy + r * 0.43, r * 0.14, r * 0.12);
 }
 
 // ---------- Piirto ----------
@@ -206,12 +405,14 @@ function renderBankWall(b, room, h) {
 }
 
 // Tähtikasa holvin sisällä: n tähteä riveittäin alhaalta ylös
-function drawBankPile(c, cx, baseY, r, n) {
+function drawBankPile(c, cx, baseY, r, n, jump) {
   var shown = Math.min(n, 45), row = 0, inRow = 0, perRow = 8, sr = r * 0.11, k, x, y;
   for (k = 0; k < shown; k++) {
     if (inRow >= perRow) { row++; inRow = 0; perRow = Math.max(3, perRow - 1); }
     x = cx + (inRow - (perRow - 1) / 2) * sr * 1.7 + (row % 2) * sr * 0.4;
     y = baseY - row * sr * 1.25;
+    // Hypähdys: tähdet pomppaavat aaltona ja asettuvat
+    if (jump > 0) y -= Math.abs(Math.sin((1 - jump) * Math.PI * 3 - k * 0.35)) * sr * 1.4 * jump;
     drawStar(c, x, y, sr, (k * 0.7) % 1 - 0.5, 0);
     inRow++;
   }
@@ -258,25 +459,12 @@ function drawBankVault(c) {
   if (bankStars > 0) artGlow(c, cx, cy + r * 0.45, r * (0.5 + Math.min(bankStars, 45) / 45 * 0.6), '#ffe678', 0.45);
   c.fillStyle = '#6a5a8a';
   c.fillRect(cx - r, cy + r * 0.58, r * 2, r * 0.3);
-  drawBankPile(c, cx, cy + r * 0.52, r, bankStars);
+  drawBankPile(c, cx, cy + r * 0.52, r, bankStars, bankPileJump);
   c.restore();
-  // Auki kääntynyt ovi vasemmalla (sivulta nähtynä kapea)
-  var dx = cx - r * 1.12;
-  c.fillStyle = '#8a8298';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(dx, cy, r * 0.2, r * 0.92, 0, 0, Math.PI * 2); else c.rect(dx - r * 0.2, cy - r * 0.9, r * 0.4, r * 1.8);
-  c.fill();
-  c.fillStyle = '#b9b4c8';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(dx - r * 0.04, cy, r * 0.15, r * 0.84, 0, 0, Math.PI * 2); else c.rect(dx - r * 0.15, cy - r * 0.84, r * 0.3, r * 1.68);
-  c.fill();
-  c.strokeStyle = '#6a6278';
-  c.lineWidth = Math.max(2, r * 0.035);
-  for (i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(dx - r * 0.12, cy + i * r * 0.3); c.lineTo(dx + r * 0.05, cy + i * r * 0.3); c.stroke(); }
-  // Saranat
-  c.fillStyle = '#d9a93a';
-  c.fillRect(dx + r * 0.1, cy - r * 0.55, r * 0.14, r * 0.12);
-  c.fillRect(dx + r * 0.1, cy + r * 0.43, r * 0.14, r * 0.12);
+  drawBankDoor(c, cx, cy, r);
+  // Vihje: auki olevassa ovessa kiiltää kahva, suljetussa pyörä hehkuu
+  if (bankDoor.state === 'open') artGlow(c, cx - r * 1.12, cy, r * 0.3, '#ffffff', 0.18 + Math.sin(globalT * 3) * 0.08);
+  else if (bankDoor.state === 'closed') artGlow(c, cx, cy, r * 0.45, '#ffe678', 0.18 + Math.sin(globalT * 3) * 0.08);
   // Saldokyltti holvin yläpuolella
   var txt = String(bankStars);
   var ts = h * 0.028;
@@ -308,23 +496,36 @@ function drawBankVault(c) {
     c.fillText('+' + bankCeleb.n, cx, gy);
     c.globalAlpha = 1;
   }
+  drawBankButton(c, v.all, 2);
   drawBankButton(c, v.dep, 1);
   drawBankButton(c, v.wd, -1);
 }
 
-// Nappi: kultainen (tähti ja nuoli holviin päin) tai hopeinen (nuoli ulos)
+// Nappi: kultainen (tähti ja nuoli holviin päin), iso kultainen kolmella
+// tähdellä (talleta kaikki, dir 2) tai hopeinen (nuoli ulos). Suljetun holvin
+// napit ovat himmeitä.
 function drawBankButton(c, b, dir) {
   var pressed = bankHold && bankHold.dir === dir;
   var shake = bankShake.t > 0 && bankShake.dir === dir ? Math.sin(globalT * 50) * b.r * 0.08 : 0;
   var x = b.x + shake, y = b.y + (pressed ? b.r * 0.08 : 0), r = b.r;
-  var empty = dir > 0 ? starCoins <= 0 : bankStars <= 0;
+  var sgn = dir > 0 ? 1 : -1;
+  var empty = (dir > 0 ? starCoins <= 0 : bankStars <= 0) || bankDoor.state !== 'open';
   c.fillStyle = dir > 0 ? '#b8860b' : '#6a6278';
   c.beginPath(); c.arc(x, y + (pressed ? r * 0.04 : r * 0.12), r, 0, Math.PI * 2); c.fill();
   c.globalAlpha = empty ? 0.55 : 1;
-  artCircle(c, x, y, r, dir > 0 ? '#ffd24f' : '#d4d0e0', { lineColor: dir > 0 ? '#b8860b' : '#6a6278' });
+  if (dir === 2 && !empty) artGlow(c, x, y, r * 1.5, '#ffe678', 0.3 + Math.sin(globalT * 4) * 0.1);
+  artCircle(c, x, y, r, dir === 2 ? '#ffb62e' : (dir > 0 ? '#ffd24f' : '#d4d0e0'), { lineColor: dir > 0 ? '#b8860b' : '#6a6278' });
   artHighlight(c, x - r * 0.3, y - r * 0.4, r * 0.3, r * 0.18, 0.5);
-  drawStar(c, x + dir * r * 0.22, y, r * 0.34, 0, 0);
+  if (dir === 2) {
+    // Kolmen tähden kasa
+    drawStar(c, x + r * 0.12, y + r * 0.2, r * 0.24, 0, 0);
+    drawStar(c, x + r * 0.5, y + r * 0.2, r * 0.24, 0.3, 0);
+    drawStar(c, x + r * 0.31, y - r * 0.18, r * 0.24, -0.2, 0);
+  } else {
+    drawStar(c, x + sgn * r * 0.22, y, r * 0.34, 0, 0);
+  }
   // Nuoli: talletus osoittaa vasemmalle (holviin), nosto oikealle (kukkaroon)
+  dir = sgn;
   var ax = x - dir * r * 0.3;
   c.fillStyle = dir > 0 ? '#7a4a00' : '#4a4458';
   c.beginPath();
@@ -335,6 +536,8 @@ function drawBankButton(c, b, dir) {
   c.fill();
   c.fillRect(Math.min(ax, ax + dir * r * 0.2), y - r * 0.1, r * 0.2, r * 0.2);
   c.globalAlpha = 1;
+  // Holvi kiinni: pieni lukko napin kulmassa
+  if (bankDoor.state !== 'open') drawHubLock(c, x + r * 0.62, y + r * 0.55, r * 0.75);
 }
 
 // Lentävät tähdet kaaressa kukkaron ja holvin välillä (piirretään kaupan päälle)
@@ -342,6 +545,7 @@ function drawBankFly(c) {
   var i, f, k, x, y;
   for (i = 0; i < bankFly.length; i++) {
     f = bankFly[i];
+    if (f.t < 0) continue;
     k = easeInOutSine(f.t / f.dur);
     x = f.x0 + (f.x1 - f.x0) * k;
     y = f.y0 + (f.y1 - f.y0) * k - Math.sin(k * Math.PI) * viewH * 0.12;

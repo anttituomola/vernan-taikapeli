@@ -186,7 +186,15 @@ function drawCastleRoomThumb(c, idx, x, y, w, hh) {
     c.fillStyle = '#2a2040';
     c.beginPath(); c.arc(vx, vy, vr * 0.84, 0, Math.PI * 2); c.fill();
     if (bankStars > 0) artGlow(c, vx, vy + vr * 0.4, vr * 0.9, '#ffe678', 0.5);
-    drawBankPile(c, vx, vy + vr * 0.52, vr, bankStars);
+    drawBankPile(c, vx, vy + vr * 0.52, vr, bankStars, 0);
+    if (bankClosed) {
+      // Holvi kiinni: pyöreä ovi pyörineen
+      artCircle(c, vx, vy, vr * 0.86, '#b9b4c8', { lineColor: '#6a6278' });
+      c.strokeStyle = '#6a6278';
+      c.lineWidth = Math.max(1.5, vr * 0.05);
+      c.beginPath(); c.arc(vx, vy, vr * 0.36, 0, Math.PI * 2); c.stroke();
+      artCircle(c, vx, vy, vr * 0.1, '#ffd24f');
+    }
   }
   for (i = 0; i < homeItems.length; i++) {
     it = homeItems[i];
