@@ -1058,12 +1058,12 @@ var WORLDS = [
     // Hohtometsä: mantereen toinen paikka, yöllinen hohtosienimetsä. Varjoperhonen
     // on vienyt tulikärpästen valot; prinsessa kerää ne takaisin.
     id: 11, name: 'Hohtometsä', region: 'land', band: 'glow',
-    place: { fx: 0.60, fy: 0.40, size: 0.9, finaleKind: 'bounce', deco: ['bounce'] },
+    place: { fx: 0.60, fy: 0.40, size: 0.9, finaleKind: 'catch', deco: ['bounce', 'catch'] },
     map: [
       '###########',
       '#B.......P#',
       '#########.#',
-      '#?........#',
+      '#K........#',
       '#.#########',
       '#........?#',
       '###########'
@@ -1081,6 +1081,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderBounceBg(b, w, h); },
         light: { rays: false, tint: ['rgba(20,30,80,0.12)', 'rgba(80,220,200,0.06)'], vignette: 0.45 },
         respawn: function () { respawnBounce(); }
+      },
+      {
+        kind: 'catch', room: 'K', name: 'Tulikärpässieppo', color: '#ffe27a', script: 'play-catch',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
+        bgColor: '#0b1238', ambient: 'sparkle', fg: null,
+        init: function () { initCatch(); },
+        update: function (dt) { updateCatch(dt); },
+        draw: function () { drawCatch(); },
+        tap: function (x, y) { handleCatchTap(x, y); },
+        resize: function () { resizeCatch(); },
+        renderBg: function (b, w, h) { renderCatchBg(b, w, h); },
+        light: { rays: true, raysColor: '#d8e8ff', raysAlpha: 0.22, tint: ['rgba(20,30,80,0.12)', 'rgba(120,255,220,0.05)'], vignette: 0.42 },
+        respawn: function () { respawnCatch(); }
       }
     ]
   }
