@@ -166,7 +166,7 @@ if (PHASES) {
 section('B. HUB_WORLDS integrity');
 const HUB_WORLDS = g('HUB_WORLDS');
 check(!!HUB_WORLDS, 'HUB_WORLDS exists');
-const STRUCTURAL = new Set(['#', '.', 'B', 'S', 'G']);
+const STRUCTURAL = new Set(['#', '.', 'B', 'S', 'G', '?']);
 if (HUB_WORLDS && PHASES) {
   const wkeys = Object.keys(HUB_WORLDS).map(Number).sort((a, b) => a - b);
   check(wkeys.every((v, i) => v === i + 1), 'world keys are dense 1..' + wkeys.length);
@@ -205,10 +205,15 @@ const ISLANDS = g('ISLANDS');
 check(!!ISLANDS, 'ISLANDS exists');
 if (ISLANDS && HUB_WORLDS && PHASES) {
   const wkeys = Object.keys(HUB_WORLDS).map(Number).sort((a, b) => a - b);
+  // Saaret (region 'sea') ja Kaukamaan paikat (region 'land') yhdessä kattavat maailmat
+  const places = g('LAND_PLACES') || [];
   check(
-    ISLANDS.map((i) => i.world).join(',') === wkeys.join(','),
-    'islands match hub worlds in order'
+    ISLANDS.concat(places).map((i) => i.world).sort((a, b) => a - b).join(',') === wkeys.join(','),
+    'islands and land places match hub worlds in order'
   );
+  for (const pl of places) {
+    check(!!PHASES[pl.finaleKind], 'place ' + pl.world + ' finaleKind ' + pl.finaleKind + ' is a phase');
+  }
   for (const isl of ISLANDS) {
     check(!!PHASES[isl.finaleKind], 'island ' + isl.world + ' finaleKind ' + isl.finaleKind + ' is a phase');
   }

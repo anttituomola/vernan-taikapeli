@@ -966,8 +966,8 @@ var WORLDS = [
     // flow-land.js:ssä. Paikka (place) vastaa saaren island-kenttää; band on
     // sokkelon maaston teema. Lohikäärmelaakso on mantereen ensimmäinen alue.
     id: 10, name: 'Lohikäärmelaakso', region: 'land', band: 'dragon',
-    // finaleKind on alueen viimeinen kenttä; siirrä sitä, kun kenttiä tulee lisää
-    place: { fx: 0.34, fy: 0.55, size: 1.0, finaleKind: 'scale', deco: ['nest', 'dragonfly', 'scale'] },
+    // finaleKind on alueen viimeinen kenttä (vartija): sen läpäisy avaa seuraavan paikan
+    place: { fx: 0.34, fy: 0.55, size: 1.0, finaleKind: 'giant', deco: ['nest', 'dragonfly', 'giant'] },
     // '?' = tuleva huone usvan peitossa (paikanpitäjä tuleville kentille)
     map: [
       '###########',
@@ -1051,6 +1051,36 @@ var WORLDS = [
         renderBgLayers: function () { return giantLayers(); },
         light: { rays: true, raysColor: '#ffd8a0', raysAlpha: 0.7, tint: ['rgba(60,20,60,0.14)', 'rgba(255,140,60,0.12)'], vignette: 0.45 },
         respawn: function () { respawnGiant(); }
+      }
+    ]
+  },
+  {
+    // Hohtometsä: mantereen toinen paikka, yöllinen hohtosienimetsä. Varjoperhonen
+    // on vienyt tulikärpästen valot; prinsessa kerää ne takaisin.
+    id: 11, name: 'Hohtometsä', region: 'land', band: 'glow',
+    place: { fx: 0.60, fy: 0.40, size: 0.9, finaleKind: 'bounce', deco: ['bounce'] },
+    map: [
+      '###########',
+      '#B.......P#',
+      '#########.#',
+      '#?........#',
+      '#.#########',
+      '#........?#',
+      '###########'
+    ],
+    levels: [
+      {
+        kind: 'bounce', room: 'P', name: 'Sienipomppu', color: '#5fd4c8', script: 'play-bounce',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
+        bgColor: '#0e1540', ambient: 'sparkle', fg: null,
+        init: function () { initBounce(); },
+        update: function (dt) { updateBounce(dt); },
+        draw: function () { drawBounce(); },
+        tap: function (x, y) { handleBounceTap(x, y); },
+        resize: function () { resizeBounce(); },
+        renderBg: function (b, w, h) { renderBounceBg(b, w, h); },
+        light: { rays: false, tint: ['rgba(20,30,80,0.12)', 'rgba(80,220,200,0.06)'], vignette: 0.45 },
+        respawn: function () { respawnBounce(); }
       }
     ]
   }
