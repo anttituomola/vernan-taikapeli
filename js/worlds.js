@@ -1058,14 +1058,16 @@ var WORLDS = [
     // Hohtometsä: mantereen toinen paikka, yöllinen hohtosienimetsä. Varjoperhonen
     // on vienyt tulikärpästen valot; prinsessa kerää ne takaisin.
     id: 11, name: 'Hohtometsä', region: 'land', band: 'glow',
-    place: { fx: 0.60, fy: 0.40, size: 0.9, finaleKind: 'catch', deco: ['bounce', 'catch'] },
+    place: { fx: 0.60, fy: 0.40, size: 0.9, finaleKind: 'moth', deco: ['bounce', 'catch', 'moth'] },
     map: [
       '###########',
       '#B.......P#',
       '#########.#',
       '#K........#',
       '#.#########',
-      '#........?#',
+      '#........V#',
+      '#########.#',
+      '#?........#',
       '###########'
     ],
     levels: [
@@ -1094,6 +1096,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderCatchBg(b, w, h); },
         light: { rays: true, raysColor: '#d8e8ff', raysAlpha: 0.22, tint: ['rgba(20,30,80,0.12)', 'rgba(120,255,220,0.05)'], vignette: 0.42 },
         respawn: function () { respawnCatch(); }
+      },
+      {
+        kind: 'moth', room: 'V', name: 'Varjoperhonen', color: '#6a4a9a', script: 'play-moth',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6500,
+        bgColor: '#07091f', ambient: 'sparkle', fg: null,
+        init: function () { initMoth(); },
+        update: function (dt) { updateMoth(dt); },
+        draw: function () { drawMoth(); },
+        tap: function (x, y) { handleMothTap(x, y); },
+        resize: function () { resizeMoth(); },
+        renderBg: function (b, w, h) { renderMothBg(b, w, h); },
+        light: { rays: false, tint: ['rgba(30,20,80,0.14)', 'rgba(120,255,220,0.05)'], vignette: 0.5 },
+        respawn: function () { respawnMoth(); }
       }
     ]
   }

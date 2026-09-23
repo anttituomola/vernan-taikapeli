@@ -49,6 +49,16 @@ Kaukamaan maailma (esim. Lohikäärmelaakso): saaren vastine mantereella, jolla
 on nimi, sokkelo ja vartija. Yksisarvinen kävelee paikkojen välillä polkua.
 _Vältä_: alue, laakso yleisnimenä, saari (mantereella)
 
+**Pomppu**:
+Hohtometsän verbi: prinsessa pomppii itsestään sienten hatuilla, ja sormi ohjaa
+sivuttain. Lyhtysieni on pompun tarkistuspiste.
+_Vältä_: hyppy (hyppy on hyppynapin ele)
+
+**Sipaisu**:
+Hohtometsän verbi: liikkuva sormi vetää hohtavaa haavia, joka nappaa
+tulikärpäsiä ja hajottaa varjokoita. Paikallaan oleva sormi ei nappaa.
+_Vältä_: pyyhkäisy, veto, raahaus (raahaus siirtää esinettä)
+
 **Liekki**:
 Tulilennon tulihengityksen varanto: kolme liekkiä, joista puhallus kuluttaa
 yhden; liekit palautuvat ajan kanssa ja tulimarja täyttää ne. Tulinappi on

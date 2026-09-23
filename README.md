@@ -58,6 +58,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-dragonfly.js` — Lohikäärmelaakso: Tulilento (lento lohikäärmeellä + tulihengitys, tulinappi `fireBtn` / `usesFire`)
 - `js/play-eggs.js`, `js/play-scale.js` — Lohikäärmelaakso: Munapesä (raahaa munat kuvion mukaan, hauto pitämällä) ja Aarrevaaka (tasapainota vaaka raahaamalla jalokiviä)
 - `js/play-giant.js` — Lohikäärmelaakson vartija Tulivuoren jätti (ritsa + tulihengitys, kolme kovenevaa kierrosta)
+- `js/play-bounce.js`, `js/play-catch.js`, `js/play-moth.js` — Kaukamaa, Hohtometsä (maailma 11): Sienipomppu (pomppu), Tulikärpässieppo (sipaisu) ja vartija Varjoperhonen (sipaisu + pomppu)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -484,6 +485,50 @@ yhdistää ritsan ja tulihengityksen.
   HUD näyttää osumat ja sulatettujen kivien määrän. Tehtävät osumien välissä:
   kuviosarja, muistiloitsu 5/4.
 
+### Kaukamaa: Hohtometsä (maailma 11)
+
+Mantereen toinen paikka, yöllinen hohtosienimetsä. Aukeaa, kun Lohikäärmelaakson
+vartija Tulivuoren jätti on läpäisty. Varjoperhonen on vienyt tulikärpästen
+valot, ja prinsessa kerää ne takaisin. Kaksi uutta verbiä, **pomppu** ja
+**sipaisu**, ja vartija yhdistää ne. Vaikeus on mitoitettu Tulivuoren jätin
+tasolle (palaute: se oli juuri lapsen ylärajalla); välikenttä on hieman
+helpompi. Kaikki kentät arvotaan joka peluukerralla. Sokkelon lopussa on
+usvahuone tulevalle kentälle.
+
+- **Sienipomppu** ♥ — uusi verbi: **pomppu**. Prinsessa pomppii itsestään
+  sienten hatuilla ylöspäin kohti Kuukukkaa, ja sormi ohjaa sivuttain
+  (prinsessa hakeutuu sormen kohdalle pehmeästi). Rata arvotaan neljään
+  kovenevaan osioon: tavalliset sienet; liikkuvat (nuolet hatun reunoilla) ja
+  jousisienet (pinkki, kierre, iso pomppu); lakastuvat sienet (ruskeat, kestävät
+  yhden pompun) ja takiaiset (piikkipallot, osuma vie sydämen). Jokaisen osion
+  alussa on lyhtysieni, joka syttyy tarkistuspisteeksi ja täyttää sydämet.
+  Alas pudotessa menee sydän ja prinsessa palaa viimeiselle lyhdylle.
+  Jokainen arvottu hyppy tarkistetaan simuloimalla: sen pitää onnistua, vaikka
+  sormi lähtisi seuraavan sienen kohdalle vasta osion reaktioajan jälkeen
+  (0,6 / 0,48 / 0,42 / 0,38 s). Tulikärpäsiä on 12 bonuksena (HUD), ja oikean
+  reunan mittari näyttää matkan Kuukukalle. Tehtävät toisella ja neljännellä
+  lyhdyllä: laske, kuviosarja.
+- **Tulikärpässieppo** ♥ — uusi verbi: **sipaisu**. Prinsessan purkin paikat
+  näyttävät, minkä värisiä tulikärpäsiä haavitaan. Liikkuva sormi vetää
+  hohtavaa haavia (paikallaan oleva ei nappaa). Väärän värinen säikähtää ja vie
+  purkista viimeksi napatun mukanaan. Varjokoihin osuminen vie sydämen ja
+  rikkoo haavin hetkeksi, ja myöhemmillä kierroksilla koit hakeutuvat haavin
+  valoa kohti. Neljä kierrosta: yksi arvottu väri, toinen väri, välkkyvät
+  tulikärpäset (pimeänä ei voi napata) ja lopuksi värit järjestyksessä.
+  Sydänten loppuessa kierros alkaa alusta. Tehtävät: erilainen, järjestys.
+- **Varjoperhonen** ♥ — vartija, joka yhdistää **sipaisun ja pompun**. Joka
+  kierros alkaa parvella: perhonen lähettää varjokoita hohtokuplassa seisovaa
+  prinsessaa kohti, ja sipaisu hajottaa ne (koit väistävät lähestyvää haavia;
+  perille päässyt vie sydämen). Sitten perhonen syöksyy matalalle ja lipuu
+  sivuttain, ja sen sydänpilkku hehkuu (valkoinen aikakaari kutistuu).
+  Prinsessa pomppii kolmella sienellä, ja sormi ohjaa. Pilkkuun ylttää vain
+  pompun huipulla, sienen kohdalta ja kun pilkku on heilunnan alaosassa, joten
+  ajoitus ratkaisee. Sienten väliin maahan pudonnut pomppii matalalle.
+  Perhonen pudottaa varjoitiöitä prinsessan kohdalle. Jos aika loppuu, tulee
+  uusi parvi. Kolme kierrosta: enemmän ja nopeampia koita, nopeampi lipuminen,
+  lyhyempi ikkuna. Kolmas osuma palauttaa valot, ja perhonen muuttuu vaaleaksi
+  kuukehrääjäksi. Tehtävät osumien välissä: peili, muistiloitsu 5/4.
+
 ### Linnan sisustus
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
@@ -564,6 +609,12 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   pesän päällä hautoo.
 - Tulivuoren jätti: ritsa kuten Pesäkalliossa (vedä taakse, päästä irti) ja
   tulinappi (tai toinen sormi / vasen alakulma) sulattaa lähimmän laavakiven.
+- Sienipomppu: prinsessa pomppii itsestään; pidä sormea ruudulla, niin hän
+  hakeutuu sivusuunnassa sormen kohdalle.
+- Tulikärpässieppo: sipaise (vedä sormea) tulikärpäsen läpi; paikallaan
+  pysyvä sormi ei nappaa.
+- Varjoperhonen: parven aikana sipaise koit pois, syöksyn aikana ohjaa pomppua
+  sormella kuten Sienipompussa.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -745,6 +796,9 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `FLY_SPEED`, ohjauksen pehmeys `FLY_ACCEL` (kiihtyvyys sormen etäisyyden mukaan), vajoaminen `FLY_SINK`, osumasäde `R = s * 0.62` (updateDragonfly)
 - Munapesä: munat ja kuviot `EGG_SHELVES` / `EGG_PATTERNS`, pesät `EGG_NEST_FX`, hautomisaika `EGG_WARM_T`, hiipuminen `EGG_COOL`
 - Aarrevaaka: kierrokset `SCALE_ROUNDS` (vasemman kupin painot), lattian kivet `SCALE_FLOOR`, kallistus `(sumR - sumL) * 0.075`, tasapainon odotus `stableT > 0.9`
+- Sienipomppu: osiot `BOUNCE_SECTIONS` (sienimäärä, pystyväli `dy`, sivusiirtymä `dx`, liikkuvien/lakastuvien osuus, takiaiset, reaktioaika `react`), pompun korkeus `BOUNCE_APEX` / jousi `BOUNCE_SPRING`, painovoima `BOUNCE_G`, ohjaus `BOUNCE_K` / `BOUNCE_D` / `BOUNCE_VMAX`; hyppyjen ulottuvuus `bounceReachable`
+- Tulikärpässieppo: kierrokset `CATCH_ROUNDS` (paikat, tulikärpäset, nopeus, koit, välkkyminen, järjestys, koiden hakeutuminen `chase`), haavin vähimmäisnopeus `CATCH_NET_SPEED`, nappaussäteet `CATCH_HIT` / `CATCH_MOTH_HIT`
+- Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas
