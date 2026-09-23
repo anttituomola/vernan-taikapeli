@@ -614,6 +614,29 @@ Kuvatehtävissä (samanlainen, erilainen, kuviosarja, kummalla enemmän, kello)
 väärä vastaus arpoo uuden tehtävän, joten arvaamalla ei pääse läpi. Laskuissa
 väärästä vastauksesta tulee vain ravistus.
 
+## Kentän suunnittelun muistilista
+
+Pelaaja on ikäryhmäänsä taitavampi, ja kenttä pelataan monta kertaa. Palautteen
+mukaan (syyskuu 2026) kentät, joissa ei voi epäonnistua ja joiden sisältö on
+joka kerta sama (Munapesä, Aarrevaaka), olivat hauskoja mutta liian helppoja
+eivätkä kutsu uudelleen; Pesäkallion ritsa sai kiitosta juuri haasteesta, ja
+Tulilento oli aluksi liian kaoottinen. Uudessa kentässä pitää olla vähintään
+kaksi seuraavista:
+
+1. **Takaisku** — sydän, esineen menetys, aikaraja tai kierroksen uusinta.
+2. **Ajoitus tai tarkkuus** — ikkuna noin 0,8 s, mieluiten ennakoiva vihje.
+3. **Kasvava vaikeus** — monivaiheinen tai kierroksittain kovenevat kierrokset.
+4. **Satunnaistus** — paikat, kuviot, painot tai järjestys arvotaan joka
+   peluukerralla, jotta uusinta ei ole ulkoa opittu.
+5. **Mitattava suoritus** — bonustähdet, virheettömyys tai aika, joka näkyy
+   juhlassa (+1 tähti täysillä sydämillä on jo käytössä).
+
+Rauhallinen kenttä ilman sydämiä on sallittu, mutta silloin vaihtelun on
+tultava satunnaistuksesta ja kovenevista kierroksista. Ohjauksen pitää pysyä
+hallittavana: vapaassa lennossa kiihtyvyys sormen etäisyyden mukaan ja
+vaimennus, ei päälle/pois-ohjausta. Mittaa osuma- ja ajoitusikkunat
+simuloimalla `VT`-kahvalla ennen tabletille viemistä.
+
 ## Vaikeuden säätö
 
 - Sydänten määrä: `HEART_MAX` (progress.js)
