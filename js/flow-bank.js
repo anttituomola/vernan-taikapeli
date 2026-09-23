@@ -170,8 +170,9 @@ function bankStep(dir) {
     bankStars++;
     if (!bankT) bankT = Date.now();
     bankFly.push({ x0: w.x, y0: w.y, x1: inV.x, y1: inV.y, t: 0, dur: 0.55 });
-    playNote(988 + Math.min(bankStars, 40) * 6, 0, 0.08, 'sine', 0.22);
+    playNote(988 + (bankStars % BANK_BAR) * 40, 0, 0.08, 'sine', 0.22);
     playNote(1319, 0.06, 0.1, 'sine', 0.16);
+    bankMeltFx(bankStars);
   } else {
     if (bankStars <= 0) { bankRefuse(dir); return; }
     bankStars--;
@@ -182,6 +183,22 @@ function bankStep(dir) {
     playNote(659, 0.06, 0.1, 'triangle', 0.16);
   }
   saveProgress();
+}
+
+// Kymmenen tähteä sulaa harkoksi (kilahdus), sata isoksi harkoksi (fanfaari)
+function bankMeltFx(n) {
+  var v = bankVault();
+  if (n > 0 && n % BANK_BIG === 0) {
+    spawnSparkles(v.cx, v.cy + v.r * 0.45, 26, '#ffd24f');
+    playNote(784, 0.1, 0.12, 'sine', 0.25);
+    playNote(1047, 0.2, 0.12, 'sine', 0.25);
+    playNote(1568, 0.3, 0.35, 'sine', 0.25);
+    bankPileJump = 1;
+  } else if (n > 0 && n % BANK_BAR === 0) {
+    spawnSparkles(v.cx, v.cy + v.r * 0.35, 14, '#ffe27a');
+    playNote(2093, 0.1, 0.18, 'sine', 0.2);
+    bankPileJump = Math.max(bankPileJump, 0.5);
+  }
 }
 
 // Koko kukkaro holviin: tähtiparvi lentää holviin ja soi nouseva sävelkulku
@@ -404,18 +421,90 @@ function renderBankWall(b, room, h) {
   }
 }
 
-// Tähtikasa holvin sisällä: n tähteä riveittäin alhaalta ylös
-function drawBankPile(c, cx, baseY, r, n, jump) {
-  var shown = Math.min(n, 45), row = 0, inRow = 0, perRow = 8, sr = r * 0.11, k, x, y;
-  for (k = 0; k < shown; k++) {
-    if (inRow >= perRow) { row++; inRow = 0; perRow = Math.max(3, perRow - 1); }
-    x = cx + (inRow - (perRow - 1) / 2) * sr * 1.7 + (row % 2) * sr * 0.4;
-    y = baseY - row * sr * 1.25;
-    // Hypähdys: tähdet pomppaavat aaltona ja asettuvat
-    if (jump > 0) y -= Math.abs(Math.sin((1 - jump) * Math.PI * 3 - k * 0.35)) * sr * 1.4 * jump;
-    drawStar(c, x, y, sr, (k * 0.7) % 1 - 0.5, 0);
-    inRow++;
+// Holvin kasa kymmenjärjestelmänä: iso kultaharkko = 100 tähteä, pieni harkko
+// = 10, tähti = 1 (456 = 4 isoa, 5 pientä ja 6 tähteä). Alimpana isot harkot,
+// niiden päällä pienet ja ylimpänä tähdet, kukin pyramidiksi (enintään 9 +
+// 9 + 9; yli 999 tähteä näkyy yhdeksänä isona harkkona ja kruununa).
+var BANK_BIG = 100, BANK_BAR = 10;
+function bankPileCounts(n) {
+  var big = Math.floor(n / BANK_BIG);
+  return { big: Math.min(big, 9), bars: Math.floor((n % BANK_BIG) / BANK_BAR), stars: n % BANK_BAR, crown: big > 9 };
+}
+// Pyramidin paikat alhaalta: rivit 4, 3, 2 (tai vähemmän) keskitettynä
+function bankPyramid(count) {
+  var out = [], rows = [4, 3, 2], row = 0, left = count, k, inRow;
+  while (left > 0 && row < rows.length) {
+    inRow = Math.min(left, rows[row]);
+    for (k = 0; k < inRow; k++) out.push({ col: k - (inRow - 1) / 2, row: row });
+    left -= inRow;
+    row++;
   }
+  return { cells: out, rows: row };
+}
+function drawBankPile(c, cx, baseY, r, n, jump) {
+  var p = bankPileCounts(n), y = baseY + r * 0.06, i, cell, x, yy, lift, idx = 0;
+  // Hypähdys: kaikki pomppaavat aaltona ja asettuvat
+  var hop = function (amp) {
+    idx++;
+    return jump > 0 ? Math.abs(Math.sin((1 - jump) * Math.PI * 3 - idx * 0.35)) * amp * jump : 0;
+  };
+  // Isot harkot (100)
+  var bw = r * 0.3, bh = r * 0.22, pyr = bankPyramid(p.big);
+  for (i = 0; i < pyr.cells.length; i++) {
+    cell = pyr.cells[i];
+    x = cx + cell.col * bw * 1.04;
+    yy = y - cell.row * bh * 1.02 - hop(r * 0.08);
+    drawBankBar(c, x, yy, bw, bh, true);
+  }
+  y -= pyr.rows * bh * 1.02;
+  // Pienet harkot (10)
+  var sw = r * 0.25, shh = r * 0.11;
+  pyr = bankPyramid(p.bars);
+  for (i = 0; i < pyr.cells.length; i++) {
+    cell = pyr.cells[i];
+    x = cx + cell.col * sw * 1.08;
+    yy = y - cell.row * shh * 1.05 - hop(r * 0.12);
+    drawBankBar(c, x, yy, sw, shh, false);
+  }
+  y -= pyr.rows * shh * 1.05;
+  // Tähdet (1)
+  var sr = r * 0.1;
+  pyr = bankPyramid(p.stars);
+  for (i = 0; i < pyr.cells.length; i++) {
+    cell = pyr.cells[i];
+    lift = hop(r * 0.16);
+    drawStar(c, cx + cell.col * sr * 2.1, y - sr * 0.9 - cell.row * sr * 1.6 - lift, sr, (i * 0.7) % 1 - 0.5, 0);
+  }
+  if (p.crown) {
+    y -= pyr.rows * sr * 1.6 + sr * 0.6;
+    artGlow(c, cx, y - r * 0.1, r * 0.3, '#ffe678', 0.7);
+    c.fillStyle = '#ffd24f';
+    c.beginPath();
+    c.moveTo(cx - r * 0.14, y); c.lineTo(cx - r * 0.16, y - r * 0.18); c.lineTo(cx - r * 0.07, y - r * 0.09);
+    c.lineTo(cx, y - r * 0.21); c.lineTo(cx + r * 0.07, y - r * 0.09); c.lineTo(cx + r * 0.16, y - r * 0.18);
+    c.lineTo(cx + r * 0.14, y); c.closePath(); c.fill();
+    artCircle(c, cx, y - r * 0.06, r * 0.03, '#ff5f7e');
+  }
+}
+
+// Kultaharkko sivulta: (x, y) pohjan keskikohta. Isossa harkossa tähtileima.
+function drawBankBar(c, x, y, w, h, big) {
+  var top = h * 0.35;
+  c.fillStyle = '#b8860b';
+  c.beginPath();
+  c.moveTo(x - w / 2, y); c.lineTo(x + w / 2, y); c.lineTo(x + w / 2 - top * 0.6, y - h); c.lineTo(x - w / 2 + top * 0.6, y - h); c.closePath();
+  c.fill();
+  var g = c.createLinearGradient(0, y - h, 0, y);
+  g.addColorStop(0, '#fff2a8');
+  g.addColorStop(1, '#ffc02e');
+  c.fillStyle = g;
+  c.beginPath();
+  c.moveTo(x - w / 2 + w * 0.06, y - h * 0.08); c.lineTo(x + w / 2 - w * 0.06, y - h * 0.08);
+  c.lineTo(x + w / 2 - top * 0.6 - w * 0.04, y - h + h * 0.1); c.lineTo(x - w / 2 + top * 0.6 + w * 0.04, y - h + h * 0.1); c.closePath();
+  c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.55)';
+  c.fillRect(x - w * 0.28, y - h * 0.8, w * 0.22, Math.max(1, h * 0.1));
+  if (big) drawStar(c, x, y - h * 0.48, h * 0.24, 0, 0);
 }
 
 // Holvi: kultainen kehys, auki kääntynyt ovi, sisällä tähtikasa, yläpuolella

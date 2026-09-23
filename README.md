@@ -511,7 +511,11 @@ salvat napsahtavat ja pyörä näkyy; napautus suljettuun oveen pyörittää py�
 vetää salvat ja avaa oven. Suljetusta holvista ei voi tallettaa eikä nostaa
 (napeissa lukko, painallus tärähdyttää ovea). Oven asento tallentuu ja näkyy
 linnakartalla. Napautus avoimen holvin sisään hypäyttää tähtikasaa. Holvin kyltti näyttää
-talletuksen, ja tähtikasa kasvaa sen mukaan. **Korko:** joka vuorokausi holvi
+talletuksen, ja holvin kasa näyttää sen **kymmenjärjestelmänä**: iso kultaharkko
+tähtileimalla = 100 tähteä, pieni kultaharkko = 10 ja tähti = 1 (456 = 4 isoa
+harkkoa, 5 pientä ja 6 tähteä; yli 999 tähden päälle ilmestyy kruunu). Kun
+talletus osuu tasakymmeneen, tähdet sulavat harkoksi kilahduksella, ja
+tasasadassa soi pieni fanfaari. **Korko:** joka vuorokausi holvi
 antaa 1 tähden jokaista kymmentä talletettua kohden (vähintään 1), ja korko
 lisätään talletukseen (korkoa korolle). Holvin kehällä kiertävä aurinko näyttää,
 kuinka pitkällä seuraava korko on. Kun holviin tullaan korkopäivän jälkeen,
