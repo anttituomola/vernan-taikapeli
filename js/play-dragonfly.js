@@ -652,7 +652,7 @@ function drawDragonfly() {
   for (i = 0; i < fly.berries.length; i++) {
     t = fly.berries[i];
     if (t.collected) continue;
-    drawBerry(c, t.x - camX, t.y + Math.sin(t.phase) * viewH * 0.015, viewH * 0.024, Math.sin(t.phase * 0.5) * 0.2, true);
+    drawFireBerry(c, t.x - camX, t.y + Math.sin(t.phase) * viewH * 0.015, viewH * 0.024, Math.sin(t.phase * 0.5) * 0.2, true);
   }
   for (i = 0; i < fly.clouds.length; i++) drawFlyCloud(c, fly.clouds[i]);
   drawFlyDragonRider(c);

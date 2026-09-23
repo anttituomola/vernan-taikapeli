@@ -256,7 +256,7 @@ function renderScaleFar(b, w, h) {
   // Seinän jalokivet ja kultahehku
   for (i = 0; i < 14; i++) {
     x = vw * ((i * 0.137 + 0.03) % 1);
-    drawGem(b, x, h * (0.08 + (i * 0.173) % 0.45), h * 0.012, SCALE_SMALL_COLORS[i % SCALE_SMALL_COLORS.length], 0.5);
+    drawScaleGem(b, x, h * (0.08 + (i * 0.173) % 0.45), h * 0.012, SCALE_SMALL_COLORS[i % SCALE_SMALL_COLORS.length], 0.5);
   }
   artGlow(b, vw * 0.5, h * 0.9, h * 0.5, '#ffb347', 0.25);
   drawBgSun(b, vw * 0.5, h * 0.06, h * 0.03, 0.3, '#ffe0a0', '#fff6dc', '#ffd24f');
@@ -287,12 +287,12 @@ function drawGoldPile(b, x, baseY, s) {
   for (i = 0; i < 6; i++) {
     artBlob(b, x - s * 0.9 + i * s * 0.36, baseY - s * (0.15 + (i % 2) * 0.5) - s * 0.05, s * 0.16, s * 0.07, '#fff0a0', { lineColor: '#b8862a' });
   }
-  drawGem(b, x + s * 0.4, baseY - s * 0.75, s * 0.14, '#ff5f7e', 1);
-  drawGem(b, x - s * 0.6, baseY - s * 0.5, s * 0.12, '#4aa8ff', 1);
+  drawScaleGem(b, x + s * 0.4, baseY - s * 0.75, s * 0.14, '#ff5f7e', 1);
+  drawScaleGem(b, x - s * 0.6, baseY - s * 0.5, s * 0.12, '#4aa8ff', 1);
 }
 
 // ---------- Piirto: jalokivet, vaaka, aarteet ----------
-function drawGem(c, x, y, r, color, alpha) {
+function drawScaleGem(c, x, y, r, color, alpha) {
   var dark = artShade(color, -0.45);
   if (alpha !== undefined) c.globalAlpha = alpha;
   c.beginPath();
@@ -342,7 +342,7 @@ function drawTreasure(c, kind, x, y, s) {
   if (kind === 'crown') {
     c.beginPath(); c.moveTo(x - s, y + s * 0.5); c.lineTo(x - s, y - s * 0.3); c.lineTo(x - s * 0.5, y + s * 0.1); c.lineTo(x, y - s * 0.6); c.lineTo(x + s * 0.5, y + s * 0.1); c.lineTo(x + s, y - s * 0.3); c.lineTo(x + s, y + s * 0.5); c.closePath();
     artFillPath(c, '#ffd24f', y - s * 0.6, y + s * 0.5, s, { lineColor: '#b8862a' });
-    drawGem(c, x, y + s * 0.15, s * 0.25, '#ff5f7e');
+    drawScaleGem(c, x, y + s * 0.15, s * 0.25, '#ff5f7e');
   } else if (kind === 'goblet') {
     artBlob(c, x, y - s * 0.3, s * 0.7, s * 0.5, '#ffd24f', { shadeTo: '#b8862a', lineColor: '#7a5a10', hi: 0.3 });
     artLimb(c, x, y, x, y + s * 0.6, s * 0.2, '#ffd24f', '#7a5a10');
@@ -350,10 +350,10 @@ function drawTreasure(c, kind, x, y, s) {
   } else if (kind === 'ring') {
     c.strokeStyle = '#7a5a10'; c.lineWidth = s * 0.42; c.beginPath(); c.arc(x, y + s * 0.15, s * 0.55, 0, Math.PI * 2); c.stroke();
     c.strokeStyle = '#ffd24f'; c.lineWidth = s * 0.28; c.beginPath(); c.arc(x, y + s * 0.15, s * 0.55, 0, Math.PI * 2); c.stroke();
-    drawGem(c, x, y - s * 0.5, s * 0.3, '#4aa8ff');
+    drawScaleGem(c, x, y - s * 0.5, s * 0.3, '#4aa8ff');
   } else if (kind === 'necklace') {
     c.strokeStyle = '#ffd24f'; c.lineWidth = Math.max(2, s * 0.14); c.beginPath(); c.arc(x, y - s * 0.3, s * 0.8, 0.3, Math.PI - 0.3); c.stroke();
-    for (i = 0; i < 3; i++) drawGem(c, x + (i - 1) * s * 0.45, y + s * 0.35 - Math.abs(i - 1) * s * 0.15, s * 0.2, ['#6fd66f', '#ff7bac', '#c9a0ff'][i]);
+    for (i = 0; i < 3; i++) drawScaleGem(c, x + (i - 1) * s * 0.45, y + s * 0.35 - Math.abs(i - 1) * s * 0.15, s * 0.2, ['#6fd66f', '#ff7bac', '#c9a0ff'][i]);
   } else {
     artLimb(c, x - s * 0.5, y + s * 0.7, x + s * 0.4, y - s * 0.5, s * 0.16, '#ffd24f', '#7a5a10');
     drawStar(c, x + s * 0.5, y - s * 0.65, s * 0.35, 0, 0.6);
@@ -388,7 +388,7 @@ function drawScale() {
   pos = scaleSlotPositions(scale.left, panL);
   for (i = 0; i < scale.left.length; i++) {
     var k = easeOutBack(Math.max(0, scale.left[i].appear));
-    if (k > 0) drawGem(c, pos[i].x, pos[i].y - (1 - k) * s * 3, scaleGemR(scale.left[i].w) * Math.max(0.2, k), scale.left[i].color);
+    if (k > 0) drawScaleGem(c, pos[i].x, pos[i].y - (1 - k) * s * 3, scaleGemR(scale.left[i].w) * Math.max(0.2, k), scale.left[i].color);
   }
   // Oikean kupin korostus, kun raahataan
   if (scale.drag) {
@@ -403,12 +403,12 @@ function drawScale() {
     g = scale.gems[i];
     if (g === scale.drag) continue;
     if (!g.onPan) artShadow(c, g.x, g.y + scaleGemR(g.w) * 1.05, scaleGemR(g.w) * 1.1, scaleGemR(g.w) * 0.3, 0.16);
-    drawGem(c, g.x, g.y, scaleGemR(g.w), g.color);
+    drawScaleGem(c, g.x, g.y, scaleGemR(g.w), g.color);
   }
   if (scale.drag) {
     g = scale.drag;
     artShadow(c, g.x, g.y + scaleGemR(g.w) * 2.2, scaleGemR(g.w) * 1.0, scaleGemR(g.w) * 0.25, 0.1);
-    drawGem(c, g.x, g.y, scaleGemR(g.w) * 1.1, g.color);
+    drawScaleGem(c, g.x, g.y, scaleGemR(g.w) * 1.1, g.color);
   }
   // Tasapaino saavutettu: hehku
   if (scale.doneT > 0) {
@@ -422,7 +422,7 @@ function drawScale() {
       var kk = easeInOutSine(Math.min(1, hp / 1.6)), g0 = scale.gems[0];
       var hx = g0.hx + (panR.x - g0.hx) * kk, hy = g0.hy + (panR.y - s * 1.5 - g0.hy) * kk;
       c.globalAlpha = hp > 1.7 ? (2.0 - hp) / 0.3 : 0.85;
-      if (kk > 0.05) drawGem(c, hx, hy, scaleGemR(1), g0.color);
+      if (kk > 0.05) drawScaleGem(c, hx, hy, scaleGemR(1), g0.color);
       drawHand(c, hx + s * 0.6, hy + s * 1.2, s * 1.1);
       c.globalAlpha = 1;
     }
@@ -440,5 +440,5 @@ HUB_ICONS.scale = function (c, x, y, s) {
   c.beginPath(); c.moveTo(x, y + s * 0.14); c.lineTo(x, y - s * 0.14); c.moveTo(x - s * 0.2, y - s * 0.1); c.lineTo(x + s * 0.2, y - s * 0.14); c.stroke();
   artBlob(c, x - s * 0.2, y + s * 0.02, s * 0.1, s * 0.035, '#ffd24f', { lineColor: '#8a5a10' });
   artBlob(c, x + s * 0.2, y - s * 0.02, s * 0.1, s * 0.035, '#ffd24f', { lineColor: '#8a5a10' });
-  drawGem(c, x - s * 0.2, y - s * 0.03, s * 0.045, '#ff5f7e');
+  drawScaleGem(c, x - s * 0.2, y - s * 0.03, s * 0.045, '#ff5f7e');
 };

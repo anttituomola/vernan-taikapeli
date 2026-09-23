@@ -774,7 +774,7 @@ function drawNestBowl(c, x, y, s, front) {
   c.lineCap = 'butt';
   artBlob(c, x - s * 0.6, y - s * 0.2, s * 0.4, s * 0.12, '#d9a06a', { line: false });
 }
-function drawBerry(c, x, y, r, rot, glow) {
+function drawFireBerry(c, x, y, r, rot, glow) {
   if (glow) artGlow(c, x, y, r * 2.6, '#ff8a4a', 0.35);
   c.save();
   c.translate(x, y);
@@ -804,7 +804,7 @@ function drawMagpie(c, x, y, s, flap, dir, carry) {
   c.beginPath(); c.moveTo(-s * 1.3, -s * 0.35); c.lineTo(-s * 1.85, -s * 0.2); c.lineTo(-s * 1.3, -s * 0.12); c.closePath(); c.fill();
   artEye(c, -s * 1.02, -s * 0.45, s * 0.12, -0.5, false);
   c.restore();
-  if (carry) drawBerry(c, x - dir * s * 1.4, y + s * 0.3, s * 0.35, 0, false);
+  if (carry) drawFireBerry(c, x - dir * s * 1.4, y + s * 0.3, s * 0.35, 0, false);
 }
 function drawSlingshot(c, f, s, pouch) {
   var hx = f.x - s * 0.1, hy = f.y + s * 1.3;
@@ -859,7 +859,7 @@ function drawNest() {
     // Toivotut marjat pesän yllä
     for (j = 0; j < d.want; j++) {
       var bx = dx + (j - (d.want - 1) / 2) * s * 0.7, by = d.y - s * 3.35;
-      if (j < d.fed) drawBerry(ctx, bx, by, s * 0.24, 0, false);
+      if (j < d.fed) drawFireBerry(ctx, bx, by, s * 0.24, 0, false);
       else drawBerryOutline(ctx, bx, by, s * 0.24);
     }
   }
@@ -908,7 +908,7 @@ function drawNest() {
   drawPrincessFree(ctx, princess.x - cx, princess.y, viewH / 560, 1, princess.walkPhase, nest.walking, globalT);
   if (!nest.walking) {
     drawSlingshot(ctx, fShow, s * 0.75, pouch);
-    if (nest.reload <= 0) drawBerry(ctx, pouch.x, pouch.y - s * 0.05, s * 0.3, 0, true);
+    if (nest.reload <= 0) drawFireBerry(ctx, pouch.x, pouch.y - s * 0.05, s * 0.3, 0, true);
   }
   // Ennakkokaari vetäessä
   if (aiming && v && v.len > NEST_MIN_PULL * viewH && nest.reload <= 0) {
@@ -940,7 +940,7 @@ function drawNest() {
         ctx.beginPath(); ctx.arc(pv.pts[i].x - cx, pv.pts[i].y, Math.max(2, s * 0.1), 0, Math.PI * 2); ctx.fill();
       }
       drawSlingshot(ctx, fShow, s * 0.75, { x: hx - cx, y: hy });
-      drawBerry(ctx, hx - cx, hy - s * 0.05, s * 0.3, 0, true);
+      drawFireBerry(ctx, hx - cx, hy - s * 0.05, s * 0.3, 0, true);
       drawHand(ctx, hx - cx + s * 0.3, hy + s * 0.6, viewH * 0.03);
       ctx.globalAlpha = 1;
     }
@@ -953,7 +953,7 @@ function drawNest() {
       ctx.fillStyle = 'rgba(255,200,120,' + (0.08 + j * 0.05) + ')';
       ctx.beginPath(); ctx.arc(fr.trail[j].x - cx, fr.trail[j].y, s * (0.08 + j * 0.02), 0, Math.PI * 2); ctx.fill();
     }
-    drawBerry(ctx, fr.x - cx, fr.y, s * 0.3, fr.rot, true);
+    drawFireBerry(ctx, fr.x - cx, fr.y, s * 0.3, fr.rot, true);
   }
 
   // Lentävät kylläiset poikaset

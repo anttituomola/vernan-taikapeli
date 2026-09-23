@@ -55,6 +55,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-nest.js` — Kaukamaa, Lohikäärmelaakso (maailma 10): Pesäkallio (ritsa), lohikäärmeenpoikasten piirto
 - `js/play-dragonfly.js` — Lohikäärmelaakso: Tulilento (lento lohikäärmeellä + tulihengitys, tulinappi `fireBtn` / `usesFire`)
 - `js/play-eggs.js`, `js/play-scale.js` — Lohikäärmelaakso: Munapesä (raahaa munat kuvion mukaan, hauto pitämällä) ja Aarrevaaka (tasapainota vaaka raahaamalla jalokiviä)
+- `js/play-giant.js` — Lohikäärmelaakson vartija Tulivuoren jätti (ritsa + tulihengitys, kolme kovenevaa kierrosta)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -417,11 +418,11 @@ tavu.
 
 Mantereen ensimmäinen alue. Aukeaa avomerimerkistä, kun Taikurin teltta on
 läpäisty. Sokkelon maasto on lämmintä punamultaa saniaisin, tulikristallein ja
-munakivin; tienviitta palauttaa mantereen kartalle. Neljä kenttää ja yksi
-usvahuone; alueen vartija on toistaiseksi Aarrevaaka (`finaleKind: 'scale'`,
-siirretään viimeiseen kenttään kun kenttiä tulee lisää). Kentät vuorottelevat
+munakivin; tienviitta palauttaa mantereen kartalle. Viisi kenttää; alueen
+vartija on Tulivuoren jätti (`finaleKind: 'giant'`). Kentät vuorottelevat
 vauhdikasta ja rauhallista: Pesäkallio (ritsa), Tulilento (lento, sydämet),
-Munapesä ja Aarrevaaka (rauhalliset, raahaus, ei sydämiä).
+Munapesä ja Aarrevaaka (rauhalliset, raahaus, ei sydämiä) ja vartija, joka
+yhdistää ritsan ja tulihengityksen.
 
 - **Pesäkallio** — uusi verbi: **ritsa**. Prinsessa ruokkii pesissä odottavia
   lohikäärmeenpoikasia tulimarjoilla: paina mihin tahansa, vedä taakse ja päästä
@@ -467,6 +468,19 @@ Munapesä ja Aarrevaaka (rauhalliset, raahaus, ei sydämiä).
   tasapainossa. Viisi kierrosta (3, 2, 4, 5, 7); joka kierroksesta Vaarin kasaan
   tulee uusi aarre. Tehtävät toisen ja neljännen kierroksen jälkeen: kummalla
   enemmän, lasku.
+- **Tulivuoren jätti** ♥ — vartija, joka yhdistää **ritsan ja tulihengityksen**.
+  Kraatterissa nukkuva Kivijätti herää, nostaa kätensä varoitukseksi ja heittää
+  laavakiviä kaaressa prinsessaa kohti. Kun kivi tulee kantamalle, sen ympärille
+  syttyy oranssi rengas: tulinappi (tai toinen sormi) puhaltaa Mintun tulipallon,
+  joka sulattaa lähimmän kiven. Ohi mennyt kivi vie sydämen. Heittojen jälkeen
+  jätin etureunassa aukeaa **kristalli-ikkuna** arvotussa paikassa (vatsa,
+  olkapää tai otsa) hetkeksi (3,0 / 2,4 / 1,9 s, valkoinen aikakaari kutistuu):
+  ammu siihen tulimarja ritsalla, ennakkokaari kultaisena kun osuu. Jos ikkuna
+  ehtii sulkeutua, jätti heittää uuden sarjan. Kolme kierrosta: 2, 3 ja 4 kiveä,
+  nopeammin ja lyhyempi ikkuna. Kolmas osuma lämmittää jätin sydämen, ja se
+  rauhoittuu ystäväksi. Sydänten loppuminen aloittaa kierroksen heitot alusta.
+  HUD näyttää osumat ja sulatettujen kivien määrän. Tehtävät osumien välissä:
+  kuviosarja, muistiloitsu 5/4.
 
 ### Linnan sisustus
 
@@ -516,6 +530,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   sormi / vasen alakulma) puhaltaa tulta lentosuuntaan.
 - Munapesä ja Aarrevaaka: raahaa (paina, vedä, päästä irti); Munapesässä pito
   pesän päällä hautoo.
+- Tulivuoren jätti: ritsa kuten Pesäkalliossa (vedä taakse, päästä irti) ja
+  tulinappi (tai toinen sormi / vasen alakulma) sulattaa lähimmän laavakiven.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -696,6 +712,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `FLY_SPEED`, ohjauksen pehmeys `FLY_ACCEL` (kiihtyvyys sormen etäisyyden mukaan), vajoaminen `FLY_SINK`, osumasäde `R = s * 0.62` (updateDragonfly)
 - Munapesä: munat ja kuviot `EGG_SHELVES` / `EGG_PATTERNS`, pesät `EGG_NEST_FX`, hautomisaika `EGG_WARM_T`, hiipuminen `EGG_COOL`
 - Aarrevaaka: kierrokset `SCALE_ROUNDS` (vasemman kupin painot), lattian kivet `SCALE_FLOOR`, kallistus `(sumR - sumL) * 0.075`, tasapainon odotus `stableT > 0.9`
+- Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas
 

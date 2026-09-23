@@ -977,7 +977,7 @@ var WORLDS = [
       '#.#########',
       '#........M#',
       '#########.#',
-      '#A.......?#',
+      '#A.......V#',
       '###########'
     ],
     levels: [
@@ -1036,6 +1036,21 @@ var WORLDS = [
         renderBgLayers: function () { return scaleLayers(); },
         light: { rays: true, raysColor: '#ffe0a0', raysAlpha: 0.6, tint: ['rgba(30,20,70,0.14)', 'rgba(255,190,80,0.10)'], vignette: 0.45 },
         respawn: function () { respawnScale(); }
+      },
+      {
+        kind: 'giant', room: 'V', name: 'Tulivuoren jätti', color: '#8a6a6a', script: 'play-giant',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, usesFire: true, celebrateMs: 6500,
+        bgColor: '#1a0a2a', ambient: 'sparkle', fg: null,
+        init: function () { initGiant(); },
+        update: function (dt) { updateGiant(dt); },
+        draw: function () { drawGiant(); },
+        tap: function (x, y) { handleGiantTap(x, y); },
+        fire: function () { giantFire(); },
+        resize: function () { resizeGiant(); },
+        renderBg: function (b, w, h) { renderGiantBg(b, w, h); },
+        renderBgLayers: function () { return giantLayers(); },
+        light: { rays: true, raysColor: '#ffd8a0', raysAlpha: 0.7, tint: ['rgba(60,20,60,0.14)', 'rgba(255,140,60,0.12)'], vignette: 0.45 },
+        respawn: function () { respawnGiant(); }
       }
     ]
   }
@@ -1113,7 +1128,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
 function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
-    'flow-hub', 'flow-sea', 'flow-land', 'flow-home',
+    'flow-hub', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-castle',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north',
     'platformer', 'pen-core'
   ];
