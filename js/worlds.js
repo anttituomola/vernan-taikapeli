@@ -1128,7 +1128,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
 function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
-    'flow-hub', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-castle', 'flow-bank', 'flow-castle',
+    'flow-hub', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-castle',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north',
     'platformer', 'pen-core'
   ];
