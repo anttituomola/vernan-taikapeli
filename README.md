@@ -33,6 +33,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
   yhteinen alku (`levelBegin`: tilan nollaus ja nappien ilme rekisterin lipuista; skipTo
   ja uusinta kutsuvat sitä ennen kentän omaa init-koukkua)
 - `js/flow-home.js` — linnan sisustus (tähtikauppa, raahaus, puput)
+- `js/flow-castle.js` — linnakartta (linnan oma karttanäkymä, huoneiden pienoiskuvat)
+- `js/flow-bank.js` — pankkiholvi (talletus, nosto, korko, pankin huonekalut)
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)
 - `js/play-garden.js` … `play-sky.js` — vaiheet 2–5
@@ -486,12 +488,32 @@ yhdistää ritsan ja tulihengityksen.
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
 säilyivät täysinä; juhlassa näkyy "+n". Tähtisaldo näkyy kartoilla vasemmalla
-ylhäällä. Linnasaaren linnan napautus avaa kuplan, jossa on ovi (sisustus) ja
-finaali. Huoneistossa on kolme huonetta: **sali** (sydäntapetti, ikkuna),
-**tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia) ja **keittiö**
-(kaakeliseinä, verhoikkuna yrttiruukulla, astiakisko, ruutulattia). Salista
-oikea ovi (portaat-kyltti) vie torniin ja vasen ovi (kattila-kyltti) keittiöön;
-tornista ja keittiöstä palataan saliin (sydän-kyltti). Puput tulevat perässä.
+ylhäällä. **Linnakartta:** saaristokartan ja Kaukamaan kartan vasemmassa
+reunassa (tähtisaldon alla) on vaaleanpunainen linnanappi, joka avaa linnan
+oman karttanäkymän. Siinä linna on leikattu auki ja jokainen huone näkyy
+pienoiskuvana maaleineen ja tavaroineen: tornihuone ylhäällä, keittiö ja sali
+maan tasalla ja pankkiholvi maan alla. Huoneen napautus vie suoraan huoneeseen;
+huoneen kotinappi palaa linnakartalle ja linnakartan venenappi sille kartalle,
+jolta tultiin. Huoneistossa on neljä huonetta: **sali** (sydäntapetti, ikkuna),
+**tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia), **keittiö**
+(kaakeliseinä, verhoikkuna yrttiruukulla, astiakisko, ruutulattia) ja
+**pankkiholvi** (kultaiset seinälevyt, lyhdyt, kivilaatat). Salista oikea ovi
+(portaat-kyltti) vie torniin, vasen ovi (kattila-kyltti) keittiöön ja keskimmäinen
+rautaovi (tähti-kyltti) holviin; muista huoneista palataan saliin (sydän-kyltti).
+Puput tulevat perässä.
+**Pankkiholvi:** takaseinän pyöreässä holvissa säilytetään tähtiä. Kultainen nappi
+(tähti ja nuoli holviin) vie yhden tähden kukkarosta holviin, hopeinen nappi
+nostaa yhden takaisin; tähti lentää kaupan saldon ja holvin väliä. Napin
+pitäminen pohjassa siirtää tähtiä yhä nopeammin. Holvin kyltti näyttää
+talletuksen, ja tähtikasa kasvaa sen mukaan. **Korko:** joka vuorokausi holvi
+antaa 1 tähden jokaista kymmentä talletettua kohden (vähintään 1), ja korko
+lisätään talletukseen (korkoa korolle). Holvin kehällä kiertävä aurinko näyttää,
+kuinka pitkällä seuraava korko on. Kun holviin tullaan korkopäivän jälkeen,
+uudet tähdet ilmestyvät juhlan kanssa ("+n"); linnakartalla holvin kohdalla
+näkyy siihen asti "+n". Pankin tavarat: säästöpossu (kolikko putoaa rakoon,
+pupu syöttää sitä), avaintaulu (avaimet helisevät), kultakasa, rahasäkit,
+kassakaappi (aukeaa, sisällä aarteita), jalokivivitriini (kimaltaa),
+pankkitiski (kello soi, pupu asettuu virkailijaksi) ja kruunu tyynyllä.
 Keittiön tavarat: hedelmäkulho ja piparilautanen (puput syövät), kattilat
 seinällä (kilisevät), tiskiallas (hana laskee vettä), seinäkaappi (aukeaa,
 sisällä mukit ja lautaset), liesi (levy hehkuu ja kattila kiehuu), ruokapöytä
@@ -678,6 +700,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Pilvipolku: haihtumisaika `PUFF_STAND = 0.7`, paluu `PUFF_BACK = 2.5`, myrskypallot `viewW * 0.07`
 - Kuun vartija: tähtien väli `1.8 + Math.random() * 0.9`, varoitus `0.9` s, putoamiskiihtyvyys `viewH * 1.3`
 - Sisustus: tähdet per kenttä `awardStars()` (progress.js, saldo `starCoins`), hinnat `HOME_ITEMS` (flow-home.js), kaupan sivukoko `HOME_SHOP_PAGE`, huoneet `HOME_ROOMS`, maalit `HOME_PAINTS`, rusetit `HOME_BOWS`
+- Pankkiholvi: korko `BANK_RATE` (0,1 / vrk, vähintään 1), koron väli `BANK_DAY`, pisin laskettava poissaolo `BANK_MAX_DAYS` (flow-bank.js); testissä `VT.bankSkip(tunnit)` kelaa korkokelloa
 - Sadesuoja: tahrojen väli `0.8 + Math.random() * 0.6`, alueet `rainZones`
 - Pupusilta: pupun nopeus `viewW * 0.14`, lähtöetäisyys `viewW * 0.45`
 - Sotkumörkö: heittoväli `2.4 + Math.random() * 1.2`, leijunta `1.2` s, muodontunnistus `penClassify` (pen-core.js: kulma `0.87` rad, pyöreys `0.13`)

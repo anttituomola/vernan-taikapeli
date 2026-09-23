@@ -155,6 +155,7 @@ function showHub() {
   document.getElementById('fireBtn').style.display = 'none';
   document.getElementById('penBtn').style.display = 'none';
   document.getElementById('karttaBtn').style.display = 'none';
+  document.getElementById('castleBtn').style.display = 'none';
   document.getElementById('seaBtn').style.display = 'block';
   document.getElementById('muteBtn').style.display = 'block';
   document.body.style.background = '#ffd6ec';
@@ -318,11 +319,15 @@ function hubArrive(ch) {
   if (ch === 'G') {
     // Linna: finaali aukeaa, kun kaikki huoneet on läpäisty; sen jälkeen sen voi
     // pelata uudestaan. Seuraavalle saarelle mennään satamasta (B).
-    // Kupla: sisustus aina, finaali kun se on avoinna, uusinta kun se on läpäisty
-    var items = [{ act: 'home' }];
-    if (!hubNextKind() && !finaleDone) items.unshift({ act: 'finale' });
-    else if (finaleDone) items.unshift({ act: 'replay', kind: 'finale' });
-    hubOfferShow(items);
+    // Kupla: finaali kun se on avoinna, uusinta kun se on läpäisty. Linnan
+    // sisustukseen mennään karttojen linnanapista (flow-castle.js).
+    if (!hubNextKind() && !finaleDone) hubOfferShow([{ act: 'finale' }]);
+    else if (finaleDone) hubOfferShow([{ act: 'replay', kind: 'finale' }]);
+    else {
+      hubToast.kind = 'lock';
+      hubToast.t = 1.8;
+      playNote(392, 0, 0.18, 'triangle', 0.28);
+    }
   }
 }
 
@@ -1377,10 +1382,6 @@ function hubOfferHit(px, py, lay) {
 }
 
 function hubOfferAct(item) {
-  if (item.act === 'home') {
-    showHome();
-    return;
-  }
   if (item.act === 'finale') {
     hubApproach = null;
     beginPlay('finale');
@@ -1429,7 +1430,6 @@ function drawHubOffer(c, lay) {
     var pr = b.rad * 0.86 * (1 + Math.sin(globalT * 4 + i) * 0.03);
     var col = '#8a4dff', ring = '#6b2ed1';
     if (b.item.act === 'boat') { col = '#4fa3ff'; ring = '#2c6fc4'; }
-    else if (b.item.act === 'home') { col = '#ff7bac'; ring = '#c94f7e'; }
     else if (b.item.act === 'finale') { col = '#ffd24f'; ring = '#d1a02e'; }
     else if (b.item.kind !== 'finale') {
       var room = hubRoomByKind(b.item.kind);
@@ -1444,8 +1444,6 @@ function drawHubOffer(c, lay) {
     c.beginPath(); c.arc(b.x - pr * 0.3, b.y - pr * 0.35, pr * 0.28, 0, Math.PI * 2); c.fill();
     if (b.item.act === 'boat') {
       drawBoat(c, b.x, b.y + pr * 0.3, pr * 1.25);
-    } else if (b.item.act === 'home') {
-      drawHomeDoorIcon(c, b.x, b.y, pr);
     } else if (b.item.act === 'finale') {
       drawStar(c, b.x, b.y, pr * 0.55, globalT * 0.8, 0.8);
     } else {
@@ -1453,27 +1451,6 @@ function drawHubOffer(c, lay) {
       if (b.item.kind === 'finale') drawStar(c, b.x, b.y, pr * 0.16, globalT, 0);
     }
   }
-}
-
-// Ovi ja sydän: linnan sisustus
-function drawHomeDoorIcon(c, x, y, r) {
-  c.fillStyle = '#fff';
-  c.beginPath();
-  c.moveTo(x - r * 0.42, y + r * 0.5);
-  c.lineTo(x - r * 0.42, y - r * 0.2);
-  c.arc(x, y - r * 0.2, r * 0.42, Math.PI, 0);
-  c.lineTo(x + r * 0.42, y + r * 0.5);
-  c.closePath();
-  c.fill();
-  c.fillStyle = '#c94f7e';
-  c.beginPath();
-  c.moveTo(x - r * 0.26, y + r * 0.5);
-  c.lineTo(x - r * 0.26, y - r * 0.1);
-  c.arc(x, y - r * 0.1, r * 0.26, Math.PI, 0);
-  c.lineTo(x + r * 0.26, y + r * 0.5);
-  c.closePath();
-  c.fill();
-  drawHeartShape(c, x, y + r * 0.05, r * 0.13, true);
 }
 
 // Pyöreä "uudestaan"-nuoli ↻

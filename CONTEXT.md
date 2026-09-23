@@ -79,6 +79,17 @@ Läpäistyistä kentistä ansaitsema valuutta, jolla ostetaan huonekaluja
 linnan sisustukseen.
 _Vältä_: kolikko, piste
 
+**Linna**:
+Vernan koti, jonka huoneita sisustetaan tähdillä: sali, tornihuone, keittiö ja
+pankkiholvi. Linnalla on oma karttanäkymä, **linnakartta**, jonne pääsee
+saaristokartan ja Kaukamaan kartan linnanapista.
+_Vältä_: koti yksinään, huoneisto (Linnasaaren linna on eri asia: finaalin paikka)
+
+**Holvi**:
+Linnan pankkiholvi, johon tähtiä talletetaan ja josta niitä nostetaan.
+Talletus kasvaa **korkoa** kerran vuorokaudessa.
+_Vältä_: pankki yksinään, säästölipas
+
 ### Hahmot
 
 **Prinsessa**:

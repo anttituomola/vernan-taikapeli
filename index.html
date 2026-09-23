@@ -7,7 +7,7 @@
 <script>
 // Versioleima: nosta tätä, kun julkaiset uuden version, niin selain lataa
 // kaikki tiedostot uudestaan eikä yhdistä vanhaa index.html:ää uusiin skripteihin.
-var VT_VERSION = '2026-09-21a';
+var VT_VERSION = '2026-09-23a';
 document.write('<link rel="stylesheet" href="css/game.css?v=' + VT_VERSION + '">');
 </script>
 </head>
@@ -18,6 +18,7 @@ document.write('<link rel="stylesheet" href="css/game.css?v=' + VT_VERSION + '">
   <h1>&#10024; VERNAN TAIKAPOLKU &#10024;</h1>
 </div>
 <button id="karttaBtn" aria-label="KARTTA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></button>
+<button id="castleBtn" aria-label="LINNA"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M3 21V9h3v2h2V9h3v2h2V9h3v2h2V9h3v12h-7v-4a2 2 0 0 0-4 0v4z"/><path d="M12 9V3.5"/><path class="fill" d="M12 3.5 16 5l-4 1.5z"/></svg></button>
 <button id="seaBtn" aria-label="MERELLE"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="fill" d="M3 16h18l-2.5 4.5h-13z"/><path d="M12 3v13"/><path class="fill" d="M12.5 4.5 19 13h-6.5z"/><path d="M11.5 7 7 13h4.5"/></svg></button>
 <button id="replayBtn" aria-label="UUDESTAAN"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 3.5v5h-5"/></svg></button>
 <button id="continueBtn" aria-label="JATKA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15"/><path d="M13 5l7 7-7 7"/></svg></button>

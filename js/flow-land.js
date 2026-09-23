@@ -93,6 +93,7 @@ function showLand(opts) {
   document.getElementById('hubChrome').style.display = 'flex';
   for (i = 0; i < ids.length; i++) document.getElementById(ids[i]).style.display = 'none';
   document.getElementById('muteBtn').style.display = 'block';
+  document.getElementById('castleBtn').style.display = 'block';
   document.body.style.background = '#8fd0ff';
   lastTime = 0;
   land.state = opts.sail ? 'sail' : 'map';

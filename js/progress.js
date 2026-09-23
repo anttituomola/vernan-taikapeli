@@ -14,7 +14,7 @@ var starGain = { n: 0, until: 0 };  // juhlassa näytettävä "+n"
 
 function saveProgress() {
   try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland, stars: starCoins, home: homeItems, decor: homeDecor, bows: homeBows }));
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland, stars: starCoins, home: homeItems, decor: homeDecor, bows: homeBows, bank: { stars: bankStars, t: bankT, unseen: bankUnseen } }));
   } catch (e) { /* yksityinen tila tms: pelataan ilman tallennusta */ }
 }
 
@@ -41,6 +41,11 @@ function loadProgress() {
     var dd = homeDecorDefault(), rk;
     for (rk in dd) if (!homeDecor[rk]) homeDecor[rk] = dd[rk];
     if (d && d.bows && d.bows.length === 3) homeBows = d.bows;
+    if (d && d.bank) {
+      bankStars = d.bank.stars | 0;
+      bankT = +d.bank.t || 0;
+      bankUnseen = d.bank.unseen | 0;
+    }
   } catch (e) { /* rikkinäinen tallennus: aloitetaan alusta */ }
 }
 
@@ -53,6 +58,9 @@ function resetProgress() {
   homeItems = [];
   homeDecor = homeDecorDefault();
   homeBows = [-1, -1, -1];
+  bankStars = 0;
+  bankT = 0;
+  bankUnseen = 0;
   saveProgress();
 }
 

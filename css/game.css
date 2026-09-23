@@ -79,6 +79,24 @@
     line-height: 1;
     box-shadow: 0 0.5vmin 0 #c9b3e6, 0 0.8vmin 1.6vmin rgba(0,0,0,0.12);
   }
+  /* Linnanappi: saaristokartalta ja Kaukamaan kartalta linnakartalle
+     (tähtisaldon alla vasemmalla) */
+  #castleBtn {
+    position: fixed;
+    top: 13vmin; left: 1.5vmin;
+    display: none;
+    width: 13vmin; height: 13vmin;
+    border-radius: 50%;
+    border: 0.7vmin solid #fff;
+    background: radial-gradient(circle at 35% 30%, #ffd6ec, #ff7bac);
+    color: #fff;
+    padding: 0;
+    cursor: pointer;
+    z-index: 5;
+    box-shadow: 0 0.8vmin 0 #c94f7e, 0 1vmin 2vmin rgba(0,0,0,0.15);
+  }
+  #castleBtn:active { transform: translateY(0.6vmin); box-shadow: 0 0.2vmin 0 #c94f7e; }
+  #castleBtn svg { width: 64%; height: 64%; }
   /* Uudestaan-nappi */
   #replayBtn {
     position: fixed;

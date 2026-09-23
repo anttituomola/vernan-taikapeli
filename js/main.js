@@ -15,6 +15,9 @@ function loop(ts) {
   } else if (mode === 'home') {
     updateHome(dt);
     drawHome();
+  } else if (mode === 'castle') {
+    updateCastle(dt);
+    drawCastleMap();
   } else if (mode === 'hub') {
     updateHub(dt);
     drawHub();
@@ -76,6 +79,10 @@ function pointerDown(e) {
   }
   if (mode === 'home') {
     handleHomeTap(p.x, p.y);
+    return;
+  }
+  if (mode === 'castle') {
+    handleCastleTap(p.x, p.y);
     return;
   }
   if (mode === 'hub') {
@@ -151,12 +158,22 @@ document.addEventListener('touchend', pointerUp);
 document.addEventListener('touchcancel', pointerUp);
 window.addEventListener('mouseup', pointerUp);
 
+// Kartta-nappi: kentästä sokkeloon, linnan huoneesta linnakartalle
 document.getElementById('karttaBtn').addEventListener('click', function () {
-  showHub();
+  if (mode === 'home') showCastle();
+  else showHub();
 });
 
-// Vene-nappi: saaren sokkelosta takaisin saaristokartalle (mantereella Kaukamaan kartalle)
+// Linnanappi: saaristokartalta tai Kaukamaan kartalta linnakartalle
+document.getElementById('castleBtn').addEventListener('click', function () {
+  if (mode === 'sea') showCastle('sea');
+  else if (mode === 'land' && land.state === 'map') showCastle('land');
+});
+
+// Vene-nappi: saaren sokkelosta takaisin saaristokartalle (mantereella Kaukamaan
+// kartalle); linnakartalta sille kartalle, jolta tultiin
 document.getElementById('seaBtn').addEventListener('click', function () {
+  if (mode === 'castle') { castleBack(); return; }
   if (mode !== 'hub') return;
   if (worldRegion(hubWorld) === 'land') showLand();
   else showSea();
@@ -251,7 +268,15 @@ window.VT = {
   homeTap: handleHomeTap,
   homeMove: homeMove,
   homeUp: homeUp,
-  homeState: function () { return { stars: starCoins, items: homeItems, bunnies: homeBunnies, drag: homeDrag, cells: homeShopCells() }; },
+  homeState: function () { return { stars: starCoins, items: homeItems, bunnies: homeBunnies, drag: homeDrag, cells: homeShopCells(), room: homeRoomIdx }; },
+  homeTick: function (dt) { updateHome(dt); drawHome(); },
+  castle: showCastle,
+  castleTap: handleCastleTap,
+  castleTick: function (dt) { updateCastle(dt); drawCastleMap(); },
+  castleLayout: castleLayout,
+  bank: function () { return { stars: bankStars, t: bankT, unseen: bankUnseen, frac: bankDayFrac(), vault: bankVault(), celeb: bankCeleb }; },
+  // Kelaa korkokelloa taaksepäin (tunteina) ja laske korko
+  bankSkip: function (hours) { if (bankT) bankT -= hours * 3600 * 1000; return bankAccrue(); },
   pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, mode: penMode, bottles: penBottles, frame: penFrame }; },
   penStart: penStart,
   herd: function () { return { bunnies: herdBunnies, owls: herdOwls, burrow: herdBurrow, bushes: herdBushes }; },
@@ -338,7 +363,7 @@ else showSea();
 // piirretään uudestaan, jotta canvas-teksti käyttää oikeaa fonttia.
 if (document.fonts && document.fonts.load) {
   document.fonts.load('bold 20px Fredoka').then(function () {
-    hubBgKey = ''; seaBgKey = ''; homeBgKey = ''; fgKey = '';
+    hubBgKey = ''; seaBgKey = ''; homeBgKey = ''; castleBgKey = ''; fgKey = '';
     resize();
   }).catch(function () {});
 }

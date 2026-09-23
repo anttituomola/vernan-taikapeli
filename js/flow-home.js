@@ -1,10 +1,11 @@
 'use strict';
 
 // Linnan sisustus: maaliton huoneisto, jossa kentistä kerätyillä tähdillä ostetaan
-// huonekaluja ja raahataan ne paikoilleen. Kaksi huonetta (sali ja tornihuone),
-// joiden välillä kuljetaan ovesta. Kauppa on sivutettu (nuolet alareunassa).
-// Puput reagoivat tavaroihin (peti, porkkanat, pallo, nalle, kakku, trampoliini).
-// Avataan linnan puhekuplasta (Linnasaari).
+// huonekaluja ja raahataan ne paikoilleen. Neljä huonetta (sali, tornihuone,
+// keittiö ja pankkiholvi), joiden välillä kuljetaan ovista. Kauppa on sivutettu
+// (nuolet alareunassa). Puput reagoivat tavaroihin (peti, porkkanat, pallo, nalle,
+// kakku, trampoliini, säästöpossu, pankkitiski). Avataan linnakartalta
+// (flow-castle.js); holvin talletus ja korko ovat flow-bank.js:ssä.
 
 var HOME_ITEMS = [
   { id: 'rug', price: 2, kind: 'floor' },
@@ -39,11 +40,22 @@ var HOME_ITEMS = [
   { id: 'cupboard', price: 3, kind: 'wall' },
   { id: 'stove', price: 4, kind: 'floor' },
   { id: 'dinnertable', price: 4, kind: 'floor' },
-  { id: 'fridge', price: 5, kind: 'floor' }
+  { id: 'fridge', price: 5, kind: 'floor' },
+  // Pankkiholvi (piirto ja napautus flow-bank.js)
+  { id: 'piggybank', price: 2, kind: 'floor' },
+  { id: 'keys', price: 2, kind: 'wall' },
+  { id: 'goldpile', price: 3, kind: 'floor' },
+  { id: 'moneybags', price: 3, kind: 'floor' },
+  { id: 'safe', price: 4, kind: 'floor' },
+  { id: 'gemcase', price: 4, kind: 'floor' },
+  { id: 'counter', price: 5, kind: 'floor' },
+  { id: 'crown', price: 5, kind: 'floor' }
 ];
-// Huoneet: 0 = sali (ovet oikealla torniin ja vasemmalla keittiöön),
-// 1 = tornihuone (ovi vasemmalla saliin), 2 = keittiö (ovi oikealla saliin)
-var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }, { id: 'kitchen' }];
+// Huoneet: 0 = sali (ovet oikealla torniin, vasemmalla keittiöön ja keskellä
+// holviin), 1 = tornihuone (ovi vasemmalla saliin), 2 = keittiö (ovi oikealla
+// saliin), 3 = pankkiholvi (ovi vasemmalla saliin). Huoneisiin mennään myös
+// suoraan linnakartalta (flow-castle.js).
+var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }, { id: 'kitchen' }, { id: 'vault' }];
 var HOME_SHOP_PAGE = 10;
 // Maalit: purkki raahataan seinälle (wall-liuku) tai lattialle (floor-liuku). Ilmaisia.
 var HOME_PAINTS = [
@@ -56,7 +68,7 @@ var HOME_PAINTS = [
   { id: 'wood', pot: '#a9743f', wall: ['#f7ead2', '#e6cfa8'], floor: ['#c98b4a', '#8a5a30'] }
 ];
 var HOME_BOWS = ['#ff7bac', '#5fa8ff', '#ffd24f'];
-function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 }, 2: { wall: 4, floor: 6 } }; }
+function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 }, 2: { wall: 4, floor: 6 }, 3: { wall: 4, floor: 5 } }; }
 // Onko #rrggbb-väri vaalea (tapettikuvion sävyn valintaan)
 function homeColorIsLight(hex) {
   var n = parseInt(hex.slice(1), 16);
@@ -106,16 +118,21 @@ function homeHasHere(id) {
 function homeItemSize() {
   return viewH * 0.13;
 }
-// Ovet: { x, y, w, h, to, side } — salissa oikealla torniin ja vasemmalla
-// keittiöön, tornissa vasemmalla saliin, keittiössä oikealla saliin
-function homeDoors() {
+// Ovet: { x, y, w, h, to, side } — salissa oikealla torniin, vasemmalla
+// keittiöön ja keskellä holviin; tornissa ja holvissa vasemmalla saliin,
+// keittiössä oikealla saliin
+function homeDoorsOf(roomIdx) {
   var room = homeRoom(), h = viewH;
   var right = { x: room.x1 - h * 0.13, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3, side: 1 };
   var left = { x: room.x0 + h * 0.01, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3, side: -1 };
-  if (homeRoomIdx === 0) { right.to = 1; left.to = 2; return [right, left]; }
-  if (homeRoomIdx === 1) { left.to = 0; return [left]; }
+  var mid = { x: room.x0 + (room.x1 - room.x0) * 0.66 - h * 0.06, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3, side: 1 };
+  if (roomIdx === 0) { right.to = 1; left.to = 2; mid.to = 3; return [right, left, mid]; }
+  if (roomIdx === 1 || roomIdx === 3) { left.to = 0; return [left]; }
   right.to = 0;
   return [right];
+}
+function homeDoors() {
+  return homeDoorsOf(homeRoomIdx);
 }
 // Ovi, joka johtaa huoneeseen `to` (tai ensimmäinen ovi)
 function homeDoorTo(to) {
@@ -133,15 +150,16 @@ function homeDoorAt(px, py, pad) {
   return null;
 }
 
-function showHome() {
-  var i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'fireBtn', 'penBtn', 'seaBtn'];
+// Huoneeseen suoraan linnakartalta (roomIdx: HOME_ROOMS-indeksi, oletus sali)
+function showHome(roomIdx) {
+  var i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'fireBtn', 'penBtn', 'seaBtn', 'castleBtn'];
   mode = 'home';
   running = false;
   holding = false;
   celebrating = false;
   hubOffer = null;
   homeDrag = null;
-  homeRoomIdx = 0;
+  homeRoomIdx = roomIdx >= 0 && roomIdx < HOME_ROOMS.length ? roomIdx : 0;
   homeBgKey = '';
   document.getElementById('hubChrome').style.display = 'none';
   for (i = 0; i < ids.length; i++) document.getElementById(ids[i]).style.display = 'none';
@@ -156,6 +174,8 @@ function showHome() {
   if (homeFish.length === 0) {
     for (i = 0; i < 3; i++) homeFish.push({ fx: (i - 1) * 0.25, fy: (i % 2) * 0.2 - 0.1, dir: i % 2 ? -1 : 1, sp: 0.25 + i * 0.08, dart: 0 });
   }
+  if (homeRoomIdx === BANK_ROOM) bankOnEnter();
+  else bankAccrue();
   playNote(523, 0, 0.15, 'triangle', 0.3);
   playNote(659, 0.1, 0.2, 'triangle', 0.3);
 }
@@ -175,6 +195,8 @@ function homeGoRoom(idx) {
     b.hop = 1;
   }
   spawnSparkles(dr.x + dr.w / 2, homeRoom().floorY - viewH * 0.15, 12, '#ffe27a');
+  if (idx === BANK_ROOM) bankOnEnter();
+  else bankHold = null;
   playNote(392, 0, 0.1, 'triangle', 0.25);
   playNote(523, 0.1, 0.15, 'triangle', 0.25);
 }
@@ -257,7 +279,7 @@ function homeShopPick(cell, px, py) {
     return;
   }
   // Arkku, jääkaappi, kaappi ja liesi alkavat kiinni/sammuksissa; muut (lamput, kynttilät) päällä
-  it = { id: def.id, fx: px / viewW, fy: py / viewH, on: ['chest', 'fridge', 'cupboard', 'stove'].indexOf(def.id) < 0, phase: 0, room: homeRoomIdx };
+  it = { id: def.id, fx: px / viewW, fy: py / viewH, on: ['chest', 'fridge', 'cupboard', 'stove', 'safe'].indexOf(def.id) < 0, phase: 0, room: homeRoomIdx };
   homeDrag = { item: it, ghost: true, def: def, dx: 0, dy: 0, sx: px, sy: py, moved: false };
   playNote(660, 0, 0.06, 'sine', 0.2);
 }
@@ -277,12 +299,14 @@ function homeStore(it) {
 // viereen, joka johtaa takaisin tähän huoneeseen
 function homeMoveToOtherRoom(it, door) {
   var def = homeItemDef(it.id), room = homeRoom(), s = homeItemSize();
-  var other = door.to, from = homeRoomIdx;
-  // Kohdehuoneen paluuovi: torni ja keittiö -> saliin; sali -> tornista tullessa oikealla, keittiöstä vasemmalla
-  var backSide = other === 1 ? -1 : (other === 2 ? 1 : (from === 1 ? 1 : -1));
+  var other = door.to, from = homeRoomIdx, ds = homeDoorsOf(other), back = ds[0], i;
+  // Kohdehuoneen paluuovi (se, joka johtaa takaisin tähän huoneeseen)
+  for (i = 0; i < ds.length; i++) if (ds[i].to === from) back = ds[i];
   it.room = other;
   it.roll = 0;
-  it.fx = (backSide < 0 ? room.x0 + s * 1.3 : room.x1 - s * 1.6) / viewW;
+  if (back.x < room.x0 + s) it.fx = (room.x0 + s * 1.3) / viewW;
+  else if (back.x + back.w > room.x1 - s) it.fx = (room.x1 - s * 1.6) / viewW;
+  else it.fx = (back.x - s * 0.6) / viewW;
   if (def && def.kind === 'wall') it.fy = 0.3;
   else it.fy = Math.min(Math.max(it.fy, (room.floorY + s * 0.05) / viewH), room.bottom / viewH);
   saveProgress();
@@ -365,6 +389,8 @@ function handleHomeTap(px, py) {
     }
     return;
   }
+  // Holvin napit (talletus ja nosto) ennen tavaroita, jotta tavara ei peitä niitä
+  if (bankTap(px, py)) return;
   // Päällimmäinen tavara sormen alla (viimeksi lisätty on päällimmäinen)
   for (i = homeItems.length - 1; i >= 0; i--) {
     if (homeItemRoom(homeItems[i]) !== homeRoomIdx) continue;
@@ -436,6 +462,7 @@ function homeMove(px, py) {
 }
 
 function homeUp() {
+  bankRelease();
   if (!homeDrag) return;
   var it = homeDrag.item;
   var moved = homeDrag.moved;
@@ -569,7 +596,7 @@ function homeItemTap(it) {
     it.phase = 1;
     playNote(880, 0, 0.1, 'sine', 0.2);
     playNote(1175, 0.08, 0.12, 'sine', 0.2);
-  } else {
+  } else if (!bankItemTap(it)) {
     playNote(660, 0, 0.08, 'triangle', 0.2);
   }
   spawnSparkles(x, y - s * 0.5, 6, '#ffe27a');
@@ -591,6 +618,7 @@ function updateHome(dt) {
     if (it.waterT > 0) it.waterT -= dt;
     if (it.clankT > 0) it.clankT -= dt;
     if (it.bounceT > 0) it.bounceT = Math.max(0, it.bounceT - dt * 2);
+    updateBankItem(it, dt);
     if (it.roll) {
       var nx = it.fx * viewW + it.roll * dt;
       nx = Math.min(Math.max(nx, room.x0 + homeItemSize() * 0.5), room.x1 - homeItemSize() * 0.5);
@@ -621,6 +649,7 @@ function updateHome(dt) {
   var bed = homeHasHere('bed'), carrots = homeHasHere('carrots'), ball = homeHasHere('ball');
   var teddy = homeHasHere('teddy'), cake = homeHasHere('cake'), tramp = homeHasHere('trampoline');
   var fruit = homeHasHere('fruitbowl'), cookies = homeHasHere('cookies'), dinner = homeHasHere('dinnertable');
+  var counter = homeHasHere('counter'), piggy = homeHasHere('piggybank');
   var snack = carrots || cake || fruit || cookies;
   for (i = 0; i < homeBunnies.length; i++) {
     b = homeBunnies[i];
@@ -630,10 +659,12 @@ function updateHome(dt) {
     if (i === 0 && bed) { want = 'sleep'; target = { fx: bed.fx, fy: bed.fy - 0.005 }; }
     else if (i === 0 && teddy) { want = 'hug'; target = { fx: teddy.fx + 0.035, fy: teddy.fy }; }
     else if (i === 0 && dinner) { want = 'sit'; target = { fx: dinner.fx - 0.06, fy: dinner.fy + 0.01 }; }
+    else if (i === 0 && counter) { want = 'teller'; target = { fx: counter.fx, fy: counter.fy - 0.012 }; }
     else if (i === 1 && snack) { want = 'eat'; target = { fx: snack.fx + 0.045, fy: snack.fy }; }
     else if (i === 2 && ball) { want = 'play'; target = { fx: ball.fx + (b.side || -1) * 0.05, fy: ball.fy }; }
     else if (i === 2 && tramp) { want = 'bounce'; target = { fx: tramp.fx, fy: tramp.fy - 0.01 }; }
     else if (i === 2 && dinner) { want = 'sit'; target = { fx: dinner.fx + 0.06, fy: dinner.fy + 0.01 }; }
+    else if (i === 2 && piggy) { want = 'save'; target = { fx: piggy.fx - 0.05, fy: piggy.fy + 0.005 }; }
     if (want !== 'wander') {
       b.tx = target.fx; b.ty = target.fy;
     } else if (b.timer <= 0) {
@@ -659,6 +690,13 @@ function updateHome(dt) {
       } else {
         b.hop = Math.max(0, b.hop - dt * 4);
       }
+      if (want === 'save' && b.timer <= 0) {
+        // Pupu pudottaa kolikon säästöpossuun
+        b.timer = 2.5 + Math.random() * 2;
+        piggy.coinT = 0.6;
+        b.hop = 1;
+        playNote(1319, 0, 0.05, 'sine', 0.12);
+      }
       if (want === 'play' && b.timer <= 0) {
         b.timer = 1.2 + Math.random();
         b.side = -(b.side || -1);
@@ -667,6 +705,7 @@ function updateHome(dt) {
       }
     }
   }
+  updateBank(dt);
   updateParticles(dt);
 }
 
@@ -677,6 +716,7 @@ function drawHome() {
   renderHomeBg();
   ctx.clearRect(0, 0, viewW, viewH);
   ctx.drawImage(homeBgCanvas, 0, 0, homeBgCanvas.width, homeBgCanvas.height, 0, 0, viewW, viewH);
+  if (homeRoomIdx === BANK_ROOM) drawBankVault(ctx);
 
   // Seinätavarat, sitten lattiatavarat ja puput y-järjestyksessä (vain tämä huone)
   var order = [];
@@ -719,6 +759,7 @@ function drawHome() {
   for (i = 0; i < homeNotes.length; i++) drawNote(ctx, homeNotes[i]);
   drawParticlesLayerAbs(ctx);
   drawHomeShop(ctx);
+  drawBankFly(ctx);
   if (homeDrag && homeDrag.ghost) drawHomeGhost(ctx);
   if (toShop) {
     var ti = homeDrag.item, ts = homeItemSize(), tx = ti.fx * viewW, ty = ti.fy * viewH;
@@ -1595,6 +1636,8 @@ function drawHomeItem(c, it, x, y, s) {
     }
     c.fillStyle = 'rgba(255,255,255,0.5)';
     c.fillRect(x - s * 0.36, y - s * 0.96, s * 0.06, s * 0.9);
+  } else {
+    drawBankItem(c, it, x, y, s);
   }
 }
 
@@ -1608,7 +1651,7 @@ function renderHomeBg() {
   homeBgCanvas.height = Math.round(viewH * DPR);
   var b = homeBgCanvas.getContext('2d');
   b.setTransform(DPR, 0, 0, DPR, 0, 0);
-  var room = homeRoom(), w = viewW, h = viewH, i, k, x, y, tower = homeRoomIdx === 1, kitchen = homeRoomIdx === 2;
+  var room = homeRoom(), w = viewW, h = viewH, i, k, x, y, tower = homeRoomIdx === 1, kitchen = homeRoomIdx === 2, vault = homeRoomIdx === BANK_ROOM;
   b.fillStyle = wallP.wall[1];
   b.fillRect(0, 0, w, h);
   // Seinä maalilla ja tapetilla (sali: sydämet, torni: tähtitaivas, keittiö: kaakelit)
@@ -1617,7 +1660,9 @@ function renderHomeBg() {
   wall.addColorStop(1, wallP.wall[1]);
   b.fillStyle = wall;
   b.fillRect(0, 0, room.x1 + h * 0.02, room.floorY);
-  if (kitchen) {
+  if (vault) {
+    renderBankWall(b, room, h);
+  } else if (kitchen) {
     // Kaakeliseinä: vaaleat laatat saumoilla, alaosassa koristeraita
     var ts = h * 0.075;
     b.strokeStyle = 'rgba(120,90,60,0.18)';
@@ -1673,7 +1718,9 @@ function renderHomeBg() {
   }
   // Ikkuna: salissa neliö ja päivä, tornissa pyöreä ja kuu, keittiössä verhoikkuna ja yrttiruukku
   var wx = tower ? room.x1 * 0.7 : (kitchen ? room.x1 * 0.72 : room.x1 * 0.34), wy = room.floorY * 0.42, ww = h * 0.2, wh = h * 0.26;
-  if (kitchen) {
+  if (vault) {
+    // Holvi on maan alla: ei ikkunaa (holvi piirretään drawBankVault-funktiossa)
+  } else if (kitchen) {
     b.fillStyle = '#fff';
     roundRect(b, wx - ww / 2 - h * 0.012, wy - wh / 2 - h * 0.012, ww + h * 0.024, wh + h * 0.024, h * 0.015);
     b.fill();
@@ -1751,8 +1798,8 @@ function renderHomeBg() {
   floor.addColorStop(1, floorP.floor[1]);
   b.fillStyle = floor;
   b.fillRect(0, room.floorY, room.x1 + h * 0.02, h - room.floorY);
-  if (kitchen) {
-    // Ruutulattia: joka toinen laatta tummempi
+  if (kitchen || vault) {
+    // Ruutulattia (holvissa kivilaatat): joka toinen laatta tummempi
     var fs = h * 0.09, row = 0;
     b.fillStyle = 'rgba(0,0,0,0.13)';
     for (y = room.floorY; y < h; y += fs, row++) {
@@ -1780,17 +1827,36 @@ function renderHomeBg() {
     b.fill();
     b.fillStyle = '#ffd24f';
     b.beginPath(); b.arc(dr.side > 0 ? dr.x + dr.w * 0.75 : dr.x + dr.w * 0.25, dr.y + dr.h * 0.53, h * 0.01, 0, Math.PI * 2); b.fill();
-    b.fillStyle = '#fff6d8';
-    roundRect(b, dr.x + dr.w * 0.1, dr.y - h * 0.07, dr.w * 0.8, h * 0.05, h * 0.01);
-    b.fill();
-    if (dr.to === 1) {
-      b.fillStyle = '#8a5cb8';
-      for (i = 0; i < 3; i++) b.fillRect(dr.x + dr.w * 0.25 + i * dr.w * 0.17, dr.y - h * 0.03 - i * h * 0.01, dr.w * 0.17, h * 0.01 * (i + 1));
-    } else if (dr.to === 2) {
-      drawCauldron(b, dr.x + dr.w / 2, dr.y - h * 0.032, h * 0.016, '#ff9f3a', false, 0, false);
-    } else {
-      b.fillStyle = '#ff5f7e';
-      drawHeartShape(b, dr.x + dr.w / 2, dr.y - h * 0.045, h * 0.012, true);
+    if (dr.to === BANK_ROOM) {
+      // Holvin ovi: rautaa ja niittejä
+      b.fillStyle = '#8a8298';
+      roundRect(b, dr.x, dr.y, dr.w, dr.h, h * 0.03);
+      b.fill();
+      b.fillStyle = '#6a6278';
+      for (i = 0; i < 3; i++) b.fillRect(dr.x, dr.y + dr.h * (0.2 + i * 0.3), dr.w, h * 0.012);
+      b.fillStyle = '#ffd24f';
+      b.beginPath(); b.arc(dr.x + dr.w * 0.75, dr.y + dr.h * 0.53, h * 0.012, 0, Math.PI * 2); b.fill();
     }
+    homeRoomSign(b, dr.to, dr.x + dr.w / 2, dr.y - h * 0.045, h * 0.05);
+  }
+}
+
+// Huoneen kyltti (ovien yllä ja linnakartalla): portaat = torni, sydän = sali,
+// kattila = keittiö, tähti = holvi. (x, y) keskikohta, sh kyltin korkeus.
+function homeRoomSign(b, idx, x, y, sh) {
+  var i, sw = sh * 1.9;
+  b.fillStyle = '#fff6d8';
+  roundRect(b, x - sw / 2, y - sh / 2, sw, sh, sh * 0.2);
+  b.fill();
+  if (idx === 1) {
+    b.fillStyle = '#8a5cb8';
+    for (i = 0; i < 3; i++) b.fillRect(x - sw * 0.3 + i * sw * 0.2, y + sh * 0.3 - (i + 1) * sh * 0.2, sw * 0.2, sh * 0.2 * (i + 1));
+  } else if (idx === 2) {
+    drawCauldron(b, x, y + sh * 0.26, sh * 0.32, '#ff9f3a', false, 0, false);
+  } else if (idx === BANK_ROOM) {
+    drawStar(b, x, y, sh * 0.34, 0, 0);
+  } else {
+    b.fillStyle = '#ff5f7e';
+    drawHeartShape(b, x, y, sh * 0.24, true);
   }
 }
