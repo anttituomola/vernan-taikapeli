@@ -2,7 +2,8 @@
 
 // Linnakartta: Vernan kodin oma karttanäkymä. Linna on leikattu auki, ja
 // jokainen huone näkyy pienoiskuvana tavaroineen: tornihuone ylhäällä,
-// keittiö ja sali maan tasalla, pankkiholvi maan alla. Huoneen napautus vie
+// keittiö ja sali maan tasalla, pankkiholvi maan alla ja puutarha linnan
+// pihalla keittiön vieressä. Huoneen napautus vie
 // suoraan huoneeseen (showHome). Linnakartalle päästään saaristokartan ja
 // Kaukamaan kartan linnanapista (castleBtn), ja vene-nappi palauttaa sille
 // kartalle, jolta tultiin.
@@ -43,13 +44,18 @@ function castleLayout() {
   var groundY = h * 0.655;
   var floorTop = groundY - ph - h * 0.02;
   var salX = cx + gap / 2 - pw * 0.15;
+  // Puutarha pihalla pikkutornin vasemmalla puolella, mittasuhteet kuin huoneessa
+  var rr = homeRoom(), gx1 = salX - gap - pw - h * 0.03 - h * 0.027 - h * 0.035;
+  var gw = Math.max(h * 0.12, Math.min(pw * 1.05, gx1 - h * 0.03));
+  var gh = gw * (rr.bottom - rr.wallTop) / (rr.x1 - rr.x0);
   return {
     groundY: groundY, pw: pw, ph: ph,
     rooms: [
       { idx: 0, x: salX, y: floorTop, w: pw, h: ph },
       { idx: 1, x: salX + pw * 0.12, y: floorTop - ph - h * 0.05, w: pw * 0.76, h: ph },
       { idx: 2, x: salX - gap - pw, y: floorTop, w: pw, h: ph },
-      { idx: 3, x: salX - pw * 0.08, y: groundY + h * 0.05, w: pw * 1.16, h: ph * 0.98 }
+      { idx: 3, x: salX - pw * 0.08, y: groundY + h * 0.05, w: pw * 1.16, h: ph * 0.98 },
+      { idx: 4, x: gx1 - gw, y: groundY + h * 0.02 - gh, w: gw, h: gh }
     ]
   };
 }
@@ -149,6 +155,7 @@ function renderCastleBg() {
   // Huoneiden aukot (tumma reuna)
   for (i = 0; i < lay.rooms.length; i++) {
     r = lay.rooms[i];
+    if (r.idx === YARD_ROOM) continue;
     b.fillStyle = 'rgba(60,30,90,0.35)';
     roundRect(b, r.x - h * 0.008, r.y - h * 0.008, r.w + h * 0.016, r.h + h * 0.016, h * 0.022);
     b.fill();
@@ -164,18 +171,22 @@ function drawCastleRoomThumb(c, idx, x, y, w, hh) {
   c.save();
   roundRect(c, x, y, w, hh, viewH * 0.018);
   c.clip();
-  var wg = c.createLinearGradient(0, y, 0, y + hh * fyRel);
-  wg.addColorStop(0, wallP.wall[0]);
-  wg.addColorStop(1, wallP.wall[1]);
-  c.fillStyle = wg;
-  c.fillRect(x, y, w, hh * fyRel);
-  var fg = c.createLinearGradient(0, y + hh * fyRel, 0, y + hh);
-  fg.addColorStop(0, floorP.floor[0]);
-  fg.addColorStop(1, floorP.floor[1]);
-  c.fillStyle = fg;
-  c.fillRect(x, y + hh * fyRel, w, hh * (1 - fyRel));
-  c.fillStyle = wallP.pot;
-  c.fillRect(x, y + hh * fyRel - viewH * 0.006, w, viewH * 0.006);
+  if (idx === YARD_ROOM) {
+    yardThumbBg(c, x, y, w, hh, fyRel, wallP);
+  } else {
+    var wg = c.createLinearGradient(0, y, 0, y + hh * fyRel);
+    wg.addColorStop(0, wallP.wall[0]);
+    wg.addColorStop(1, wallP.wall[1]);
+    c.fillStyle = wg;
+    c.fillRect(x, y, w, hh * fyRel);
+    var fg = c.createLinearGradient(0, y + hh * fyRel, 0, y + hh);
+    fg.addColorStop(0, floorP.floor[0]);
+    fg.addColorStop(1, floorP.floor[1]);
+    c.fillStyle = fg;
+    c.fillRect(x, y + hh * fyRel, w, hh * (1 - fyRel));
+    c.fillStyle = wallP.pot;
+    c.fillRect(x, y + hh * fyRel - viewH * 0.006, w, viewH * 0.006);
+  }
   var map = function (it2) {
     return { x: x + (it2.fx * viewW - room.x0) * sc, y: y + (it2.fy * viewH - room.wallTop) * (hh / rh) };
   };
@@ -242,13 +253,13 @@ function drawCastleMap() {
     ctx.fillStyle = '#ffe27a';
     ctx.fillText('+' + pend, bx - viewH * 0.045, by + viewH * 0.016);
   }
-  // Prinsessa yksisarvisella ja puput linnan pihalla
-  var kit = lay.rooms[2];
-  var ux = Math.max(viewH * 0.12, kit.x - viewH * 0.3);
+  // Prinsessa yksisarvisella ja puput linnan oikealla puolella
+  var sal = lay.rooms[0];
+  var ux = Math.min(viewW - viewH * 0.3, sal.x + sal.w + viewH * 0.2);
   drawUnicorn(ctx, ux, lay.groundY + viewH * 0.02, viewH * 0.0009, 1, 0, false, globalT);
   for (i = 0; i < 3; i++) {
     var bx2 = ux + viewH * (0.02 + i * 0.05), by2 = lay.groundY + viewH * (0.035 + (i % 2) * 0.02);
-    if (bx2 > kit.x - viewH * 0.04) break;
+    if (bx2 > viewW - viewH * 0.03) break;
     drawBunny(ctx, bx2, by2, viewH * 0.03, Math.abs(Math.sin(globalT * 3 + i)) * viewH * 0.01, globalT * 3 + i, false);
     if (homeBows[i] >= 0) drawBow(ctx, bx2, by2 - viewH * 0.045, viewH * 0.009, HOME_BOWS[homeBows[i]]);
   }

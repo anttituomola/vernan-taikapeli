@@ -277,6 +277,7 @@ window.VT = {
   bank: function () { return { stars: bankStars, t: bankT, unseen: bankUnseen, frac: bankDayFrac(), vault: bankVault(), celeb: bankCeleb }; },
   // Kelaa korkokelloa taaksepäin (tunteina) ja laske korko
   bankSkip: function (hours) { if (bankT) bankT -= hours * 3600 * 1000; return bankAccrue(); },
+  yard: function () { return { weeds: yardWeeds, treats: yardTreats, drops: yardDrops, sun: yardSunPos(), day: yardDay() }; },
   pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, mode: penMode, bottles: penBottles, frame: penFrame }; },
   penStart: penStart,
   herd: function () { return { bunnies: herdBunnies, owls: herdOwls, burrow: herdBurrow, bushes: herdBushes }; },

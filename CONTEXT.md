@@ -90,8 +90,8 @@ linnan sisustukseen.
 _Vältä_: kolikko, piste
 
 **Linna**:
-Vernan koti, jonka huoneita sisustetaan tähdillä: sali, tornihuone, keittiö ja
-pankkiholvi. Linnalla on oma karttanäkymä, **linnakartta**, jonne pääsee
+Vernan koti, jonka huoneita sisustetaan tähdillä: sali, tornihuone, keittiö,
+pankkiholvi ja puutarha. Linnalla on oma karttanäkymä, **linnakartta**, jonne pääsee
 saaristokartan ja Kaukamaan kartan linnanapista.
 _Vältä_: koti yksinään, huoneisto (Linnasaaren linna on eri asia: finaalin paikka)
 
@@ -99,6 +99,12 @@ _Vältä_: koti yksinään, huoneisto (Linnasaaren linna on eri asia: finaalin p
 Linnan pankkiholvi, johon tähtiä talletetaan ja josta niitä nostetaan.
 Talletus kasvaa **korkoa** kerran vuorokaudessa.
 _Vältä_: pankki yksinään, säästölipas
+
+**Puutarha**:
+Linnan ulkohuone keittiön vieressä, jonne istutetaan kasveja ja jossa ne
+kasvavat **kastelulla** (kastelukannu raahataan kasvin kohdalle). Kypsästä
+kasvista saadaan **satoa**, jonka pupu syö.
+_Vältä_: piha yksinään, kasvimaa, Puutarha-kenttä (ensimmäisen saaren kenttä on eri asia)
 
 ### Hahmot
 

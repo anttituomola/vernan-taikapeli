@@ -35,6 +35,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/flow-home.js` — linnan sisustus (tähtikauppa, raahaus, puput)
 - `js/flow-castle.js` — linnakartta (linnan oma karttanäkymä, huoneiden pienoiskuvat)
 - `js/flow-bank.js` — pankkiholvi (talletus, nosto, korko, pankin huonekalut)
+- `js/flow-yard.js` — linnan puutarha (kasvit, kastelu, sato, rikkaruohot, puutarhan tavarat)
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)
 - `js/play-garden.js` … `play-sky.js` — vaiheet 2–5
@@ -537,9 +538,10 @@ ylhäällä. **Linnakartta:** saaristokartan ja Kaukamaan kartan vasemmassa
 reunassa (tähtisaldon alla) on vaaleanpunainen linnanappi, joka avaa linnan
 oman karttanäkymän. Siinä linna on leikattu auki ja jokainen huone näkyy
 pienoiskuvana maaleineen ja tavaroineen: tornihuone ylhäällä, keittiö ja sali
-maan tasalla ja pankkiholvi maan alla. Huoneen napautus vie suoraan huoneeseen;
+maan tasalla, pankkiholvi maan alla ja puutarha pihalla linnan vasemmalla
+puolella. Huoneen napautus vie suoraan huoneeseen;
 huoneen kotinappi palaa linnakartalle ja linnakartan venenappi sille kartalle,
-jolta tultiin. Huoneistossa on neljä huonetta: **sali** (sydäntapetti, ikkuna),
+jolta tultiin. Huoneistossa on neljä sisähuonetta ja puutarha: **sali** (sydäntapetti, ikkuna),
 **tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia), **keittiö**
 (kaakeliseinä, verhoikkuna yrttiruukulla, astiakisko, ruutulattia) ja
 **pankkiholvi** (kultaiset seinälevyt, lyhdyt, kivilaatat). Salista oikea ovi
@@ -574,6 +576,28 @@ seinällä (kilisevät), tiskiallas (hana laskee vettä), seinäkaappi (aukeaa,
 sisällä mukit ja lautaset), liesi (levy hehkuu ja kattila kiehuu), ruokapöytä
 (kynttilä syttyy, kaksi pupua istuu pöytään) ja jääkaappi (ovi aukeaa, valo
 ja herkut). Tavaroita voi viedä mihin huoneeseen vain.
+**Puutarha:** linnan viides huone on ulkona: taivas, aita (seinämaali),
+nurmikko ja kivipolku (lattiamaali), ja linnan muurin portti (kattila-kyltti)
+vie keittiöön; keittiön vasen ovi (kukka-kyltti) tuo puutarhaan. Kauppa aukeaa
+puutarhassa puutarhasivulta. Kasvit (tulppaanit, auringonkukka, mansikat,
+porkkanapenkki, ruusupensas, kurpitsa, omenapuu, taikakukka) istutetaan
+raahaamalla kuten huonekalut, ja ne alkavat siemenenä multakummussa.
+**Kastelu:** kastelukannu (1 tähti) raahataan niin, että sen suutin on kasvin
+kohdalla: kannu kallistuu, vesi valuu ja noin 0,6 s:n kaadon jälkeen kasvi
+kasvaa askeleen (siemen, taimi, nuppu, kukka/kypsä; 4 kastelua). Kastelun
+jälkeen kasvi juo 3 s, ennen kuin se kasvaa taas. Janoisen kasvin yllä on
+vesitippakupla. Täysikasvuinen kasvi janoaa taas seuraavana päivänä (nuokkuu,
+auringonkukka surullinen), kunnes se kastellaan. **Sato:** kypsän mansikan,
+porkkanan tai kurpitsan napautus pudottaa herkun ja kasvi palaa nupuksi;
+omenapuusta putoaa omena kerrallaan (3), sitten se kukkii uudelleen. Pupu
+juoksee herkun luo ja syö sen. Kukkien napautus heilauttaa niitä ja soittaa
+(taikakukka soittaa sävelmän sateenkaarikipinöin). **Aurinko** taivaalla
+hymyilee ja pyörittää säteitään napautuksesta, ja kukat hypähtävät.
+**Rikkaruohot** kasvavat nurmikolle (enintään 3), ja napautus kiskoo ne irti.
+Puutarhatavarat: lapio (kaivaa, multaa lentää), kottikärryt (vierivät, pupu
+istuu kyytiin), puutarhatonttu (lakki heiluu), linnunpönttö (lintu kurkistaa ja
+visertää), mehiläispesä (mehiläiset lentävät laajemmalle), lintujen allas
+(roiskuu) ja keinu (heiluu, pupu keinuu).
 Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa)
 **raahaamalla**: tartu korttiin, vedä tavara huoneen puolelle ja päästä irti
 haluamaasi kohtaan, niin tähdet veloitetaan. Kaupan päälle palautettu tavara
