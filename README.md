@@ -596,6 +596,29 @@ etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentä
   lempeäksi tuulihengeksi, ja karavaanin kameli palaa. Pyörteeseen ja kettuun
   voi napauttaa. Tehtävät osumien välissä: lajittele, muistiloitsu 5/4.
 
+### Kaukamaa: Porkkanakumpu (maailma 13)
+
+Mantereen neljäs paikka, pupujen vihreät kummut etelärannalla. Aukeaa, kun
+Aurinkodyynien vartija Hiekkapyörre on läpäisty. Syntyi palautteesta:
+reittitehtävän pupun ohjaus oli mieluisa, joten siitä tehtiin isompi ja
+haastavampi oma kenttä. Sokkelossa on kolme usvahuonetta tuleville kentille.
+
+- **Pupupolku** — uusi verbi: **ohjelmointi**. Napauta nuolia ohjelmariville ja
+  paina ▶: pupu hyppii ohjelman askel kerrallaan (käynnissä oleva ruutu
+  hehkuu). Ohjelmarivin ruudun napautus poistaa sen. Pensas, reuna tai
+  suljettu portti pysäyttää pupun (punainen !), ja jos ohjelma loppuu ennen
+  maalia, pupu ihmettelee (?); kummassakin pupu palaa alkuun ja ohjelma jää
+  korjattavaksi. Neljä arvottua, kovenevaa kierrosta: 5×5 ja yksi porkkana
+  (rivi 8); 6×5, kaksi porkkanaa ja lopuksi kotikoloon (rivi 10); 6×6, avain
+  avaa portin ja **toistonapit** ×2 / ×3 kertaavat viimeisen nuolen (rivi 7,
+  joten toistoa on pakko käyttää); 7×6, kaksi porkkanaa, avain ja toisto
+  (rivi 8). Jokainen rata tarkistetaan leveyshaulla: ratkeaa, reitti on
+  kierroksen mittainen, siinä on vähintään kaksi käännöstä, portti on
+  pakollinen ja toistokierroksilla reitti ei mahdu riville ilman toistoa.
+  Ensimmäisellä ajolla onnistunut kierros antaa kultaisen porkkanan (HUD).
+  Ensimmäisellä kierroksella käsi näyttää kaksi ensimmäistä nuolta ja ▶:n.
+  Ei sydämiä. Pupuun ja porkkanoihin voi napauttaa. Tehtävät: lasku, vähennys.
+
 ### Linnan sisustus
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
@@ -712,6 +735,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   paikallaan kaivaaksesi.
 - Hiekkapyörre: liukuvaiheessa kuten Dyynilaskussa, etsintävaiheessa kuten
   Aarrevarvussa.
+- Pupupolku: napauta nuolia ohjelmariville (×2 / ×3 kertaa viimeisen), ▶ ajaa;
+  rivin ruudun napautus poistaa sen.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -900,6 +925,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, irtoamisherkkyys `DUNE_LIFT`, ylämäen jarrutus pohjassa `DUNE_UPHILL_BRAKE`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); mitoitus botilla (yli 0,3 s lennot): 0,1 s viive ~18 lentoa ja ~35 s ilman osumia, 0,45 s ~14 lentoa, 0,6 s ~6 lentoa, painamatta keskimäärin 0,8 osuutta uusiksi
 - Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
 - Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (dyynit, korkeus, pyörteen nopeus, kaktukset, lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`), dyynin leveys `WHIRL_HALF`, pyörteen etäisyys `WHIRL_LAG` / kiinnijäänti `WHIRL_CATCH`; liuku- ja etsintävakiot tulevat Dyynilaskusta ja Aarrevarvusta (`DUNE_*`, `DOWSE_*`). Mitoitus botilla: pyyhkivä botti 0,3–0,45 s viiveellä voittaa ~65–72 s:ssa ja menettää 1–3 sydäntä
+- Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas

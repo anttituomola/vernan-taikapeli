@@ -69,6 +69,11 @@ Aarrevarvun verbi: sormen perässä kulkeva taikavarpu jättää lämpöjäljen,
 kertoo, kuinka lähellä haudattu arkku on; paikallaan pidetty sormi kaivaa.
 _Vältä_: haku, kaivaminen yksinään (kaivaa Fenni-kettu)
 
+**Ohjelmointi**:
+Porkkanakummun verbi: nuolista kootaan ohjelmarivi, ja ▶ ajaa sen; pupu
+hyppii käsky kerrallaan. Toistonappi (×2, ×3) kertaa viimeisen nuolen.
+_Vältä_: koodaus, reitti (reitti on tehtävä, josta kenttä syntyi)
+
 **Kääntö**:
 Kuunsäteen verbi: napautus kääntää kristallipeiliä neljänneskierroksen, ja
 kuunsäde kimpoaa peilistä uuteen suuntaan.

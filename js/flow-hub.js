@@ -1020,7 +1020,8 @@ var HUB_TILE_COLORS = {
   fair: ['#ffe6f2', '#fff3d6'],
   dragon: ['#e9a374', '#e09a6a'],
   glow: ['#2e5a6a', '#285262'],
-  desert: ['#f2cf8a', '#ebc47c']
+  desert: ['#f2cf8a', '#ebc47c'],
+  carrot: ['#9fdc7f', '#93d272']
 };
 
 function drawMushroomTile(b, x, baseY, s) {

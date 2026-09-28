@@ -1182,6 +1182,38 @@ var WORLDS = [
         respawn: function () { respawnWhirl(); }
       }
     ]
+  },
+  {
+    // Porkkanakumpu: mantereen neljäs paikka, pupujen kummut. Pupuja ohjataan
+    // ohjelmoimalla (reittitehtävän laajennus omaksi kentäksi).
+    id: 13, name: 'Porkkanakumpu', region: 'land', band: 'carrot',
+    place: { fx: 0.52, fy: 0.84, size: 0.7, finaleKind: 'bcode', deco: ['bcode'] },
+    map: [
+      '###########',
+      '#B.......C#',
+      '#########.#',
+      '#?........#',
+      '#.#########',
+      '#........?#',
+      '#########.#',
+      '#?........#',
+      '###########'
+    ],
+    levels: [
+      {
+        kind: 'bcode', room: 'C', name: 'Pupupolku', color: '#ff8f3a', script: 'play-bcode',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#8fd8ff', ambient: 'sparkle', fg: null,
+        init: function () { initBcode(); },
+        update: function (dt) { updateBcode(dt); },
+        draw: function () { drawBcode(); },
+        tap: function (x, y) { handleBcodeTap(x, y); },
+        resize: function () { resizeBcode(); },
+        renderBg: function (b, w, h) { renderBcodeBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,200,0.05)', 'rgba(120,200,120,0.04)'], vignette: 0.25 },
+        respawn: function () { respawnBcode(); }
+      }
+    ]
   }
 ];
 

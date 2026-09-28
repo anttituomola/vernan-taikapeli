@@ -13,9 +13,7 @@
 
 var LAND_SAIL_T = 4.0;
 // Usvaiset paikat vihjaavat tulevista alueista; napautus näyttää lukon.
-var LAND_FOG = [
-  { fx: 0.52, fy: 0.84, size: 0.7 }
-];
+var LAND_FOG = [];
 var land = {
   state: 'map', t: 0, dir: 1, fanfare: false,
   pawn: { x: 0, y: 0, facing: 1, walkPhase: 0, at: -1, target: null },
