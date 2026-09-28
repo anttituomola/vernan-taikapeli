@@ -601,8 +601,9 @@ etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentä
 Mantereen neljäs paikka, pupujen vihreät kummut etelärannalla. Aukeaa, kun
 Aurinkodyynien vartija Hiekkapyörre on läpäisty. Syntyi palautteesta:
 reittitehtävän pupun ohjaus oli mieluisa, joten siitä tehtiin isompi ja
-haastavampi oma kenttä, ja Kuunsäteen peilipulmasta värimuunnelma. Sokkelossa
-on kaksi usvahuonetta tuleville kentille.
+haastavampi oma kenttä, ja Kuunsäteen peilipulmasta värimuunnelma. Vartija
+Myyräkuningas yhdistää ne (`finaleKind: 'mole'`). Sokkelossa on yksi
+usvahuone tulevalle kentälle.
 
 - **Pupupolku** — uusi verbi: **ohjelmointi**. Napauta nuolia ohjelmariville ja
   paina ▶: pupu hyppii ohjelman askel kerrallaan (käynnissä oleva ruutu
@@ -633,6 +634,22 @@ on kaksi usvahuonetta tuleville kentille.
   uudestaan. Kimalainen istuu säteellä olevalle peilille ja varjostaa säteen;
   napautus häätää sen. Perhoset lepäävät ruuduissa bonuksena. Laseihin,
   kukkiin ja kiviin voi napauttaa. Tehtävät: sekoita väri (sekavärit), lasku.
+- **Myyräkuningas** ♥ — vartija, joka yhdistää **ohjelmoinnin ja värisäteen**.
+  Myyräkuningas on vienyt kummun värit, ja sen kruunun kiteet ovat himmeät.
+  Uusi sääntö: pupu kääntää kristallipeiliä hyppäämällä sen päälle (tassunjälki
+  peilin kulmassa; toinen hyppy kääntää takaisin). Ohjelmoi pupun reitti
+  nuolilla niin, että kun ohjelma loppuu, aurinkokiven säde kulkee värilasien
+  kautta kiteeseen oikean värisenä (katkoviivarengas kertoo kiteen värin).
+  Säde näkyy koko ajan ja muuttuu pupun hyppiessä. Pensaat, kivet, lasit ja
+  kide tukkivat pupun tien; kivet pysäyttävät myös säteen. Epäonnistunut ajo
+  (törmäys tai väärä lopputulos) vie sydämen, ja pupu ja peilit palaavat
+  alkuun; sydänten loppuessa kierros arvotaan uudestaan. Kolme kierrosta: 5×4,
+  yksi väärä peili ja yksi lasi (rivi 8); 6×5, kaksi väärää peiliä, kaksi
+  lasia ja reitin peili, jota ei saa kääntää (rivi 10); 6×6, kolme väärää
+  peiliä ja toistonapit (rivi 8, toisto pakollinen). Jokainen rata tarkistetaan
+  leveyshaulla (pupun paikka × peilien parillisuus). Osuma sytyttää kruunuun
+  kiteen; kolmas palauttaa värit, ja Myyräkuningas ilahtuu. Kuninkaaseen voi
+  napauttaa. Tehtävät osumien välissä: lasku, vähennys.
 
 ### Linnan sisustus
 
@@ -753,6 +770,7 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 - Pupupolku: napauta nuolia ohjelmariville (×2 / ×3 kertaa viimeisen), ▶ ajaa;
   rivin ruudun napautus poistaa sen.
 - Värisäde: napauta peiliä kääntääksesi sitä; napautus kimalaiseen häätää sen.
+- Myyräkuningas: ohjelmoi kuten Pupupolussa; pupu kääntää peilin hypätessään sen päälle.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -943,6 +961,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (dyynit, korkeus, pyörteen nopeus, kaktukset, lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`), dyynin leveys `WHIRL_HALF`, pyörteen etäisyys `WHIRL_LAG` / kiinnijäänti `WHIRL_CATCH`; liuku- ja etsintävakiot tulevat Dyynilaskusta ja Aarrevarvusta (`DUNE_*`, `DOWSE_*`). Mitoitus botilla: pyyhkivä botti 0,3–0,45 s viiveellä voittaa ~65–72 s:ssa ja menettää 1–3 sydäntä
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
+- Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas

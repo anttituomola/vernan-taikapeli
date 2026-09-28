@@ -1187,14 +1187,14 @@ var WORLDS = [
     // Porkkanakumpu: mantereen neljäs paikka, pupujen kummut. Pupuja ohjataan
     // ohjelmoimalla (reittitehtävän laajennus omaksi kentäksi).
     id: 13, name: 'Porkkanakumpu', region: 'land', band: 'carrot',
-    place: { fx: 0.52, fy: 0.84, size: 0.7, finaleKind: 'prism', deco: ['bcode', 'prism'] },
+    place: { fx: 0.52, fy: 0.84, size: 0.7, finaleKind: 'mole', deco: ['bcode', 'prism', 'mole'] },
     map: [
       '###########',
       '#B.......C#',
       '#########.#',
       '#K........#',
       '#.#########',
-      '#........?#',
+      '#........V#',
       '#########.#',
       '#?........#',
       '###########'
@@ -1225,6 +1225,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderPrismBg(b, w, h); },
         light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(180,120,255,0.04)'], vignette: 0.25 },
         respawn: function () { respawnPrism(); }
+      },
+      {
+        kind: 'mole', room: 'V', name: 'Myyräkuningas', color: '#8a6a5a', script: 'play-mole',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6500,
+        bgColor: '#9ab8c8', ambient: 'sparkle', fg: null,
+        init: function () { initMole(); },
+        update: function (dt) { updateMole(dt); },
+        draw: function () { drawMole(); },
+        tap: function (x, y) { handleMoleTap(x, y); },
+        resize: function () { resizeMole(); },
+        renderBg: function (b, w, h) { renderMoleBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.3, tint: ['rgba(80,100,120,0.08)', 'rgba(255,220,160,0.05)'], vignette: 0.35 },
+        respawn: function () { respawnMole(); }
       }
     ]
   }
