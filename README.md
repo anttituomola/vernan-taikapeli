@@ -546,8 +546,9 @@ on rauhallisempi ajattelupulma ennen vartijaa (uusi verbi **kääntö**).
 
 Mantereen kolmas paikka, aavikko keitaineen itärannalla. Aukeaa, kun
 Hohtometsän vartija Varjoperhonen on läpäisty. Hiekkamyrsky on hajottanut
-karavaanin, ja prinsessa kulkee dyynien yli keitaalta toiselle. Sokkelossa on
-kolme usvahuonetta tuleville kentille.
+karavaanin, ja prinsessa kulkee dyynien yli keitaalta toiselle ja etsii
+haudatut aarteet. Sokkelossa on kaksi usvahuonetta tuleville kentille (toinen
+niistä vartijalle); siihen asti Aarrevarpu avaa seuraavan paikan.
 
 - **Dyynilasku** ♥ — uusi verbi: **liuku**. Prinsessa laskee hiekkalaudalla
   itään. Pidä pohjassa, niin lauta painuu raskaaksi ja kiihtyy alamäessä;
@@ -563,6 +564,21 @@ kolme usvahuonetta tuleville kentille.
   Aurinkokivet ovat bonuksia: osa notkoissa, osa korkeimpien lentojen
   lakipisteissä, jonne ylettää vain hyvällä ajoituksella. Sydänten loppuessa
   palataan edelliselle keitaalle. Tehtävät keitailla: anna N kappaletta, kello.
+- **Aarrevarpu** ♥ — uusi verbi: **etsintä**. Taikavarpu seuraa sormea hiekan
+  yllä, ja sen kärki jättää hehkuvan jäljen: sininen on kylmä, turkoosi
+  viileä, keltainen lämmin, oranssi kuuma ja kultainen tähti polttava (tästä
+  kaivamalla arkku löytyy). Kärjen hehku ja äänimerkin tahti kertovat saman.
+  Kun sormi pysyy paikallaan hetken (valkoinen rengas latautuu), aavikkokettu
+  Fenni juoksee paikalle ja kaivaa. Kaivuja on rajallisesti (tassut HUD:ssa:
+  arkut + 3 / 3 / 2 / 2 ylimääräistä); tyhjä kuoppa muistaa lämpönsä. Jos
+  kaivut loppuvat, tuuli peittää kuopat ja arkut hautautuvat uusiin paikkoihin.
+  Hiekassa piilee skorpioneja arkkujen lähellä: varpu värisee ja jälki saa
+  punaiset renkaat niiden kohdalla, ja skorpionin päälle kaivaminen vie
+  sydämen (sydänten loppuessa kierros alkaa alusta). Neljä arvottua,
+  kovenevaa kierrosta: 1, 2, 2 ja 3 arkkua, 0–3 skorpionia, lyhenevä lämmön
+  kantama, ja viimeisellä kierroksella tuulenpuuskat pyyhkivät jäljen.
+  Säästyneet kaivut lentävät aurinkokivinä HUD:iin. Ketulle, kaktuksille ja
+  kiville voi napauttaa. Tehtävät: maksa, kummalla enemmän.
 
 ### Linnan sisustus
 
@@ -676,6 +692,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 - Kuunsäde: napauta peiliä kääntääksesi sitä; napautus koihin häätää sen.
 - Dyynilasku: pidä pohjassa alamäessä (raskas lauta kiihtyy), päästä irti
   ylämäessä (lauta lentää harjalta). Keitaalta liikkeelle painamalla.
+- Aarrevarpu: vedä sormea hiekalla (varpu jättää lämpöjäljen), pidä sormi
+  paikallaan kaivaaksesi.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -862,6 +880,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
 - Kuunsäde: kierrokset `BEAM_ROUNDS` (ruudukko, reitin peilit, kukat, hämäyspeilit, kivet, bonuskärpäset, kuun laskuaika `time`, koin väli `moth`), säteen kasvunopeus `BEAM_GROW`, kukkien hehkuaika `BEAM_HOLD`; arvonta `beamTryGenerate` tarkistaa, että ratkaisu toimii eikä alkuasento ratkaise
 - Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); mitoitus botilla: 0,1 s viive ~35 s ilman osumia, 0,3 s ~2 sydäntä, painamatta keskimäärin yksi osuus uusiksi
+- Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas

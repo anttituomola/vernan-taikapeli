@@ -1129,12 +1129,12 @@ var WORLDS = [
     // Aurinkodyynit: mantereen kolmas paikka, aavikko keitaineen itärannalla.
     // Hiekkamyrsky on hajottanut karavaanin; prinsessa kulkee dyynien yli.
     id: 12, name: 'Aurinkodyynit', region: 'land', band: 'desert',
-    place: { fx: 0.84, fy: 0.64, size: 0.85, finaleKind: 'dune', deco: ['dune'] },
+    place: { fx: 0.84, fy: 0.64, size: 0.85, finaleKind: 'dowse', deco: ['dune', 'dowse'] },
     map: [
       '###########',
       '#B.......D#',
       '#########.#',
-      '#?........#',
+      '#A........#',
       '#.#########',
       '#........?#',
       '#########.#',
@@ -1154,6 +1154,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderDuneBg(b, w, h); },
         light: { rays: true, raysColor: '#fff0b0', raysAlpha: 0.5, tint: ['rgba(255,200,120,0.08)', 'rgba(255,150,80,0.06)'], vignette: 0.3 },
         respawn: function () { respawnDune(); }
+      },
+      {
+        kind: 'dowse', room: 'A', name: 'Aarrevarpu', color: '#ffd24f', script: 'play-dowse',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
+        bgColor: '#f0c078', ambient: 'sparkle', fg: null,
+        init: function () { initDowse(); },
+        update: function (dt) { updateDowse(dt); },
+        draw: function () { drawDowse(); },
+        tap: function (x, y) { handleDowseTap(x, y); },
+        resize: function () { resizeDowse(); },
+        renderBg: function (b, w, h) { renderDowseBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff0b0', raysAlpha: 0.4, tint: ['rgba(255,200,120,0.06)', 'rgba(255,150,80,0.05)'], vignette: 0.3 },
+        respawn: function () { respawnDowse(); }
       }
     ]
   }
