@@ -14,7 +14,6 @@
 var LAND_SAIL_T = 4.0;
 // Usvaiset paikat vihjaavat tulevista alueista; napautus näyttää lukon.
 var LAND_FOG = [
-  { fx: 0.84, fy: 0.64, size: 0.85 },
   { fx: 0.52, fy: 0.84, size: 0.7 }
 ];
 var land = {

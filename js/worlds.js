@@ -1124,6 +1124,38 @@ var WORLDS = [
         respawn: function () { respawnMoth(); }
       }
     ]
+  },
+  {
+    // Aurinkodyynit: mantereen kolmas paikka, aavikko keitaineen itärannalla.
+    // Hiekkamyrsky on hajottanut karavaanin; prinsessa kulkee dyynien yli.
+    id: 12, name: 'Aurinkodyynit', region: 'land', band: 'desert',
+    place: { fx: 0.84, fy: 0.64, size: 0.85, finaleKind: 'dune', deco: ['dune'] },
+    map: [
+      '###########',
+      '#B.......D#',
+      '#########.#',
+      '#?........#',
+      '#.#########',
+      '#........?#',
+      '#########.#',
+      '#?........#',
+      '###########'
+    ],
+    levels: [
+      {
+        kind: 'dune', room: 'D', name: 'Dyynilasku', color: '#ffb84a', script: 'play-dune',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6000,
+        bgColor: '#5ec8e8', ambient: 'sparkle', fg: null,
+        init: function () { initDune(); },
+        update: function (dt) { updateDune(dt); },
+        draw: function () { drawDune(); },
+        tap: function (x, y) { handleDuneTap(x, y); },
+        resize: function () { resizeDune(); },
+        renderBg: function (b, w, h) { renderDuneBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff0b0', raysAlpha: 0.5, tint: ['rgba(255,200,120,0.08)', 'rgba(255,150,80,0.06)'], vignette: 0.3 },
+        respawn: function () { respawnDune(); }
+      }
+    ]
   }
 ];
 

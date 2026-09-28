@@ -542,6 +542,28 @@ on rauhallisempi ajattelupulma ennen vartijaa (uusi verbi **kääntö**).
   lyhyempi ikkuna. Kolmas osuma palauttaa valot, ja perhonen muuttuu vaaleaksi
   kuukehrääjäksi. Tehtävät osumien välissä: peili, muistiloitsu 5/4.
 
+### Kaukamaa: Aurinkodyynit (maailma 12)
+
+Mantereen kolmas paikka, aavikko keitaineen itärannalla. Aukeaa, kun
+Hohtometsän vartija Varjoperhonen on läpäisty. Hiekkamyrsky on hajottanut
+karavaanin, ja prinsessa kulkee dyynien yli keitaalta toiselle. Sokkelossa on
+kolme usvahuonetta tuleville kentille.
+
+- **Dyynilasku** ♥ — uusi verbi: **liuku**. Prinsessa laskee hiekkalaudalla
+  itään. Pidä pohjassa, niin lauta painuu raskaaksi ja kiihtyy alamäessä;
+  päästä irti ylämäessä, niin lauta keventyy ja lentää dyynin harjalta (harjalta
+  irtoaa vain riittävällä vauhdilla). Pohjassa pitäminen ylämäessä jarruttaa,
+  ja ylämäkeen laskeutuminen töksähtää; alamäkeen osuva lasku on täydellinen
+  (kipinät, lisää vauhtia). Hiekkamyrsky seuraa takana, ja yläreunan mittari
+  näyttää prinsessan, myrskyn ja keitaat: kiinni saanut myrsky vie sydämen ja
+  puuska heittää eteenpäin. Kolme arvottua osuutta (6, 8 ja 9 dyyniä), joiden
+  lopussa on keidas: sydämet täyttyvät, ja matka jatkuu painamalla. Osuudet
+  kovenevat: jyrkemmät dyynit, nopeampi myrsky (0,34 / 0,40 / 0,46 ruutua/s) ja
+  kaktukset harjojen takana (0 / 1 / 2; hyppää yli, osuma vie sydämen).
+  Aurinkokivet ovat bonuksia: osa notkoissa, osa korkeimpien lentojen
+  lakipisteissä, jonne ylettää vain hyvällä ajoituksella. Sydänten loppuessa
+  palataan edelliselle keitaalle. Tehtävät keitailla: anna N kappaletta, kello.
+
 ### Linnan sisustus
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
@@ -652,6 +674,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 - Varjoperhonen: parven aikana sipaise koit pois, syöksyn aikana ohjaa pomppua
   sormella kuten Sienipompussa.
 - Kuunsäde: napauta peiliä kääntääksesi sitä; napautus koihin häätää sen.
+- Dyynilasku: pidä pohjassa alamäessä (raskas lauta kiihtyy), päästä irti
+  ylämäessä (lauta lentää harjalta). Keitaalta liikkeelle painamalla.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -837,6 +861,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Tulikärpässieppo: kierrokset `CATCH_ROUNDS` (paikat, tulikärpäset, nopeus, koit, välkkyminen, järjestys, koiden hakeutuminen `chase`), haavin vähimmäisnopeus `CATCH_NET_SPEED`, nappaussäteet `CATCH_HIT` / `CATCH_MOTH_HIT`
 - Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
 - Kuunsäde: kierrokset `BEAM_ROUNDS` (ruudukko, reitin peilit, kukat, hämäyspeilit, kivet, bonuskärpäset, kuun laskuaika `time`, koin väli `moth`), säteen kasvunopeus `BEAM_GROW`, kukkien hehkuaika `BEAM_HOLD`; arvonta `beamTryGenerate` tarkistaa, että ratkaisu toimii eikä alkuasento ratkaise
+- Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); mitoitus botilla: 0,1 s viive ~35 s ilman osumia, 0,3 s ~2 sydäntä, painamatta keskimäärin yksi osuus uusiksi
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas

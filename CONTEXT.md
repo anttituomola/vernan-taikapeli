@@ -59,6 +59,11 @@ Hohtometsän verbi: liikkuva sormi vetää hohtavaa haavia, joka nappaa
 tulikärpäsiä ja hajottaa varjokoita. Paikallaan oleva sormi ei nappaa.
 _Vältä_: pyyhkäisy, veto, raahaus (raahaus siirtää esinettä)
 
+**Liuku**:
+Aurinkodyynien verbi: pohjassa pitäminen painaa hiekkalaudan raskaaksi
+alamäessä, ja irti päästäminen ylämäessä keventää sen lentoon dyynin harjalta.
+_Vältä_: lasku (lasku on laskutehtävä), liito (liito on Kotkalennon lento)
+
 **Kääntö**:
 Kuunsäteen verbi: napautus kääntää kristallipeiliä neljänneskierroksen, ja
 kuunsäde kimpoaa peilistä uuteen suuntaan.
