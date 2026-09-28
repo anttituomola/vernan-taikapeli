@@ -2,8 +2,8 @@
 
 // Dyynilasku (Kaukamaa, Aurinkodyynit): uusi verbi LIUKU. Prinsessa laskee
 // hiekkalaudalla dyynien yli itään. Pidä pohjassa, niin lauta painuu raskaaksi
-// ja kiihtyy alamäessä; päästä irti ylämäessä, niin lauta keventyy ja lentää
-// dyynin harjalta. Pohjassa pitäminen ylämäessä jarruttaa, ja ylämäkeen
+// ja kiihtyy alamäessä; päästä irti ennen harjaa, niin lauta keventyy ja lentää
+// dyynin harjalta (pohjassa pidetty lauta pysyy maassa). Ylämäkeen
 // laskeutuminen töksähtää. Alamäkeen osuva lasku on täydellinen: kipinät ja
 // vauhtia lisää. Hiekkamyrsky seuraa takana: jos se saa prinsessan kiinni,
 // menee sydän ja puuska heittää eteenpäin. Kolme osuutta, joiden lopussa on
@@ -22,6 +22,11 @@ var DUNE_SECTIONS = [
 ];
 var DUNE_G = 1.5;           // painovoima × viewH / s² (sormi irti)
 var DUNE_G_HOLD = 4.2;      // painovoima pohjassa pitäessä (raskas lauta)
+// Irtoamisen herkkyys, kun sormi on irti: harjalta irtoaa, kun kaarevuuden vaatima
+// voima ylittää tämän osuuden painovoimasta (1 = fysikaalinen, pienempi = helpompi)
+var DUNE_LIFT = 0.8;
+var DUNE_UPHILL_BRAKE = 0;   // 0 = pohjassa pito ei jarruta ylämäessä, 1 = jarruttaa täysin
+// (1:llä myöhään irti päästävä ei lentänyt koskaan: 0,45 s viiveen botti 0 lentoa)
 var DUNE_VMIN = 0.2;        // pienin vauhti maassa × viewW / s (ei jää jumiin notkoon)
 var DUNE_VMAX = 1.5;        // suurin vauhti × viewW / s
 var DUNE_DRAG = 0.04;       // kitka (osuus / s)
@@ -71,12 +76,15 @@ function duneStep(p, hold, dt) {
     sl = duneSlope(p.x);
     len = Math.sqrt(1 + sl * sl);
     vt = p.vx * len;
-    vt += g * sl / len * dt;
+    // Raskas lauta kiihdyttää alamäessä; ylämäessä pohjassa pito ei jarruta
+    // enempää kuin kevyt (DUNE_UPHILL_BRAKE), jotta myöhäinen irtipäästö ei vie kaikkea vauhtia
+    var ga = hold && sl < 0 ? (DUNE_G + (DUNE_G_HOLD - DUNE_G) * DUNE_UPHILL_BRAKE) * h : g;
+    vt += ga * sl / len * dt;
     vt -= vt * DUNE_DRAG * dt;
     vt = Math.max(DUNE_VMIN * W, Math.min(DUNE_VMAX * W, vt));
     // Irtoaa harjalta, kun kaarevuus vaatii enemmän kuin painovoima pitää
     k = duneCurv(p.x) / (len * len * len);
-    if (k > 0 && vt * vt * k > g / len) {
+    if (k > 0 && vt * vt * k > g * (hold ? 1 : DUNE_LIFT) / len) {
       p.ground = false;
       p.vx = vt / len;
       p.vy = vt * sl / len;

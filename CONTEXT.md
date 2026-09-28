@@ -61,7 +61,7 @@ _Vältä_: pyyhkäisy, veto, raahaus (raahaus siirtää esinettä)
 
 **Liuku**:
 Aurinkodyynien verbi: pohjassa pitäminen painaa hiekkalaudan raskaaksi
-alamäessä, ja irti päästäminen ylämäessä keventää sen lentoon dyynin harjalta.
+alamäessä, ja irti päästäminen ennen harjaa keventää sen lentoon.
 _Vältä_: lasku (lasku on laskutehtävä), liito (liito on Kotkalennon lento)
 
 **Etsintä**:

@@ -552,9 +552,10 @@ niistä vartijalle); siihen asti Aarrevarpu avaa seuraavan paikan.
 
 - **Dyynilasku** ♥ — uusi verbi: **liuku**. Prinsessa laskee hiekkalaudalla
   itään. Pidä pohjassa, niin lauta painuu raskaaksi ja kiihtyy alamäessä;
-  päästä irti ylämäessä, niin lauta keventyy ja lentää dyynin harjalta (harjalta
-  irtoaa vain riittävällä vauhdilla). Pohjassa pitäminen ylämäessä jarruttaa,
-  ja ylämäkeen laskeutuminen töksähtää; alamäkeen osuva lasku on täydellinen
+  päästä irti ennen harjaa, niin lauta keventyy ja lentää dyynin harjalta
+  (harjalta irtoaa vain riittävällä vauhdilla, ja pohjassa pidetty lauta pysyy
+  maassa). Ylämäessä pohjassa pito ei jarruta, jotta myöhäinenkin irtipäästö
+  riittää. Ylämäkeen laskeutuminen töksähtää; alamäkeen osuva lasku on täydellinen
   (kipinät, lisää vauhtia). Hiekkamyrsky seuraa takana, ja yläreunan mittari
   näyttää prinsessan, myrskyn ja keitaat: kiinni saanut myrsky vie sydämen ja
   puuska heittää eteenpäin. Kolme arvottua osuutta (6, 8 ja 9 dyyniä), joiden
@@ -691,7 +692,7 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   sormella kuten Sienipompussa.
 - Kuunsäde: napauta peiliä kääntääksesi sitä; napautus koihin häätää sen.
 - Dyynilasku: pidä pohjassa alamäessä (raskas lauta kiihtyy), päästä irti
-  ylämäessä (lauta lentää harjalta). Keitaalta liikkeelle painamalla.
+  ennen harjaa (lauta lentää harjalta). Keitaalta liikkeelle painamalla.
 - Aarrevarpu: vedä sormea hiekalla (varpu jättää lämpöjäljen), pidä sormi
   paikallaan kaivaaksesi.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
@@ -879,7 +880,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Tulikärpässieppo: kierrokset `CATCH_ROUNDS` (paikat, tulikärpäset, nopeus, koit, välkkyminen, järjestys, koiden hakeutuminen `chase`), haavin vähimmäisnopeus `CATCH_NET_SPEED`, nappaussäteet `CATCH_HIT` / `CATCH_MOTH_HIT`
 - Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
 - Kuunsäde: kierrokset `BEAM_ROUNDS` (ruudukko, reitin peilit, kukat, hämäyspeilit, kivet, bonuskärpäset, kuun laskuaika `time`, koin väli `moth`), säteen kasvunopeus `BEAM_GROW`, kukkien hehkuaika `BEAM_HOLD`; arvonta `beamTryGenerate` tarkistaa, että ratkaisu toimii eikä alkuasento ratkaise
-- Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); mitoitus botilla: 0,1 s viive ~35 s ilman osumia, 0,3 s ~2 sydäntä, painamatta keskimäärin yksi osuus uusiksi
+- Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, irtoamisherkkyys `DUNE_LIFT`, ylämäen jarrutus pohjassa `DUNE_UPHILL_BRAKE`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); mitoitus botilla (yli 0,3 s lennot): 0,1 s viive ~18 lentoa ja ~35 s ilman osumia, 0,45 s ~14 lentoa, 0,6 s ~6 lentoa, painamatta keskimäärin 0,8 osuutta uusiksi
 - Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
