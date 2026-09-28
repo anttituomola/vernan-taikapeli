@@ -547,8 +547,8 @@ on rauhallisempi ajattelupulma ennen vartijaa (uusi verbi **kääntö**).
 Mantereen kolmas paikka, aavikko keitaineen itärannalla. Aukeaa, kun
 Hohtometsän vartija Varjoperhonen on läpäisty. Hiekkamyrsky on hajottanut
 karavaanin, ja prinsessa kulkee dyynien yli keitaalta toiselle ja etsii
-haudatut aarteet. Sokkelossa on kaksi usvahuonetta tuleville kentille (toinen
-niistä vartijalle); siihen asti Aarrevarpu avaa seuraavan paikan.
+haudatut aarteet. Vartija Hiekkapyörre yhdistää alueen kaksi verbiä, liu'un ja
+etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentälle.
 
 - **Dyynilasku** ♥ — uusi verbi: **liuku**. Prinsessa laskee hiekkalaudalla
   itään. Pidä pohjassa, niin lauta painuu raskaaksi ja kiihtyy alamäessä;
@@ -580,6 +580,21 @@ niistä vartijalle); siihen asti Aarrevarpu avaa seuraavan paikan.
   kantama, ja viimeisellä kierroksella tuulenpuuskat pyyhkivät jäljen.
   Säästyneet kaivut lentävät aurinkokivinä HUD:iin. Ketulle, kaktuksille ja
   kiville voi napauttaa. Tehtävät: maksa, kummalla enemmän.
+- **Hiekkapyörre** ♥ — vartija, joka yhdistää **liu'un ja etsinnän**.
+  Kiukkuinen pyörremyrsky hajotti karavaanin ja hautasi sen taikalampun. Joka
+  kierros alkaa liu'ulla: pyörre ajaa takaa arvotuilla dyyneillä (kiinni
+  jääminen ja kaktukset vievät sydämen). Keitaalla alkaa etsintä: varpu ja
+  lämpöjälki kuten Aarrevarvussa, ja Fenni kaivaa. Pyörre leijuu taivaanrannassa
+  ja kerää voimaa (rengas sen ympärillä, viimeinen neljännes punaisena): kun
+  rengas täyttyy, se puhaltaa, vie sydämen ja hautaa lampun uuteen paikkaan.
+  Skorpionit pistävät. Löydetty lamppu nousee ja ampuu valonsäteen pyörteeseen,
+  joka kutistuu. Kolme kierrosta: 4 / 5 / 6 dyyniä, pyörteen nopeus 0,42 / 0,48 /
+  0,55 ruutua/s, 1 / 2 / 2 kaktusta, 1 / 2 / 3 skorpionia, lyhenevä lämmön
+  kantama ja puhallusväli 20 / 17 / 14 s; kahdella viimeisellä tuulenpuuskat
+  haalistavat jäljen. Sydänten loppuessa vaihe alkaa alusta (liuku radan
+  alusta, etsintä uudella lampulla). Kolmas osuma rauhoittaa pyörteen
+  lempeäksi tuulihengeksi, ja karavaanin kameli palaa. Pyörteeseen ja kettuun
+  voi napauttaa. Tehtävät osumien välissä: lajittele, muistiloitsu 5/4.
 
 ### Linnan sisustus
 
@@ -695,6 +710,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   ennen harjaa (lauta lentää harjalta). Keitaalta liikkeelle painamalla.
 - Aarrevarpu: vedä sormea hiekalla (varpu jättää lämpöjäljen), pidä sormi
   paikallaan kaivaaksesi.
+- Hiekkapyörre: liukuvaiheessa kuten Dyynilaskussa, etsintävaiheessa kuten
+  Aarrevarvussa.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -882,6 +899,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Kuunsäde: kierrokset `BEAM_ROUNDS` (ruudukko, reitin peilit, kukat, hämäyspeilit, kivet, bonuskärpäset, kuun laskuaika `time`, koin väli `moth`), säteen kasvunopeus `BEAM_GROW`, kukkien hehkuaika `BEAM_HOLD`; arvonta `beamTryGenerate` tarkistaa, että ratkaisu toimii eikä alkuasento ratkaise
 - Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, irtoamisherkkyys `DUNE_LIFT`, ylämäen jarrutus pohjassa `DUNE_UPHILL_BRAKE`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); mitoitus botilla (yli 0,3 s lennot): 0,1 s viive ~18 lentoa ja ~35 s ilman osumia, 0,45 s ~14 lentoa, 0,6 s ~6 lentoa, painamatta keskimäärin 0,8 osuutta uusiksi
 - Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
+- Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (dyynit, korkeus, pyörteen nopeus, kaktukset, lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`), dyynin leveys `WHIRL_HALF`, pyörteen etäisyys `WHIRL_LAG` / kiinnijäänti `WHIRL_CATCH`; liuku- ja etsintävakiot tulevat Dyynilaskusta ja Aarrevarvusta (`DUNE_*`, `DOWSE_*`). Mitoitus botilla: pyyhkivä botti 0,3–0,45 s viiveellä voittaa ~65–72 s:ssa ja menettää 1–3 sydäntä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas

@@ -315,7 +315,7 @@ function updateDowse(dt) {
   }
   if (dowse.gust > 0) {
     dowse.gust -= dt;
-    for (i = 0; i < dowse.trail.length; i++) { dowse.trail[i].x += W * 0.3 * dt; dowse.trail[i].t -= dt * 4; }
+    for (i = 0; i < dowse.trail.length; i++) { dowse.trail[i].x += W * 0.02 * dt; dowse.trail[i].t -= dt * 4; }
   }
   // Jälki haalistuu
   for (i = dowse.trail.length - 1; i >= 0; i--) {

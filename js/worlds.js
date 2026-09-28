@@ -1129,14 +1129,14 @@ var WORLDS = [
     // Aurinkodyynit: mantereen kolmas paikka, aavikko keitaineen itärannalla.
     // Hiekkamyrsky on hajottanut karavaanin; prinsessa kulkee dyynien yli.
     id: 12, name: 'Aurinkodyynit', region: 'land', band: 'desert',
-    place: { fx: 0.84, fy: 0.64, size: 0.85, finaleKind: 'dowse', deco: ['dune', 'dowse'] },
+    place: { fx: 0.84, fy: 0.64, size: 0.85, finaleKind: 'whirl', deco: ['dune', 'dowse', 'whirl'] },
     map: [
       '###########',
       '#B.......D#',
       '#########.#',
       '#A........#',
       '#.#########',
-      '#........?#',
+      '#........V#',
       '#########.#',
       '#?........#',
       '###########'
@@ -1167,6 +1167,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderDowseBg(b, w, h); },
         light: { rays: true, raysColor: '#fff0b0', raysAlpha: 0.4, tint: ['rgba(255,200,120,0.06)', 'rgba(255,150,80,0.05)'], vignette: 0.3 },
         respawn: function () { respawnDowse(); }
+      },
+      {
+        kind: 'whirl', room: 'V', name: 'Hiekkapyörre', color: '#c89060', script: 'play-whirl',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6500,
+        bgColor: '#e89a5a', ambient: 'sparkle', fg: null,
+        init: function () { initWhirl(); },
+        update: function (dt) { updateWhirl(dt); },
+        draw: function () { drawWhirl(); },
+        tap: function (x, y) { handleWhirlTap(x, y); },
+        resize: function () { resizeWhirl(); },
+        renderBg: function (b, w, h) { renderWhirlBg(b, w, h); },
+        light: { rays: true, raysColor: '#ffd0a0', raysAlpha: 0.45, tint: ['rgba(255,160,90,0.08)', 'rgba(255,120,60,0.06)'], vignette: 0.35 },
+        respawn: function () { respawnWhirl(); }
       }
     ]
   }
