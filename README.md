@@ -493,8 +493,8 @@ vartija Tulivuoren jätti on läpäisty. Varjoperhonen on vienyt tulikärpästen
 valot, ja prinsessa kerää ne takaisin. Kaksi uutta verbiä, **pomppu** ja
 **sipaisu**, ja vartija yhdistää ne. Vaikeus on mitoitettu Tulivuoren jätin
 tasolle (palaute: se oli juuri lapsen ylärajalla); välikenttä on hieman
-helpompi. Kaikki kentät arvotaan joka peluukerralla. Sokkelon lopussa on
-usvahuone tulevalle kentälle.
+helpompi. Kaikki kentät arvotaan joka peluukerralla. Neljäs kenttä, Kuunsäde,
+on rauhallisempi ajattelupulma ennen vartijaa (uusi verbi **kääntö**).
 
 - **Sienipomppu** ♥ — uusi verbi: **pomppu**. Prinsessa pomppii itsestään
   sienten hatuilla ylöspäin kohti Kuukukkaa, ja sormi ohjaa sivuttain
@@ -517,6 +517,18 @@ usvahuone tulevalle kentälle.
   valoa kohti. Neljä kierrosta: yksi arvottu väri, toinen väri, välkkyvät
   tulikärpäset (pimeänä ei voi napata) ja lopuksi värit järjestyksessä.
   Sydänten loppuessa kierros alkaa alusta. Tehtävät: erilainen, järjestys.
+- **Kuunsäde** — uusi verbi: **kääntö**. Kuukivi kerää kuun valon ja lähettää
+  säteen kivilaattojen yli. Napautus kääntää kristallipeiliä (/ ↔ \), ja säde
+  kimpoaa peileistä; kivet pysäyttävät sen. Kun säde sytyttää kaikki kuukukat
+  yhtä aikaa, kierros on valmis. Neljä arvottua, kovenevaa kierrosta: 4×3
+  ruudukko, 2 peiliä ja 1 kukka; 5×4, 3 peiliä, 2 kukkaa, hämäyspeili ja kivi;
+  5×4, 4 peiliä ja varjokoi; 6×4, 5 peiliä ja 3 kukkaa. Toisesta kierroksesta
+  alkaen kuu laskee (70 / 65 / 60 s, aikakaari kuun ympärillä, viimeiset 10 s
+  oranssina): jos se ehtii laskea, pilvi peittää kuun ja kierros arvotaan
+  uudestaan. Kolmannesta kierroksesta alkaen varjokoi lentää säteellä olevan
+  peilin päälle ja pimentää säteen; napautus häätää sen. Nukkuvat tulikärpäset
+  ovat bonuksia: ne heräävät, kun säde kulkee niiden kautta (yleensä vain jollain
+  muulla peiliasennolla). Ei sydämiä. Tehtävät: reitti, vähennys.
 - **Varjoperhonen** ♥ — vartija, joka yhdistää **sipaisun ja pompun**. Joka
   kierros alkaa parvella: perhonen lähettää varjokoita hohtokuplassa seisovaa
   prinsessaa kohti, ja sipaisu hajottaa ne (koit väistävät lähestyvää haavia;
@@ -639,6 +651,7 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   pysyvä sormi ei nappaa.
 - Varjoperhonen: parven aikana sipaise koit pois, syöksyn aikana ohjaa pomppua
   sormella kuten Sienipompussa.
+- Kuunsäde: napauta peiliä kääntääksesi sitä; napautus koihin häätää sen.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -823,6 +836,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Sienipomppu: osiot `BOUNCE_SECTIONS` (sienimäärä, pystyväli `dy`, sivusiirtymä `dx`, liikkuvien/lakastuvien osuus, takiaiset, reaktioaika `react`), pompun korkeus `BOUNCE_APEX` / jousi `BOUNCE_SPRING`, painovoima `BOUNCE_G`, ohjaus `BOUNCE_K` / `BOUNCE_D` / `BOUNCE_VMAX`; hyppyjen ulottuvuus `bounceReachable`
 - Tulikärpässieppo: kierrokset `CATCH_ROUNDS` (paikat, tulikärpäset, nopeus, koit, välkkyminen, järjestys, koiden hakeutuminen `chase`), haavin vähimmäisnopeus `CATCH_NET_SPEED`, nappaussäteet `CATCH_HIT` / `CATCH_MOTH_HIT`
 - Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
+- Kuunsäde: kierrokset `BEAM_ROUNDS` (ruudukko, reitin peilit, kukat, hämäyspeilit, kivet, bonuskärpäset, kuun laskuaika `time`, koin väli `moth`), säteen kasvunopeus `BEAM_GROW`, kukkien hehkuaika `BEAM_HOLD`; arvonta `beamTryGenerate` tarkistaa, että ratkaisu toimii eikä alkuasento ratkaise
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas

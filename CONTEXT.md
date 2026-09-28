@@ -59,6 +59,11 @@ Hohtometsän verbi: liikkuva sormi vetää hohtavaa haavia, joka nappaa
 tulikärpäsiä ja hajottaa varjokoita. Paikallaan oleva sormi ei nappaa.
 _Vältä_: pyyhkäisy, veto, raahaus (raahaus siirtää esinettä)
 
+**Kääntö**:
+Kuunsäteen verbi: napautus kääntää kristallipeiliä neljänneskierroksen, ja
+kuunsäde kimpoaa peilistä uuteen suuntaan.
+_Vältä_: pyöritys, rotaatio (pyöritys on jatkuva liike)
+
 **Liekki**:
 Tulilennon tulihengityksen varanto: kolme liekkiä, joista puhallus kuluttaa
 yhden; liekit palautuvat ajan kanssa ja tulimarja täyttää ne. Tulinappi on

@@ -1065,9 +1065,9 @@ var WORLDS = [
       '#########.#',
       '#K........#',
       '#.#########',
-      '#........V#',
+      '#........L#',
       '#########.#',
-      '#?........#',
+      '#V........#',
       '###########'
     ],
     levels: [
@@ -1096,6 +1096,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderCatchBg(b, w, h); },
         light: { rays: true, raysColor: '#d8e8ff', raysAlpha: 0.22, tint: ['rgba(20,30,80,0.12)', 'rgba(120,255,220,0.05)'], vignette: 0.42 },
         respawn: function () { respawnCatch(); }
+      },
+      {
+        kind: 'beam', room: 'L', name: 'Kuunsäde', color: '#bfe8ff', script: 'play-beam',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#080c30', ambient: 'sparkle', fg: null,
+        init: function () { initBeam(); },
+        update: function (dt) { updateBeam(dt); },
+        draw: function () { drawBeam(); },
+        tap: function (x, y) { handleBeamTap(x, y); },
+        resize: function () { resizeBeam(); },
+        renderBg: function (b, w, h) { renderBeamBg(b, w, h); },
+        light: { rays: true, raysColor: '#d8e8ff', raysAlpha: 0.25, tint: ['rgba(20,30,80,0.12)', 'rgba(160,220,255,0.05)'], vignette: 0.45 },
+        respawn: function () { respawnBeam(); }
       },
       {
         kind: 'moth', room: 'V', name: 'Varjoperhonen', color: '#6a4a9a', script: 'play-moth',
