@@ -601,7 +601,8 @@ etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentä
 Mantereen neljäs paikka, pupujen vihreät kummut etelärannalla. Aukeaa, kun
 Aurinkodyynien vartija Hiekkapyörre on läpäisty. Syntyi palautteesta:
 reittitehtävän pupun ohjaus oli mieluisa, joten siitä tehtiin isompi ja
-haastavampi oma kenttä. Sokkelossa on kolme usvahuonetta tuleville kentille.
+haastavampi oma kenttä, ja Kuunsäteen peilipulmasta värimuunnelma. Sokkelossa
+on kaksi usvahuonetta tuleville kentille.
 
 - **Pupupolku** — uusi verbi: **ohjelmointi**. Napauta nuolia ohjelmariville ja
   paina ▶: pupu hyppii ohjelman askel kerrallaan (käynnissä oleva ruutu
@@ -618,6 +619,20 @@ haastavampi oma kenttä. Sokkelossa on kolme usvahuonetta tuleville kentille.
   Ensimmäisellä ajolla onnistunut kierros antaa kultaisen porkkanan (HUD).
   Ensimmäisellä kierroksella käsi näyttää kaksi ensimmäistä nuolta ja ▶:n.
   Ei sydämiä. Pupuun ja porkkanoihin voi napauttaa. Tehtävät: lasku, vähennys.
+- **Värisäde** — Kuunsäteen muunnelma **värilaseilla**. Aurinkokivi lähettää
+  valkoisen säteen, ja peiliä käännetään napauttamalla kuten Kuunsäteessä.
+  Värilasit ovat kiinteitä: säde saa lasin värin, ja kaksi eri lasia sekoittaa
+  värit kuten Taikakeittiössä (punainen + keltainen = oranssi, punainen +
+  sininen = violetti, keltainen + sininen = vihreä, kaikki kolme = ruskea).
+  Kukat ovat värillisiä ja aukeavat vain oman värisestä valosta; väärän värinen
+  valo saa kukan värisemään. Neljä arvottua, kovenevaa kierrosta: 4×4, yksi
+  lasi ja kukka; 5×4, kaksi lasia (sekoitus) ja kaksi eriväristä kukkaa;
+  5×5, neljä peiliä ja kimalainen; 6×5, viisi peiliä ja kolme kukkaa.
+  Hämäyslasit ja -peilit reitin ulkopuolella. Toisesta kierroksesta alkaen
+  aurinko laskee (75 / 70 / 65 s): pilvi peittää sen ja kierros arvotaan
+  uudestaan. Kimalainen istuu säteellä olevalle peilille ja varjostaa säteen;
+  napautus häätää sen. Perhoset lepäävät ruuduissa bonuksena. Laseihin,
+  kukkiin ja kiviin voi napauttaa. Tehtävät: sekoita väri (sekavärit), lasku.
 
 ### Linnan sisustus
 
@@ -737,6 +752,7 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
   Aarrevarvussa.
 - Pupupolku: napauta nuolia ohjelmariville (×2 / ×3 kertaa viimeisen), ▶ ajaa;
   rivin ruudun napautus poistaa sen.
+- Värisäde: napauta peiliä kääntääksesi sitä; napautus kimalaiseen häätää sen.
 - Puutarha, lampi, luola, finaali, karkkilaakso ja torni: pidä pohjassa
   juostaksesi, **↑** hyppää, lyhyt napautus ampuu sauvalla (missä sauva on).
 - Hyppy myös **toisella sormella**: kun yksi sormi juoksee, napautus millä
@@ -926,6 +942,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
 - Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (dyynit, korkeus, pyörteen nopeus, kaktukset, lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`), dyynin leveys `WHIRL_HALF`, pyörteen etäisyys `WHIRL_LAG` / kiinnijäänti `WHIRL_CATCH`; liuku- ja etsintävakiot tulevat Dyynilaskusta ja Aarrevarvusta (`DUNE_*`, `DOWSE_*`). Mitoitus botilla: pyyhkivä botti 0,3–0,45 s viiveellä voittaa ~65–72 s:ssa ja menettää 1–3 sydäntä
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
+- Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
 
 ## Tyyliopas
