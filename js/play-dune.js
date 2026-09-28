@@ -16,20 +16,25 @@
 // hills: dyynejä, half: puolikkaan leveys × viewW, amp: korkeus × viewH,
 // storm: myrskyn nopeus × viewW / s, cacti: kaktuksia harjojen takana
 var DUNE_SECTIONS = [
-  { hills: 6, half: [0.42, 0.6], amp: [0.13, 0.2], storm: 0.34, cacti: 0 },
-  { hills: 8, half: [0.38, 0.58], amp: [0.15, 0.24], storm: 0.4, cacti: 1 },
-  { hills: 9, half: [0.36, 0.58], amp: [0.17, 0.28], storm: 0.46, cacti: 2 }
+  { hills: 6, half: [0.42, 0.6], amp: [0.13, 0.2], storm: 0.32, cacti: 1 },
+  { hills: 8, half: [0.38, 0.58], amp: [0.15, 0.24], storm: 0.38, cacti: 3 },
+  { hills: 9, half: [0.36, 0.58], amp: [0.17, 0.28], storm: 0.44, cacti: 4 }
 ];
-var DUNE_G = 1.5;           // painovoima × viewH / s² (sormi irti)
-var DUNE_G_HOLD = 4.2;      // painovoima pohjassa pitäessä (raskas lauta)
+// Tahti: painovoima ja nopeudet on skaalattu hitaammiksi (aikakerroin 0,68 alkuperäisestä:
+// painovoima × 0,68², nopeudet × 0,68), jolloin lentoradat pysyvät samoina mutta kaikki
+// tapahtuu rauhallisemmin. Palaute 28.9.2026: kenttä meni hyppyjen onnistuessa liian nopeasti.
+var DUNE_G = 0.694;         // painovoima × viewH / s² (sormi irti)
+var DUNE_G_HOLD = 1.942;    // painovoima pohjassa pitäessä (raskas lauta)
 // Irtoamisen herkkyys, kun sormi on irti: harjalta irtoaa, kun kaarevuuden vaatima
 // voima ylittää tämän osuuden painovoimasta (1 = fysikaalinen, pienempi = helpompi)
-var DUNE_LIFT = 0.8;
-var DUNE_UPHILL_BRAKE = 0;   // 0 = pohjassa pito ei jarruta ylämäessä, 1 = jarruttaa täysin
-// (1:llä myöhään irti päästävä ei lentänyt koskaan: 0,45 s viiveen botti 0 lentoa)
-var DUNE_VMIN = 0.2;        // pienin vauhti maassa × viewW / s (ei jää jumiin notkoon)
-var DUNE_VMAX = 1.5;        // suurin vauhti × viewW / s
-var DUNE_DRAG = 0.04;       // kitka (osuus / s)
+var DUNE_LIFT = 0.6;
+// Ylämäessä pohjassa pito jarruttaa (0 = ei lainkaan, 1 = täysi raskas lauta). 0:lla koko
+// kentän pystyi paahtamaan läpi sormi pohjassa hyppäämättä; 1:llä myöhään irti päästävä ei
+// lentänyt koskaan. 0,75 ja herkempi irtoaminen: paahtaja menettää osuuden, 0,45 s viive lentää.
+var DUNE_UPHILL_BRAKE = 0.75;
+var DUNE_VMIN = 0.136;      // pienin vauhti maassa × viewW / s (ei jää jumiin notkoon)
+var DUNE_VMAX = 1.02;       // suurin vauhti × viewW / s
+var DUNE_DRAG = 0.09;       // kitka maassa (osuus / s); ilmassa ei kitkaa, joten lento säilyttää vauhdin
 var DUNE_PERFECT = 0.35;    // täydellinen lasku: kulma radan ja rinteen välillä (rad)
 var DUNE_STORM_LAG = 0.9;   // myrsky pysyy enintään näin kaukana takana × viewW
 var DUNE_STORM_HIT = 0.08;  // myrsky saa kiinni, kun väli on alle tämän × viewW
@@ -165,7 +170,7 @@ function duneSeed() {
   var p, s, sec, dt = 1 / 120, n, flights = [], cur = null, i, f, W = viewW, h = viewH, g, ev;
   for (s = 0; s < dune.secs.length; s++) {
     sec = dune.secs[s];
-    p = { x: s === 0 ? W * 0.3 : dune.secs[s - 1].rest, y: 0, vx: 0.35 * W, vy: 0, ground: true };
+    p = { x: s === 0 ? W * 0.3 : dune.secs[s - 1].rest, y: 0, vx: 0.24 * W, vy: 0, ground: true };
     p.y = duneY(p.x);
     flights = [];
     cur = null;
@@ -199,8 +204,10 @@ function duneSeed() {
     for (i = cand.length - 1; i > 0; i--) { var k2 = Math.floor(Math.random() * (i + 1)), tmp = cand[i]; cand[i] = cand[k2]; cand[k2] = tmp; }
     for (i = 0; i < cand.length && placed < sec.cacti; i++) {
       f = cand[i];
-      var mid = f.pts[Math.floor(f.pts.length * 0.45)];
-      if (!mid || mid.gy - mid.y < h * 0.12) continue;
+      // Kaktus lennon korkeimman kohdan alle (vähintään 0,13 viewH maan yllä)
+      var mid = null;
+      f.pts.forEach(function (q) { if (!mid || q.gy - q.y > mid.gy - mid.y) mid = q; });
+      if (!mid || mid.gy - mid.y < h * 0.13) continue;
       if (dune.cacti.some(function (c) { return Math.abs(c.x - mid.x) < W * 0.6; })) continue;
       dune.cacti.push({ x: mid.x, sec: s, hit: 0 });
       placed++;
@@ -261,7 +268,7 @@ function duneGo() {
   var p = dune.p;
   dune.state = 'ride';
   dune.t = 0;
-  p.vx = 0.35 * viewW;
+  p.vx = 0.24 * viewW;
   dune.storm = p.x - viewW * DUNE_STORM_LAG;
   playNote(523, 0, 0.1, 'triangle', 0.3);
   playNote(784, 0.08, 0.16, 'triangle', 0.3);
@@ -332,9 +339,9 @@ function updateDune(dt) {
   var camT = p.x - W * (0.3 - Math.min(0.08, p.vx / W * 0.05));
   dune.cam += (camT - dune.cam) * Math.min(1, dt * 5);
   // Hiekkaa lentää laudan alta vauhdissa
-  if (p.ground && p.vx > W * 0.6 && Math.random() < dt * 25) spawnDust(p.x, p.y, 1, 1);
+  if (p.ground && p.vx > W * 0.41 && Math.random() < dt * 25) spawnDust(p.x, p.y, 1, 1);
   // Jälki
-  dune.trail.push({ x: p.x, y: p.y, t: globalT, fast: p.vx > W * 0.95 });
+  dune.trail.push({ x: p.x, y: p.y, t: globalT, fast: p.vx > W * 0.65 });
   while (dune.trail.length && globalT - dune.trail[0].t > 0.35) dune.trail.shift();
   if (!p.ground) {
     dune.windT -= dt;
@@ -374,8 +381,8 @@ function updateDune(dt) {
     artShakeStart(h * 0.015, 0.4);
     playNote(140, 0, 0.3, 'sawtooth', 0.12);
     // Puuska heittää eteenpäin ja myrsky jää hetkeksi
-    p.vx = Math.max(p.vx, W * 0.6);
-    if (p.ground) { p.ground = false; p.vy = -h * 0.5; }
+    p.vx = Math.max(p.vx, W * 0.41);
+    if (p.ground) { p.ground = false; p.vy = -h * 0.34; }
     dune.storm = p.x - W * 0.55;
     loseHeart();
     if (dune.state !== 'ride') return;

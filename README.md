@@ -554,14 +554,17 @@ etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentä
   itään. Pidä pohjassa, niin lauta painuu raskaaksi ja kiihtyy alamäessä;
   päästä irti ennen harjaa, niin lauta keventyy ja lentää dyynin harjalta
   (harjalta irtoaa vain riittävällä vauhdilla, ja pohjassa pidetty lauta pysyy
-  maassa). Ylämäessä pohjassa pito ei jarruta, jotta myöhäinenkin irtipäästö
-  riittää. Ylämäkeen laskeutuminen töksähtää; alamäkeen osuva lasku on täydellinen
+  maassa). Ylämäessä pohjassa pito jarruttaa, joten kenttää ei voi paahtaa
+  läpi sormi pohjassa: vauhti säilyy vain lentämällä (ilmassa ei kitkaa) ja
+  täydellisillä laskuilla. Tahti on rauhallinen (huippuvauhti noin ruutu
+  sekunnissa). Ylämäkeen laskeutuminen töksähtää; alamäkeen osuva lasku on täydellinen
   (kipinät, lisää vauhtia). Hiekkamyrsky seuraa takana, ja yläreunan mittari
   näyttää prinsessan, myrskyn ja keitaat: kiinni saanut myrsky vie sydämen ja
   puuska heittää eteenpäin. Kolme arvottua osuutta (6, 8 ja 9 dyyniä), joiden
   lopussa on keidas: sydämet täyttyvät, ja matka jatkuu painamalla. Osuudet
-  kovenevat: jyrkemmät dyynit, nopeampi myrsky (0,34 / 0,40 / 0,46 ruutua/s) ja
-  kaktukset harjojen takana (0 / 1 / 2; hyppää yli, osuma vie sydämen).
+  kovenevat: jyrkemmät dyynit, nopeampi myrsky (0,32 / 0,38 / 0,44 ruutua/s) ja
+  kaktukset harjojen takana (enintään 1 / 3 / 4, käytännössä 2–3 radalla;
+  hyppää yli, osuma vie sydämen).
   Aurinkokivet ovat bonuksia: osa notkoissa, osa korkeimpien lentojen
   lakipisteissä, jonne ylettää vain hyvällä ajoituksella. Sydänten loppuessa
   palataan edelliselle keitaalle. Tehtävät keitailla: anna N kappaletta, kello.
@@ -588,8 +591,8 @@ etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentä
   ja kerää voimaa (rengas sen ympärillä, viimeinen neljännes punaisena): kun
   rengas täyttyy, se puhaltaa, vie sydämen ja hautaa lampun uuteen paikkaan.
   Skorpionit pistävät. Löydetty lamppu nousee ja ampuu valonsäteen pyörteeseen,
-  joka kutistuu. Kolme kierrosta: 4 / 5 / 6 dyyniä, pyörteen nopeus 0,42 / 0,48 /
-  0,55 ruutua/s, 1 / 2 / 2 kaktusta, 1 / 2 / 3 skorpionia, lyhenevä lämmön
+  joka kutistuu. Kolme kierrosta: 5 / 6 / 7 dyyniä, pyörteen nopeus 0,33 / 0,38 /
+  0,43 ruutua/s, enintään 2 / 3 / 3 kaktusta, 1 / 2 / 3 skorpionia, lyhenevä lämmön
   kantama ja puhallusväli 20 / 17 / 14 s; kahdella viimeisellä tuulenpuuskat
   haalistavat jäljen. Sydänten loppuessa vaihe alkaa alusta (liuku radan
   alusta, etsintä uudella lampulla). Kolmas osuma rauhoittaa pyörteen
@@ -956,7 +959,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Tulikärpässieppo: kierrokset `CATCH_ROUNDS` (paikat, tulikärpäset, nopeus, koit, välkkyminen, järjestys, koiden hakeutuminen `chase`), haavin vähimmäisnopeus `CATCH_NET_SPEED`, nappaussäteet `CATCH_HIT` / `CATCH_MOTH_HIT`
 - Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
 - Kuunsäde: kierrokset `BEAM_ROUNDS` (ruudukko, reitin peilit, kukat, hämäyspeilit, kivet, bonuskärpäset, kuun laskuaika `time`, koin väli `moth`), säteen kasvunopeus `BEAM_GROW`, kukkien hehkuaika `BEAM_HOLD`; arvonta `beamTryGenerate` tarkistaa, että ratkaisu toimii eikä alkuasento ratkaise
-- Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, irtoamisherkkyys `DUNE_LIFT`, ylämäen jarrutus pohjassa `DUNE_UPHILL_BRAKE`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); mitoitus botilla (yli 0,3 s lennot): 0,1 s viive ~18 lentoa ja ~35 s ilman osumia, 0,45 s ~14 lentoa, 0,6 s ~6 lentoa, painamatta keskimäärin 0,8 osuutta uusiksi
+- Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, irtoamisherkkyys `DUNE_LIFT`, ylämäen jarrutus pohjassa `DUNE_UPHILL_BRAKE`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); kaktus lennon korkeimman kohdan alle (vähintään 0,13 viewH). Mitoitus botilla 28.9.2026 (yli 0,3 s lennot, 6 peliä): sormi aina pohjassa ~75 s, ~6 myrsky- tai kaktusosumaa ja 1,3 osuutta uusiksi (ei voi paahtaa); 0,1 s viive ~52 s, 18 lentoa, ei osuuksia uusiksi; 0,3 s ~55 s; 0,45 s ~59 s, 13 lentoa, 0,5 osuutta uusiksi; painamatta ~57 s, 0,7 osuutta uusiksi. Hiekkapyörteen liukuvaiheissa sormi pohjassa menettää 1,3 kolmesta
 - Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
 - Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (dyynit, korkeus, pyörteen nopeus, kaktukset, lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`), dyynin leveys `WHIRL_HALF`, pyörteen etäisyys `WHIRL_LAG` / kiinnijäänti `WHIRL_CATCH`; liuku- ja etsintävakiot tulevat Dyynilaskusta ja Aarrevarvusta (`DUNE_*`, `DOWSE_*`). Mitoitus botilla: pyyhkivä botti 0,3–0,45 s viiveellä voittaa ~65–72 s:ssa ja menettää 1–3 sydäntä
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
