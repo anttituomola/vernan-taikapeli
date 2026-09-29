@@ -71,6 +71,7 @@ function makeSandbox() {
     },
     localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
     requestAnimationFrame: () => 1,
+    setTimeout: () => 1, clearTimeout() {}, setInterval: () => 1, clearInterval() {},
     performance: { now: () => 0 },
     innerWidth: 800, innerHeight: 600, devicePixelRatio: 1,
     location: { search: '', href: 'http://localhost/' },
