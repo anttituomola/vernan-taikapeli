@@ -60,8 +60,8 @@ tulikärpäsiä ja hajottaa varjokoita. Paikallaan oleva sormi ei nappaa.
 _Vältä_: pyyhkäisy, veto, raahaus (raahaus siirtää esinettä)
 
 **Liuku**:
-Aurinkodyynien verbi: pohjassa pitäminen painaa hiekkalaudan raskaaksi
-alamäessä, ja irti päästäminen ennen harjaa keventää sen lentoon.
+Aurinkodyynien verbi: hiekkalauta liukuu itsestään, ja napautus hyppää
+esteen yli (lyhyt napautus matala hyppy, pohjassa pitäminen korkea ja pitkä).
 _Vältä_: lasku (lasku on laskutehtävä), liito (liito on Kotkalennon lento)
 
 **Etsintä**:

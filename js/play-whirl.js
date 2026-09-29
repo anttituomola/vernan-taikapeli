@@ -3,8 +3,9 @@
 // Hiekkapyörre (Kaukamaa, Aurinkodyynit): alueen vartija. Yhdistää alueen kaksi
 // verbiä: LIUKU (Dyynilasku) ja ETSINTÄ (Aarrevarpu). Kiukkuinen pyörremyrsky
 // hajotti karavaanin ja hautasi sen taikalampun. Joka kierroksessa:
-//  1) Liuku: pyörre ajaa takaa dyyneillä. Pidä pohjassa alamäessä, päästä irti
-//     ennen harjaa. Kiinni saanut pyörre ja kaktukset vievät sydämen.
+//  1) Liuku: lauta liukuu itsestään ja pyörre ajaa takaa. Napautus hyppää
+//     (pohjassa korkeammalle) kaktusten, skorpionien ja juoksuhiekan yli.
+//     Törmäys vie sydämen ja hidastaa; kiinni saanut pyörre vie sydämen.
 //  2) Etsintä: keitaalla pyörre on haudannut lampun hiekkaan. Taikavarpu jättää
 //     lämpöjäljen, paikallaan pito lähettää Fenni-ketun kaivamaan. Pyörre kerää
 //     voimaa (rengas sen ympärillä): kun rengas täyttyy, se puhaltaa, vie sydämen
@@ -13,25 +14,22 @@
 // Kolme kierrosta: pidempi rata, nopeampi pyörre, enemmän kaktuksia ja
 // skorpioneja, lyhyempi lämmön kantama ja lyhyempi puhallusväli. Kolmas osuma
 // rauhoittaa pyörteen lempeäksi tuulihengeksi. Tehtävät osumien välissä.
-// Liukuvaihe lainaa Dyynilaskun maaston, laudan ja kameran (dune-olio ja
-// duneStep/duneY/drawDuneGround): vain yksi kenttä on kerrallaan käynnissä.
+// Liukuvaihe lainaa Dyynilaskun maaston, laudan, kameran ja esteet (dune-olio,
+// duneRideFrame/duneBuildObstacles/drawDuneGround): vain yksi kenttä on kerrallaan käynnissä.
 
-// hills: dyynejä, amp: korkeus × viewH, speed: pyörteen nopeus × viewW / s,
-// cacti: kaktuksia, range: lämmön kantama × viewW, scorp: skorpioneja,
+// hills, half, amp: dyynit; speed: liukuvauhti × viewW / s; obs, kinds, gap: esteet
+// (kuten DUNE_SECTIONS); range: lämmön kantama × viewW, scorp: skorpioneja,
 // charge: puhalluksen latausaika (s), gust: tuulenpuuskan väli (s, 0 = ei)
 var WHIRL_ROUNDS = [
-  { hills: 5, amp: [0.14, 0.2], speed: 0.33, cacti: 2, range: 0.5, scorp: 1, charge: 20, gust: 0 },
-  { hills: 6, amp: [0.16, 0.24], speed: 0.38, cacti: 3, range: 0.42, scorp: 2, charge: 17, gust: 7 },
-  { hills: 7, amp: [0.18, 0.27], speed: 0.43, cacti: 3, range: 0.36, scorp: 3, charge: 14, gust: 5 }
+  { hills: 5, half: [0.45, 0.7], amp: [0.04, 0.09], speed: 0.31, obs: 6, kinds: ['cactus', 'tall', 'scorp'], gap: [1.5, 2.1], range: 0.5, scorp: 1, charge: 20, gust: 0 },
+  { hills: 6, half: [0.42, 0.68], amp: [0.05, 0.1], speed: 0.34, obs: 8, kinds: ['cactus', 'tall', 'scorp', 'double'], gap: [1.4, 2.0], range: 0.42, scorp: 2, charge: 17, gust: 7 },
+  { hills: 7, half: [0.4, 0.65], amp: [0.05, 0.11], speed: 0.37, obs: 10, kinds: ['cactus', 'tall', 'scorp', 'double', 'pit'], gap: [1.3, 1.8], range: 0.36, scorp: 3, charge: 14, gust: 5 }
 ];
-var WHIRL_HALF = [0.38, 0.56];  // dyynin puolikkaan leveys × viewW
-var WHIRL_LAG = 0.85;           // pyörre pysyy enintään näin kaukana takana × viewW
-var WHIRL_CATCH = 0.1;          // kiinni, kun väli on alle tämän × viewW
 var WHIRL_FADE = 0.6;           // vaiheiden välinen häivytys (s)
 
 var whirl = {
   round: 0, hits: 0, phase: 'ride', state: 'rest', t: 0, fade: 0, fadeTo: null,
-  arenaX: 0, wx: 0, cacti: [], restT: 0, heldOnce: false,
+  arenaX: 0, wx: 0, obs: [], restT: 0, jumped: false,
   lamp: null, scorps: [], trail: [], holes: [], rod: { x: 0, y: 0, on: false, heat: 0, danger: 0 },
   stillT: 0, stillX: 0, stillY: 0, armed: true, fox: null, charge: 0, gustT: 0, gust: 0, blowT: 0,
   tickT: 0, dug: false, beamT: 0, hurtW: 0, wig: 0, calmT: 0, taskDelay: -1, gen: 0
@@ -39,48 +37,16 @@ var whirl = {
 
 // ---------- Liukuvaihe: rata ----------
 function whirlBuild() {
-  var W = viewW, h = viewH, R = WHIRL_ROUNDS[whirl.round], pts = [], x, k, base = h * DUNE_BASE, yP = h * DUNE_PLATEAU, amp, big = false;
+  var W = viewW, h = viewH, R = WHIRL_ROUNDS[whirl.round], pts = [], x, yP = h * DUNE_PLATEAU, i;
   pts.push({ x: -W * 1.5, y: yP });
   x = W * 0.55;
   pts.push({ x: x, y: yP });
-  for (k = 0; k < R.hills; k++) {
-    big = Math.random() < 0.55 ? !big : big;
-    amp = duneRand(R.amp) * h * (big ? 1 : 0.75);
-    x += duneRand(WHIRL_HALF) * W;
-    pts.push({ x: x, y: base - Math.random() * h * 0.03, valley: true });
-    x += duneRand(WHIRL_HALF) * W * (big ? 1 : 0.85);
-    pts.push({ x: x, y: base - amp, peak: true });
-  }
-  x += duneRand(WHIRL_HALF) * W;
-  pts.push({ x: x, y: base - Math.random() * h * 0.03, valley: true });
-  x += W * 0.6;
-  pts.push({ x: x, y: yP });
+  x = duneAddHills(pts, x, R.hills, R.half, R.amp, yP);
   whirl.arenaX = x;
   pts.push({ x: x + W * 3, y: yP });
   dune.pts = pts;
-  whirlSeedCacti(R);
-}
-// Kaktukset kohtiin, joiden yli hyvä lasku lentää reilusti (kuten Dyynilaskussa)
-function whirlSeedCacti(R) {
-  var W = viewW, h = viewH, p = { x: W * 0.3, y: 0, vx: 0.24 * W, vy: 0, ground: true }, dt = 1 / 120, n, ev, cur = null, flights = [], i, f;
-  p.y = duneY(p.x);
-  for (n = 0; n < 60 * 120 && p.x < whirl.arenaX; n++) {
-    ev = duneStep(p, duneBotHold(p), dt);
-    if (ev && ev.launch) cur = { pts: [] };
-    if (!p.ground && cur) cur.pts.push({ x: p.x, y: p.y, gy: duneY(p.x) });
-    if (ev && ev.land && cur) { if (cur.pts.length > 20) flights.push(cur); cur = null; }
-  }
-  for (i = flights.length - 1; i > 0; i--) { var k = Math.floor(Math.random() * (i + 1)), tmp = flights[i]; flights[i] = flights[k]; flights[k] = tmp; }
-  whirl.cacti = [];
-  for (i = 0; i < flights.length && whirl.cacti.length < R.cacti; i++) {
-    f = flights[i];
-    // Kaktus lennon korkeimman kohdan alle (vähintään 0,13 viewH maan yllä)
-    var mid = null;
-    f.pts.forEach(function (q) { if (!mid || q.gy - q.y > mid.gy - mid.y) mid = q; });
-    if (!mid || mid.gy - mid.y < h * 0.13) continue;
-    if (whirl.cacti.some(function (c) { return Math.abs(c.x - mid.x) < W * 0.6; })) continue;
-    whirl.cacti.push({ x: mid.x, hit: 0 });
-  }
+  whirl.obs = duneBuildObstacles(W * 0.55, whirl.arenaX, R, {});
+  for (i = 0; i < whirl.obs.length; i++) whirl.obs[i].intro = false;
 }
 function whirlRideStart() {
   var p = dune.p;
@@ -89,7 +55,7 @@ function whirlRideStart() {
   whirl.state = 'rest';
   whirl.t = 0;
   whirl.restT = 0;
-  p.x = viewW * 0.3; p.y = duneY(p.x); p.vx = 0; p.vy = 0; p.ground = true; p.ang = 0;
+  p.x = viewW * 0.3; p.y = duneY(p.x); p.vy = 0; p.ground = true; p.ang = 0; p.cut = false; p.slowT = 0; p.buf = 0;
   dune.cam = p.x - viewW * 0.3;
   dune.trail = [];
   whirl.wx = p.x - viewW * 1.1;
@@ -176,7 +142,7 @@ function initWhirl() {
   whirl.hits = 0;
   whirl.fade = 0;
   whirl.fadeTo = null;
-  whirl.heldOnce = false;
+  whirl.jumped = false;
   whirl.dug = false;
   whirl.beamT = 0;
   whirl.hurtW = 0;
@@ -199,7 +165,9 @@ function resizeWhirl() {
 function handleWhirlTap(px, py) {
   var f = whirl.fox, sp;
   if (whirl.phase === 'ride') {
-    if (whirl.state === 'rest' && !puzzleBusy() && whirl.taskDelay <= 0 && whirl.restT > 0.4 && !whirl.fadeTo) whirlGo();
+    if (puzzleBusy() || whirl.fadeTo) return;
+    if (whirl.state === 'rest') { if (whirl.taskDelay <= 0 && whirl.restT > 0.4) whirlGo(); }
+    else if (whirl.state === 'ride') { duneJump(dune.p); whirl.jumped = true; }
     return;
   }
   whirl.armed = true;
@@ -221,8 +189,8 @@ function whirlGo() {
   var p = dune.p;
   whirl.state = 'ride';
   whirl.t = 0;
-  p.vx = 0.24 * viewW;
-  whirl.wx = p.x - viewW * WHIRL_LAG;
+  p.slowT = 0;
+  whirl.wx = p.x - viewW * DUNE_STORM_LAG * 1.6;
   playNote(523, 0, 0.1, 'triangle', 0.3);
   playNote(784, 0.08, 0.16, 'triangle', 0.3);
 }
@@ -236,8 +204,7 @@ function updateWhirl(dt) {
   if (whirl.hurtW > 0) whirl.hurtW -= dt;
   if (whirl.wig > 0) whirl.wig -= dt;
   if (whirl.blowT > 0) whirl.blowT -= dt;
-  for (var i = 0; i < whirl.cacti.length; i++) if (whirl.cacti[i].hit > 0) whirl.cacti[i].hit -= dt;
-  for (i = 0; i < whirl.scorps.length; i++) if (whirl.scorps[i].out > 0) whirl.scorps[i].out -= dt;
+  for (var i = 0; i < whirl.scorps.length; i++) if (whirl.scorps[i].out > 0) whirl.scorps[i].out -= dt;
   busy = puzzleBusy();
   if (whirl.taskDelay > 0 && !busy) {
     whirl.taskDelay -= dt;
@@ -264,58 +231,28 @@ function updateWhirl(dt) {
 }
 
 function whirlUpdateRide(dt) {
-  var p = dune.p, W = viewW, h = viewH, R = WHIRL_ROUNDS[whirl.round], n, ev, i;
+  var p = dune.p, W = viewW, h = viewH, R = WHIRL_ROUNDS[whirl.round];
   if (whirl.state === 'rest') {
     whirl.restT += dt;
     return;
   }
   if (whirl.state === 'arrive') {
     var rest = whirl.arenaX + W * 0.45;
+    if (!p.ground) duneRunStep(p, dt, 0, false);
     p.x += (rest - p.x) * Math.min(1, dt * 3);
-    p.y = duneY(p.x);
+    if (p.ground) p.y = duneY(p.x);
     p.ang += (0 - p.ang) * Math.min(1, dt * 6);
     dune.cam += (p.x - W * 0.3 - dune.cam) * Math.min(1, dt * 3);
     whirl.wx += (p.x - W * 0.7 - whirl.wx) * Math.min(1, dt * 1.5);
     if (whirl.t > 1.2) { whirl.fadeTo = 'dig'; whirl.fade = 0; }
     return;
   }
-  if (holding) whirl.heldOnce = true;
-  for (n = 0; n < 4; n++) {
-    ev = duneStep(p, holding, dt / 4);
-    if (ev && ev.land) duneLanded(ev);
-    if (ev && ev.launch) playNote(660, 0, 0.12, 'sine', 0.18);
-  }
-  var ta = p.ground ? Math.atan(duneSlope(p.x)) : Math.atan2(p.vy, p.vx);
-  p.ang += (ta - p.ang) * Math.min(1, dt * (p.ground ? 14 : 5));
-  dune.cam += (p.x - W * (0.3 - Math.min(0.08, p.vx / W * 0.05)) - dune.cam) * Math.min(1, dt * 5);
-  if (p.ground && p.vx > W * 0.41 && Math.random() < dt * 25) spawnDust(p.x, p.y, 1, 1);
-  dune.trail.push({ x: p.x, y: p.y, t: globalT, fast: p.vx > W * 0.65 });
-  while (dune.trail.length && globalT - dune.trail[0].t > 0.35) dune.trail.shift();
-  // Kaktukset
-  for (i = 0; i < whirl.cacti.length; i++) {
-    var ca = whirl.cacti[i];
-    if (Math.abs(ca.x - p.x) < h * 0.05 && p.y > duneY(ca.x) - h * 0.09 && ca.hit <= 0 && hurtT <= 0) {
-      ca.hit = 0.6;
-      artShakeStart(h * 0.012, 0.3);
-      spawnSparkles(p.x, p.y - h * 0.05, 10, '#7ac25a');
-      p.vx *= 0.6;
-      loseHeart();
-      if (whirl.phase !== 'ride' || whirl.state !== 'ride') return;
-    }
-  }
-  // Pyörre ajaa takaa
-  whirl.wx += R.speed * W * dt;
-  whirl.wx = Math.max(whirl.wx, p.x - W * WHIRL_LAG);
-  if (p.x - whirl.wx < W * WHIRL_CATCH && hurtT <= 0) {
-    artShakeStart(h * 0.015, 0.4);
-    playNote(140, 0, 0.3, 'sawtooth', 0.12);
-    p.vx = Math.max(p.vx, W * 0.41);
-    if (p.ground) { p.ground = false; p.vy = -h * 0.34; }
-    whirl.wx = p.x - W * 0.5;
-    loseHeart();
-    if (whirl.phase !== 'ride' || whirl.state !== 'ride') return;
-  }
-  if (p.x >= whirl.arenaX + W * 0.05 && p.ground) {
+  // Liuku ja hypyt kuten Dyynilaskussa; pyörre on myrskyn paikalla
+  var so = { x: whirl.wx };
+  var ok = duneRideFrame(dt, R.speed * W, whirl.obs, [], so, function () { return whirl.phase === 'ride' && whirl.state === 'ride'; });
+  if (!ok || whirl.phase !== 'ride' || whirl.state !== 'ride') return;
+  whirl.wx = so.x;
+  if (p.x >= whirl.arenaX + W * 0.05) {
     whirl.state = 'arrive';
     whirl.t = 0;
     hearts = HEART_MAX;
@@ -576,11 +513,7 @@ function drawWhirlRide(c) {
   }
   drawDuneGround(c);
   if (ax < dune.cam + W * 1.6) artBlob(c, ax + W * 0.6, yP + h * 0.04, h * 0.2, h * 0.03, '#4fc3e0', { lineColor: '#2a8ab0', hi: 0.4 });
-  for (i = 0; i < whirl.cacti.length; i++) {
-    var ca = whirl.cacti[i];
-    if (ca.x < dune.cam - W * 0.1 || ca.x > dune.cam + W * 1.1) continue;
-    duneDrawCactus(c, ca.x, duneY(ca.x) + h * 0.01, h * 0.1, ca.hit);
-  }
+  duneDrawAllObs(c, whirl.obs, false);
   if (dune.trail.length > 1) {
     c.lineCap = 'round';
     for (i = 1; i < dune.trail.length; i++) {
@@ -590,7 +523,7 @@ function drawWhirlRide(c) {
       c.beginPath(); c.moveTo(dune.trail[i - 1].x, dune.trail[i - 1].y - h * 0.01); c.lineTo(dune.trail[i].x, dune.trail[i].y - h * 0.01); c.stroke();
     }
   }
-  if (!(hurtT > 0 && Math.sin(globalT * 30) > 0)) duneDrawRider(c, p.x, p.y, p.ang, holding && whirl.state === 'ride');
+  if (!(hurtT > 0 && Math.sin(globalT * 30) > 0)) duneDrawRider(c, p.x, p.y, p.ang, false);
   // Pyörre takana: iso suppilo, joka näkyy kun se on lähellä
   var wy = Math.min(h * 0.62, duneY(Math.max(whirl.wx, dune.pts[0].x)) - h * 0.28);
   drawWhirlSpirit(c, whirl.wx, wy, h * 0.24, 0, 0);
@@ -604,7 +537,7 @@ function drawWhirlRide(c) {
     c.fillStyle = g;
     c.fillRect(0, 0, Math.max(0, sx + W * 0.1), h);
   }
-  if (whirl.state === 'rest' && whirl.restT > 0.8 && !puzzleBusy() && whirl.taskDelay <= 0) {
+  if ((whirl.state === 'rest' && whirl.restT > 0.8 && !puzzleBusy() && whirl.taskDelay <= 0) || (whirl.state === 'ride' && !whirl.jumped)) {
     var k = (globalT % 1.2) / 1.2;
     drawHand(c, W * 0.62, h * 0.4 + Math.abs(Math.sin(k * Math.PI)) * h * 0.05, h * 0.045);
   }

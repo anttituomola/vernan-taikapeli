@@ -550,24 +550,26 @@ karavaanin, ja prinsessa kulkee dyynien yli keitaalta toiselle ja etsii
 haudatut aarteet. Vartija Hiekkapyörre yhdistää alueen kaksi verbiä, liu'un ja
 etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentälle.
 
-- **Dyynilasku** ♥ — uusi verbi: **liuku**. Prinsessa laskee hiekkalaudalla
-  itään. Pidä pohjassa, niin lauta painuu raskaaksi ja kiihtyy alamäessä;
-  päästä irti ennen harjaa, niin lauta keventyy ja lentää dyynin harjalta
-  (harjalta irtoaa vain riittävällä vauhdilla, ja pohjassa pidetty lauta pysyy
-  maassa). Ylämäessä pohjassa pito jarruttaa, joten kenttää ei voi paahtaa
-  läpi sormi pohjassa: vauhti säilyy vain lentämällä (ilmassa ei kitkaa) ja
-  täydellisillä laskuilla. Tahti on rauhallinen (huippuvauhti noin ruutu
-  sekunnissa). Ylämäkeen laskeutuminen töksähtää; alamäkeen osuva lasku on täydellinen
-  (kipinät, lisää vauhtia). Hiekkamyrsky seuraa takana, ja yläreunan mittari
-  näyttää prinsessan, myrskyn ja keitaat: kiinni saanut myrsky vie sydämen ja
-  puuska heittää eteenpäin. Kolme arvottua osuutta (6, 8 ja 9 dyyniä), joiden
-  lopussa on keidas: sydämet täyttyvät, ja matka jatkuu painamalla. Osuudet
-  kovenevat: jyrkemmät dyynit, nopeampi myrsky (0,32 / 0,38 / 0,44 ruutua/s) ja
-  kaktukset harjojen takana (enintään 1 / 3 / 4, käytännössä 2–3 radalla;
-  hyppää yli, osuma vie sydämen).
-  Aurinkokivet ovat bonuksia: osa notkoissa, osa korkeimpien lentojen
-  lakipisteissä, jonne ylettää vain hyvällä ajoituksella. Sydänten loppuessa
-  palataan edelliselle keitaalle. Tehtävät keitailla: anna N kappaletta, kello.
+- **Dyynilasku** ♥ — uusi verbi: **liuku**. Prinsessa liukuu hiekkalaudalla
+  itsestään tasaista vauhtia itään; napautus hyppää. Lyhyt napautus on matala
+  hyppy (noin 0,17 ruudun korkeus), pohjassa pitäminen korkea ja pitkä hyppy
+  (0,30); napautus juuri ennen laskeutumista laukeaa laskeutuessa. Esteet:
+  kaktus (matala hyppy riittää), korkea kaktus (korkea hyppy), skorpioni
+  (kulkee edestakaisin), tuplakaktus ja juoksuhiekka (pitkä hyppy). Törmäys
+  vie sydämen ja hidastaa hetkeksi, jolloin takana seuraava hiekkamyrsky
+  lähestyy; kiinni saanut myrsky vie sydämen. Yläreunan mittari näyttää
+  prinsessan, myrskyn ja keitaat. Kolme arvottua osuutta, joiden lopussa on
+  keidas (sydämet täyttyvät, matka jatkuu napautuksella): 1) kaktukset,
+  2) + korkea kaktus ja skorpioni, 3) + tuplakaktus ja juoksuhiekka; vauhti
+  0,30 / 0,33 / 0,36 ruutua/s ja esteet tihenevät. Kunkin estetyypin kaksi
+  ensimmäistä saavat maahan hyppymerkin (keltainen nuoli = napauta, kaksi
+  pinkkiä = pidä pohjassa), ja käsi näyttää napautuksen ennen ensimmäistä
+  hyppyä. Jokaisen esteen ajoitusikkuna lasketaan simuloimalla (vähintään
+  0,3 s, keskimäärin noin 0,45 s). Aurinkokivet ovat bonuksia: korkeiden
+  esteiden yllä hypyn lakipisteessä ja matalalla esteiden välissä. Sydänten
+  loppuessa palataan edelliselle keitaalle. Tehtävät keitailla: anna N
+  kappaletta, kello. (Aiempi paino- ja kaarevuusliuku hylättiin 29.9.2026: se
+  ei ollut intuitiivinen.)
 - **Aarrevarpu** ♥ — uusi verbi: **etsintä**. Taikavarpu seuraa sormea hiekan
   yllä, ja sen kärki jättää hehkuvan jäljen: sininen on kylmä, turkoosi
   viileä, keltainen lämmin, oranssi kuuma ja kultainen tähti polttava (tästä
@@ -585,14 +587,16 @@ etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentä
   kiville voi napauttaa. Tehtävät: maksa, kummalla enemmän.
 - **Hiekkapyörre** ♥ — vartija, joka yhdistää **liu'un ja etsinnän**.
   Kiukkuinen pyörremyrsky hajotti karavaanin ja hautasi sen taikalampun. Joka
-  kierros alkaa liu'ulla: pyörre ajaa takaa arvotuilla dyyneillä (kiinni
-  jääminen ja kaktukset vievät sydämen). Keitaalla alkaa etsintä: varpu ja
+  kierros alkaa liu'ulla kuten Dyynilaskussa: lauta liukuu itsestään, napautus
+  hyppää (pohjassa korkeammalle), ja pyörre ajaa takaa (törmäys hidastaa,
+  kiinni jääminen ja esteet vievät sydämen). Keitaalla alkaa etsintä: varpu ja
   lämpöjälki kuten Aarrevarvussa, ja Fenni kaivaa. Pyörre leijuu taivaanrannassa
   ja kerää voimaa (rengas sen ympärillä, viimeinen neljännes punaisena): kun
   rengas täyttyy, se puhaltaa, vie sydämen ja hautaa lampun uuteen paikkaan.
   Skorpionit pistävät. Löydetty lamppu nousee ja ampuu valonsäteen pyörteeseen,
-  joka kutistuu. Kolme kierrosta: 5 / 6 / 7 dyyniä, pyörteen nopeus 0,33 / 0,38 /
-  0,43 ruutua/s, enintään 2 / 3 / 3 kaktusta, 1 / 2 / 3 skorpionia, lyhenevä lämmön
+  joka kutistuu. Kolme kierrosta: liukuvauhti 0,31 / 0,34 / 0,37 ruutua/s,
+  6 / 8 / 10 estettä (tuplakaktus toisesta, juoksuhiekka kolmannesta
+  kierroksesta; ei hyppymerkkejä), 1 / 2 / 3 skorpionia etsinnässä, lyhenevä lämmön
   kantama ja puhallusväli 20 / 17 / 14 s; kahdella viimeisellä tuulenpuuskat
   haalistavat jäljen. Sydänten loppuessa vaihe alkaa alusta (liuku radan
   alusta, etsintä uudella lampulla). Kolmas osuma rauhoittaa pyörteen
@@ -764,8 +768,8 @@ paikkaan pääsee myös kävelemällä satamaruutuun.
 - Varjoperhonen: parven aikana sipaise koit pois, syöksyn aikana ohjaa pomppua
   sormella kuten Sienipompussa.
 - Kuunsäde: napauta peiliä kääntääksesi sitä; napautus koihin häätää sen.
-- Dyynilasku: pidä pohjassa alamäessä (raskas lauta kiihtyy), päästä irti
-  ennen harjaa (lauta lentää harjalta). Keitaalta liikkeelle painamalla.
+- Dyynilasku: napauta hypätäksesi (pidä pohjassa korkeampaan ja pidempään
+  hyppyyn); lauta liukuu itsestään. Keitaalta liikkeelle napautuksella.
 - Aarrevarpu: vedä sormea hiekalla (varpu jättää lämpöjäljen), pidä sormi
   paikallaan kaivaaksesi.
 - Hiekkapyörre: liukuvaiheessa kuten Dyynilaskussa, etsintävaiheessa kuten
@@ -959,9 +963,9 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Tulikärpässieppo: kierrokset `CATCH_ROUNDS` (paikat, tulikärpäset, nopeus, koit, välkkyminen, järjestys, koiden hakeutuminen `chase`), haavin vähimmäisnopeus `CATCH_NET_SPEED`, nappaussäteet `CATCH_HIT` / `CATCH_MOTH_HIT`
 - Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
 - Kuunsäde: kierrokset `BEAM_ROUNDS` (ruudukko, reitin peilit, kukat, hämäyspeilit, kivet, bonuskärpäset, kuun laskuaika `time`, koin väli `moth`), säteen kasvunopeus `BEAM_GROW`, kukkien hehkuaika `BEAM_HOLD`; arvonta `beamTryGenerate` tarkistaa, että ratkaisu toimii eikä alkuasento ratkaise
-- Dyynilasku: osuudet `DUNE_SECTIONS` (dyynejä, puolikkaan leveys, korkeus, myrskyn nopeus, kaktukset), painovoima `DUNE_G` / pohjassa `DUNE_G_HOLD`, irtoamisherkkyys `DUNE_LIFT`, ylämäen jarrutus pohjassa `DUNE_UPHILL_BRAKE`, vauhdin rajat `DUNE_VMIN` / `DUNE_VMAX`, kitka `DUNE_DRAG`, täydellisen laskun kulma `DUNE_PERFECT`, myrskyn etäisyys `DUNE_STORM_LAG` / osuma `DUNE_STORM_HIT`. Aurinkokivet ja kaktukset sijoitetaan hyvän botin (`duneBotHold`) lentoradoille (`duneSeed`); kaktus lennon korkeimman kohdan alle (vähintään 0,13 viewH). Mitoitus botilla 28.9.2026 (yli 0,3 s lennot, 6 peliä): sormi aina pohjassa ~75 s, ~6 myrsky- tai kaktusosumaa ja 1,3 osuutta uusiksi (ei voi paahtaa); 0,1 s viive ~52 s, 18 lentoa, ei osuuksia uusiksi; 0,3 s ~55 s; 0,45 s ~59 s, 13 lentoa, 0,5 osuutta uusiksi; painamatta ~57 s, 0,7 osuutta uusiksi. Hiekkapyörteen liukuvaiheissa sormi pohjassa menettää 1,3 kolmesta
+- Dyynilasku: osuudet `DUNE_SECTIONS` (dyynit `hills`/`half`/`amp`, liukuvauhti `speed`, esteitä `obs`, tyypit `kinds`, välit sekunteina `gap`), estetyypit `DUNE_OBS` (korkeus `hh`, puolileveys `hw`, skorpionin liike `move`), hyppy `DUNE_JUMP_G` / `DUNE_JUMP_H` / matala `DUNE_JUMP_CUT` + `DUNE_MIN_HOLD`, puskuri `DUNE_BUFFER`, osuma-alue `DUNE_PW`, ajoitusikkunan minimi `DUNE_MIN_WIN`, törmäyksen hidastus `DUNE_SLOW` / `DUNE_SLOW_K`, myrsky `DUNE_STORM_K` / `DUNE_STORM_LAG` / `DUNE_STORM_HIT`. Ikkuna ja tarvittava hyppy (low/high) lasketaan `duneObsWindow` / `duneObsFit`. Mitoitus botilla 29.9.2026 (hyppää optimikohdasta normaalijakautuneella ajoitusvirheellä): 0,05 s ei osumia ~85 s; 0,12 s ~1,5 osumaa; 0,2 s ~5 osumaa ja joskus osuus uusiksi; jatkuva hyppiminen tai hyppäämättä jättäminen ei pääse läpi
 - Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
-- Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (dyynit, korkeus, pyörteen nopeus, kaktukset, lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`), dyynin leveys `WHIRL_HALF`, pyörteen etäisyys `WHIRL_LAG` / kiinnijäänti `WHIRL_CATCH`; liuku- ja etsintävakiot tulevat Dyynilaskusta ja Aarrevarvusta (`DUNE_*`, `DOWSE_*`). Mitoitus botilla: pyyhkivä botti 0,3–0,45 s viiveellä voittaa ~65–72 s:ssa ja menettää 1–3 sydäntä
+- Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (liukuvaiheen dyynit, vauhti ja esteet kuten `DUNE_SECTIONS`; etsinnän lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`); liukuvaihe käyttää Dyynilaskun funktioita (`duneRideFrame`, `duneBuildObstacles`) ja etsintä Aarrevarvun vakioita (`DOWSE_*`). Liukuvaiheet botilla: 0,05 s ei osumia, 0,12 s ~2 osumaa kolmessa vaiheessa
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä

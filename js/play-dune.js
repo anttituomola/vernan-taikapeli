@@ -1,52 +1,61 @@
 'use strict';
 
-// Dyynilasku (Kaukamaa, Aurinkodyynit): uusi verbi LIUKU. Prinsessa laskee
-// hiekkalaudalla dyynien yli itään. Pidä pohjassa, niin lauta painuu raskaaksi
-// ja kiihtyy alamäessä; päästä irti ennen harjaa, niin lauta keventyy ja lentää
-// dyynin harjalta (pohjassa pidetty lauta pysyy maassa). Ylämäkeen
-// laskeutuminen töksähtää. Alamäkeen osuva lasku on täydellinen: kipinät ja
-// vauhtia lisää. Hiekkamyrsky seuraa takana: jos se saa prinsessan kiinni,
-// menee sydän ja puuska heittää eteenpäin. Kolme osuutta, joiden lopussa on
-// keidas (tarkistuspiste: sydämet täyttyvät, myrsky jää jälkeen). Osuudet
-// kovenevat: jyrkemmät dyynit, nopeampi myrsky ja kaktuksia harjojen takana
-// (hyppää yli, osuma vie sydämen). Maasto arvotaan joka peluukerralla, ja
-// aurinkokivet sijoitetaan hyvän laskun lentoradoille (bonus, HUD).
+// Dyynilasku (Kaukamaa, Aurinkodyynit): verbi LIUKU. Prinsessa liukuu
+// hiekkalaudalla itsestään tasaista vauhtia dyynien yli itään. Napautus
+// hyppää: lyhyt napautus on matala hyppy, pohjassa pitäminen korkea ja pitkä
+// hyppy. Esteet: kaktus (matala hyppy riittää), korkea kaktus (korkea hyppy),
+// skorpioni (kulkee edestakaisin), tuplakaktus ja juoksuhiekka (pitkä hyppy).
+// Törmäys vie sydämen ja hidastaa hetkeksi, jolloin takana seuraava
+// hiekkamyrsky pääsee lähemmäs; kiinni saanut myrsky vie sydämen. Kolme
+// osuutta, joiden lopussa on keidas (tarkistuspiste). Osuudet kovenevat: uusia
+// estetyyppejä, tiheämmät esteet ja hieman kovempi vauhti. Jokaisen estetyypin
+// kaksi ensimmäistä saavat hyppymerkin maahan. Aurinkokivet ovat bonuksia:
+// osa matalalla, osa korkeiden hyppyjen lakipisteessä. Rata arvotaan joka
+// kerralla, ja jokaisen esteen ajoitusikkuna tarkistetaan simuloimalla.
 // Tehtävät ensimmäisellä ja toisella keitaalla.
+// Aiempi painoon ja mäen kaarevuuteen perustuva liuku (Tiny Wings -tyyli)
+// hylättiin 29.9.2026: se ei ollut intuitiivinen, eikä aikuinenkaan saanut
+// laudan hyppäämään.
+// Hiekkapyörre (play-whirl.js) käyttää samoja juoksu-, hyppy- ja estefunktioita.
 
 // hills: dyynejä, half: puolikkaan leveys × viewW, amp: korkeus × viewH,
-// storm: myrskyn nopeus × viewW / s, cacti: kaktuksia harjojen takana
+// speed: liukuvauhti × viewW / s, obs: esteitä, kinds: estetyypit,
+// gap: esteiden väli sekunteina (vauhdin mukaan)
 var DUNE_SECTIONS = [
-  { hills: 6, half: [0.42, 0.6], amp: [0.13, 0.2], storm: 0.32, cacti: 1 },
-  { hills: 8, half: [0.38, 0.58], amp: [0.15, 0.24], storm: 0.38, cacti: 3 },
-  { hills: 9, half: [0.36, 0.58], amp: [0.17, 0.28], storm: 0.44, cacti: 4 }
+  { hills: 5, half: [0.5, 0.75], amp: [0.03, 0.08], speed: 0.3, obs: 6, kinds: ['cactus'], gap: [1.7, 2.4] },
+  { hills: 6, half: [0.45, 0.7], amp: [0.04, 0.1], speed: 0.33, obs: 8, kinds: ['cactus', 'tall', 'scorp'], gap: [1.5, 2.1] },
+  { hills: 7, half: [0.42, 0.65], amp: [0.05, 0.11], speed: 0.36, obs: 10, kinds: ['cactus', 'tall', 'scorp', 'double', 'pit'], gap: [1.35, 1.9] }
 ];
-// Tahti: painovoima ja nopeudet on skaalattu hitaammiksi (aikakerroin 0,68 alkuperäisestä:
-// painovoima × 0,68², nopeudet × 0,68), jolloin lentoradat pysyvät samoina mutta kaikki
-// tapahtuu rauhallisemmin. Palaute 28.9.2026: kenttä meni hyppyjen onnistuessa liian nopeasti.
-var DUNE_G = 0.694;         // painovoima × viewH / s² (sormi irti)
-var DUNE_G_HOLD = 1.942;    // painovoima pohjassa pitäessä (raskas lauta)
-// Irtoamisen herkkyys, kun sormi on irti: harjalta irtoaa, kun kaarevuuden vaatima
-// voima ylittää tämän osuuden painovoimasta (1 = fysikaalinen, pienempi = helpompi)
-var DUNE_LIFT = 0.6;
-// Ylämäessä pohjassa pito jarruttaa (0 = ei lainkaan, 1 = täysi raskas lauta). 0:lla koko
-// kentän pystyi paahtamaan läpi sormi pohjassa hyppäämättä; 1:llä myöhään irti päästävä ei
-// lentänyt koskaan. 0,75 ja herkempi irtoaminen: paahtaja menettää osuuden, 0,45 s viive lentää.
-var DUNE_UPHILL_BRAKE = 0.75;
-var DUNE_VMIN = 0.136;      // pienin vauhti maassa × viewW / s (ei jää jumiin notkoon)
-var DUNE_VMAX = 1.02;       // suurin vauhti × viewW / s
-var DUNE_DRAG = 0.09;       // kitka maassa (osuus / s); ilmassa ei kitkaa, joten lento säilyttää vauhdin
-var DUNE_PERFECT = 0.35;    // täydellinen lasku: kulma radan ja rinteen välillä (rad)
-var DUNE_STORM_LAG = 0.9;   // myrsky pysyy enintään näin kaukana takana × viewW
-var DUNE_STORM_HIT = 0.08;  // myrsky saa kiinni, kun väli on alle tämän × viewW
-var DUNE_BASE = 0.9;        // notkojen korkeus × viewH
-var DUNE_PLATEAU = 0.64;    // keitaiden tasanteen korkeus × viewH
-var DUNE_OASIS_W = 1.3;     // keitaan leveys × viewW
+var DUNE_JUMP_G = 1.8;       // painovoima hypyssä × viewH / s² (pieni = leijuva, lapselle aikaa)
+var DUNE_JUMP_H = 0.3;       // korkean (pohjassa pidetyn) hypyn huippu × viewH; matala noin 0,17
+var DUNE_JUMP_CUT = 0.5;     // irti päästäessä nousunopeus leikataan tähän osuuteen -> matala hyppy
+var DUNE_MIN_HOLD = 0.1;     // lyhinkin napautus hyppää vähintään näin pitkän painalluksen verran (s)
+var DUNE_BUFFER = 0.18;      // napautus ennen laskeutumista laukeaa laskeutuessa (s)
+var DUNE_PW = 0.012;         // prinsessan osuma-alueen puolileveys × viewW
+var DUNE_MIN_WIN = 0.3;      // esteen ajoitusikkunan vähimmäisleveys (s)
+var DUNE_SLOW = 0.9;         // törmäyksen hidastus (s), vauhti silloin DUNE_SLOW_K
+var DUNE_SLOW_K = 0.35;
+var DUNE_STORM_K = 0.82;     // myrskyn vauhti suhteessa liukuvauhtiin
+var DUNE_STORM_LAG = 0.5;    // myrsky pysyy enintään näin kaukana takana × viewW
+var DUNE_STORM_HIT = 0.08;   // myrsky saa kiinni, kun väli on alle tämän × viewW
+var DUNE_BASE = 0.9;         // notkojen korkeus × viewH
+var DUNE_PLATEAU = 0.72;     // keitaiden tasanteen korkeus × viewH
+var DUNE_OASIS_W = 1.3;      // keitaan leveys × viewW
+// Estetyypit: hh = korkeus × viewH, hw = puolileveys × viewW, need = tarvittava hyppy
+// (tarvittava hyppy, low / high, lasketaan ajoitusikkunasta arvonnassa: ob.need)
+var DUNE_OBS = {
+  cactus: { hh: 0.09, hw: 0.012 },
+  tall: { hh: 0.2, hw: 0.015 },
+  scorp: { hh: 0.05, hw: 0.02, move: 0.03 },
+  double: { hh: 0.09, hw: 0.055 },
+  pit: { hh: 0, hw: 0.12, pit: true }
+};
 
 var dune = {
-  pts: [], secs: [], gems: [], cacti: [], trail: [],
-  p: { x: 0, y: 0, vx: 0, vy: 0, ground: true, ang: 0 },
-  cam: 0, storm: 0, sec: 0, arrive: 0, state: 'rest', t: 0, heldOnce: false, holdT: 0,
-  perfect: 0, gemGot: 0, taskDelay: -1, won: false, flash: 0, flashT: 0, windT: 0, restT: 0
+  pts: [], secs: [], gems: [], obs: [], trail: [],
+  p: { x: 0, y: 0, vy: 0, ground: true, ang: 0, cut: false, slowT: 0, buf: 0 },
+  cam: 0, storm: 0, sec: 0, arrive: 0, state: 'rest', t: 0, jumped: false,
+  gemGot: 0, taskDelay: -1, won: false, restT: 0
 };
 
 // ---------- Maasto ----------
@@ -69,148 +78,183 @@ function duneSlope(x) {
   var i = duneSeg(x), a = dune.pts[i], b = dune.pts[i + 1], dx = b.x - a.x, t = Math.max(0, Math.min(1, (x - a.x) / dx));
   return (b.y - a.y) * Math.PI / 2 * Math.sin(Math.PI * t) / dx;
 }
-function duneCurv(x) {
-  var i = duneSeg(x), a = dune.pts[i], b = dune.pts[i + 1], dx = b.x - a.x, t = Math.max(0, Math.min(1, (x - a.x) / dx));
-  return (b.y - a.y) * Math.PI * Math.PI / 2 * Math.cos(Math.PI * t) / (dx * dx);
+function duneRand(a) { return a[0] + Math.random() * (a[1] - a[0]); }
+// Dyynit x0:sta eteenpäin; palauttaa loppukohdan. Lopuksi nousu tasanteelle (yP).
+function duneAddHills(pts, x, n, half, amp, yP) {
+  var W = viewW, h = viewH, base = h * DUNE_BASE, k, big = false, a;
+  for (k = 0; k < n; k++) {
+    big = Math.random() < 0.55 ? !big : big;
+    a = duneRand(amp) * h * (big ? 1 : 0.7);
+    x += duneRand(half) * W;
+    pts.push({ x: x, y: base - Math.random() * h * 0.02, valley: true });
+    x += duneRand(half) * W;
+    pts.push({ x: x, y: base - h * 0.06 - a, peak: true });
+  }
+  x += duneRand(half) * W;
+  pts.push({ x: x, y: base - Math.random() * h * 0.02, valley: true });
+  x += W * 0.6;
+  pts.push({ x: x, y: yP });
+  return x;
 }
 
-// Yksi fysiikka-askel (myös botti käyttää tätä). Palauttaa laskeutumisen tiedot.
-function duneStep(p, hold, dt) {
-  var h = viewH, W = viewW, g = (hold ? DUNE_G_HOLD : DUNE_G) * h, sl, len, vt, k, ty, ev = null;
+// ---------- Juoksu ja hyppy (yhteinen Hiekkapyörteen kanssa) ----------
+function duneJumpV() { return Math.sqrt(2 * DUNE_JUMP_G * DUNE_JUMP_H) * viewH; }
+function duneJumpRaw(p) {
+  p.ground = false;
+  p.vy = -duneJumpV();
+  p.cut = false;
+  p.jt = 0;
+}
+function duneJump(p) {
   if (p.ground) {
-    sl = duneSlope(p.x);
-    len = Math.sqrt(1 + sl * sl);
-    vt = p.vx * len;
-    // Raskas lauta kiihdyttää alamäessä; ylämäessä pohjassa pito ei jarruta
-    // enempää kuin kevyt (DUNE_UPHILL_BRAKE), jotta myöhäinen irtipäästö ei vie kaikkea vauhtia
-    var ga = hold && sl < 0 ? (DUNE_G + (DUNE_G_HOLD - DUNE_G) * DUNE_UPHILL_BRAKE) * h : g;
-    vt += ga * sl / len * dt;
-    vt -= vt * DUNE_DRAG * dt;
-    vt = Math.max(DUNE_VMIN * W, Math.min(DUNE_VMAX * W, vt));
-    // Irtoaa harjalta, kun kaarevuus vaatii enemmän kuin painovoima pitää
-    k = duneCurv(p.x) / (len * len * len);
-    if (k > 0 && vt * vt * k > g * (hold ? 1 : DUNE_LIFT) / len) {
-      p.ground = false;
-      p.vx = vt / len;
-      p.vy = vt * sl / len;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      return { launch: true };
-    }
-    p.vx = vt / len;
-    p.vy = vt * sl / len;
-    p.x += p.vx * dt;
+    duneJumpRaw(p);
+    playNote(660, 0, 0.08, 'triangle', 0.25);
+    playNote(880, 0.05, 0.1, 'triangle', 0.2);
+    spawnDust(p.x, p.y, 4, 1);
+    return true;
+  }
+  // Napautus juuri ennen laskeutumista puskuroituu
+  p.buf = DUNE_BUFFER;
+  return false;
+}
+// Yksi askel: vauhti vx (px/s), hold = sormi pohjassa. Palauttaa true laskeutuessa.
+function duneRunStep(p, dt, vx, hold) {
+  var gy;
+  p.x += vx * dt;
+  if (p.buf > 0) p.buf -= dt;
+  if (p.ground) {
     p.y = duneY(p.x);
-    return null;
+    return false;
   }
-  p.vy += g * dt;
-  p.x += p.vx * dt;
+  // Irti päästetty sormi leikkaa nousun: lyhyt napautus = matala hyppy
+  p.jt = (p.jt || 0) + dt;
+  if (!hold && !p.cut && p.vy < 0 && p.jt >= DUNE_MIN_HOLD) { p.vy = Math.max(p.vy, -duneJumpV() * DUNE_JUMP_CUT); p.cut = true; }
+  p.vy += DUNE_JUMP_G * viewH * dt;
   p.y += p.vy * dt;
-  ty = duneY(p.x);
-  if (p.y >= ty) {
-    sl = duneSlope(p.x);
-    len = Math.sqrt(1 + sl * sl);
-    var sp = Math.sqrt(p.vx * p.vx + p.vy * p.vy) || 1;
-    vt = (p.vx + p.vy * sl) / len;
-    var ang = Math.acos(Math.max(-1, Math.min(1, vt / sp)));
-    ev = { land: true, ang: ang, slope: sl, perfect: sl > 0.12 && ang < DUNE_PERFECT };
-    if (ev.perfect) vt *= 1.08;
-    vt = Math.max(DUNE_VMIN * W, Math.min(DUNE_VMAX * W, vt));
-    p.vx = vt / len;
-    p.vy = vt * sl / len;
-    p.y = ty;
+  gy = duneY(p.x);
+  if (p.y >= gy && p.vy > 0) {
+    p.y = gy;
     p.ground = true;
+    p.vy = 0;
+    return true;
   }
-  return ev;
+  return false;
+}
+// Onko prinsessa esteen kohdalla sen sisällä (maassa juoksuhiekassa tai kaktusta matalammalla)
+function duneObsTouch(p, ob) {
+  var d = DUNE_OBS[ob.kind], W = viewW, h = viewH, ox = ob.x + (ob.off || 0);
+  if (Math.abs(p.x - ox) > d.hw * W + DUNE_PW * W) return false;
+  if (d.pit) return p.ground || p.y >= duneY(p.x) - h * 0.005;
+  return p.y > duneY(ox) - d.hh * h;
+}
+function duneObsUpdate(obs, dt) {
+  var i, ob, d;
+  for (i = 0; i < obs.length; i++) {
+    ob = obs[i];
+    d = DUNE_OBS[ob.kind];
+    if (ob.hit > 0) ob.hit -= dt;
+    if (d.move) { ob.ph += dt * ob.sp; ob.off = Math.sin(ob.ph) * d.move * viewW; }
+  }
+}
+// Ajoitusikkuna: millä lähtöetäisyyksillä hyppy (low / high) ylittää esteen.
+// Palauttaa { lo, hi } lähtökohdan etäisyytenä esteen keskeltä (px) tai null.
+function duneObsWindow(ob, jump, vx) {
+  var dt = 1 / 120, best = null, run = null, d, x0, p, t, ok, n, hold, W = viewW;
+  var span = W * 0.6, stepX = vx / 50;
+  for (d = span; d > -W * 0.05; d -= stepX) {
+    x0 = ob.x - d;
+    p = { x: x0, y: duneY(x0), vy: 0, ground: true, cut: false, buf: 0 };
+    // Lähtöpaikka ei saa olla esteen päällä (esim. juoksuhiekan sisällä)
+    ok = Math.abs(x0 - ob.x) > DUNE_OBS[ob.kind].hw * W + DUNE_PW * W + (DUNE_OBS[ob.kind].move || 0) * W;
+    duneJumpRaw(p);
+    t = 0;
+    for (n = 0; n < 600 && ok; n++) {
+      // Matala: lyhin napautus; korkea: pohjassa koko nousun ajan
+      hold = jump === 'high' && t < 0.6;
+      var landed = duneRunStep(p, dt, vx, hold);
+      t += dt;
+      // Liikkuva skorpioni: tarkistetaan pahimmat asennot
+      if (DUNE_OBS[ob.kind].move) {
+        var m = DUNE_OBS[ob.kind].move * W, save = ob.off;
+        ob.off = -m; if (duneObsTouch(p, ob)) ok = false;
+        ob.off = m; if (duneObsTouch(p, ob)) ok = false;
+        ob.off = 0; if (duneObsTouch(p, ob)) ok = false;
+        ob.off = save;
+      } else if (duneObsTouch(p, ob)) ok = false;
+      if (!ok || landed) break;
+    }
+    // Laskeutuminen ennen estettä ei ylitä sitä
+    if (ok && p.x < ob.x + DUNE_OBS[ob.kind].hw * W + DUNE_PW * W) ok = false;
+    if (ok) { if (!run) run = { lo: d, hi: d }; else run.lo = d; }
+    else if (run) { if (!best || run.hi - run.lo > best.hi - best.lo) best = run; run = null; }
+  }
+  if (run && (!best || run.hi - run.lo > best.hi - best.lo)) best = run;
+  return best;
+}
+// Esteet väliltä [xa, xb]: tyypit ja välit sekunteina. Jokaisesta lasketaan
+// ajoitusikkuna: jos matala hyppy riittää väljästi, este on matala (low),
+// muuten korkea (high); liian tiukka este siirtyy hieman tai jää pois.
+// Kaksi ensimmäistä kutakin tyyppiä saavat hyppymerkin (intro).
+function duneObsFit(cand, vx) {
+  var win = duneObsWindow(cand, 'low', vx);
+  if (win && (win.hi - win.lo) / vx >= DUNE_MIN_WIN) { cand.need = 'low'; cand.win = win; return true; }
+  win = duneObsWindow(cand, 'high', vx);
+  if (win && (win.hi - win.lo) / vx >= DUNE_MIN_WIN) { cand.need = 'high'; cand.win = win; return true; }
+  return false;
+}
+function duneBuildObstacles(xa, xb, S, seen) {
+  var W = viewW, obs = [], x = xa + W * 0.8, k, kind, ob, tries, vx = S.speed * W, order, i;
+  for (k = 0; k < S.obs && x < xb - W * 0.6; k++) {
+    // Uusi tyyppi esitellään heti, sitten satunnaisesti
+    order = S.kinds.filter(function (q) { return !seen[q]; });
+    kind = order.length ? order[0] : S.kinds[Math.floor(Math.random() * S.kinds.length)];
+    ob = null;
+    for (tries = 0; tries < 5 && !ob; tries++) {
+      var cand = { kind: kind, x: x + tries * W * 0.07, hit: 0, off: 0, ph: Math.random() * 6, sp: 1.4 + Math.random() * 0.6 };
+      if (duneObsFit(cand, vx)) ob = cand;
+    }
+    if (!ob) { x += W * 0.25; continue; }
+    seen[kind] = (seen[kind] || 0) + 1;
+    ob.intro = seen[kind] <= 2;
+    obs.push(ob);
+    x = ob.x + duneRand(S.gap) * vx;
+  }
+  return obs;
 }
 
 // ---------- Radan arvonta ----------
-function duneRand(a) { return a[0] + Math.random() * (a[1] - a[0]); }
 function duneBuild() {
-  var W = viewW, h = viewH, pts = [], secs = [], x, s, S, k, base = h * DUNE_BASE, yP = h * DUNE_PLATEAU, amp, big = false;
+  var W = viewW, h = viewH, pts = [], secs = [], x, s, S, yP = h * DUNE_PLATEAU, seen = {}, i, ob, start;
   pts.push({ x: -W * 1.5, y: yP });
   x = W * 0.55;
   pts.push({ x: x, y: yP });
   for (s = 0; s < DUNE_SECTIONS.length; s++) {
     S = DUNE_SECTIONS[s];
-    var start = x;
-    for (k = 0; k < S.hills; k++) {
-      // Rytmi: iso ja pieni dyyni vuorottelevat välillä
-      big = Math.random() < 0.55 ? !big : big;
-      amp = duneRand(S.amp) * h * (big ? 1 : 0.75);
-      x += duneRand(S.half) * W;
-      pts.push({ x: x, y: base - Math.random() * h * 0.03, valley: true });
-      x += duneRand(S.half) * W * (big ? 1 : 0.85);
-      pts.push({ x: x, y: base - amp, peak: true });
-    }
-    x += duneRand(S.half) * W;
-    pts.push({ x: x, y: base - Math.random() * h * 0.03, valley: true });
-    x += W * 0.6;
-    pts.push({ x: x, y: yP });
-    secs.push({ start: start, oasis: x, rest: x + W * 0.45, end: x + W * DUNE_OASIS_W, storm: S.storm * W, cacti: S.cacti, last: s === DUNE_SECTIONS.length - 1 });
+    start = x;
+    x = duneAddHills(pts, x, S.hills, S.half, S.amp, yP);
+    secs.push({ start: start, oasis: x, rest: x + W * 0.45, end: x + W * DUNE_OASIS_W, speed: S.speed * W, last: s === DUNE_SECTIONS.length - 1 });
     x += W * DUNE_OASIS_W;
     pts.push({ x: x, y: yP });
   }
   pts.push({ x: x + W * 3, y: yP });
   dune.pts = pts;
   dune.secs = secs;
+  dune.obs = [];
   dune.gems = [];
-  dune.cacti = [];
-  duneSeed();
-}
-
-// Hyvä lasku botilla: sen lentoradoille aurinkokivet, ja kaktukset harjojen
-// taakse kohtiin, joiden yli botti lentää reilusti
-function duneBotHold(p) {
-  var sl = duneSlope(p.x + p.vx * 0.05);
-  if (p.ground) return sl > 0.02;
-  return p.vy > 0 && duneSlope(p.x + p.vx * 0.25) > 0.05;
-}
-function duneSeed() {
-  var p, s, sec, dt = 1 / 120, n, flights = [], cur = null, i, f, W = viewW, h = viewH, g, ev;
-  for (s = 0; s < dune.secs.length; s++) {
-    sec = dune.secs[s];
-    p = { x: s === 0 ? W * 0.3 : dune.secs[s - 1].rest, y: 0, vx: 0.24 * W, vy: 0, ground: true };
-    p.y = duneY(p.x);
-    flights = [];
-    cur = null;
-    for (n = 0; n < 60 * 120 && p.x < sec.oasis; n++) {
-      ev = duneStep(p, duneBotHold(p), dt);
-      if (ev && ev.launch) cur = { pts: [], x0: p.x };
-      if (!p.ground && cur) cur.pts.push({ x: p.x, y: p.y, gy: duneY(p.x) });
-      if (ev && ev.land && cur) { cur.x1 = p.x; if (cur.pts.length > 20) flights.push(cur); cur = null; }
-    }
-    // Aurinkokivet: korkeimmat lennot (lakipiste vähintään 0,15 viewH maan yllä)
-    // saavat kiven lakipisteeseen, jonne maata pitkin ajava ei ylety
-    for (i = 0; i < flights.length; i++) {
-      f = flights[i];
-      f.apex = 0;
-      for (var j = 1; j < f.pts.length; j++) if (f.pts[j].gy - f.pts[j].y > f.pts[f.apex].gy - f.pts[f.apex].y) f.apex = j;
-      f.air = f.pts[f.apex].gy - f.pts[f.apex].y;
-    }
-    var high = flights.filter(function (q) { return q.air > h * 0.15; }).sort(function (a, b) { return b.air - a.air; });
-    for (i = 0; i < high.length && i < 4; i++) {
-      var gp = high[i].pts[high[i].apex];
-      dune.gems.push({ x: gp.x, y: gp.y - h * 0.05, got: false, sec: s, t: Math.random() * 6 });
-    }
-    // Maahan muutama kivi notkoihin, jotta jokainen saa jotain
-    for (i = 0, g = 0; i < dune.pts.length - 1 && g < 2; i++) {
-      var q = dune.pts[i];
-      if (!q.valley || q.x < sec.start + W * 0.5 || q.x > sec.oasis) continue;
-      if (Math.random() < 0.35) { dune.gems.push({ x: q.x, y: duneY(q.x) - h * 0.06, got: false, sec: s, t: Math.random() * 6 }); g++; }
-    }
-    // Kaktukset: lento, jonka keskivaiheilla botti on vähintään 0,12 viewH maan yllä
-    var placed = 0, cand = flights.slice();
-    for (i = cand.length - 1; i > 0; i--) { var k2 = Math.floor(Math.random() * (i + 1)), tmp = cand[i]; cand[i] = cand[k2]; cand[k2] = tmp; }
-    for (i = 0; i < cand.length && placed < sec.cacti; i++) {
-      f = cand[i];
-      // Kaktus lennon korkeimman kohdan alle (vähintään 0,13 viewH maan yllä)
-      var mid = null;
-      f.pts.forEach(function (q) { if (!mid || q.gy - q.y > mid.gy - mid.y) mid = q; });
-      if (!mid || mid.gy - mid.y < h * 0.13) continue;
-      if (dune.cacti.some(function (c) { return Math.abs(c.x - mid.x) < W * 0.6; })) continue;
-      dune.cacti.push({ x: mid.x, sec: s, hit: 0 });
-      placed++;
+  for (s = 0; s < secs.length; s++) {
+    var list = duneBuildObstacles(secs[s].start, secs[s].oasis, DUNE_SECTIONS[s], seen);
+    for (i = 0; i < list.length; i++) {
+      ob = list[i];
+      ob.sec = s;
+      dune.obs.push(ob);
+      // Aurinkokivi: korkean hypyn esteen yllä lakipisteessä, muuten välillä matalalla
+      if (ob.need === 'high' || Math.random() < 0.3) {
+        dune.gems.push({ x: ob.x, y: duneY(ob.x) - h * (ob.need === 'high' ? 0.3 : 0.2), got: false, sec: s, t: Math.random() * 6 });
+      }
+      if (i + 1 < list.length && Math.random() < 0.5) {
+        var gx = (ob.x + list[i + 1].x) / 2;
+        dune.gems.push({ x: gx, y: duneY(gx) - h * 0.1, got: false, sec: s, t: Math.random() * 6 });
+      }
     }
   }
 }
@@ -224,8 +268,7 @@ function initDune() {
   duneBuild();
   dune.sec = 0;
   dune.gemGot = 0;
-  dune.perfect = 0;
-  dune.heldOnce = false;
+  dune.jumped = false;
   dune.taskDelay = -1;
   dune.won = false;
   dune.trail = [];
@@ -234,7 +277,7 @@ function initDune() {
 }
 function duneRestAt(x) {
   var p = dune.p;
-  p.x = x; p.y = duneY(x); p.vx = 0; p.vy = 0; p.ground = true; p.ang = 0;
+  p.x = x; p.y = duneY(x); p.vy = 0; p.ground = true; p.ang = 0; p.cut = false; p.slowT = 0; p.buf = 0;
   dune.state = 'rest';
   dune.t = 0;
   dune.restT = 0;
@@ -259,28 +302,98 @@ function resizeDune() {
   duneRestAt(sec === 0 ? viewW * 0.3 : dune.secs[sec - 1].rest);
 }
 function handleDuneTap() {
-  // Lepotilasta liikkeelle painamalla (sama ele kuin laskussa)
-  if (dune.state === 'rest' && !puzzleBusy() && dune.taskDelay <= 0 && dune.restT > 0.4) {
-    duneGo();
+  if (puzzleBusy()) return;
+  // Keitaalta liikkeelle napautuksella, ajossa napautus hyppää
+  if (dune.state === 'rest') {
+    if (dune.taskDelay <= 0 && dune.restT > 0.4) duneGo();
+    return;
+  }
+  if (dune.state === 'ride') {
+    duneJump(dune.p);
+    dune.jumped = true;
   }
 }
 function duneGo() {
   var p = dune.p;
   dune.state = 'ride';
   dune.t = 0;
-  p.vx = 0.24 * viewW;
-  dune.storm = p.x - viewW * DUNE_STORM_LAG;
+  p.slowT = 0;
+  dune.storm = p.x - viewW * DUNE_STORM_LAG * 1.6;
   playNote(523, 0, 0.1, 'triangle', 0.3);
   playNote(784, 0.08, 0.16, 'triangle', 0.3);
 }
 
+// Törmäys esteeseen: sydän, hidastus ja pieni pomppu
+function duneBump(p, ob) {
+  var h = viewH;
+  ob.hit = 0.6;
+  p.slowT = DUNE_SLOW;
+  artShakeStart(h * 0.012, 0.3);
+  spawnSparkles(p.x, p.y - h * 0.05, 10, ob.kind === 'scorp' ? '#c0402a' : (ob.kind === 'pit' ? '#d8b070' : '#7ac25a'));
+  playNote(200, 0, 0.12, 'sawtooth', 0.15);
+  if (p.ground) { p.ground = false; p.vy = -duneJumpV() * 0.35; p.cut = true; }
+  loseHeart();
+}
+// Yksi ajokehys: liike, esteet, kivet ja myrsky. Palauttaa false, jos tila vaihtui.
+function duneRideFrame(dt, speed, obs, gems, stormObj, alive) {
+  var p = dune.p, W = viewW, h = viewH, i, n, vx, landed;
+  vx = speed * (p.slowT > 0 ? DUNE_SLOW_K : 1);
+  if (p.slowT > 0) p.slowT -= dt;
+  for (n = 0; n < 4; n++) {
+    landed = duneRunStep(p, dt / 4, vx, holding);
+    if (landed) {
+      spawnDust(p.x, p.y, 3, 1);
+      playNote(330, 0, 0.05, 'triangle', 0.12);
+      if (p.buf > 0) { p.buf = 0; duneJump(p); }
+    }
+  }
+  var ta = p.ground ? Math.atan(duneSlope(p.x)) : Math.max(-0.4, Math.min(0.5, p.vy / (viewH * 4)));
+  p.ang += (ta - p.ang) * Math.min(1, dt * 10);
+  dune.cam += (p.x - W * 0.3 - dune.cam) * Math.min(1, dt * 5);
+  if (p.ground && Math.random() < dt * 12) spawnDust(p.x, p.y, 1, 1);
+  dune.trail.push({ x: p.x, y: p.y, t: globalT, fast: !p.ground });
+  while (dune.trail.length && globalT - dune.trail[0].t > 0.35) dune.trail.shift();
+  duneObsUpdate(obs, dt);
+  for (i = 0; i < gems.length; i++) {
+    var g = gems[i];
+    if (g.got) continue;
+    if (Math.abs(g.x - p.x) < h * 0.06 && Math.abs(g.y - (p.y - h * 0.06)) < h * 0.07) {
+      g.got = true;
+      dune.gemGot++;
+      artPop(g.x, g.y, h * 0.05, '#ffd24f', 'burst');
+      spawnSparkles(g.x, g.y, 10, '#ffd24f');
+      playNote(1047 + dune.gemGot * 40, 0, 0.1, 'sine', 0.3);
+      playNote(1568 + dune.gemGot * 40, 0.07, 0.15, 'sine', 0.25);
+    }
+  }
+  for (i = 0; i < obs.length; i++) {
+    var ob = obs[i];
+    if (ob.hit > 0 || hurtT > 0) continue;
+    if (duneObsTouch(p, ob)) {
+      duneBump(p, ob);
+      if (!alive()) return false;
+    }
+  }
+  // Myrsky seuraa vähän liukuvauhtia hitaammin: vain törmäilevä jää kiinni
+  stormObj.x += speed * DUNE_STORM_K * dt;
+  stormObj.x = Math.max(stormObj.x, p.x - W * DUNE_STORM_LAG);
+  if (p.x - stormObj.x < W * DUNE_STORM_HIT && hurtT <= 0) {
+    artShakeStart(h * 0.015, 0.4);
+    playNote(140, 0, 0.3, 'sawtooth', 0.12);
+    p.slowT = 0;
+    stormObj.x = p.x - W * DUNE_STORM_LAG;
+    loseHeart();
+    if (!alive()) return false;
+  }
+  return true;
+}
+
 // ---------- Päivitys ----------
 function updateDune(dt) {
-  var busy, p = dune.p, W = viewW, h = viewH, sec, n, sub, ev, hold, i, g;
+  var busy, p = dune.p, W = viewW, h = viewH, sec, i;
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
-  if (dune.flashT > 0) dune.flashT -= dt;
   busy = puzzleBusy();
   if (dune.taskDelay > 0 && !busy) {
     dune.taskDelay -= dt;
@@ -290,7 +403,6 @@ function updateDune(dt) {
     }
   }
   for (i = 0; i < dune.gems.length; i++) dune.gems[i].t += dt;
-  for (i = 0; i < dune.cacti.length; i++) if (dune.cacti[i].hit > 0) dune.cacti[i].hit -= dt;
   if (busy || celebrating) return;
   dune.t += dt;
   sec = dune.secs[Math.min(dune.sec, dune.secs.length - 1)];
@@ -308,11 +420,12 @@ function updateDune(dt) {
   if (dune.state === 'arrive') {
     // Keitaalla lauta liukuu palmun luo ja pysähtyy
     sec = dune.secs[dune.arrive];
+    if (!p.ground) duneRunStep(p, dt, 0, false);
     p.x += (sec.rest - p.x) * Math.min(1, dt * 3);
-    p.y = duneY(p.x);
+    if (p.ground) p.y = duneY(p.x);
     p.ang += (0 - p.ang) * Math.min(1, dt * 6);
     dune.cam += (p.x - W * 0.3 - dune.cam) * Math.min(1, dt * 3);
-    if (Math.abs(sec.rest - p.x) < W * 0.01) {
+    if (Math.abs(sec.rest - p.x) < W * 0.01 && p.ground) {
       if (sec.last) { dune.state = 'won'; dune.t = 0; soundFanfare(); spawnSparkles(p.x, p.y - h * 0.1, 30, '#ffe27a'); }
       else {
         if (dune.sec === 1 || dune.sec === 2) dune.taskDelay = 0.6;
@@ -321,74 +434,12 @@ function updateDune(dt) {
     }
     return;
   }
-
-  // Ajo
-  hold = holding;
-  if (hold) { dune.heldOnce = true; dune.holdT += dt; } else dune.holdT = 0;
-  sub = 4;
-  for (n = 0; n < sub; n++) {
-    ev = duneStep(p, hold, dt / sub);
-    if (ev && ev.land) duneLanded(ev);
-    if (ev && ev.launch) playNote(660, 0, 0.12, 'sine', 0.18);
-  }
-  // Kulma: maassa rinteen mukaan, ilmassa radan mukaan pehmeästi
-  var ta = Math.atan2(p.vy, p.vx);
-  if (p.ground) ta = Math.atan(duneSlope(p.x));
-  p.ang += (ta - p.ang) * Math.min(1, dt * (p.ground ? 14 : 5));
-  // Kamera: prinsessa kolmanneksen kohdalla, vauhdissa hieman edempänä
-  var camT = p.x - W * (0.3 - Math.min(0.08, p.vx / W * 0.05));
-  dune.cam += (camT - dune.cam) * Math.min(1, dt * 5);
-  // Hiekkaa lentää laudan alta vauhdissa
-  if (p.ground && p.vx > W * 0.41 && Math.random() < dt * 25) spawnDust(p.x, p.y, 1, 1);
-  // Jälki
-  dune.trail.push({ x: p.x, y: p.y, t: globalT, fast: p.vx > W * 0.65 });
-  while (dune.trail.length && globalT - dune.trail[0].t > 0.35) dune.trail.shift();
-  if (!p.ground) {
-    dune.windT -= dt;
-    if (dune.windT <= 0) { dune.windT = 0.5; playNote(300 + Math.random() * 60, 0, 0.3, 'sine', 0.04); }
-  }
-
-  // Aurinkokivet
-  for (i = 0; i < dune.gems.length; i++) {
-    g = dune.gems[i];
-    if (g.got) continue;
-    if (Math.abs(g.x - p.x) < h * 0.06 && Math.abs(g.y - (p.y - h * 0.06)) < h * 0.065) {
-      g.got = true;
-      dune.gemGot++;
-      artPop(g.x, g.y, h * 0.05, '#ffd24f', 'burst');
-      spawnSparkles(g.x, g.y, 10, '#ffd24f');
-      playNote(1047 + dune.gemGot * 40, 0, 0.1, 'sine', 0.3);
-      playNote(1568 + dune.gemGot * 40, 0.07, 0.15, 'sine', 0.25);
-    }
-  }
-  // Kaktukset: osuma maassa tai matalalla
-  for (i = 0; i < dune.cacti.length; i++) {
-    var ca = dune.cacti[i], cy = duneY(ca.x);
-    if (Math.abs(ca.x - p.x) < h * 0.05 && p.y > cy - h * 0.09 && ca.hit <= 0 && hurtT <= 0) {
-      ca.hit = 0.6;
-      artShakeStart(h * 0.012, 0.3);
-      spawnSparkles(p.x, p.y - h * 0.05, 10, '#7ac25a');
-      p.vx *= 0.6;
-      if (!p.ground) p.vy = Math.min(p.vy, -h * 0.3);
-      loseHeart();
-      if (dune.state !== 'ride') return;
-    }
-  }
-  // Myrsky
-  dune.storm += sec.storm * dt;
-  dune.storm = Math.max(dune.storm, p.x - W * DUNE_STORM_LAG);
-  if (p.x - dune.storm < W * DUNE_STORM_HIT && hurtT <= 0) {
-    artShakeStart(h * 0.015, 0.4);
-    playNote(140, 0, 0.3, 'sawtooth', 0.12);
-    // Puuska heittää eteenpäin ja myrsky jää hetkeksi
-    p.vx = Math.max(p.vx, W * 0.41);
-    if (p.ground) { p.ground = false; p.vy = -h * 0.34; }
-    dune.storm = p.x - W * 0.55;
-    loseHeart();
-    if (dune.state !== 'ride') return;
-  }
+  var stormObj = { x: dune.storm };
+  var ok = duneRideFrame(dt, sec.speed, dune.obs, dune.gems, stormObj, function () { return dune.state === 'ride'; });
+  if (dune.state === 'ride') dune.storm = stormObj.x;
+  if (!ok || dune.state !== 'ride') return;
   // Keitaalle: osuus valmis, seuraava alkaa keitaalta
-  if (p.x >= sec.oasis + W * 0.05 && p.ground) {
+  if (p.x >= sec.oasis + W * 0.05) {
     dune.state = 'arrive';
     dune.t = 0;
     dune.arrive = dune.sec;
@@ -398,25 +449,6 @@ function updateDune(dt) {
     spawnSparkles(sec.rest, duneY(sec.rest) - h * 0.2, 16, '#7fd4ff');
     playNote(659, 0, 0.18, 'triangle', 0.35);
     playNote(988, 0.1, 0.3, 'triangle', 0.35);
-  }
-}
-function duneLanded(ev) {
-  var p = dune.p, h = viewH;
-  if (ev.perfect) {
-    dune.perfect++;
-    dune.flashT = 0.5;
-    spawnSparkles(p.x, p.y - h * 0.02, 12, '#fff2a0');
-    artPop(p.x, p.y - h * 0.03, h * 0.06, '#fff2a0', 'ring');
-    playNote(988, 0, 0.1, 'triangle', 0.28);
-    playNote(1319, 0.07, 0.16, 'triangle', 0.28);
-  } else if (ev.slope < -0.1) {
-    // Töksähdys ylämäkeen
-    spawnDust(p.x, p.y, 6, -1);
-    artShakeStart(h * 0.006, 0.18);
-    playNote(180, 0, 0.1, 'triangle', 0.25);
-  } else {
-    spawnDust(p.x, p.y, 3, 1);
-    playNote(330, 0, 0.06, 'triangle', 0.15);
   }
 }
 
@@ -550,6 +582,50 @@ function duneDrawCactus(c, x, y, s, hit) {
   c.beginPath(); c.arc(x + wg, y - s * 0.98, s * 0.07, 0, Math.PI * 2); c.fill();
 }
 
+// Esteet ja hyppymerkit (yhteinen Hiekkapyörteen kanssa). Kamera on käännetty jo.
+function duneDrawAllObs(c, obs, marks) {
+  var W = viewW, h = viewH, i, ob, x;
+  for (i = 0; i < obs.length; i++) {
+    ob = obs[i];
+    x = ob.x + (ob.off || 0);
+    if (x < dune.cam - W * 0.2 || x > dune.cam + W * 1.2) continue;
+    duneDrawObs(c, ob, x);
+    // Hyppymerkki: hehkuva kohta maassa, josta hyppy onnistuu (kaksi ensimmäistä kutakin tyyppiä)
+    if (marks && ob.intro && ob.win && dune.p.x < ob.x) {
+      var mx = ob.x - (ob.win.lo + ob.win.hi) / 2, my = duneY(mx), high = ob.need === 'high';
+      var pulse = 0.5 + Math.sin(globalT * 6) * 0.25;
+      artGlow(c, mx, my - h * 0.01, h * 0.05, high ? '#ff8ad8' : '#fff2a0', pulse);
+      c.strokeStyle = high ? 'rgba(255,110,190,0.95)' : 'rgba(255,230,120,0.95)';
+      c.lineWidth = Math.max(2, h * 0.007);
+      c.lineCap = 'round';
+      c.beginPath(); c.moveTo(mx - h * 0.02, my - h * 0.03); c.lineTo(mx, my - h * 0.055); c.lineTo(mx + h * 0.02, my - h * 0.03); c.stroke();
+      if (high) { c.beginPath(); c.moveTo(mx - h * 0.02, my - h * 0.06); c.lineTo(mx, my - h * 0.085); c.lineTo(mx + h * 0.02, my - h * 0.06); c.stroke(); }
+    }
+  }
+}
+function duneDrawObs(c, ob, x) {
+  var h = viewH, W = viewW, y = duneY(x), d = DUNE_OBS[ob.kind];
+  if (ob.kind === 'cactus') duneDrawCactus(c, x, y + h * 0.01, h * 0.1, ob.hit);
+  else if (ob.kind === 'tall') duneDrawCactus(c, x, y + h * 0.01, h * 0.2, ob.hit);
+  else if (ob.kind === 'double') {
+    duneDrawCactus(c, x - d.hw * W * 0.62, y + h * 0.01, h * 0.1, ob.hit);
+    duneDrawCactus(c, x + d.hw * W * 0.62, y + h * 0.01, h * 0.095, ob.hit);
+  } else if (ob.kind === 'scorp') {
+    c.save(); c.translate(x, y - h * 0.025); c.scale(Math.cos(ob.ph) > 0 ? 1 : -1, 1);
+    drawDowseScorp(c, 0, 0, h * 0.055, globalT);
+    c.restore();
+  } else if (ob.kind === 'pit') {
+    // Juoksuhiekka: pyörteinen kuoppa, kuplat
+    var r = d.hw * W;
+    artBlob(c, x, y + h * 0.012, r, h * 0.022, '#b8884a', { lineColor: '#7a5428' });
+    c.strokeStyle = 'rgba(120,80,40,0.55)';
+    c.lineWidth = Math.max(1.5, h * 0.004);
+    for (var k = 0; k < 3; k++) {
+      c.beginPath(); c.ellipse(x, y + h * 0.012, r * (0.3 + k * 0.22), h * (0.006 + k * 0.005), 0, globalT * (1 + k * 0.4) + k, globalT * (1 + k * 0.4) + k + 4); c.stroke();
+    }
+  }
+}
+
 function duneDrawGem(c, x, y, s, t) {
   var bob = Math.sin(t * 3) * s * 0.15;
   artGlow(c, x, y + bob, s * 2.2, '#ffd24f', 0.45);
@@ -620,11 +696,7 @@ function drawDune() {
   for (i = 0; i < dune.secs.length; i++) drawDuneOasis(c, dune.secs[i], dune.secs[i].last);
   drawDuneGround(c);
   for (i = 0; i < dune.secs.length; i++) duneDrawPond(c, dune.secs[i], dune.secs[i].last);
-  for (i = 0; i < dune.cacti.length; i++) {
-    var ca = dune.cacti[i];
-    if (ca.x < dune.cam - W * 0.1 || ca.x > dune.cam + W * 1.1) continue;
-    duneDrawCactus(c, ca.x, duneY(ca.x) + h * 0.01, h * 0.1, ca.hit);
-  }
+  duneDrawAllObs(c, dune.obs, true);
   for (i = 0; i < dune.gems.length; i++) {
     g = dune.gems[i];
     if (g.got || g.x < dune.cam - W * 0.1 || g.x > dune.cam + W * 1.1) continue;
@@ -640,9 +712,8 @@ function drawDune() {
       c.beginPath(); c.moveTo(dune.trail[i - 1].x, dune.trail[i - 1].y - h * 0.01); c.lineTo(dune.trail[i].x, dune.trail[i].y - h * 0.01); c.stroke();
     }
   }
-  if (dune.flashT > 0) artGlow(c, p.x, p.y - h * 0.04, h * 0.12, '#fff2a0', dune.flashT);
   var blink = hurtT > 0 && Math.sin(globalT * 30) > 0;
-  if (!blink) duneDrawRider(c, p.x, p.y, p.ang, holding && dune.state === 'ride');
+  if (!blink) duneDrawRider(c, p.x, p.y, p.ang, false);
   c.restore();
   // Hiukkaset ja pop-efektit ovat maailmakoordinaateissa: kamera vain piirron ajaksi
   camX = dune.cam;
@@ -652,13 +723,13 @@ function drawDune() {
   if (p.y < h * 0.02) {
     artCircle(c, p.x - dune.cam, h * 0.03, h * 0.015, '#ff6fb0', { lineColor: '#fff' });
   }
-  // Vihje: käsi painaa alamäessä ja nousee ylämäessä, kunnes lapsi on painanut
+  // Vihje: käsi napauttaa keitaalla (liikkeelle) ja ennen ensimmäistä hyppyä
   if (dune.state === 'rest' && dune.restT > 0.8 && !puzzleBusy() && dune.taskDelay <= 0) {
     k = (globalT % 1.2) / 1.2;
     drawHand(c, W * 0.62, h * 0.4 + Math.abs(Math.sin(k * Math.PI)) * h * 0.05, h * 0.045);
-  } else if (!dune.heldOnce && dune.state === 'ride' && p.ground && duneSlope(p.x) > 0.05) {
+  } else if (!dune.jumped && dune.state === 'ride') {
     k = (globalT % 0.8) / 0.8;
-    drawHand(c, W * 0.62, h * 0.4 + k * h * 0.03, h * 0.045);
+    drawHand(c, W * 0.62, h * 0.4 + Math.abs(Math.sin(k * Math.PI)) * h * 0.04, h * 0.045);
   }
   endPlayWorld();
   camX = 0;
