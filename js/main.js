@@ -354,6 +354,40 @@ function unlockAll() {
   showSea();
 }
 
+// ---------- Näyttö päällä ----------
+// Miettimiskentissä lapsi voi tuijottaa ruutua pitkään koskematta, joten pyydetään
+// selaimelta näytön valveillapito (Screen Wake Lock). Lukko vapautetaan, kun ruutuun
+// ei ole koskettu WAKE_IDLE_S sekuntiin, ettei unohtunut laite pala tuntikausia.
+// Selain vapauttaa lukon itse, kun välilehti piiloutuu; se pyydetään uudestaan
+// seuraavasta kosketuksesta tai kun välilehti tulee taas näkyviin.
+var WAKE_IDLE_S = 600;
+var wakeLock = null;
+var wakeLastInput = 0;
+function wakeRequest() {
+  if (wakeLock || !navigator.wakeLock || document.visibilityState !== 'visible') return;
+  wakeLock = 'pending';
+  navigator.wakeLock.request('screen').then(function (lock) {
+    wakeLock = lock;
+    lock.addEventListener('release', function () { if (wakeLock === lock) wakeLock = null; });
+  }).catch(function () { wakeLock = null; });
+}
+function wakeInput() {
+  wakeLastInput = Date.now();
+  wakeRequest();
+}
+['touchstart', 'mousedown', 'keydown'].forEach(function (ev) {
+  document.addEventListener(ev, wakeInput, { capture: true, passive: true });
+});
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible' && Date.now() - wakeLastInput < WAKE_IDLE_S * 1000) wakeRequest();
+});
+setInterval(function () {
+  if (wakeLock && wakeLock !== 'pending' && Date.now() - wakeLastInput > WAKE_IDLE_S * 1000) {
+    wakeLock.release().catch(function () {});
+    wakeLock = null;
+  }
+}, 15000);
+
 loadProgress();
 hubWorld = lastIsland;
 resize();
