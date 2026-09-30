@@ -60,6 +60,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-eggs.js`, `js/play-scale.js` — Lohikäärmelaakso: Munapesä (raahaa munat kuvion mukaan, hauto pitämällä) ja Aarrevaaka (tasapainota vaaka raahaamalla jalokiviä)
 - `js/play-giant.js` — Lohikäärmelaakson vartija Tulivuoren jätti (ritsa + tulihengitys, kolme kovenevaa kierrosta)
 - `js/play-bounce.js`, `js/play-catch.js`, `js/play-moth.js` — Kaukamaa, Hohtometsä (maailma 11): Sienipomppu (pomppu), Tulikärpässieppo (sipaisu) ja vartija Varjoperhonen (sipaisu + pomppu)
+- `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -548,7 +549,8 @@ Mantereen kolmas paikka, aavikko keitaineen itärannalla. Aukeaa, kun
 Hohtometsän vartija Varjoperhonen on läpäisty. Hiekkamyrsky on hajottanut
 karavaanin, ja prinsessa kulkee dyynien yli keitaalta toiselle ja etsii
 haudatut aarteet. Vartija Hiekkapyörre yhdistää alueen kaksi verbiä, liu'un ja
-etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentälle.
+etsinnän (`finaleKind: 'whirl'`). Kamelikaravaani täytti sokkelon usvahuoneen
+30.9.2026 (laskut saivat hyvää palautetta, joten niistä tehtiin oma kenttä).
 
 - **Dyynilasku** ♥ — uusi verbi: **liuku**. Prinsessa liukuu hiekkalaudalla
   itsestään tasaista vauhtia itään; napautus hyppää. Lyhyt napautus on matala
@@ -585,6 +587,23 @@ etsinnän (`finaleKind: 'whirl'`). Sokkelossa on yksi usvahuone tulevalle kentä
   kantama, ja viimeisellä kierroksella tuulenpuuskat pyyhkivät jäljen.
   Säästyneet kaivut lentävät aurinkokivinä HUD:iin. Ketulle, kaktuksille ja
   kiville voi napauttaa. Tehtävät: maksa, kummalla enemmän.
+- **Kamelikaravaani** ♥ — laskukenttä **raahaamalla**. Jokaisen kamelin kyltissä
+  on luku, ja kameli jaksaa kantaa juuri sen verran: raahaa matolta numerosäkkejä
+  (1–5, luku ja pisteet) kamelin selkään, kunnes säkkien summa on kyltin luku.
+  Summaa ei näytetä, vaan se lasketaan itse. Liian painava kuorma saa kamelin
+  istahtamaan: sydän menee, ja viimeksi nostettu säkki putoaa takaisin. Oikea
+  kuorma: kyltti vihertyy ja kameli hymyilee. Selästä voi raahata säkin pois.
+  Neljä arvottua, kovenevaa kierrosta: yksi kameli (5–7, kaksi säkkiä); kaksi
+  kamelia (6–8); kaksi kamelia, joista toisen kuorma on kolme säkkiä (7–10);
+  kolme kamelia, joista yksi istuu valmiiksi liian raskaana, joten sen selästä
+  pitää ottaa säkki pois (vähennys). Ratkaisu arvotaan ensin, joten kierros
+  ratkeaa aina, ja hämäyssäkkejä on 1–2; ykkössäkkejä on enintään yksi per
+  kameli. Toisesta kierroksesta alkaen hiekkamyrsky lähestyy oikealta
+  (70 / 75 / 90 s, mittari yläreunassa): jos se ehtii kameleille, sydän menee ja
+  kierros arvotaan uudestaan, kuten myös sydänten loppuessa. Virheetön kierros
+  antaa HUD:iin kultaisen säkin. Ensimmäisellä kierroksella käsi näyttää
+  raahauksen. Kameliin voi napauttaa. Tehtävät toisen ja kolmannen kierroksen
+  jälkeen: maksa, vähennys.
 - **Hiekkapyörre** ♥ — vartija, joka yhdistää **liu'un ja etsinnän**.
   Kiukkuinen pyörremyrsky hajotti karavaanin ja hautasi sen taikalampun. Joka
   kierros alkaa liu'ulla kuten Dyynilaskussa: lauta liukuu itsestään, napautus
@@ -966,6 +985,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Dyynilasku: osuudet `DUNE_SECTIONS` (dyynit `hills`/`half`/`amp`, liukuvauhti `speed`, esteitä `obs`, tyypit `kinds`, välit sekunteina `gap`), estetyypit `DUNE_OBS` (korkeus `hh`, puolileveys `hw`, skorpionin liike `move`), hyppy `DUNE_JUMP_G` / `DUNE_JUMP_H` / matala `DUNE_JUMP_CUT` + `DUNE_MIN_HOLD`, puskuri `DUNE_BUFFER`, osuma-alue `DUNE_PW`, ajoitusikkunan minimi `DUNE_MIN_WIN`, törmäyksen hidastus `DUNE_SLOW` / `DUNE_SLOW_K`, myrsky `DUNE_STORM_K` / `DUNE_STORM_LAG` / `DUNE_STORM_HIT`. Ikkuna ja tarvittava hyppy (low/high) lasketaan `duneObsWindow` / `duneObsFit`. Mitoitus botilla 29.9.2026 (hyppää optimikohdasta normaalijakautuneella ajoitusvirheellä): 0,05 s ei osumia ~85 s; 0,12 s ~1,5 osumaa; 0,2 s ~5 osumaa ja joskus osuus uusiksi; jatkuva hyppiminen tai hyppäämättä jättäminen ei pääse läpi
 - Aarrevarpu: kierrokset `DOWSE_ROUNDS` (arkut, ylimääräiset kaivut, skorpionit, lämmön kantama `range`, tuulenpuuskat `gust`), löytösäde `DOWSE_HIT`, pistosäde `DOWSE_SCORP_R`, vaaran aistimissäde `DOWSE_SENSE`, paikallaan pito `DOWSE_STILL`, kaivuanimaatio `DOWSE_DIG_T`, jäljen kesto `DOWSE_TRAIL_LIFE`; lämpövyöhykkeet `dowseHeatColor`
 - Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (liukuvaiheen dyynit, vauhti ja esteet kuten `DUNE_SECTIONS`; etsinnän lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`); liukuvaihe käyttää Dyynilaskun funktioita (`duneRideFrame`, `duneBuildObstacles`) ja etsintä Aarrevarvun vakioita (`DOWSE_*`). Liukuvaiheet botilla: 0,05 s ei osumia, 0,12 s ~2 osumaa kolmessa vaiheessa
+- Kamelikaravaani: kierrokset `CARAVAN_ROUNDS` (kamelit: ratkaisun säkkimäärä `n` tai valmiiksi raskas `pre`, kyltin rajat `lo`/`hi`, suurin säkki `vmax`, hämäyssäkit `extra`, myrskyn saapumisaika `time`), säkkejä selässä enintään `CARAVAN_MAX_LOAD`; arvonta `caravanGenerate`
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä

@@ -1136,9 +1136,9 @@ var WORLDS = [
       '#########.#',
       '#A........#',
       '#.#########',
-      '#........V#',
+      '#........K#',
       '#########.#',
-      '#?........#',
+      '#V........#',
       '###########'
     ],
     levels: [
@@ -1167,6 +1167,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderDowseBg(b, w, h); },
         light: { rays: true, raysColor: '#fff0b0', raysAlpha: 0.4, tint: ['rgba(255,200,120,0.06)', 'rgba(255,150,80,0.05)'], vignette: 0.3 },
         respawn: function () { respawnDowse(); }
+      },
+      {
+        kind: 'caravan', room: 'K', name: 'Kamelikaravaani', color: '#e8b070', script: 'play-caravan',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
+        bgColor: '#f0c078', ambient: 'sparkle', fg: null,
+        init: function () { initCaravan(); },
+        update: function (dt) { updateCaravan(dt); },
+        draw: function () { drawCaravan(); },
+        tap: function (x, y) { handleCaravanTap(x, y); },
+        resize: function () { resizeCaravan(); },
+        renderBg: function (b, w, h) { renderCaravanBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff0b0', raysAlpha: 0.4, tint: ['rgba(255,200,120,0.06)', 'rgba(255,150,80,0.05)'], vignette: 0.3 },
+        respawn: function () { respawnCaravan(); }
       },
       {
         kind: 'whirl', room: 'V', name: 'Hiekkapyörre', color: '#c89060', script: 'play-whirl',
