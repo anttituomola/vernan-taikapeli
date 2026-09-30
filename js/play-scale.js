@@ -7,21 +7,34 @@
 // ja iso kaksi, ja vaaka kallistuu heti painavamman puolen mukaan, joten liian
 // painavan kupin näkee ja jalokiven voi raahata takaisin lattialle. Viisi
 // kierrosta; jokaisesta tasapainosta Vaarin aarrekasa saa uuden aarteen.
-// Tehtävät toisen ja neljännen kierroksen jälkeen: kummalla enemmän, lasku.
+// Kierrokset arvotaan joka peluukerralla: jalokivissä on kolme painoa (pieni 1,
+// iso 2, jättikivi 3; pisteet kertovat painon), ja lattian kiviä on rajallisesti,
+// joten yhdistelmä on mietittävä. Kolmannesta kierroksesta alkaen harakka lentää
+// välillä kupin yli ja nappaa sieltä viimeksi lisätyn kiven takaisin lattialle.
+// Jos oikea kuppi ei kertaakaan käynyt liian painavana, aarre on kultainen
+// (virheetön punnitus). Tehtävät toisen ja neljännen kierroksen jälkeen:
+// kummalla enemmän, lasku.
 
-var SCALE_ROUNDS = [[1, 1, 1], [2], [2, 1, 1], [2, 2, 1], [2, 2, 2, 1]];
-var SCALE_FLOOR = [
-  { fx: 0.30, w: 1 }, { fx: 0.37, w: 1 }, { fx: 0.44, w: 1 }, { fx: 0.51, w: 1 }, { fx: 0.58, w: 1 }, { fx: 0.65, w: 1 }, { fx: 0.72, w: 1 }, { fx: 0.79, w: 1 },
-  { fx: 0.34, w: 2 }, { fx: 0.48, w: 2 }, { fx: 0.62, w: 2 }, { fx: 0.76, w: 2 }
+// lo/hi: Vaarin kupin paino, floor: lattian kivet (painot), magpie: harakka
+var SCALE_ROUNDS = [
+  { lo: 3, hi: 4, floor: [1, 1, 1, 2, 2], magpie: false },
+  { lo: 4, hi: 5, floor: [1, 1, 2, 2, 3], magpie: false },
+  { lo: 5, hi: 6, floor: [1, 2, 2, 3, 3], magpie: true },
+  { lo: 7, hi: 8, floor: [1, 2, 3, 3, 2, 3], magpie: true },
+  { lo: 8, hi: 9, floor: [1, 2, 2, 3, 3, 3], magpie: true }
 ];
 var SCALE_SMALL_COLORS = ['#ff7bac', '#5fa8ff', '#6fd66f', '#ffd24f', '#c9a0ff', '#ff9f3a', '#6fd6d6', '#ff8fc0'];
 var SCALE_BIG_COLORS = ['#b678ff', '#ff5f7e', '#4aa8ff', '#5fd36b'];
+var SCALE_HUGE_COLORS = ['#ff6a3a', '#3ac8b8', '#d85aff'];
 var SCALE_TREASURES = ['crown', 'goblet', 'ring', 'necklace', 'sceptre'];
+var SCALE_MAGPIE_WAIT = [8, 11];   // harakan väli (s)
+var SCALE_MAGPIE_WARN = 1.4;        // huuto ja varjo ennen syöksyä
 
 var scale = {
   round: 0, gems: [], left: [], drag: null, back: [],
   angle: 0, stableT: 0, doneT: 0, treasures: 0, taskDelay: 0, finishT: 0,
-  vaari: { nodT: 0, blinkT: 0 }, hintT: 0
+  vaari: { nodT: 0, blinkT: 0 }, hintT: 0, over: false, gold: [], order: 0,
+  magpie: { state: 'off', t: 0, x: 0, y: 0, gem: null }
 };
 
 function scaleS() { return viewH * 0.03; }
@@ -32,16 +45,26 @@ function scalePanPos(side) {
   var p = scalePivot(), B = scaleArm(), a = scale.angle;
   return { x: p.x + side * B * Math.cos(a), y: p.y + side * B * Math.sin(a) + scaleChain() };
 }
-function scaleGemR(w) { return scaleS() * (w === 2 ? 1.45 : 1); }
+function scaleGemR(w) { return scaleS() * (w === 3 ? 1.8 : w === 2 ? 1.45 : 1); }
+function scaleGemColor(w, i) {
+  if (w === 3) return SCALE_HUGE_COLORS[i % SCALE_HUGE_COLORS.length];
+  return w === 2 ? SCALE_BIG_COLORS[i % SCALE_BIG_COLORS.length] : SCALE_SMALL_COLORS[i % SCALE_SMALL_COLORS.length];
+}
 function scaleSum(list) {
   var i, n = 0;
   for (i = 0; i < list.length; i++) n += list[i].w;
   return n;
 }
-// Jalokivien paikat kupissa: rivi keskeltä ulospäin, iso kivi vie enemmän tilaa
+// Jalokivien paikat kupissa: rivi keskeltä ulospäin, iso kivi vie enemmän tilaa.
+// Jos rivi on kuppia leveämpi, kivet menevät limittäin.
 function scaleSlotPositions(list, pan) {
-  var i, widths = [], total = 0, x, out = [], s = scaleS();
+  var i, widths = [], total = 0, x, out = [], s = scaleS(), k;
   for (i = 0; i < list.length; i++) { widths.push(scaleGemR(list[i].w) * 2.1); total += widths[i]; }
+  if (total > s * 7.4) {
+    k = s * 7.4 / total;
+    for (i = 0; i < widths.length; i++) widths[i] *= k;
+    total = s * 7.4;
+  }
   x = pan.x - total / 2;
   for (i = 0; i < list.length; i++) {
     out.push({ x: x + widths[i] / 2, y: pan.y - scaleGemR(list[i].w) * 0.9 - s * 0.1 });
@@ -52,15 +75,11 @@ function scaleSlotPositions(list, pan) {
 
 // ---------- Alustus ----------
 function initScale() {
-  var i, f;
+  var i;
   tasks = [makeTask(-5, 'compare'), makeTask(-5, 'math')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   scale.gems = [];
-  for (i = 0; i < SCALE_FLOOR.length; i++) {
-    f = SCALE_FLOOR[i];
-    scale.gems.push({ idx: i, w: f.w, fx: f.fx, hx: 0, hy: 0, x: 0, y: 0, onPan: false, color: f.w === 2 ? SCALE_BIG_COLORS[i % SCALE_BIG_COLORS.length] : SCALE_SMALL_COLORS[i % SCALE_SMALL_COLORS.length], wobble: 0 });
-  }
-  scalePlaceFloor();
+  scale.gold = [];
   scale.round = 0;
   scale.left = [];
   scale.drag = null;
@@ -83,20 +102,51 @@ function initScale() {
   playNote(784, 0.24, 0.3, 'triangle', 0.35);
 }
 function scalePlaceFloor() {
-  var i, g, s = scaleS();
-  for (i = 0; i < scale.gems.length; i++) {
+  var i, g, n = scale.gems.length;
+  for (i = 0; i < n; i++) {
     g = scale.gems[i];
+    g.fx = 0.3 + (n > 1 ? i / (n - 1) : 0.5) * 0.52;
     g.hx = g.fx * viewW;
-    g.hy = groundTop + viewH * (g.w === 2 ? 0.10 : 0.045) - scaleGemR(g.w) * 0.2;
+    g.hy = groundTop + viewH * (i % 2 ? 0.1 : 0.05) - scaleGemR(g.w) * 0.2;
     if (!g.onPan && scale.drag !== g) { g.x = g.hx; g.y = g.hy; }
   }
 }
+// Kierroksen arvonta: lattian kivet sekoitetaan, Vaarin paino on jonkin
+// lattiakivien osajoukon summa (ratkeaa aina), ja Vaarin kivet ovat eri
+// yhdistelmä kuin ratkaisu, jottei kuppia voi vain kopioida.
+function scaleGenerate(R) {
+  var floor = shuffleNums(R.floor.slice()), n = floor.length, m, sum, k, cnt, target = 0, sols = [], left, tries, rest, w;
+  for (m = 1; m < (1 << n); m++) {
+    sum = 0; cnt = 0;
+    for (k = 0; k < n; k++) if (m & (1 << k)) { sum += floor[k]; cnt++; }
+    if (sum >= R.lo && sum <= R.hi && cnt >= 2) sols.push(sum);
+  }
+  target = sols.length ? sols[Math.floor(Math.random() * sols.length)] : R.lo;
+  for (tries = 0; tries < 50; tries++) {
+    left = []; rest = target;
+    while (rest > 0) {
+      w = Math.min(rest, 1 + Math.floor(Math.random() * 3));
+      left.push(w); rest -= w;
+    }
+    if (left.length <= 4) break;
+  }
+  return { floor: floor, left: left.sort(function (a, b) { return b - a; }) };
+}
 function scaleLoadRound() {
-  var i, set = SCALE_ROUNDS[scale.round];
+  var i, R = SCALE_ROUNDS[scale.round], G = scaleGenerate(R);
+  scale.gems = [];
+  for (i = 0; i < G.floor.length; i++) {
+    scale.gems.push({ idx: i, w: G.floor[i], fx: 0, hx: 0, hy: 0, x: 0, y: 0, onPan: false, color: scaleGemColor(G.floor[i], i + scale.round), wobble: 0, order: 0 });
+  }
+  scale.drag = null;
+  scale.back = [];
+  scalePlaceFloor();
   scale.left = [];
-  for (i = 0; i < set.length; i++) scale.left.push({ w: set[i], color: set[i] === 2 ? SCALE_BIG_COLORS[(i + 1) % SCALE_BIG_COLORS.length] : SCALE_SMALL_COLORS[(i + 3) % SCALE_SMALL_COLORS.length], appear: -i * 0.15 });
+  for (i = 0; i < G.left.length; i++) scale.left.push({ w: G.left[i], color: scaleGemColor(G.left[i], i + 3), appear: -i * 0.15 });
   scale.stableT = 0;
   scale.doneT = 0;
+  scale.over = false;
+  scale.magpie = { state: R.magpie ? 'wait' : 'off', t: SCALE_MAGPIE_WAIT[0] + Math.random() * 2, x: 0, y: 0, gem: null };
 }
 function respawnScale() {}
 function resizeScale() {
@@ -120,7 +170,15 @@ function handleScaleTap(px, py) {
     dx = px - g.x; dy = py - g.y;
     if (dx * dx + dy * dy < r * r && dx * dx + dy * dy < bd) { bd = dx * dx + dy * dy; best = g; }
   }
-  if (!best) return;
+  if (!best) {
+    // Harakkaan voi napauttaa: se säikähtää ja lähtee tyhjin nokin
+    var mp = scale.magpie;
+    if (mp.state === 'dive' && Math.hypot(px - mp.x, py - mp.y) < viewH * 0.08) {
+      mp.state = 'leave'; mp.t = 0; mp.gem = null;
+      playNote(1400, 0, 0.08, 'square', 0.1);
+    }
+    return;
+  }
   scale.drag = best;
   if (best.onPan) { best.onPan = false; scaleArrangePan(); }
   for (i = scale.back.length - 1; i >= 0; i--) if (scale.back[i].g === best) scale.back.splice(i, 1);
@@ -139,6 +197,8 @@ function scaleArrangePan() {
 function scaleDrop(g) {
   if (scaleInPan(g.x, g.y)) {
     g.onPan = true;
+    g.order = ++scale.order;
+    if (scaleSum(scaleRightList()) > scaleSum(scale.left)) scale.over = true;
     scaleArrangePan();
     artPop(g.x, g.y, scaleGemR(g.w) * 1.6, g.color, 'ring');
     playNote(600 + scaleSum(scaleRightList()) * 60, 0, 0.18, 'triangle', 0.35);
@@ -217,12 +277,81 @@ function updateScale(dt) {
     }
   }
   if (scale.treasures === 0 && !busy) scale.hintT += dt;
+  if (!busy && !celebrating) scaleUpdateMagpie(dt);
+}
+// Harakka: odottaa, huutaa (varjo taivaalla), syöksyy kupille ja vie viimeksi
+// lisätyn kiven takaisin lattialle. Napautus säikäyttää sen pois.
+function scaleUpdateMagpie(dt) {
+  var mp = scale.magpie, pan = scalePanPos(1), list, i, g, k;
+  if (mp.state === 'off') return;
+  mp.t -= dt;
+  if (mp.state === 'wait') {
+    if (scale.doneT > 0) mp.t = Math.max(mp.t, 2);
+    if (mp.t <= 0) {
+      mp.state = 'warn'; mp.t = SCALE_MAGPIE_WARN;
+      playNote(1300, 0, 0.1, 'square', 0.08);
+      playNote(1100, 0.15, 0.12, 'square', 0.08);
+    }
+  } else if (mp.state === 'warn') {
+    mp.x = viewW * 1.05; mp.y = viewH * 0.12;
+    if (mp.t <= 0) { mp.state = 'dive'; mp.t = 0.9; mp.sx = mp.x; mp.sy = mp.y; }
+  } else if (mp.state === 'dive') {
+    k = easeInOutSine(1 - mp.t / 0.9);
+    mp.x = mp.sx + (pan.x - mp.sx) * k;
+    mp.y = mp.sy + (pan.y - viewH * 0.08 - mp.sy) * k;
+    if (mp.t <= 0) {
+      list = scaleRightList();
+      g = null;
+      for (i = 0; i < list.length; i++) if (!g || list[i].order > g.order) g = list[i];
+      if (g && scale.doneT <= 0 && g !== scale.drag) {
+        g.onPan = false;
+        scaleArrangePan();
+        mp.gem = g;
+        g.x = -1e4;
+        playNote(1500, 0, 0.08, 'square', 0.1);
+        playNote(1700, 0.1, 0.1, 'square', 0.1);
+      }
+      mp.state = 'leave'; mp.t = 0;
+    }
+  } else if (mp.state === 'leave') {
+    mp.t += dt;
+    mp.x -= viewW * 0.6 * dt;
+    mp.y -= viewH * 0.25 * dt;
+    // Kivi putoaa lattialle harakan noustessa
+    if (mp.gem && mp.t > 0.35) {
+      g = mp.gem;
+      g.x = mp.x; g.y = mp.y + viewH * 0.03;
+      scale.back.push({ g: g, x0: g.x, y0: g.y, t: 0 });
+      mp.gem = null;
+    }
+    if (mp.t > 1.8) { mp.state = 'wait'; mp.t = SCALE_MAGPIE_WAIT[0] + Math.random() * (SCALE_MAGPIE_WAIT[1] - SCALE_MAGPIE_WAIT[0]); }
+  }
+}
+function drawScaleMagpie(c) {
+  var mp = scale.magpie, s = viewH * 0.035, g;
+  if (mp.state === 'warn') {
+    // Huuto: harakka kurkistaa oikeasta reunasta
+    var k = 1 - mp.t / SCALE_MAGPIE_WARN;
+    drawMagpie(c, viewW - s * 1.2 * k, viewH * 0.12, s, Math.sin(globalT * 18), 1, false);
+    c.fillStyle = '#ff5f3a';
+    c.font = 'bold ' + Math.round(viewH * 0.05) + 'px ' + UI_FONT;
+    c.textAlign = 'center';
+    c.globalAlpha = 0.6 + Math.sin(globalT * 12) * 0.3;
+    c.fillText('!', viewW - s * 3, viewH * 0.1);
+    c.globalAlpha = 1;
+  } else if (mp.state === 'dive' || mp.state === 'leave') {
+    drawMagpie(c, mp.x, mp.y, s, Math.sin(globalT * 22), mp.state === 'leave' ? -1 : 1, false);
+    g = mp.gem;
+    if (g) drawScaleGem(c, mp.x + (mp.state === 'leave' ? s * 1.4 : -s * 1.4), mp.y + s * 0.4, scaleGemR(g.w) * 0.8, g.color);
+  }
 }
 
 function scaleRoundDone() {
   var i, list = scaleRightList(), p = scalePivot();
   scale.doneT = 2.2;
+  scale.gold[scale.treasures] = !scale.over;
   scale.treasures++;
+  if (!scale.over) playNote(1760, 0.5, 0.3, 'sine', 0.3);
   scale.vaari.nodT = 1.6;
   artPop(p.x, p.y, viewH * 0.08, '#ffe27a', 'burst');
   spawnSparkles(p.x, p.y - viewH * 0.05, 24, '#ffe27a');
@@ -292,7 +421,7 @@ function drawGoldPile(b, x, baseY, s) {
 }
 
 // ---------- Piirto: jalokivet, vaaka, aarteet ----------
-function drawScaleGem(c, x, y, r, color, alpha) {
+function drawScaleGem(c, x, y, r, color, alpha, w) {
   var dark = artShade(color, -0.45);
   if (alpha !== undefined) c.globalAlpha = alpha;
   c.beginPath();
@@ -307,6 +436,14 @@ function drawScaleGem(c, x, y, r, color, alpha) {
   c.lineWidth = Math.max(1, r * 0.08);
   c.beginPath(); c.moveTo(x - r, y - r * 0.1); c.lineTo(x + r, y - r * 0.1); c.moveTo(x - r * 0.3, y - r * 0.1); c.lineTo(x, y + r); c.moveTo(x + r * 0.3, y - r * 0.1); c.lineTo(x, y + r); c.stroke();
   artHighlight(c, x - r * 0.3, y - r * 0.35, r * 0.25, r * 0.12, 0.6);
+  // Painon pisteet
+  if (w) {
+    var dr = Math.max(1.5, r * 0.13), j;
+    c.fillStyle = '#ffffff';
+    for (j = 0; j < w; j++) {
+      c.beginPath(); c.arc(x + (j - (w - 1) / 2) * dr * 2.6, y + r * 0.28, dr, 0, Math.PI * 2); c.fill();
+    }
+  }
   c.globalAlpha = 1;
 }
 function drawScalePan(c, pan, side) {
@@ -388,7 +525,7 @@ function drawScale() {
   pos = scaleSlotPositions(scale.left, panL);
   for (i = 0; i < scale.left.length; i++) {
     var k = easeOutBack(Math.max(0, scale.left[i].appear));
-    if (k > 0) drawScaleGem(c, pos[i].x, pos[i].y - (1 - k) * s * 3, scaleGemR(scale.left[i].w) * Math.max(0.2, k), scale.left[i].color);
+    if (k > 0) drawScaleGem(c, pos[i].x, pos[i].y - (1 - k) * s * 3, scaleGemR(scale.left[i].w) * Math.max(0.2, k), scale.left[i].color, 1, scale.left[i].w);
   }
   // Oikean kupin korostus, kun raahataan
   if (scale.drag) {
@@ -402,13 +539,14 @@ function drawScale() {
   for (i = 0; i < scale.gems.length; i++) {
     g = scale.gems[i];
     if (g === scale.drag) continue;
+    if (g === scale.magpie.gem) continue;
     if (!g.onPan) artShadow(c, g.x, g.y + scaleGemR(g.w) * 1.05, scaleGemR(g.w) * 1.1, scaleGemR(g.w) * 0.3, 0.16);
-    drawScaleGem(c, g.x, g.y, scaleGemR(g.w), g.color);
+    drawScaleGem(c, g.x, g.y, scaleGemR(g.w), g.color, 1, g.w);
   }
   if (scale.drag) {
     g = scale.drag;
     artShadow(c, g.x, g.y + scaleGemR(g.w) * 2.2, scaleGemR(g.w) * 1.0, scaleGemR(g.w) * 0.25, 0.1);
-    drawScaleGem(c, g.x, g.y, scaleGemR(g.w) * 1.1, g.color);
+    drawScaleGem(c, g.x, g.y, scaleGemR(g.w) * 1.1, g.color, 1, g.w);
   }
   // Tasapaino saavutettu: hehku
   if (scale.doneT > 0) {
@@ -422,14 +560,21 @@ function drawScale() {
       var kk = easeInOutSine(Math.min(1, hp / 1.6)), g0 = scale.gems[0];
       var hx = g0.hx + (panR.x - g0.hx) * kk, hy = g0.hy + (panR.y - s * 1.5 - g0.hy) * kk;
       c.globalAlpha = hp > 1.7 ? (2.0 - hp) / 0.3 : 0.85;
-      if (kk > 0.05) drawScaleGem(c, hx, hy, scaleGemR(1), g0.color);
+      if (kk > 0.05) drawScaleGem(c, hx, hy, scaleGemR(g0.w), g0.color, 1, g0.w);
       drawHand(c, hx + s * 0.6, hy + s * 1.2, s * 1.1);
       c.globalAlpha = 1;
     }
   }
+  drawScaleMagpie(c);
   drawParticlesLayer(c);
   endPlayWorld();
-  drawPickupHud(c, SCALE_ROUNDS.length, function (i2) { return i2 < scale.treasures; }, function (cc, x, y, hs) { drawTreasure(cc, SCALE_TREASURES[0], x, y, hs * 0.9); });
+  // HUD: aarteet; kultainen hehku = virheetön punnitus
+  var hsz = viewH * 0.022;
+  drawPickupHud(c, SCALE_ROUNDS.length, function (i2) { return i2 < scale.treasures; }, function (cc, x, y, hs) {
+    var gi = Math.round((x - hudX() - hsz * 1.4 * 0.5 - hsz * 1.6) / (hsz * 3.2));
+    if (gi < scale.treasures && scale.gold[gi]) artGlow(cc, x, y, hs * 1.8, '#ffd24f', 0.8);
+    drawTreasure(cc, SCALE_TREASURES[Math.max(0, Math.min(4, gi))], x, y, hs * 0.9);
+  });
   drawTaskOverlay(c);
 }
 

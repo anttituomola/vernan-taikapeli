@@ -465,15 +465,32 @@ yhdistää ritsan ja tulihengityksen.
   lämpöä, lämpörengas täyttyy 2,6 sekunnissa ja munat halkeilevat vaihe
   vaiheelta, kunnes poikaset kuoriutuvat. Irti päästettynä lämpö hiipuu, joten
   hautominen tehdään yhdellä pidolla. Käsi näyttää sekä raahauksen että pidon.
-  Tehtävät kuoriutumisten jälkeen: järjestä koon mukaan, samanlainen.
+  Kaksi kierrosta, joiden kuviot, pesien järjestys ja munien hyllyt arvotaan
+  joka peluukerralla (30.9.2026, palaute: liian helppo, ei kutsu uusintaan).
+  Ensimmäisellä kierroksella pesät ovat eriväriset. Toisella kaksi pesää on
+  samanvärisiä ja kuviot lähes samanlaiset (pienet pilkut / isot täplät, vaaka-
+  / pystyraidat, siksak / renkaat), ja luolan suulta puhaltaa **kylmä puhuri**:
+  huurre ja iso lumihiutale kasvavat 1,5 s varoitukseksi, ja puhallus nollaa
+  kaikkien keskeneräisten pesien lämmön (Minttu värisee). Hautominen (2,6 s)
+  on ajoitettava puhurien väliin (tyyntä 4–5,5 s). Tehtävät: järjestä koon
+  mukaan (kierrosten välissä), samanlainen (toisen kierroksen ensimmäisen
+  kuoriutumisen jälkeen).
 - **Aarrevaaka** — ei liikkumista, ei sydämiä. Vanha lohikäärme Vaari laittaa
   kultaisen vaa'an vasempaan kuppiin jalokiviä; raahaa lattian jalokiviä oikeaan
   kuppiin, kunnes vaaka on tasan. Pieni jalokivi painaa yhden ja iso kaksi, ja
   vaaka **kallistuu heti** painavamman puolen mukaan, joten liian painavan kupin
   näkee ja kiven voi raahata takaisin lattialle. Osoitin muuttuu vihreäksi
-  tasapainossa. Viisi kierrosta (3, 2, 4, 5, 7); joka kierroksesta Vaarin kasaan
-  tulee uusi aarre. Tehtävät toisen ja neljännen kierroksen jälkeen: kummalla
-  enemmän, lasku.
+  tasapainossa. Viisi arvottua kierrosta (30.9.2026, palaute: liian helppo):
+  jalokivissä on kolme painoa (pieni 1, iso 2, jättikivi 3; valkoiset pisteet
+  kertovat painon), ja lattialla on vain 5–6 kiveä, joten yhdistelmä on
+  mietittävä. Vaarin paino arvotaan lattiakivien jostakin yhdistelmästä
+  (3–4, 4–5, 5–6, 7–8, 8–9), joten kierros ratkeaa aina. Kolmannesta
+  kierroksesta alkaen **harakka** huutaa oikeasta reunasta (!) ja syöksyy
+  kupille noin 8–11 sekunnin välein: se vie viimeksi lisätyn kiven takaisin
+  lattialle, ellei sitä napauteta pois ennen kuin se ehtii kupille. Joka
+  kierroksesta Vaarin kasaan tulee uusi aarre; jos oikea kuppi ei kertaakaan
+  käynyt liian painavana, aarre hehkuu HUD:ssa kultaisena (virheetön punnitus).
+  Tehtävät toisen ja neljännen kierroksen jälkeen: kummalla enemmän, lasku.
 - **Tulivuoren jätti** ♥ — vartija, joka yhdistää **ritsan ja tulihengityksen**.
   Kraatterissa nukkuva Kivijätti herää, nostaa kätensä varoitukseksi ja heittää
   laavakiviä kaaressa prinsessaa kohti. Kun kivi tulee kantamalle, sen ympärille
@@ -921,7 +938,8 @@ väärästä vastauksesta tulee vain ravistus.
 Pelaaja on ikäryhmäänsä taitavampi, ja kenttä pelataan monta kertaa. Palautteen
 mukaan (syyskuu 2026) kentät, joissa ei voi epäonnistua ja joiden sisältö on
 joka kerta sama (Munapesä, Aarrevaaka), olivat hauskoja mutta liian helppoja
-eivätkä kutsu uudelleen; Pesäkallion ritsa sai kiitosta juuri haasteesta, ja
+eivätkä kutsu uudelleen (ne korjattiin 30.9.2026: arvonta, kierrokset, puhuri
+ja harakka); Pesäkallion ritsa sai kiitosta juuri haasteesta, ja
 Tulilento oli aluksi liian kaoottinen. Uudessa kentässä pitää olla vähintään
 kaksi seuraavista:
 
@@ -997,8 +1015,8 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Revontulikettu: kiteet `FOX_STONES`
 - Pesäkallio: asemat `NEST_STATIONS` (pesien paikat, toiveet, `peek`, `swing`, `overhang`, pilarit `rocks`), laukaisu `NEST_VMAX` / veto `NEST_PULL`, painovoima `NEST_G`, kurkistus `NEST_PEEK_UP` / `NEST_PEEK_DOWN`, suun säde `nestMouth` (`s * 1.1`), ennakkokaaren osumatarkkuus `nestPreview` (`m.r * m.r * 0.6`), harakan väli `3.5 + Math.random() * 2`; osumaikkunat voi mitata selaimessa käymällä vedot läpi `nestLaunchVel` + `nestPreview`
 - Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `FLY_SPEED`, ohjauksen pehmeys `FLY_ACCEL` (kiihtyvyys sormen etäisyyden mukaan), vajoaminen `FLY_SINK`, osumasäde `R = s * 0.62` (updateDragonfly)
-- Munapesä: munat ja kuviot `EGG_SHELVES` / `EGG_PATTERNS`, pesät `EGG_NEST_FX`, hautomisaika `EGG_WARM_T`, hiipuminen `EGG_COOL`
-- Aarrevaaka: kierrokset `SCALE_ROUNDS` (vasemman kupin painot), lattian kivet `SCALE_FLOOR`, kallistus `(sumR - sumL) * 0.075`, tasapainon odotus `stableT > 0.9`
+- Munapesä: hyllyt `EGG_SHELVES`, kuviot pareittain `EGG_PATTERNS` (sama `group` = sama väri), kierrokset `EGG_ROUNDS` ja kuvioiden arvonta `eggsPickPatterns`, pesät `EGG_NEST_FX`, hautomisaika `EGG_WARM_T`, hiipuminen `EGG_COOL`, puhuri `EGG_GUST_CALM` / `EGG_GUST_WARN` / `EGG_GUST_BLOW`
+- Aarrevaaka: kierrokset `SCALE_ROUNDS` (Vaarin painon rajat `lo`/`hi`, lattian kivet `floor`, harakka `magpie`), arvonta `scaleGenerate`, kallistus `(sumR - sumL) * 0.075`, tasapainon odotus `stableT > 0.9`, harakan väli `SCALE_MAGPIE_WAIT` ja varoitus `SCALE_MAGPIE_WARN`
 - Sienipomppu: osiot `BOUNCE_SECTIONS` (sienimäärä, pystyväli `dy`, sivusiirtymä `dx`, liikkuvien/lakastuvien osuus, takiaiset, reaktioaika `react`), pompun korkeus `BOUNCE_APEX` / jousi `BOUNCE_SPRING`, painovoima `BOUNCE_G`, ohjaus `BOUNCE_K` / `BOUNCE_D` / `BOUNCE_VMAX`; hyppyjen ulottuvuus `bounceReachable`
 - Tulikärpässieppo: kierrokset `CATCH_ROUNDS` (paikat, tulikärpäset, nopeus, koit, välkkyminen, järjestys, koiden hakeutuminen `chase`), haavin vähimmäisnopeus `CATCH_NET_SPEED`, nappaussäteet `CATCH_HIT` / `CATCH_MOTH_HIT`
 - Varjoperhonen: kierrokset `MOTH_ROUNDS` (koit, väli, nopeus, väistöt `jink`, lipuminen `drift`, pilkun heilunta `bob`, ikkuna, itiöt), pompun korkeus `MOTH_APEX`, pilkun osumasäde `MOTH_SPOT_R`, syöksyn korkeus `targetY` (updateMoth)
