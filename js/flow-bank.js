@@ -86,7 +86,9 @@ function bankWalletPos() {
 }
 
 // ---------- Syöte ----------
-// Palauttaa true, jos napautus osui pankin nappiin
+// Palauttaa true, jos napautus osui pankin nappiin. Ovi ja holvin sisus
+// käsitellään vasta tavaroiden jälkeen (bankDoorTap), jotta holvin päälle
+// siirretyt tavarat saa vielä raahattua pois.
 function bankTap(px, py) {
   if (homeRoomIdx !== BANK_ROOM) return false;
   var v = bankVault(), dx, dy, b, dir = 0;
@@ -99,7 +101,7 @@ function bankTap(px, py) {
     bankDepositAll();
     return true;
   }
-  if (!dir) return bankDoorTap(px, py);
+  if (!dir) return false;
   bankHold = { dir: dir, next: 0.5, rate: 0.4 };
   bankStep(dir);
   return true;
@@ -107,6 +109,7 @@ function bankTap(px, py) {
 
 // Ovi ja holvin sisus: sulje, avaa tai hypäytä tähtikasaa
 function bankDoorTap(px, py) {
+  if (homeRoomIdx !== BANK_ROOM) return false;
   var v = bankVault(), d = bankDoor, dx = px - v.cx, dy = py - v.cy;
   var inVault = dx * dx + dy * dy <= v.r * v.r * 1.1;
   var onOpenDoor = Math.abs(px - (v.cx - v.r * 1.12)) < v.r * 0.34 && Math.abs(dy) < v.r * 0.95;
