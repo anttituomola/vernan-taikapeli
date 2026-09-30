@@ -61,6 +61,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-giant.js` — Lohikäärmelaakson vartija Tulivuoren jätti (ritsa + tulihengitys, kolme kovenevaa kierrosta)
 - `js/play-bounce.js`, `js/play-catch.js`, `js/play-moth.js` — Kaukamaa, Hohtometsä (maailma 11): Sienipomppu (pomppu), Tulikärpässieppo (sipaisu) ja vartija Varjoperhonen (sipaisu + pomppu)
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
+- `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus) ja vartija Myyräkuningas
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -628,8 +629,8 @@ Mantereen neljäs paikka, pupujen vihreät kummut etelärannalla. Aukeaa, kun
 Aurinkodyynien vartija Hiekkapyörre on läpäisty. Syntyi palautteesta:
 reittitehtävän pupun ohjaus oli mieluisa, joten siitä tehtiin isompi ja
 haastavampi oma kenttä, ja Kuunsäteen peilipulmasta värimuunnelma. Vartija
-Myyräkuningas yhdistää ne (`finaleKind: 'mole'`). Sokkelossa on yksi
-usvahuone tulevalle kentälle.
+Myyräkuningas yhdistää ne (`finaleKind: 'mole'`). Loitsupolku täytti sokkelon
+usvahuoneen 30.9.2026 (palaute: pupun ohjelmointiin isompia ja haastavampia ratoja).
 
 - **Pupupolku** — uusi verbi: **ohjelmointi**. Napauta nuolia ohjelmariville ja
   paina ▶: pupu hyppii ohjelman askel kerrallaan (käynnissä oleva ruutu
@@ -660,6 +661,26 @@ usvahuone tulevalle kentälle.
   uudestaan. Kimalainen istuu säteellä olevalle peilille ja varjostaa säteen;
   napautus häätää sen. Perhoset lepäävät ruuduissa bonuksena. Laseihin,
   kukkiin ja kiviin voi napauttaa. Tehtävät: sekoita väri (sekavärit), lasku.
+- **Loitsupolku** — Pupupolun isompi jatko: **loitsu** eli aliohjelma. Rivejä on
+  kaksi: pupurivi (pääohjelma) ja ★-rivi (loitsu). Rivin napautus valitsee sen
+  (keltainen kehys), nuolet ja ⏸ menevät valitulle riville, ja ★-nappi lisää
+  pupuriville loitsun, jolloin pupu tekee koko ★-rivin (pupu kimaltaa, ja
+  käynnissä oleva ruutu hehkuu kummallakin rivillä). Pupurivi on niin lyhyt,
+  ettei reitti mahdu siihen ilman loitsua. Kolmannesta kierroksesta alkaen
+  niityllä on **myyriä**, jotka nousevat joka toisella askeleella (ylhäällä
+  parillisilla askelilla; ajon ulkopuolella ne kurkkivat samassa tahdissa), ja
+  **odota**-nappi ⏸ pitää pupun paikallaan yhden askeleen. Pensas, reuna tai
+  nouseva myyrä pysäyttää pupun (!), ohjelman loppuminen kesken saa sen
+  ihmettelemään (?), ja ohjelma jää korjattavaksi. Neljä arvottua, kovenevaa
+  kierrosta: 7×5, loitsu valmiina ja pupurivi 4 (2 loitsua + 2 nuolta);
+  7×5, loitsu 3 ja pupurivi 5, kaksi porkkanaa; 7×6, pupurivi 6, myyrät ja
+  odotus; 8×6, loitsu 4 ja pupurivi 7, kaksi odotusta, myyrät ja kaksi
+  porkkanaa. Rata rakennetaan arvotusta ohjelmasta (loitsu kolmesti), joten se
+  ratkeaa aina; myyrät ovat reitillä odotusten jälkeen ja hämäysmyyrät reitin
+  vieressä, ja leveyshaku varmistaa, ettei lyhin reitti mahdu pupuriville ilman
+  loitsua. Käsi näyttää ★-napin, ★-rivin ja ⏸:n niiden ensimmäisellä
+  kierroksella. Ensimmäisellä ajolla onnistunut kierros antaa kultaisen
+  porkkanan. Ei sydämiä. Tehtävät: lukumäärä, kuviosarja.
 - **Myyräkuningas** ♥ — vartija, joka yhdistää **ohjelmoinnin ja värisäteen**.
   Myyräkuningas on vienyt kummun värit, ja sen kruunun kiteet ovat himmeät.
   Uusi sääntö: pupu kääntää kristallipeiliä hyppäämällä sen päälle (tassunjälki
@@ -987,6 +1008,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Hiekkapyörre: kierrokset `WHIRL_ROUNDS` (liukuvaiheen dyynit, vauhti ja esteet kuten `DUNE_SECTIONS`; etsinnän lämmön kantama, skorpionit, puhallusväli `charge`, puuskat `gust`); liukuvaihe käyttää Dyynilaskun funktioita (`duneRideFrame`, `duneBuildObstacles`) ja etsintä Aarrevarvun vakioita (`DOWSE_*`). Liukuvaiheet botilla: 0,05 s ei osumia, 0,12 s ~2 osumaa kolmessa vaiheessa
 - Kamelikaravaani: kierrokset `CARAVAN_ROUNDS` (kamelit: ratkaisun säkkimäärä `n` tai valmiiksi raskas `pre`, kyltin rajat `lo`/`hi`, suurin säkki `vmax`, hämäyssäkit `extra`, myrskyn saapumisaika `time`), säkkejä selässä enintään `CARAVAN_MAX_LOAD`; arvonta `caravanGenerate`
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
+- Loitsupolku: kierrokset `BLOOP_ROUNDS` (ruudukko, pupurivi `main`, ★-rivi `spell`, loitsuja pääohjelmassa `stars`, odotukset `waits`, myyrät reitillä `moles` ja vieressä `decoys`, porkkanat, reitin pituus `len`, pensaat, valmis loitsu `given`), askeleen kesto `BLOOP_STEP_T`, myyrien tahti `bloopMoleUpAt`; arvonta `bloopTryGenerate`, tarkistus `bloopSimulate`. Reitti 8 / 11 / 11 / 14 askelta, lyhin reitti keskimäärin 8,6 / 9,3 / 9,2 askelta
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)

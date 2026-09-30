@@ -1207,9 +1207,9 @@ var WORLDS = [
       '#########.#',
       '#K........#',
       '#.#########',
-      '#........V#',
+      '#........L#',
       '#########.#',
-      '#?........#',
+      '#V........#',
       '###########'
     ],
     levels: [
@@ -1238,6 +1238,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderPrismBg(b, w, h); },
         light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(180,120,255,0.04)'], vignette: 0.25 },
         respawn: function () { respawnPrism(); }
+      },
+      {
+        kind: 'bloop', room: 'L', name: 'Loitsupolku', color: '#ffd24f', script: 'play-bloop',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#7fc8f0', ambient: 'sparkle', fg: null,
+        init: function () { initBloop(); },
+        update: function (dt) { updateBloop(dt); },
+        draw: function () { drawBloop(); },
+        tap: function (x, y) { handleBloopTap(x, y); },
+        resize: function () { resizeBloop(); },
+        renderBg: function (b, w, h) { renderBloopBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(120,200,120,0.04)'], vignette: 0.25 },
+        respawn: function () { respawnBloop(); }
       },
       {
         kind: 'mole', room: 'V', name: 'Myyräkuningas', color: '#8a6a5a', script: 'play-mole',
