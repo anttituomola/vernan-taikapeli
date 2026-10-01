@@ -12,6 +12,7 @@ var gemDefs = [
   { fx: 0.825, fy: 0.36 }, { fx: 0.30, fy: 0.12 }, { fx: 0.76, fy: 0.12 }
 ];
 var GEM_COLORS = ['#ff5f7e', '#5fa8ff', '#6fd66f', '#ffe94f', '#c9a0ff', '#8fd3ff'];
+var towerTapSeen = 0;     // viimeksi käsitelty kosketuksen alkuhetki (juoksukentällä ei ole tap-koukkua)
 
 function layoutTower() {
   var g = groundTop;
@@ -23,6 +24,7 @@ function layoutTower() {
     { kind: 'ledge', x: worldW * 0.80, y: g - viewH * 0.22, w: worldW * 0.05 }
   ];
   throne.x = throne.fx * worldW;
+  towerProps();
 }
 
 function initTower() {
@@ -46,9 +48,10 @@ function initTower() {
   pendulums = [];
   var pFx = [0.27, 0.50, 0.72];
   for (i = 0; i < pFx.length; i++) {
-    pendulums.push({ fx: pFx[i], x: pFx[i] * worldW, phase: i * 1.3, speed: 1.1, angle: 0 });
+    pendulums.push({ fx: pFx[i], x: pFx[i] * worldW, phase: i * 1.3, speed: 1.1, angle: 0, flareT: 0 });
   }
   throne.open = false;
+  towerTapSeen = holdStartG;
   resetPrincess(viewW * 0.08, groundTop);
   checkpoint.x = princess.x;
   checkpoint.y = groundTop;
@@ -98,6 +101,7 @@ function updateTower(dt) {
   var i;
   updateTasks(dt);
   var busy = puzzleBusy();
+  towerPollTap();
 
   platformerStep(dt, { runSp: viewW * 0.22 });
   updateCheckpoints(princess.x, groundTop);
@@ -115,6 +119,7 @@ function updateTower(dt) {
   for (i = 0; i < pendulums.length; i++) {
     var p = pendulums[i];
     if (!busy) p.phase += dt * p.speed;
+    if (p.flareT > 0) p.flareT -= dt;
     p.angle = Math.sin(p.phase) * 0.55;
     var bob = pendulumBob(p);
     var hx = bob.x - princess.x, hy = bob.y - (princess.y - viewH * 0.1);
@@ -131,6 +136,7 @@ function updateTower(dt) {
     startCelebration();
   }
 
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -175,7 +181,10 @@ function renderTowerMid(b, w, h) {
   b.strokeStyle = 'rgba(255,255,255,0.05)';
   b.lineWidth = 2;
   for (i = 0; i < 14; i++) { b.beginPath(); b.moveTo(0, h * 0.05 * i); b.lineTo(w, h * 0.05 * i); b.stroke(); }
+  // Keskikerros: kirjahyllyt sävytetään seinän väriin (ilmaperspektiivi), ei reunaviivoja
   var bookCols = ['#ff5f7e', '#ffb84f', '#6fd66f', '#5fa8ff', '#b678ff', '#ffe94f'];
+  var hazeCol = '#3c2f6e', hazed = [], shelfCol = artMix('#5a3d2a', hazeCol, 0.3), boardCol = artMix('#7a5538', hazeCol, 0.3);
+  for (k = 0; k < bookCols.length; k++) hazed.push(artMix(bookCols[k], hazeCol, 0.3));
   for (i = 0; i < 12; i++) {
     x = w * (0.04 + i * 0.082);
     if (i % 3 === 1) {
@@ -191,15 +200,15 @@ function renderTowerMid(b, w, h) {
       b.beginPath(); b.arc(x - h * 0.02, h * 0.34, h * 0.005, 0, Math.PI * 2); b.fill();
       continue;
     }
-    b.fillStyle = '#5a3d2a';
+    b.fillStyle = shelfCol;
     b.fillRect(x - h * 0.07, h * 0.16, h * 0.14, h * 0.3);
     for (k = 0; k < 3; k++) {
       var sy = h * 0.19 + k * h * 0.09;
-      b.fillStyle = '#7a5538';
+      b.fillStyle = boardCol;
       b.fillRect(x - h * 0.065, sy + h * 0.07, h * 0.13, h * 0.012);
       var j;
       for (j = 0; j < 5; j++) {
-        b.fillStyle = bookCols[(i + j + k) % bookCols.length];
+        b.fillStyle = hazed[(i + j + k) % hazed.length];
         b.fillRect(x - h * 0.06 + j * h * 0.025, sy + h * 0.01 + (j % 2) * h * 0.008, h * 0.02, h * 0.06 - (j % 2) * h * 0.008);
       }
     }
@@ -219,23 +228,154 @@ function renderTowerNear(b, w, h) {
   for (i = 1; i < platforms.length; i++) {
     drawStoneSlab(b, platforms[i].x, platforms[i].y, platforms[i].w, h * 0.05, h);
   }
-  drawThroneFrame(b, throne.x, groundTop, h);
 }
 
-function drawThroneFrame(b, x, baseY, h) {
-  var s = h * 0.1;
-  b.fillStyle = '#8a5cb8';
-  roundRect(b, x - s * 0.7, baseY - s * 1.8, s * 1.4, s * 1.8, s * 0.2);
-  b.fill();
-  b.fillStyle = '#c0304e';
-  roundRect(b, x - s * 0.55, baseY - s * 1.5, s * 1.1, s * 0.9, s * 0.15);
-  b.fill();
-  b.fillStyle = '#ffd24f';
-  b.fillRect(x - s * 0.7, baseY - s * 0.6, s * 1.4, s * 0.12);
+// Tökättävät koristeet: lattiakynttelikköjä ja kirjapinoja ovien välissä
+// sekä valtaistuin piirretään joka ruudulla, jotta ne heilahtavat
+// napautuksesta. Kutsutaan layoutTowerista (init ja resize).
+function towerProps() {
+  var h = viewH, i, candleFx = [0.12, 0.60], bookFx = [0.38, 0.84];
+  propsReset();
+  for (i = 0; i < 2; i++) {
+    propAdd({
+      x: worldW * candleFx[i], y: groundTop, s: h * 0.05, r: h * 0.1, hy: h * 0.11, amp: 0.08, color: '#ffd86a', note: 700 + i * 90,
+      draw: towerDrawCandelabra,
+      poke: function (p) {
+        // Liekit leimahtavat
+        spawnSparkles(p.x, p.y - p.s * 2.7, 8, '#ffe27a');
+        playNote(1568, 0.06, 0.12, 'triangle', 0.14);
+      }
+    });
+    propAdd({
+      x: worldW * bookFx[i], y: groundTop, s: h * 0.045, r: h * 0.08, hy: h * 0.03, amp: 0.1, color: '#c9a0ff', note: 560 + i * 70, ci: i,
+      draw: towerDrawBooks,
+      poke: function (p) {
+        // Päällimmäinen kansi läpsähtää auki ja pölyä pöllähtää
+        spawnSparkles(p.x, p.y - p.s * 1.2, 8, '#ffffff');
+        playNote(440, 0.05, 0.08, 'triangle', 0.12);
+      }
+    });
+  }
+  propAdd({
+    x: throne.x, y: groundTop, r: h * 0.14, hy: h * 0.11, amp: 0.035, color: '#ffd24f', note: 784, owl: 0,
+    draw: towerDrawThrone,
+    update: function (p, dt) { if (p.owl > 0) { p.owl += dt; if (p.owl > 2.6) p.owl = 0; } },
+    poke: towerThronePoke
+  });
 }
 
+function towerThronePoke(p) {
+  // Kruunu kimaltaa ja fanfaari soi; joka kolmas tökkäys kutsuu pöllön esiin (yllätys)
+  spawnSparkles(p.x, p.y - viewH * 0.1, 10, '#ffd24f');
+  playNote(1047, 0.1, 0.16, 'triangle', 0.2);
+  playNote(1319, 0.22, 0.2, 'triangle', 0.2);
+  if (p.n % 3 === 0 && !(p.owl > 0)) {
+    p.owl = 0.001;
+    playNote(392, 0.6, 0.18, 'sine', 0.25);
+    playNote(330, 0.85, 0.3, 'sine', 0.25);
+  }
+}
+
+// Valtaistuin (origo = lattia): selkänoja, tyyny, jalusta ja kruunu.
+// Yllätys: pöllö nousee selkänojan takaa, räpyttelee silmiään ja painuu takaisin.
+function towerDrawThrone(c, p) {
+  var s = viewH * 0.1, lw = Math.max(1.2, s * 0.04), k, oy, os, blink;
+  artShadow(c, 0, 0, s * 0.95, s * 0.16, 0.2);
+  if (p.owl > 0) {
+    k = p.owl < 0.4 ? easeOutBack(p.owl / 0.4) : (p.owl > 2.2 ? Math.max(0, (2.6 - p.owl) / 0.4) : 1);
+    os = s * 0.3;
+    oy = -s * 1.2 - k * s * 1.0;
+    blink = p.owl > 1.0 && p.owl < 1.5 && Math.sin(p.owl * 25) > 0;
+    // Korvatupsut, vartalo, maha, silmät ja nokka (piirretään ennen selkänojaa)
+    c.beginPath(); c.moveTo(-os * 0.9, oy - os * 0.6); c.lineTo(-os * 0.75, oy - os * 1.5); c.lineTo(-os * 0.2, oy - os * 0.95); c.closePath();
+    artFillPath(c, '#9b7bff', oy - os * 1.5, oy - os * 0.6, os * 0.3, { lineColor: '#4a2a90', line: lw });
+    c.beginPath(); c.moveTo(os * 0.9, oy - os * 0.6); c.lineTo(os * 0.75, oy - os * 1.5); c.lineTo(os * 0.2, oy - os * 0.95); c.closePath();
+    artFillPath(c, '#9b7bff', oy - os * 1.5, oy - os * 0.6, os * 0.3, { lineColor: '#4a2a90', line: lw });
+    artBlob(c, 0, oy, os, os * 1.15, '#9b7bff', { lineColor: '#4a2a90', line: lw, hi: 0.25 });
+    artBlob(c, 0, oy + os * 0.35, os * 0.6, os * 0.6, '#e3d8f5', { line: false });
+    artEye(c, -os * 0.38, oy - os * 0.3, os * 0.3, 0, blink);
+    artEye(c, os * 0.38, oy - os * 0.3, os * 0.3, 0, blink);
+    c.fillStyle = '#ffb347';
+    c.beginPath(); c.moveTo(-os * 0.12, oy + os * 0.02); c.lineTo(os * 0.12, oy + os * 0.02); c.lineTo(0, oy + os * 0.3); c.closePath(); c.fill();
+  }
+  artRoundRect(c, -s * 0.7, -s * 1.8, s * 1.4, s * 1.8, s * 0.2, '#8a5cb8', { lineColor: '#4a2a70', line: lw });
+  artRoundRect(c, -s * 0.55, -s * 1.5, s * 1.1, s * 0.9, s * 0.15, '#c0304e', { lineColor: '#6a1428', line: lw });
+  artHighlight(c, -s * 0.3, -s * 1.32, s * 0.16, s * 0.08, 0.3);
+  artRoundRect(c, -s * 0.7, -s * 0.6, s * 1.4, s * 0.12, s * 0.04, '#ffd24f', { lineColor: '#9a6a10', line: lw });
+  // Kruunu istuimella
+  c.beginPath();
+  c.moveTo(-s * 0.35, -s * 0.75); c.lineTo(-s * 0.35, -s * 1.1); c.lineTo(-s * 0.17, -s * 0.9); c.lineTo(0, -s * 1.2);
+  c.lineTo(s * 0.17, -s * 0.9); c.lineTo(s * 0.35, -s * 1.1); c.lineTo(s * 0.35, -s * 0.75); c.closePath();
+  artFillPath(c, '#ffd24f', -s * 1.2, -s * 0.75, s * 0.3, { lineColor: '#9a6a10', line: lw });
+  artCircle(c, 0, -s * 0.93, s * 0.06, '#ff5f7e', { line: false });
+}
+
+// Lattiakynttelikkö (origo = lattia): jalusta, varsi, poikkipuu ja kolme
+// kynttilää. Tökättynä liekit leimahtavat (p.t = aika tökkäyksestä).
+function towerDrawCandelabra(c, p) {
+  var s = p.s, i, x, fl, lw = Math.max(1.2, s * 0.05);
+  var flare = p.t >= 0 && p.t < 0.8 ? 1 - p.t / 0.8 : 0;
+  artShadow(c, 0, 0, s * 0.9, s * 0.16, 0.2);
+  artGlow(c, 0, -s * 2.6, s * (1.6 + flare), '#ffd86a', 0.35 + flare * 0.3);
+  artRoundRect(c, -s * 0.5, -s * 0.16, s, s * 0.16, s * 0.06, '#d9b34f', { lineColor: '#8a6a10', line: lw });
+  artLimb(c, 0, -s * 0.1, 0, -s * 2.0, s * 0.14, '#d9b34f', '#8a6a10');
+  artLimb(c, -s * 0.7, -s * 2.0, s * 0.7, -s * 2.0, s * 0.12, '#d9b34f', '#8a6a10');
+  for (i = -1; i <= 1; i++) {
+    x = i * s * 0.7;
+    artRoundRect(c, x - s * 0.1, -s * 2.6, s * 0.2, s * 0.6, s * 0.06, '#fff6c8', { lineColor: '#b8a060', line: lw, shadeTo: '#e3d8f5' });
+    fl = Math.sin(globalT * 9 + i * 2 + p.x) * s * 0.04;
+    artBlob(c, x, -s * 2.78 + fl, s * 0.09 * (1 + flare * 0.6), s * 0.16 * (1 + flare * 0.8), '#ffb84f', { lineColor: '#d9700f', line: Math.max(1, s * 0.03) });
+  }
+}
+
+// Kirjapino (origo = lattia): kolme kirjaa reunaviivoin ja sivuraidoin.
+// Tökättynä päällimmäinen kansi raottuu (p.t).
+function towerDrawBooks(c, p) {
+  var s = p.s, i, col, dx, cols = ['#ff5f7e', '#5fa8ff', '#6fd66f', '#ffb84f'], lw = Math.max(1.2, s * 0.05);
+  var flip = p.t >= 0 ? Math.sin(Math.min(1, p.t / 0.7) * Math.PI) : 0;
+  artShadow(c, 0, 0, s * 1.2, s * 0.18, 0.2);
+  for (i = 0; i < 3; i++) {
+    col = cols[(i + p.ci) % 4];
+    dx = (i % 2) * s * 0.15;
+    artRoundRect(c, -s * (1 - i * 0.1) + dx, -s * 0.36 * (i + 1), s * (2 - i * 0.2), s * 0.36, s * 0.08, col, { lineColor: artShade(col, -0.5), line: lw });
+    c.fillStyle = 'rgba(255,255,255,0.7)';
+    roundRect(c, -s * (0.85 - i * 0.1) + dx, -s * 0.36 * (i + 1) + s * 0.1, s * (1.6 - i * 0.2), s * 0.08, s * 0.04);
+    c.fill();
+  }
+  if (flip > 0) {
+    c.save();
+    c.translate(-s * 0.8, -s * 1.08);
+    c.rotate(-flip * 1.2);
+    artRoundRect(c, 0, -s * 0.08, s * 1.6, s * 0.1, s * 0.04, '#fff6e8', { lineColor: '#b8a080', line: Math.max(1, s * 0.04) });
+    c.restore();
+  }
+}
+
+// Juoksukentällä ei ole omaa napautuskoukkua: uusi kosketus tunnistetaan
+// otteen alkuhetkestä (hyppyalueen napautukset eivät tule tänne). Kattokruunun
+// kynttilät leimahtavat ja koristeet heilahtavat: pelkkää koristetta.
+function towerPollTap() {
+  if (holdStartG === towerTapSeen) return;
+  towerTapSeen = holdStartG;
+  if (!running || celebrating || puzzleBusy()) return;
+  var wx = holdSX + camX, wy = holdSY, i, bob;
+  for (i = 0; i < pendulums.length; i++) {
+    bob = pendulumBob(pendulums[i]);
+    if (Math.hypot(wx - bob.x, wy - bob.y) < viewH * 0.09) {
+      pendulums[i].flareT = 0.8;
+      playNote(1568, 0, 0.12, 'triangle', 0.18);
+      playNote(2093, 0.1, 0.14, 'triangle', 0.14);
+      spawnSparkles(bob.x, bob.y - viewH * 0.03, 8, '#ffe27a');
+      return;
+    }
+  }
+  propsTap(wx, wy);
+}
+
+// Jalokivi: särmikäs muoto reunaviivalla, kiiltofasetti ja hehku
 function drawGem(c, x, y, s, color) {
-  c.fillStyle = color;
+  var line = artShade(color, -0.5);
+  artGlow(c, x, y, s * 1.6, color, 0.4);
   c.beginPath();
   c.moveTo(x - s * 0.7, y - s * 0.2);
   c.lineTo(x - s * 0.35, y - s * 0.65);
@@ -243,7 +383,7 @@ function drawGem(c, x, y, s, color) {
   c.lineTo(x + s * 0.7, y - s * 0.2);
   c.lineTo(x, y + s * 0.75);
   c.closePath();
-  c.fill();
+  artFillPath(c, color, y - s * 0.65, y + s * 0.75, s * 0.7, { lineColor: line });
   c.fillStyle = 'rgba(255,255,255,0.55)';
   c.beginPath();
   c.moveTo(x - s * 0.35, y - s * 0.65);
@@ -252,32 +392,32 @@ function drawGem(c, x, y, s, color) {
   c.lineTo(x - s * 0.7, y - s * 0.2);
   c.closePath();
   c.fill();
+  c.strokeStyle = artRGBA(line, 0.5);
+  c.lineWidth = Math.max(1, s * 0.06);
+  c.lineJoin = 'round';
+  c.beginPath();
+  c.moveTo(x - s * 0.7, y - s * 0.2); c.lineTo(x + s * 0.7, y - s * 0.2);
+  c.moveTo(x - s * 0.35, y - s * 0.65); c.lineTo(x - s * 0.2, y - s * 0.2); c.lineTo(x, y + s * 0.75);
+  c.moveTo(x + s * 0.35, y - s * 0.65); c.lineTo(x + s * 0.2, y - s * 0.2); c.lineTo(x, y + s * 0.75);
+  c.stroke();
 }
 
 function drawPendulum(c, p) {
   var pivotX = p.x - camX, pivotY = viewH * 0.06;
   if (pivotX < -viewH * 0.6 || pivotX > viewW + viewH * 0.6) return;
   var bob = pendulumBob(p);
-  var bx = bob.x - camX, by = bob.y;
-  c.strokeStyle = '#c9b8e0';
-  c.lineWidth = Math.max(2, viewH * 0.006);
-  c.beginPath(); c.moveTo(pivotX, pivotY); c.lineTo(bx, by); c.stroke();
-  c.fillStyle = '#6b5a80';
-  c.beginPath(); c.arc(pivotX, pivotY, viewH * 0.012, 0, Math.PI * 2); c.fill();
-  // Kattokruunu: rengas ja kynttilät
-  var r = viewH * 0.065;
-  c.fillStyle = '#d9b34f';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(bx, by, r, r * 0.4, 0, 0, Math.PI * 2);
-  else c.arc(bx, by, r * 0.7, 0, Math.PI * 2);
-  c.fill();
-  var i;
+  var bx = bob.x - camX, by = bob.y, r = viewH * 0.065, i, cx2, cy2;
+  var flare = p.flareT > 0 ? p.flareT / 0.8 : 0;
+  artLimb(c, pivotX, pivotY, bx, by, Math.max(2, viewH * 0.006), '#c9b8e0', '#5a4a70');
+  artCircle(c, pivotX, pivotY, viewH * 0.012, '#6b5a80', { lineColor: '#3a3050' });
+  // Kattokruunu: hehku, rengas ja kynttilät; tökättynä liekit leimahtavat
+  artGlow(c, bx, by - r * 0.3, r * (1.5 + flare * 0.6), '#ffd86a', 0.28 + flare * 0.35);
+  artBlob(c, bx, by, r, r * 0.4, '#d9b34f', { lineColor: '#8a6a10', hi: 0.3 });
   for (i = 0; i < 4; i++) {
-    var cx2 = bx + Math.cos(i * Math.PI / 2 + globalT) * r * 0.75, cy2 = by - r * 0.1 + Math.sin(i * Math.PI / 2 + globalT) * r * 0.3;
-    c.fillStyle = '#fff6c8';
-    c.fillRect(cx2 - r * 0.05, cy2 - r * 0.35, r * 0.1, r * 0.35);
-    c.fillStyle = '#ffb84f';
-    c.beginPath(); c.arc(cx2, cy2 - r * 0.42, r * 0.09, 0, Math.PI * 2); c.fill();
+    cx2 = bx + Math.cos(i * Math.PI / 2 + globalT) * r * 0.75;
+    cy2 = by - r * 0.1 + Math.sin(i * Math.PI / 2 + globalT) * r * 0.3;
+    artRoundRect(c, cx2 - r * 0.05, cy2 - r * 0.35, r * 0.1, r * 0.35, r * 0.03, '#fff6c8', { lineColor: '#b8a060', line: Math.max(1, r * 0.02), shadeTo: '#e3d8f5' });
+    artBlob(c, cx2, cy2 - r * 0.44, r * 0.07 * (1 + flare * 0.5), r * 0.12 * (1 + flare * 0.8), '#ffb84f', { lineColor: '#d9700f', line: Math.max(1, r * 0.02) });
   }
 }
 
@@ -286,31 +426,16 @@ function drawThroneGlow(c) {
   if (x < -h * 0.3 || x > viewW + h * 0.3) return;
   var s = h * 0.1;
   if (throne.open) {
-    var g = c.createRadialGradient(x, groundTop - s * 1.2, s * 0.2, x, groundTop - s * 1.2, s * 2);
-    g.addColorStop(0, 'rgba(255,240,180,' + (0.55 + Math.sin(globalT * 4) * 0.15) + ')');
-    g.addColorStop(1, 'rgba(255,240,180,0)');
-    c.fillStyle = g;
-    c.beginPath(); c.arc(x, groundTop - s * 1.2, s * 2, 0, Math.PI * 2); c.fill();
+    artGlow(c, x, groundTop - s * 1.2, s * 2, '#fff0b4', 0.55 + Math.sin(globalT * 4) * 0.15);
     drawStar(c, x, groundTop - s * 2.4, h * 0.035, globalT, 1);
   }
-  // Kruunu istuimella
-  c.fillStyle = '#ffd24f';
-  c.beginPath();
-  c.moveTo(x - s * 0.35, groundTop - s * 0.75);
-  c.lineTo(x - s * 0.35, groundTop - s * 1.1);
-  c.lineTo(x - s * 0.17, groundTop - s * 0.9);
-  c.lineTo(x, groundTop - s * 1.2);
-  c.lineTo(x + s * 0.17, groundTop - s * 0.9);
-  c.lineTo(x + s * 0.35, groundTop - s * 1.1);
-  c.lineTo(x + s * 0.35, groundTop - s * 0.75);
-  c.closePath();
-  c.fill();
 }
 
 function drawTower() {
   var i;
   if (!beginPlayWorld()) return;
   for (i = 0; i < pendulums.length; i++) drawPendulum(ctx, pendulums[i]);
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   drawThroneGlow(ctx);

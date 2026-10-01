@@ -59,6 +59,7 @@ function wireStandOn(i) {
 function initWire() {
   var i;
   layoutWire();
+  wireSetupProps();
   tasks = [makeTask(-5, 'clock'), makeTask(-5, 'jigsaw')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   wire.stars = [];
@@ -93,6 +94,7 @@ function respawnWire() {
 function resizeWire(ratio) {
   var i, st = wire.state, plat = wire.plat;
   layoutWire();
+  wireSetupProps();
   for (i = 0; i < wire.stars.length; i++) {
     wire.stars[i].ax = wireStarDefs[i].fx * worldW;
     wire.stars[i].ay = wireRopeY() - viewH * 0.10;
@@ -118,13 +120,14 @@ function wireLandPlat(i) {
 }
 
 function handleWireTap(px, py) {
-  if (!running || celebrating || puzzleBusy()) return;
-  if (wire.state === 'stand') {
-    if (wirePlats[wire.plat].door) return;
+  if (!running || puzzleBusy()) return;
+  if (!celebrating && wire.state === 'stand' && !wirePlats[wire.plat].door) {
     wire.state = 'walk';
     playNote(660, 0, 0.12, 'sine', 0.3);
     playNote(880, 0.08, 0.16, 'sine', 0.25);
   }
+  // Koristeet heilahtavat napautuksen lisäksi: pelivaste (lähtö tai nojaus) ei muutu
+  propsTap(px + camX, py);
 }
 
 function wireCollectStar(s) {
@@ -195,6 +198,7 @@ function updateWire(dt) {
   princess.x = wire.x;
   princess.y = wireRopeY();
   followCam(wire.x, dt);
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -222,13 +226,15 @@ function renderWireFar(b, w, h) {
 }
 function renderWireMid(b, w, h) {
   var i, x, y, sw = h * 0.07;
+  // Keskikerros: telttakangas sävytetään hiukan seinän väriin (ilmaperspektiivi)
+  var wallC = '#162040', stripeA = artMix('#2a6a78', wallC, 0.18), stripeB = artMix('#e8f4d8', wallC, 0.18);
   for (i = 0, x = 0; x < w; i++, x += sw) {
-    b.fillStyle = i % 2 ? '#2a6a78' : '#e8f4d8';
+    b.fillStyle = i % 2 ? stripeA : stripeB;
     b.fillRect(x, 0, sw + 1, h * 0.2);
   }
-  b.fillStyle = '#2a6a78';
+  b.fillStyle = stripeA;
   for (x = sw / 2; x < w + sw; x += sw) { b.beginPath(); b.arc(x, h * 0.2, sw / 2, 0, Math.PI); b.fill(); }
-  b.strokeStyle = '#ffd24f';
+  b.strokeStyle = artMix('#ffd24f', wallC, 0.18);
   b.lineWidth = Math.max(2, h * 0.006);
   b.beginPath();
   for (x = 0; x <= w + sw; x += sw) { b.moveTo(x, h * 0.2); b.arc(x + sw / 2, h * 0.2, sw / 2, Math.PI, 0, true); }
@@ -241,20 +247,29 @@ function renderWireMid(b, w, h) {
 }
 function renderWireNear(b, w, h) {
   var i, x, y, px, pt = wireRopeY(), ny = wireNetY(), pw = wirePlatW();
-  var rows = 3;
+  var rows = 3, lw = Math.max(1.2, h * 0.003);
+  // Katsomo: penkkirivit pupusiluetteineen (eturivin kannustajat ovat koristeita)
   for (i = 0; i < rows; i++) {
     y = h * (0.86 + i * 0.035);
     b.fillStyle = i === 0 ? '#2a1a44' : (i === 1 ? '#231538' : '#1b1030');
     b.fillRect(0, y - h * 0.01, w, h * 0.06);
+    b.fillStyle = 'rgba(255,255,255,0.07)';
+    b.fillRect(0, y - h * 0.01, w, h * 0.005);
     for (x = h * 0.03 + i * h * 0.03; x < w; x += h * 0.065) {
       b.fillStyle = i === 0 ? '#3d2a5c' : '#2f1f4a';
       b.beginPath(); b.arc(x, y, h * 0.02, 0, Math.PI * 2); b.fill();
     }
   }
-  b.fillStyle = '#2a6a78';
+  // Areenan reunus: kaksisävyinen raitapalkki tummalla reunaviivalla
+  var eg = b.createLinearGradient(0, h * 0.955, 0, h);
+  eg.addColorStop(0, artShade('#2a6a78', 0.14));
+  eg.addColorStop(1, artShade('#2a6a78', -0.22));
+  b.fillStyle = eg;
   b.fillRect(0, h * 0.955, w, h * 0.045);
   b.fillStyle = '#e8f4d8';
-  for (x = 0; x < w; x += h * 0.12) b.fillRect(x, h * 0.955, h * 0.06, h * 0.045);
+  for (x = 0; x < w; x += h * 0.12) { roundRect(b, x, h * 0.955, h * 0.06, h * 0.045, h * 0.008); b.fill(); }
+  b.fillStyle = artShade('#2a6a78', -0.5);
+  b.fillRect(0, h * 0.95, w, h * 0.006);
   b.strokeStyle = 'rgba(200,200,255,0.45)';
   b.lineWidth = Math.max(1, h * 0.002);
   for (x = 0; x < w + h * 0.06; x += h * 0.03) {
@@ -266,42 +281,37 @@ function renderWireNear(b, w, h) {
   b.beginPath(); b.moveTo(0, ny); b.lineTo(w, ny); b.stroke();
   for (i = 0; i < wirePlats.length; i++) {
     px = wirePlatX(i);
-    b.fillStyle = '#5a4a78';
-    b.fillRect(px - h * 0.012, pt, h * 0.024, h * 0.955 - pt);
-    var dg = b.createLinearGradient(px - pw / 2, 0, px + pw / 2, 0);
-    dg.addColorStop(0, '#2a6a78');
-    dg.addColorStop(0.5, '#4ec4c8');
-    dg.addColorStop(1, '#2a6a78');
-    b.fillStyle = dg;
-    roundRect(b, px - pw / 2, pt - h * 0.018, pw, h * 0.05, h * 0.012);
-    b.fill();
-    b.fillStyle = '#ffd24f';
-    b.fillRect(px - pw / 2, pt - h * 0.018, pw, h * 0.01);
+    // Pylväs ja koroke: kaksisävyinen levy kultaisella reunalistalla
+    artRoundRect(b, px - h * 0.012, pt, h * 0.024, h * 0.955 - pt, h * 0.008, '#5a4a78', { lineColor: '#2e2444', line: lw });
+    artRoundRect(b, px - pw / 2, pt - h * 0.018, pw, h * 0.05, h * 0.012, '#4ec4c8', { lineColor: '#1f5a66', line: lw * 1.3 });
+    artHighlight(b, px - pw * 0.3, pt + h * 0.006, pw * 0.12, h * 0.008, 0.25);
+    artRoundRect(b, px - pw / 2, pt - h * 0.018, pw, h * 0.012, h * 0.005, '#ffd24f', { lineColor: '#d98a00', line: lw });
     if (wirePlats[i].door) {
-      b.fillStyle = '#ffd24f';
-      roundRect(b, px - pw * 0.4, pt - h * 0.34, pw * 0.8, h * 0.32, h * 0.03);
-      b.fill();
-      b.fillStyle = '#2a6a78';
-      roundRect(b, px - pw * 0.32, pt - h * 0.31, pw * 0.64, h * 0.29, h * 0.025);
-      b.fill();
+      // Loppuovi: tähtiverho kultaisissa kehyksissä
+      artRoundRect(b, px - pw * 0.4, pt - h * 0.34, pw * 0.8, h * 0.32, h * 0.03, '#ffd24f', { lineColor: '#d98a00', line: lw * 1.3 });
+      artRoundRect(b, px - pw * 0.32, pt - h * 0.31, pw * 0.64, h * 0.29, h * 0.025, '#2a6a78', { lineColor: '#143a44', line: lw });
+      artHighlight(b, px - pw * 0.22, pt - h * 0.26, pw * 0.07, h * 0.03, 0.2);
       drawStar(b, px, pt - h * 0.2, h * 0.05, 0, 0);
     }
   }
 }
 
 function drawWireRope(c) {
-  var i, x0, x1, y = wireRopeY(), sag;
-  c.strokeStyle = '#e8d4a8';
-  c.lineWidth = Math.max(3, viewH * 0.01);
+  var i, x0, x1, y = wireRopeY(), sag, pass;
   c.lineCap = 'round';
-  for (i = 0; i < wirePlats.length - 1; i++) {
-    x0 = wirePlatX(i) - camX;
-    x1 = wirePlatX(i + 1) - camX;
-    sag = viewH * 0.025;
-    if (wire.state === 'walk' && wire.plat === i) sag += Math.abs(wire.lean) * viewH * 0.02;
+  // Nuora: tumma reunaviiva alla, vaalea köysi päällä
+  for (pass = 0; pass < 2; pass++) {
+    c.strokeStyle = pass === 0 ? '#8a7050' : '#e8d4a8';
+    c.lineWidth = pass === 0 ? Math.max(5, viewH * 0.016) : Math.max(3, viewH * 0.01);
     c.beginPath();
-    c.moveTo(x0, y);
-    c.quadraticCurveTo((x0 + x1) / 2, y + sag, x1, y);
+    for (i = 0; i < wirePlats.length - 1; i++) {
+      x0 = wirePlatX(i) - camX;
+      x1 = wirePlatX(i + 1) - camX;
+      sag = viewH * 0.025;
+      if (wire.state === 'walk' && wire.plat === i) sag += Math.abs(wire.lean) * viewH * 0.02;
+      c.moveTo(x0, y);
+      c.quadraticCurveTo((x0 + x1) / 2, y + sag, x1, y);
+    }
     c.stroke();
   }
 }
@@ -310,29 +320,115 @@ function drawWirePole(c, x, y, s, lean) {
   c.save();
   c.translate(x, y - s * 24);
   c.rotate(lean * 0.7);
-  c.strokeStyle = '#8a5a30';
-  c.lineWidth = Math.max(3, s * 2.4);
-  c.lineCap = 'round';
-  c.beginPath(); c.moveTo(-s * 38, 0); c.lineTo(s * 38, 0); c.stroke();
-  c.fillStyle = '#ffd24f';
-  c.beginPath(); c.arc(-s * 38, 0, s * 3, 0, Math.PI * 2); c.arc(s * 38, 0, s * 3, 0, Math.PI * 2); c.fill();
+  artLimb(c, -s * 38, 0, s * 38, 0, Math.max(3, s * 2.4), '#8a5a30', '#4a2a10');
+  artCircle(c, -s * 38, 0, s * 3, '#ffd24f', { lineColor: '#d98a00', line: 1.2 });
+  artCircle(c, s * 38, 0, s * 3, '#ffd24f', { lineColor: '#d98a00', line: 1.2 });
   c.restore();
 }
 
 function drawWireHint(c, x, y, dir) {
   var pulse = 0.7 + Math.sin(globalT * 6) * 0.3;
-  c.fillStyle = 'rgba(255,226,122,' + pulse + ')';
   c.beginPath();
   c.moveTo(x + dir * viewH * 0.05, y);
   c.lineTo(x - dir * viewH * 0.02, y - viewH * 0.035);
   c.lineTo(x - dir * viewH * 0.02, y + viewH * 0.035);
   c.closePath();
-  c.fill();
+  artFillPath(c, '#ffe27a', y - viewH * 0.035, y + viewH * 0.035, viewH * 0.035, { lineColor: '#d98a00', alpha: pulse });
+}
+
+// ---------- Tökättävät koristeet ----------
+var WIRE_PARASOL_COLS = ['#ff7bac', '#fff3e0', '#7fd4ff', '#ffd23e'];
+
+// Yksipyöräinen lähtökorokkeen juurella, päivänvarjot tehtäväkorokkeiden
+// juurella ja kolme kannustavaa katsojapupua eturivissä (sama piirto kuin
+// Sirkusteltassa). Rakennetaan uudestaan resize-koukussa.
+function wireSetupProps() {
+  var i, floorY = viewH * 0.955, fans = [0.22, 0.50, 0.76];
+  propsReset();
+  propAdd({ x: wirePlatX(0) + viewH * 0.16, y: floorY, s: viewH * 0.05, r: viewH * 0.09, hy: viewH * 0.07, color: '#ff8fa0', note: 1760, spin: 0, rideT: 0, draw: wireDrawUnicycle, poke: wirePokeUnicycle, update: wireUpdateUnicycle });
+  for (i = 1; i <= 2; i++) propAdd({ x: wirePlatX(i) - viewH * 0.16, y: floorY, s: viewH * 0.05, r: viewH * 0.1, hy: viewH * 0.13, ci: i, color: '#ff9ec6', note: 1200, draw: wireDrawParasol, poke: wirePokeParasol });
+  for (i = 0; i < 3; i++) propAdd({ x: fans[i] * worldW, y: viewH * 0.885, s: viewH * 0.04, r: viewH * 0.07, hy: viewH * 0.045, color: CIRC_BULB_COLS[i], note: 880 + i * 120, draw: circDrawFan, poke: circPokeFan });
+}
+
+// Yksipyöräinen: pyörä pyörähtää tökättäessä; viidennellä kerralla se käy
+// itsekseen pienellä ajelulla (yllätys)
+function wireDrawUnicycle(c, p) {
+  var s = p.s, i, a, ride = 0, spin = p.spin;
+  if (p.rideT > 0) ride = Math.sin((1 - p.rideT / 3.0) * Math.PI * 2) * s * 3;
+  c.translate(ride, 0);
+  c.rotate(-0.12 + ride / (s * 3) * 0.15);
+  artShadow(c, 0, 0, s * 1.2, s * 0.22, 0.18);
+  // Rengas, vanne, pinnat ja napa
+  artCircle(c, 0, -s * 0.9, s * 0.9, '#3a3a4a', { lineColor: '#1a1a24' });
+  artCircle(c, 0, -s * 0.9, s * 0.62, '#e8eef7', { lineColor: '#9aa6c0', shadeTo: '#e3d8f5' });
+  c.strokeStyle = '#9aa6c0';
+  c.lineWidth = Math.max(1, s * 0.06);
+  c.beginPath();
+  for (i = 0; i < 4; i++) {
+    a = spin + i * Math.PI / 4;
+    c.moveTo(Math.cos(a) * s * 0.6, -s * 0.9 + Math.sin(a) * s * 0.6);
+    c.lineTo(-Math.cos(a) * s * 0.6, -s * 0.9 - Math.sin(a) * s * 0.6);
+  }
+  c.stroke();
+  artCircle(c, 0, -s * 0.9, s * 0.13, '#ffd24f', { lineColor: '#b8860b' });
+  artLimb(c, -Math.cos(spin) * s * 0.4, -s * 0.9 - Math.sin(spin) * s * 0.4, Math.cos(spin) * s * 0.4, -s * 0.9 + Math.sin(spin) * s * 0.4, s * 0.08, '#1a1a24', false);
+  // Runko ja satula
+  artLimb(c, 0, -s * 0.9, 0, -s * 2.5, s * 0.16, '#ff5f7e', '#a02040');
+  artBlob(c, 0, -s * 2.6, s * 0.5, s * 0.16, '#5a3a1e', { lineColor: '#2a1a0a' });
+}
+function wireUpdateUnicycle(p, dt) {
+  if (p.t >= 0) p.spin += dt * 16 * Math.exp(-p.t * 2.5);
+  if (p.rideT > 0) {
+    p.rideT -= dt;
+    p.spin += dt * 10 * Math.cos((1 - p.rideT / 3.0) * Math.PI * 2);
+    if (p.rideT < 0) p.rideT = 0;
+  }
+}
+function wirePokeUnicycle(p) {
+  playNote(1760, 0, 0.07, 'sine', 0.2);
+  playNote(1760, 0.12, 0.07, 'sine', 0.2);
+  if (p.n % 5 === 0 && p.rideT <= 0) {
+    p.rideT = 3.0;
+    playNote(523, 0.2, 0.1, 'triangle', 0.25);
+    playNote(659, 0.3, 0.1, 'triangle', 0.25);
+    playNote(784, 0.4, 0.2, 'triangle', 0.25);
+  }
+}
+
+// Päivänvarjo telineessä: tökkäys pyöräyttää kuvun ympäri
+function wireDrawParasol(c, p) {
+  var s = p.s, i, rot = p.t >= 0 ? easeOutCubic(p.t / 1.2) * Math.PI * 2 : 0, sx = Math.cos(rot);
+  if (Math.abs(sx) < 0.06) sx = sx < 0 ? -0.06 : 0.06;
+  artShadow(c, 0, 0, s * 0.7, s * 0.14, 0.16);
+  artRoundRect(c, -s * 0.5, -s * 0.18, s, s * 0.18, s * 0.07, '#6e5a8a', { lineColor: '#3e3050' });
+  artLimb(c, 0, -s * 0.12, 0, -s * 2.4, s * 0.1, '#8a6a44', '#4a3418');
+  c.save();
+  c.translate(0, -s * 2.4);
+  c.scale(sx, 1);
+  // Kupu neljänä värilohkona ja yhteinen reunaviiva
+  for (i = 0; i < 4; i++) {
+    c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, s * 1.35, Math.PI + i * Math.PI / 4, Math.PI + (i + 1) * Math.PI / 4); c.closePath();
+    artFillPath(c, WIRE_PARASOL_COLS[(i + p.ci) % 4], -s * 1.35, 0, s * 1.35, { line: false });
+  }
+  c.beginPath(); c.arc(0, 0, s * 1.35, Math.PI, 0); c.closePath();
+  c.strokeStyle = '#8a3a5a';
+  c.lineWidth = Math.max(1.2, s * 0.09);
+  c.lineJoin = 'round';
+  c.stroke();
+  c.restore();
+  artCircle(c, 0, -s * 3.8, s * 0.12, '#ffd24f', { lineColor: '#b8860b' });
+}
+function wirePokeParasol() {
+  playNote(1200, 0, 0.06, 'sine', 0.15);
+  playNote(1500, 0.05, 0.06, 'sine', 0.15);
+  playNote(1800, 0.1, 0.1, 'sine', 0.15);
 }
 
 function drawWire() {
   var i, n, s, ps, fallY, lean;
   if (!beginPlayWorld()) return;
+  // Tökättävät koristeet (yksipyöräinen, päivänvarjot, katsojat)
+  propsDraw(ctx);
   drawWireRope(ctx);
   for (i = 0; i < checkpoints.length; i++) {
     drawLantern(ctx, checkpoints[i], wireRopeY() - viewH * 0.02);

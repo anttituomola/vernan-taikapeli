@@ -16,8 +16,124 @@ function layoutLevel2() {
   owl.y = platforms[4].y;
 }
 
+// ---------- Tökättävät koristeet ----------
+// Paikat murto-osina (fx × worldW, dy × viewH maanpinnasta), jotta koristeet
+// kestävät ruudun koon vaihdon: gardenPropSync laskee paikan joka ruudulla.
+// p.sp on koristeen oma lyhyt ajastin (hehku, kasvot, aivastus).
+var gardenHoldPrev = false;
+function gardenPropSync(p, dt) {
+  p.x = p.fx * worldW;
+  p.y = groundTop + p.dy * viewH;
+  p.r = p.fr * viewH;
+  if (p.sp > 0) p.sp -= dt;
+}
+
+// Sieni: jalka, lakki ja täplät. Jaettu luolan ja suon kanssa (eri värit).
+// face: kasvot jalassa (yllätys), glow: lakin hehku
+function gardenDrawMushroom(c, s, cap, spot, stem, face, glow) {
+  var capLine = artShade(cap, -0.5);
+  artShadow(c, 0, 0, s * 0.9, s * 0.2, 0.16);
+  artRoundRect(c, -s * 0.28, -s * 0.9, s * 0.56, s * 0.95, s * 0.2, stem, { lineColor: artShade(stem, -0.5) });
+  if (glow) artGlow(c, 0, -s * 1.0, s * 1.9, glow, 0.3 + Math.sin(globalT * 6) * 0.12);
+  artBlob(c, 0, -s * 1.0, s * 1.05, s * 0.6, cap, { lineColor: capLine, hi: 0.3 });
+  artCircle(c, -s * 0.42, -s * 1.1, s * 0.16, spot, { line: false });
+  artCircle(c, s * 0.3, -s * 1.27, s * 0.12, spot, { line: false });
+  artCircle(c, s * 0.58, -s * 0.85, s * 0.1, spot, { line: false });
+  if (face) {
+    artEye(c, -s * 0.11, -s * 0.24, s * 0.06, 0, false);
+    artEye(c, s * 0.11, -s * 0.24, s * 0.06, 0, false);
+    c.strokeStyle = artShade(stem, -0.6);
+    c.lineWidth = Math.max(1, s * 0.05);
+    c.lineCap = 'round';
+    c.beginPath(); c.arc(0, -s * 0.14, s * 0.1, 0.2, Math.PI - 0.2); c.stroke();
+  }
+}
+
+// Lyhtypylväs: tolppa, lasi ja liekki; tökättynä loistaa kirkkaammin
+function gardenDrawLamp(c, s, lit) {
+  artShadow(c, 0, 0, s * 0.6, s * 0.15, 0.14);
+  artLimb(c, 0, 0, 0, -s * 1.9, s * 0.14, '#6a4a28', '#3a2810');
+  artGlow(c, 0, -s * 1.75, s * (1.8 + lit * 0.9), '#ffd45a', 0.4 + lit * 0.3);
+  artRoundRect(c, -s * 0.32, -s * 2.15, s * 0.64, s * 0.8, s * 0.12, lit > 0 ? '#fff0a0' : '#ffd45a', { lineColor: '#8a5a20' });
+  artRoundRect(c, -s * 0.4, -s * 2.3, s * 0.8, s * 0.2, s * 0.06, '#6a4a28', { lineColor: '#3a2810' });
+  artCircle(c, 0, -s * 1.7 + Math.sin(globalT * 9) * s * 0.03, s * 0.12 + lit * s * 0.04, '#ff9d3a', { line: false });
+  artHighlight(c, -s * 0.12, -s * 1.95, s * 0.08, s * 0.16, 0.4);
+}
+
+// Kukkakimppu: kolme vartta ja kukkaa
+function gardenDrawFlowers(c, s, col, col2) {
+  artShadow(c, 0, 0, s * 0.8, s * 0.16, 0.12);
+  artLimb(c, 0, 0, -s * 0.5, -s * 1.1, s * 0.1, '#3f8a4a', '#1f5a2a');
+  artLimb(c, 0, 0, s * 0.1, -s * 1.45, s * 0.1, '#3f8a4a', '#1f5a2a');
+  artLimb(c, 0, 0, s * 0.6, -s * 1.0, s * 0.1, '#3f8a4a', '#1f5a2a');
+  drawFlower(c, -s * 0.5, -s * 1.1, s * 0.26, col);
+  drawFlower(c, s * 0.1, -s * 1.45, s * 0.3, col2);
+  drawFlower(c, s * 0.6, -s * 1.0, s * 0.26, col);
+}
+
+function gardenPropsSetup() {
+  var i, defs = [
+    { kind: 'shroom', fx: 0.07, fr: 0.045, color: '#c9a0ff', note: 520 },
+    { kind: 'flowers', fx: 0.24, fr: 0.04, color: '#ff7bac', color2: '#ffd24f', note: 740 },
+    { kind: 'lamp', fx: 0.40, fr: 0.05, color: '#ffd45a', note: 988 },
+    { kind: 'flowers', fx: 0.72, fr: 0.04, color: '#c9a0ff', color2: '#7fd4ff', note: 830 }
+  ];
+  propsReset();
+  for (i = 0; i < defs.length; i++) {
+    defs[i].dy = 0.012;
+    defs[i].sp = 0;
+    defs[i].update = gardenPropSync;
+    if (defs[i].kind === 'shroom') {
+      defs[i].draw = function (c, p) { gardenDrawMushroom(c, p.r, '#9a6ad8', '#e9d8ff', '#f1e6d2', p.sp > 0, p.sp > 0 ? '#c9a0ff' : null); };
+      defs[i].poke = function (p) {
+        // Itiöpöllähdys; viidennellä tökkäyksellä sieni saa kasvot ja kikattaa
+        spawnSparkles(p.x, p.y - p.r * 1.3, 10, '#e4b8ff');
+        if (p.n % 5 === 0) {
+          p.sp = 4;
+          playNote(660, 0.1, 0.1, 'triangle', 0.25);
+          playNote(784, 0.2, 0.1, 'triangle', 0.25);
+          playNote(988, 0.3, 0.2, 'triangle', 0.25);
+        }
+      };
+    } else if (defs[i].kind === 'lamp') {
+      defs[i].draw = function (c, p) { gardenDrawLamp(c, p.r, p.sp > 0 ? Math.min(1, p.sp) : 0); };
+      defs[i].poke = function (p) {
+        p.sp = 1.5;
+        playNote(1319, 0.1, 0.25, 'sine', 0.18);
+      };
+    } else {
+      defs[i].draw = function (c, p) { gardenDrawFlowers(c, p.r, p.color, p.color2); };
+      defs[i].poke = function (p) { spawnSparkles(p.x, p.y - p.r * 1.2, 8, p.color); };
+    }
+    gardenPropSync(propAdd(defs[i]), 0);
+  }
+}
+
+// Juoksukentässä ei ole tap-koukkua: napautus tunnistetaan pidon alkamisesta.
+// Pöllö räpäyttää ja huhuilee, muuten tökätään koristetta. Ei pelivaikutusta.
+function gardenTapCheck() {
+  var wx, wy, s, dx, dy;
+  if (holding && !gardenHoldPrev && running && !celebrating && !puzzleBusy()) {
+    wx = holdWorldX; wy = holdSY;
+    s = viewH * 0.055;
+    dx = wx - owl.x; dy = wy - (owl.y - s);
+    if (!owl.awake && dx * dx + dy * dy < s * 1.6 * s * 1.6) {
+      owl.pokeT = 0.9;
+      spawnSparkles(owl.x, owl.y - s * 1.6, 6, '#ffe27a');
+      playNote(392, 0, 0.14, 'triangle', 0.3);
+      playNote(330, 0.16, 0.22, 'triangle', 0.3);
+    } else {
+      propsTap(wx, wy);
+    }
+  }
+  gardenHoldPrev = holding;
+}
+
 function initLevel2() {
   layoutLevel2();
+  gardenPropsSetup();
+  gardenHoldPrev = false;
+  owl.pokeT = 0;
   princess.x = viewW * 0.12;
   princess.y = groundTop;
   princess.vx = 0;
@@ -103,6 +219,9 @@ function updateLevel2(dt) {
   var runSp = viewW * 0.22;
 
   updateTasks(dt);
+  propsUpdate(dt);
+  gardenTapCheck();
+  if (owl.pokeT > 0) owl.pokeT -= dt;
 
   if (!celebrating && holding && !puzzleBusy()) {
     var dxh = holdWorldX - princess.x;
@@ -239,13 +358,17 @@ function drawOwl(c) {
   var y = owl.y - viewH * 0.055 - (owl.awake ? owl.flyT * viewH * 0.05 : 0);
   var s = viewH * 0.055;
   if (x < -s * 3 || x > viewW + s * 3) return;
+  // Tökättynä pöllö kallistaa päätään, avaa silmät hetkeksi ja huhuilee
+  var poke = owl.pokeT > 0 ? owl.pokeT : 0;
+  var eyesOpen = owl.awake || (poke > 0.25 && poke < 0.8);
   if (!owl.awake) artShadow(c, x, owl.y, s * 1.1, s * 0.28, 0.16);
   c.save();
   c.translate(x, y);
+  if (poke > 0) c.rotate(Math.sin(poke * 9) * 0.12 * poke);
   artBlob(c, 0, 0, s * 0.7, s * 0.9, '#8b5a2b', { hi: 0.3 });
   artCircle(c, 0, s * 0.18, s * 0.35, '#c9a06a', {});
-  artEye(c, -s * 0.22, -s * 0.25, s * 0.2, owl.awake ? 0.35 : 0, !owl.awake);
-  artEye(c, s * 0.22, -s * 0.25, s * 0.2, owl.awake ? 0.35 : 0, !owl.awake);
+  artEye(c, -s * 0.22, -s * 0.25, s * 0.2, owl.awake ? 0.35 : 0, !eyesOpen);
+  artEye(c, s * 0.22, -s * 0.25, s * 0.2, owl.awake ? 0.35 : 0, !eyesOpen);
   c.beginPath();
   c.moveTo(0, -s * 0.05);
   c.lineTo(s * 0.18, s * 0.12);
@@ -284,6 +407,7 @@ function drawLevel2() {
     artGlow(ctx, fx, fy, 10, '#ffe9a0', 0.25 + Math.sin(globalT * 3 + i) * 0.15);
   }
 
+  propsDraw(ctx);
   drawOwl(ctx);
 
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);

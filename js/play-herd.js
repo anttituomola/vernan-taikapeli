@@ -3,6 +3,8 @@
 // Pupupaimen: kolme pupua seuraa yksisarvista niityllä. Pöllön huuto pelästyttää
 // lähellä olevat puput pensaisiin piiloon; piiloutunut pupu kootaan napauttamalla.
 // Kaikki kolme viedään pupukoloon. Ei sydämiä: kiireetön hoivakenttä.
+// Pensaat, kolo ja kyltti ovat tökättäviä koristeita (props.js); pöllöt ja
+// seuraavat puput reagoivat napautukseen vain kosmeettisesti.
 
 var HERD_N = 3;
 var herdBunnies = [];
@@ -12,6 +14,8 @@ var herdBurrow = { fx: 0.95, x: 0 };
 var herdBushDefs = [0.12, 0.22, 0.33, 0.44, 0.55, 0.66, 0.77, 0.86];
 var herdOwlDefs = [{ fx: 0.30 }, { fx: 0.58 }, { fx: 0.80 }];
 var herdStartDefs = [{ fx: 0.06, fy: 0.25 }, { fx: 0.10, fy: 0.75 }, { fx: 0.14, fy: 0.5 }];
+var HERD_OWL = '#8a6a44';
+var HERD_OWL_LINE = '#4a3320';
 
 function herdPathY(f) {
   return groundTop + (groundBottom - groundTop) * f;
@@ -30,7 +34,7 @@ function initHerd() {
   tasks = [makeTask(0.36, 'word', { maxSyl: 2 }), makeTask(0.70, 'count')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   herdOwls = [];
-  for (i = 0; i < herdOwlDefs.length; i++) herdOwls.push({ px: 0, py: 0, x: 0, y: 0, state: 'sleep', timer: 4 + i * 1.5, diveT: 0, tx: 0, ty: 0, scared: false });
+  for (i = 0; i < herdOwlDefs.length; i++) herdOwls.push({ px: 0, py: 0, x: 0, y: 0, state: 'sleep', timer: 4 + i * 1.5, diveT: 0, tx: 0, ty: 0, scared: false, pokeT: -1 });
   layoutHerd();
   for (i = 0; i < herdOwls.length; i++) { herdOwls[i].x = herdOwls[i].px; herdOwls[i].y = herdOwls[i].py; }
   herdBunnies = [];
@@ -43,6 +47,7 @@ function initHerd() {
   unicorn.y = unicorn.ty = herdPathY(0.5);
   unicorn.facing = 1;
   unicorn.moving = false;
+  herdSetupProps();
   renderBackground();
   playNote(523, 0, 0.25, 'sine', 0.35);
   playNote(659, 0.12, 0.3, 'triangle', 0.3);
@@ -55,6 +60,7 @@ function resizeHerd(ratio) {
   layoutHerd();
   for (i = 0; i < herdBunnies.length; i++) { herdBunnies[i].x *= ratio; herdBunnies[i].tx *= ratio; }
   for (i = 0; i < herdOwls.length; i++) { herdOwls[i].x *= ratio; herdOwls[i].tx *= ratio; }
+  herdSetupProps();
 }
 
 function herdHomeCount() {
@@ -90,9 +96,141 @@ function herdRejoin(b) {
   playNote(1319, 0.08, 0.15, 'sine', 0.3);
 }
 
+// ---------- Koristeet ja kosmeettiset reaktiot ----------
+// Pensaat, pupukolo ja kyltti piirretään joka ruudulla (props.js), jotta ne
+// heilahtavat napautuksesta. Paikat ovat samat kuin ennen taustakuvassa.
+function herdSetupProps() {
+  var i, h = viewH, s = h * 0.1;
+  propsReset();
+  for (i = 0; i < herdBushes.length; i++) {
+    propAdd({ x: herdBushes[i].x, y: herdBushes[i].y, r: h * 0.11, hy: h * 0.05, color: '#ff7bac', amp: 0.1, note: 520 + (i % 4) * 40,
+      draw: herdDrawBushProp, poke: herdPokeBush });
+  }
+  propAdd({ x: herdBurrow.x, y: groundTop + h * 0.02, r: s * 1.1, hy: s * 0.35, color: '#e8c9a0', amp: 0.03, note: 330, peek: -1,
+    draw: herdDrawBurrow, poke: herdPokeBurrow, update: herdUpdateBurrow });
+  propAdd({ x: herdBurrow.x + s * 1.25, y: groundTop, r: s * 0.6, hy: s * 1.15, color: '#fff6c8', note: 740,
+    draw: herdDrawSign });
+}
+
+function herdDrawBushProp(c, p) {
+  drawBush(c, 0, 0, viewH * 0.09);
+}
+// Pensas rapisee ja pudottaa pari kukkaa
+function herdPokeBush(p) {
+  var h = viewH;
+  propDropBall(p.x - h * 0.03, p.y - h * 0.12, h * 0.011, '#ff7bac', p.y + h * 0.01, -viewW * 0.03);
+  propDropBall(p.x + h * 0.04, p.y - h * 0.09, h * 0.011, '#ff7bac', p.y + h * 0.01, viewW * 0.03);
+}
+
+// Pupukolo: kumpu ja kolo. Kolmannella tökkäyksellä kolosta kurkistaa pupu (yllätys).
+function herdDrawBurrow(c, p) {
+  var s = viewH * 0.1, k;
+  artShadow(c, 0, s * 0.08, s * 1.15, s * 0.22, 0.14);
+  c.beginPath(); c.arc(0, 0, s * 0.95, Math.PI, 0); c.closePath();
+  artFillPath(c, '#8a6a44', -s * 0.95, 0, s * 0.95, { lineColor: '#4a3320' });
+  artHighlight(c, -s * 0.38, -s * 0.6, s * 0.28, s * 0.12, 0.22);
+  c.beginPath(); c.arc(0, 0, s * 0.62, Math.PI, 0); c.closePath();
+  artFillPath(c, '#3a2a1a', -s * 0.62, 0, s * 0.62, { shadeTo: '#1e140c', lineColor: '#2a1c10' });
+  if (p.peek >= 0) {
+    k = p.peek < 0.4 ? easeOutBack(p.peek / 0.4) : (p.peek > 1.6 ? Math.max(0, 1 - (p.peek - 1.6) / 0.4) : 1);
+    c.save();
+    c.beginPath(); c.rect(-s, -s * 3, s * 2, s * 3); c.clip();
+    drawBunny(c, 0, s * 0.6 - k * s * 0.9, s * 0.42, 0, p.peek * 4, true);
+    c.restore();
+  }
+}
+function herdUpdateBurrow(p, dt) {
+  if (p.peek >= 0) {
+    p.peek += dt;
+    if (p.peek > 2.0) p.peek = -1;
+  }
+}
+function herdPokeBurrow(p) {
+  if (p.n % 3 === 0 && p.peek < 0) {
+    p.peek = 0;
+    soundBunny();
+  }
+}
+
+// Kyltti kolon vieressä: tolppa, laatta ja pupun kuva
+function herdDrawSign(c, p) {
+  var s = viewH * 0.1;
+  artShadow(c, 0, s * 0.03, s * 0.3, s * 0.07, 0.14);
+  artLimb(c, 0, 0, 0, -s * 1.0, s * 0.1, '#c98b4a', '#6b4520');
+  artRoundRect(c, -s * 0.35, -s * 1.4, s * 0.7, s * 0.4, s * 0.08, '#fff6c8', { lineColor: '#b89a5a', shadeTo: '#f0dca8' });
+  drawBunny(c, 0, -s * 1.05, s * 0.16, 0, 0, true);
+}
+
+// Pöllö: oksalla nukkuva (tai huhuileva, syöksyvä) pöllö tarrakirjan ilmeellä.
+// Tökkäys räpäyttää silmät auki hetkeksi; tila ei muutu.
+function herdDrawOwl(c, o) {
+  var x = o.x - camX, y = o.y, s = viewH * 0.045;
+  if (x < -s * 4 || x > viewW + s * 4) return;
+  var awake = o.state !== 'sleep', pk = o.pokeT, lo = { lineColor: HERD_OWL_LINE };
+  var eyesOpen = awake, blink = false, big = 1;
+  if (pk >= 0) {
+    if (pk < 0.22) { blink = true; eyesOpen = true; } else if (pk < 1.2) { eyesOpen = true; big = 1.12; }
+  }
+  if (o.state !== 'dive') artLimb(c, x - s * 1.6, y + s * 1.05, x + s * 1.6, y + s * 0.95, s * 0.2, '#6b4a2a', '#3a2a1a');
+  c.save();
+  c.translate(x, y);
+  if (pk >= 0) c.rotate(Math.sin(pk * 18) * Math.exp(-pk * 3.5) * 0.12);
+  if (o.state === 'dive') {
+    c.beginPath(); c.moveTo(-s * 0.5, 0); c.lineTo(-s * 1.9, -s * 0.8); c.lineTo(-s * 0.6, s * 0.5); c.closePath();
+    artFillPath(c, '#6b4a2a', -s * 0.8, s * 0.5, s * 0.5, lo);
+    c.beginPath(); c.moveTo(s * 0.5, 0); c.lineTo(s * 1.9, -s * 0.8); c.lineTo(s * 0.6, s * 0.5); c.closePath();
+    artFillPath(c, '#6b4a2a', -s * 0.8, s * 0.5, s * 0.5, lo);
+  }
+  // Korvatupsut
+  c.beginPath(); c.moveTo(-s * 0.6, -s * 0.6); c.lineTo(-s * 0.4, -s * 1.15); c.lineTo(-s * 0.1, -s * 0.7); c.closePath();
+  artFillPath(c, HERD_OWL, -s * 1.15, -s * 0.6, s * 0.3, lo);
+  c.beginPath(); c.moveTo(s * 0.6, -s * 0.6); c.lineTo(s * 0.4, -s * 1.15); c.lineTo(s * 0.1, -s * 0.7); c.closePath();
+  artFillPath(c, HERD_OWL, -s * 1.15, -s * 0.6, s * 0.3, lo);
+  // Vartalo ja maha
+  artBlob(c, 0, 0, s * 0.75, s, HERD_OWL, { lineColor: HERD_OWL_LINE, hi: 0.25 });
+  artBlob(c, 0, s * 0.25, s * 0.45, s * 0.6, '#c9a97a', { line: false });
+  // Silmät
+  if (eyesOpen && !blink) {
+    var glow = o.state === 'hoot' ? 0.6 + Math.sin(globalT * 16) * 0.4 : 1;
+    artCircle(c, -s * 0.3, -s * 0.35, s * 0.3 * big, '#ffe678', { lineColor: '#b8862e', alpha: glow });
+    artCircle(c, s * 0.3, -s * 0.35, s * 0.3 * big, '#ffe678', { lineColor: '#b8862e', alpha: glow });
+    c.fillStyle = '#222';
+    c.beginPath(); c.arc(-s * 0.3, -s * 0.35, s * 0.13 * big, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.arc(s * 0.3, -s * 0.35, s * 0.13 * big, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(255,255,255,0.8)';
+    c.beginPath(); c.arc(-s * 0.35, -s * 0.42, s * 0.05, 0, Math.PI * 2); c.arc(s * 0.25, -s * 0.42, s * 0.05, 0, Math.PI * 2); c.fill();
+  } else {
+    c.strokeStyle = '#3a2a1a';
+    c.lineWidth = Math.max(1.5, s * 0.1);
+    c.lineCap = 'round';
+    c.beginPath(); c.arc(-s * 0.3, -s * 0.35, s * 0.25, 0.2, Math.PI - 0.2); c.stroke();
+    c.beginPath(); c.arc(s * 0.3, -s * 0.35, s * 0.25, 0.2, Math.PI - 0.2); c.stroke();
+  }
+  // Nokka
+  c.beginPath(); c.moveTo(-s * 0.12, -s * 0.1); c.lineTo(s * 0.12, -s * 0.1); c.lineTo(0, s * 0.12); c.closePath();
+  artFillPath(c, '#ffb84f', -s * 0.1, s * 0.12, s * 0.12, { lineColor: '#b8701a' });
+  c.restore();
+}
+function herdPokeOwl(o) {
+  var s = viewH * 0.045;
+  o.pokeT = 0;
+  spawnSparkles(o.x, o.y - s, 5, '#ffe9a0');
+  artPop(o.x, o.y, s * 1.2, '#ffe9a0', 'ring');
+  playNote(294, 0, 0.18, 'sine', 0.2);
+  playNote(247, 0.16, 0.22, 'sine', 0.18);
+}
+// Seuraava pupu hypähtää ja vikisee napautuksesta (ei vaikuta peliin)
+function herdPokeBunny(b) {
+  b.hop = 1;
+  spawnSparkles(b.x, b.y - viewH * 0.08, 6, '#ff9fd0');
+  artPop(b.x, b.y - viewH * 0.05, viewH * 0.04, '#ff9fd0', 'ring');
+  playNote(1300, 0, 0.08, 'sine', 0.25);
+  playNote(1600, 0.07, 0.1, 'sine', 0.2);
+}
+
 function handleHerdTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
-  var wx = px + camX, i, b, dx, dy;
+  var wx = px + camX, i, b, o, dx, dy;
   for (i = 0; i < herdBunnies.length; i++) {
     b = herdBunnies[i];
     if (b.state !== 'hiding' && b.state !== 'free') continue;
@@ -103,6 +241,22 @@ function handleHerdTap(px, py) {
       return;
     }
   }
+  // Kosmeettiset reaktiot: seuraava pupu hypähtää, pöllö räpäyttää, koriste heilahtaa
+  for (i = 0; i < herdBunnies.length; i++) {
+    b = herdBunnies[i];
+    if (b.state !== 'follow') continue;
+    dx = wx - b.x;
+    dy = py - (b.y - viewH * 0.06);
+    if (dx * dx + dy * dy < viewH * 0.08 * viewH * 0.08) { herdPokeBunny(b); break; }
+  }
+  for (i = 0; i < herdOwls.length; i++) {
+    o = herdOwls[i];
+    if (o.state === 'dive') continue;
+    dx = wx - o.x;
+    dy = py - o.y;
+    if (dx * dx + dy * dy < viewH * 0.07 * viewH * 0.07) { herdPokeOwl(o); break; }
+  }
+  propsTap(wx, py);
   setWalkTarget(px, py);
 }
 
@@ -130,6 +284,7 @@ function updateHerd(dt) {
   // Pöllöt: uni -> huhuilu -> syöksy; syöksy ei satuta, mutta pelästyttää puput lähellä
   for (i = 0; i < herdOwls.length; i++) {
     o = herdOwls[i];
+    if (o.pokeT >= 0) { o.pokeT += dt; if (o.pokeT > 1.4) o.pokeT = -1; }
     if (busy || celebrating) continue;
     if (o.state === 'sleep') {
       o.timer -= dt;
@@ -213,6 +368,7 @@ function updateHerd(dt) {
     }
   }
 
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -232,6 +388,7 @@ function renderHerdBg(b, w, h) {
 }
 function renderHerdFar(b, w, h) { meadowFar(b, w, h, '#7ec8ff', '#c8ecff', '#c8e8b8'); }
 function renderHerdMid(b, w, h) { meadowMid(b, w, h, '#a7dd8f'); }
+// Lähin kerros: nurmi ja kukat. Pensaat, kolo ja kyltti ovat koristeita (herdSetupProps).
 function renderHerdNear(b, w, h) {
   var i, x;
   meadowNearGrass(b, w, h);
@@ -239,18 +396,6 @@ function renderHerdNear(b, w, h) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, ['#ff7bac', '#ffe27a', '#c9a0ff', '#7fd4ff'][i % 4]);
   }
-  for (i = 0; i < herdBushes.length; i++) drawBush(b, herdBushes[i].x, herdBushes[i].y, h * 0.09);
-  var bx = herdBurrow.x, s = h * 0.1;
-  b.fillStyle = '#8a6a44';
-  b.beginPath(); b.arc(bx, groundTop + h * 0.02, s * 0.95, Math.PI, 0); b.fill();
-  b.fillStyle = '#3a2a1a';
-  b.beginPath(); b.arc(bx, groundTop + h * 0.02, s * 0.62, Math.PI, 0); b.fill();
-  b.fillStyle = '#fff6c8';
-  roundRect(b, bx + s * 0.9, groundTop - s * 1.4, s * 0.7, s * 0.4, s * 0.08);
-  b.fill();
-  b.fillStyle = '#c98b4a';
-  b.fillRect(bx + s * 1.2, groundTop - s * 1.0, s * 0.08, s * 1.0);
-  drawBunny(b, bx + s * 1.25, groundTop - s * 1.05, s * 0.16, 0, 0, true);
 }
 
 function drawHerdBunny(c, b) {
@@ -258,17 +403,12 @@ function drawHerdBunny(c, b) {
   if (x < -s * 4 || x > viewW + s * 4) return;
   if (b.state === 'hiding' && Math.abs(b.x - b.tx) < 8) {
     // Piilossa pensaan takana: korvat ja huutomerkki näkyvät
+    var bob = Math.sin(globalT * 3) * s * 0.1;
     drawBunny(c, x, y - viewH * 0.02, s * 0.8, 0, b.earT, true);
-    c.fillStyle = '#ff5f7e';
-    c.fillRect(x - s * 0.08, y - s * 2.4 - Math.sin(globalT * 3) * s * 0.1, s * 0.16, s * 0.5);
-    c.beginPath(); c.arc(x, y - s * 1.75 - Math.sin(globalT * 3) * s * 0.1, s * 0.1, 0, Math.PI * 2); c.fill();
+    artRoundRect(c, x - s * 0.09, y - s * 2.45 - bob, s * 0.18, s * 0.55, s * 0.09, '#ff5f7e', { lineColor: '#a8243f' });
+    artCircle(c, x, y - s * 1.75 - bob, s * 0.11, '#ff5f7e', { lineColor: '#a8243f' });
     return;
   }
-  c.fillStyle = 'rgba(0,0,0,0.15)';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(x, y, s * 0.8, s * 0.2, 0, 0, Math.PI * 2);
-  else c.arc(x, y, s * 0.5, 0, Math.PI * 2);
-  c.fill();
   drawBunny(c, x, y, s, b.hop * viewH * 0.025, b.earT, false);
   if (b.state === 'follow') drawHeartShape(c, x, y - s * 2.3 + Math.sin(globalT * 3) * s * 0.1, s * 0.14, true);
 }
@@ -276,8 +416,9 @@ function drawHerdBunny(c, b) {
 function drawHerd() {
   var i, order = [];
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
-  for (i = 0; i < herdOwls.length; i++) if (herdOwls[i].state !== 'dive') drawNightOwl(ctx, herdOwls[i]);
+  for (i = 0; i < herdOwls.length; i++) if (herdOwls[i].state !== 'dive') herdDrawOwl(ctx, herdOwls[i]);
   // Puput ja yksisarvinen syvyysjärjestyksessä
   for (i = 0; i < herdBunnies.length; i++) if (herdBunnies[i].state !== 'home') order.push({ y: herdBunnies[i].y, b: herdBunnies[i] });
   order.push({ y: unicorn.y, u: true });
@@ -287,7 +428,7 @@ function drawHerd() {
     if (order[i].u) drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
     else drawHerdBunny(ctx, order[i].b);
   }
-  for (i = 0; i < herdOwls.length; i++) if (herdOwls[i].state === 'dive') drawNightOwl(ctx, herdOwls[i]);
+  for (i = 0; i < herdOwls.length; i++) if (herdOwls[i].state === 'dive') herdDrawOwl(ctx, herdOwls[i]);
   drawParticlesLayer(ctx);
   // Nuoli: piilossa olevaan pupuun tai koloon
   if (!celebrating) {

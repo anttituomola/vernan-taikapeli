@@ -66,6 +66,7 @@ function initIcecream() {
   ice.taskDelay = 0;
   ice.customer.earT = 0;
   iceNextOrder();
+  iceSetupProps();
   princess.x = viewW * 0.45;
   princess.y = viewH * 0.82;
   princess.facing = 1;
@@ -80,6 +81,7 @@ function respawnIcecream() {}
 function resizeIcecream() {
   princess.x = viewW * 0.45;
   princess.y = viewH * 0.82;
+  iceSetupProps();
 }
 
 function iceOrderDone() {
@@ -143,7 +145,10 @@ function handleIcecreamTap(px, py) {
     ice.customer.hop = 1;
     playNote(1300, 0, 0.08, 'sine', 0.25);
     playNote(1600, 0.07, 0.1, 'sine', 0.2);
+    return;
   }
+  // Koristeet (kyltti, pehmiskone, kello) vain, kun napautus ei osunut peliin
+  propsTap(px, py);
 }
 
 function updateIcecream(dt) {
@@ -173,6 +178,7 @@ function updateIcecream(dt) {
     k.happyT -= dt;
     k.hop = Math.abs(Math.sin(globalT * 10));
   }
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -203,13 +209,14 @@ function renderIcecreamFar(b, w, h) {
   drawCloud(b, vw * 0.7, h * 0.08, h * 0.025, 0.8);
 }
 function renderIcecreamMid(b, w, h) {
-  var vw = viewW, i;
+  var vw = viewW, i, haze = '#c8ecff';
+  // Kaukainen maailmanpyörä ja teltta: ei reunaviivaa, sävy kohti taivasta
   b.strokeStyle = 'rgba(255,255,255,0.7)';
   b.lineWidth = h * 0.006;
   b.beginPath(); b.arc(vw * 0.82, h * 0.3, h * 0.13, 0, Math.PI * 2); b.stroke();
   for (i = 0; i < 8; i++) { b.beginPath(); b.moveTo(vw * 0.82, h * 0.3); b.lineTo(vw * 0.82 + Math.cos(i * Math.PI / 4) * h * 0.13, h * 0.3 + Math.sin(i * Math.PI / 4) * h * 0.13); b.stroke(); }
-  for (i = 0; i < 8; i++) { b.fillStyle = maneColors[i % 6]; b.beginPath(); b.arc(vw * 0.82 + Math.cos(i * Math.PI / 4) * h * 0.13, h * 0.3 + Math.sin(i * Math.PI / 4) * h * 0.13, h * 0.012, 0, Math.PI * 2); b.fill(); }
-  drawFairTent(b, vw * 0.62, h * 0.46, h * 0.12, '#c8323c');
+  for (i = 0; i < 8; i++) artCircle(b, vw * 0.82 + Math.cos(i * Math.PI / 4) * h * 0.13, h * 0.3 + Math.sin(i * Math.PI / 4) * h * 0.13, h * 0.012, artMix(maneColors[i % 6], haze, 0.3), { line: false });
+  drawFairTent(b, vw * 0.62, h * 0.46, h * 0.12, '#c8323c', '#e8f6ff');
   var gr = b.createLinearGradient(0, h * 0.44, 0, h * 0.6);
   gr.addColorStop(0, '#9fdc7f');
   gr.addColorStop(1, '#6fbb60');
@@ -217,7 +224,8 @@ function renderIcecreamMid(b, w, h) {
   b.fillRect(0, h * 0.44, w, h * 0.16);
 }
 function renderIcecreamNear(b, w, h) {
-  var vw = viewW, x, y;
+  var vw = viewW, x, y, lw = Math.max(1.2, h * 0.003);
+  // Markiisi: raidat, kaarireuna ja tummempi reunaviiva
   b.fillStyle = '#ff7bac';
   b.fillRect(0, h * 0.14, vw * 0.52, h * 0.09);
   b.fillStyle = '#fff';
@@ -226,19 +234,19 @@ function renderIcecreamNear(b, w, h) {
   for (x = h * 0.025; x < vw * 0.52 + h * 0.05; x += h * 0.05) { b.beginPath(); b.arc(x, h * 0.23, h * 0.025, 0, Math.PI); b.fill(); }
   b.fillStyle = '#fff';
   for (x = h * 0.075; x < vw * 0.52; x += h * 0.1) { b.beginPath(); b.arc(x, h * 0.23, h * 0.025, 0, Math.PI); b.fill(); }
-  // Kojun seinä ja hylly makuastioille
+  b.strokeStyle = '#c96a92';
+  b.lineWidth = lw;
+  b.beginPath();
+  for (x = h * 0.025; x < vw * 0.52 + h * 0.05; x += h * 0.05) { b.moveTo(x - h * 0.025, h * 0.23); b.arc(x, h * 0.23, h * 0.025, Math.PI, 0, true); }
+  b.stroke();
+  b.fillStyle = 'rgba(120,40,70,0.25)';
+  b.fillRect(0, h * 0.14, vw * 0.52, h * 0.005);
+  // Kojun seinä
   b.fillStyle = '#fff6e8';
   b.fillRect(0, h * 0.25, vw * 0.52, h * 0.36);
   b.fillStyle = 'rgba(255,150,190,0.25)';
   for (x = 0; x < vw * 0.52; x += h * 0.08) b.fillRect(x, h * 0.25, h * 0.03, h * 0.36);
-  // Iso jäätelökyltti katoksen päässä (HUD on vasemmalla ylhäällä)
-  b.fillStyle = '#ffd24f';
-  roundRect(b, vw * 0.53, h * 0.05, h * 0.16, h * 0.13, h * 0.02);
-  b.fill();
-  b.strokeStyle = '#ff7bac';
-  b.lineWidth = Math.max(2, h * 0.008);
-  b.stroke();
-  drawIceCone(b, vw * 0.53 + h * 0.08, h * 0.14, h * 0.035, [0, 2, 3], 'cherry', 1);
+  // (Iso jäätelökyltti katoksen päässä on tökättävä koriste, ks. iceSetupProps)
   // Tiski
   var cg = b.createLinearGradient(0, h * 0.6, 0, h);
   cg.addColorStop(0, '#c98b4a');
@@ -247,17 +255,15 @@ function renderIcecreamNear(b, w, h) {
   b.fillRect(0, h * 0.6, w, h * 0.4);
   b.fillStyle = '#e8c49a';
   b.fillRect(0, h * 0.6, w, h * 0.025);
+  b.fillStyle = 'rgba(90,58,30,0.5)';
+  b.fillRect(0, h * 0.625, w, h * 0.004);
   b.fillStyle = 'rgba(0,0,0,0.12)';
   for (y = h * 0.68; y < h; y += h * 0.08) b.fillRect(0, y, w, 2);
   // Makuastioiden hylly
-  b.fillStyle = '#7fd4ff';
-  roundRect(b, vw * 0.04, h * 0.53, vw * 0.46, h * 0.05, h * 0.015);
-  b.fill();
+  artRoundRect(b, vw * 0.04, h * 0.53, vw * 0.46, h * 0.05, h * 0.015, '#7fd4ff', { lineColor: '#2a7aa8', line: lw });
   // Tötterön teline
   var cp = iceConePos();
-  b.fillStyle = '#e8eef7';
-  roundRect(b, cp.x - h * 0.06, cp.y - h * 0.02, h * 0.12, h * 0.04, h * 0.012);
-  b.fill();
+  artRoundRect(b, cp.x - h * 0.06, cp.y - h * 0.02, h * 0.12, h * 0.04, h * 0.012, '#e8eef7', { lineColor: '#9aa6c0', shadeTo: '#d8d0ea', line: lw });
 }
 
 function drawIceScoop(c, x, y, r, fl) {
@@ -266,6 +272,9 @@ function drawIceScoop(c, x, y, r, fl) {
   g.addColorStop(1, fl.c);
   c.fillStyle = g;
   c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+  c.strokeStyle = artShade(fl.c, -0.35);
+  c.lineWidth = Math.max(1, r * 0.09);
+  c.stroke();
   c.fillStyle = 'rgba(0,0,0,0.08)';
   c.beginPath(); c.arc(x + r * 0.25, y + r * 0.3, r * 0.15, 0, Math.PI * 2); c.fill();
 }
@@ -275,12 +284,17 @@ function drawIceTop(c, kind, x, y, s) {
   if (kind === 'cherry') {
     c.strokeStyle = '#5a8a30';
     c.lineWidth = Math.max(1.5, s * 0.12);
+    c.lineCap = 'round';
     c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + s * 0.4, y - s * 0.8, x + s * 0.6, y - s * 1.1); c.stroke();
     var g = c.createRadialGradient(x - s * 0.2, y - s * 0.2, s * 0.05, x, y, s * 0.6);
     g.addColorStop(0, '#ff8f9f');
     g.addColorStop(1, '#c8102e');
     c.fillStyle = g;
     c.beginPath(); c.arc(x, y, s * 0.6, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#7a0a1e';
+    c.lineWidth = Math.max(1, s * 0.08);
+    c.stroke();
+    artHighlight(c, x - s * 0.22, y - s * 0.24, s * 0.16, s * 0.1, 0.45);
   } else {
     var cols = ['#ff5f7e', '#ffd23e', '#7fd4ff', '#5fd36b', '#c9a0ff'];
     for (i = 0; i < 9; i++) {
@@ -298,8 +312,8 @@ function drawIceTop(c, kind, x, y, s) {
 // Tötterö: scoops = makuindeksit alhaalta ylös, top = koriste tai null, alpha viimeiselle
 function drawIceCone(c, x, y, s, scoops, top, alpha) {
   var i, r = s * 1.05;
-  c.fillStyle = '#e8a860';
-  c.beginPath(); c.moveTo(x - s * 0.9, y - s * 0.3); c.lineTo(x + s * 0.9, y - s * 0.3); c.lineTo(x, y + s * 2.2); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(x - s * 0.9, y - s * 0.3); c.lineTo(x + s * 0.9, y - s * 0.3); c.lineTo(x, y + s * 2.2); c.closePath();
+  artFillPath(c, '#e8a860', y - s * 0.3, y + s * 2.2, s * 0.9, { lineColor: '#8a5a30', line: Math.max(1, s * 0.09) });
   c.strokeStyle = 'rgba(140,90,40,0.5)';
   c.lineWidth = Math.max(1, s * 0.06);
   for (i = 0; i < 3; i++) {
@@ -315,17 +329,11 @@ function drawIceCone(c, x, y, s, scoops, top, alpha) {
 }
 
 function drawIceTub(c, x, y, s, fl, dim, jx) {
-  c.fillStyle = 'rgba(0,0,0,0.15)';
-  roundRect(c, x - s * 1.1 + jx, y - s * 0.3 + s * 0.15, s * 2.2, s * 1.3, s * 0.2);
-  c.fill();
-  c.fillStyle = '#e8eef7';
-  roundRect(c, x - s * 1.1 + jx, y - s * 0.3, s * 2.2, s * 1.3, s * 0.2);
-  c.fill();
+  artShadow(c, x + jx, y + s * 1.05, s * 1.2, s * 0.25, 0.18);
+  artRoundRect(c, x - s * 1.1 + jx, y - s * 0.3, s * 2.2, s * 1.3, s * 0.2, '#e8eef7', { lineColor: '#9aa6c0', shadeTo: '#d8d0ea' });
+  artHighlight(c, x - s * 0.7 + jx, y + s * 0.15, s * 0.16, s * 0.35, 0.3);
   c.globalAlpha = dim ? 0.55 : 1;
-  c.fillStyle = fl.c;
-  c.beginPath();
-  if (c.ellipse) c.ellipse(x + jx, y - s * 0.3, s * 1.0, s * 0.35, 0, 0, Math.PI * 2); else c.arc(x + jx, y - s * 0.3, s * 0.8, 0, Math.PI * 2);
-  c.fill();
+  artBlob(c, x + jx, y - s * 0.3, s * 1.0, s * 0.35, fl.c, { lineColor: artShade(fl.c, -0.35), line: Math.max(1, s * 0.07) });
   drawIceScoop(c, x + jx, y - s * 0.7, s * 0.6, fl);
   c.globalAlpha = 1;
 }
@@ -370,6 +378,8 @@ function drawIcecreamHud(c) {
 function drawIcecream() {
   var i, p, jx;
   if (!beginPlayWorld()) return;
+  // Tökättävät koristeet (kyltti, pehmiskone, kello)
+  propsDraw(ctx);
   // Makuastiat
   for (i = 0; i < ICE_FLAVORS.length; i++) {
     p = iceTubPos(i);
@@ -380,10 +390,7 @@ function drawIcecream() {
   // Koristeet
   for (i = 0; i < ICE_TOPS.length; i++) {
     p = iceTopPos(i);
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.beginPath();
-    if (ctx.ellipse) ctx.ellipse(p.x, p.y + viewH * 0.015, viewH * 0.05, viewH * 0.018, 0, 0, Math.PI * 2); else ctx.arc(p.x, p.y, viewH * 0.04, 0, Math.PI * 2);
-    ctx.fill();
+    artBlob(ctx, p.x, p.y + viewH * 0.015, viewH * 0.05, viewH * 0.018, '#ffffff', { lineColor: '#c9b3cf', shadeTo: '#e3d8f5', alpha: 0.9 });
     drawIceTop(ctx, ICE_TOPS[i], p.x, p.y - viewH * 0.005, viewH * 0.025);
   }
   // Tötterö telineessä
@@ -393,10 +400,7 @@ function drawIcecream() {
   if (ice.dropT >= 0) {
     var dy = cp.y + viewH * 0.02 + Math.min(1, ice.dropT * 2.5) * viewH * 0.05, sq = 1 - Math.min(0.5, ice.dropT * 0.5);
     ctx.globalAlpha = Math.max(0, 1 - ice.dropT / 1.2);
-    ctx.fillStyle = ice.dropC;
-    ctx.beginPath();
-    if (ctx.ellipse) ctx.ellipse(ice.dropX, dy, viewH * 0.03 / sq, viewH * 0.03 * sq, 0, 0, Math.PI * 2); else ctx.arc(ice.dropX, dy, viewH * 0.03, 0, Math.PI * 2);
-    ctx.fill();
+    artBlob(ctx, ice.dropX, dy, viewH * 0.03 / sq, viewH * 0.03 * sq, ice.dropC, { lineColor: artShade(ice.dropC, -0.35) });
     ctx.globalAlpha = 1;
   }
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);

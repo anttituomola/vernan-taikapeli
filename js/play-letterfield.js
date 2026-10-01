@@ -7,6 +7,8 @@
 // kirjaimen napautus heilauttaa sitä; läpi ratsastus ei tee mitään. Sanakuplan
 // napautus lukee sanan. Kolme sanaa kolmella alueella; valmis sana luetaan ja
 // sen kuva paljastuu. Ei sydämiä: rauhallinen lukukenttä.
+// Koristeet (numerokyltit, avoimet kirjat) ovat tökättäviä (props.js): ne
+// heilahtavat napautuksesta, ja viidesti tökätty kyltti näyttää V-kirjaimen.
 
 var LF_ZONES = [[0.05, 0.28], [0.36, 0.60], [0.68, 0.92]];
 var lf = { words: [], letters: [], cur: 0, gate: { fx: 0.965, x: 0, open: false }, sayT: -1, sayWord: -1, bunnies: [] };

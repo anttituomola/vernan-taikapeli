@@ -31,12 +31,13 @@ function initLollipop() {
     });
   }
   lollyWheels = [
-    { zA: 0.13, zB: 0.25, x: 0.19 * worldW, y: groundTop + viewH * 0.06, dir: 1, t: 0 },
-    { zA: 0.45, zB: 0.61, x: 0.53 * worldW, y: groundTop + viewH * 0.15, dir: -1, t: 1 },
-    { zA: 0.80, zB: 0.92, x: 0.86 * worldW, y: groundTop + viewH * 0.10, dir: 1, t: 2 }
+    { zA: 0.13, zB: 0.25, x: 0.19 * worldW, y: groundTop + viewH * 0.06, dir: 1, t: 0, pokeT: 0, spin: 0, spinV: 0 },
+    { zA: 0.45, zB: 0.61, x: 0.53 * worldW, y: groundTop + viewH * 0.15, dir: -1, t: 1, pokeT: 0, spin: 0, spinV: 0 },
+    { zA: 0.80, zB: 0.92, x: 0.86 * worldW, y: groundTop + viewH * 0.10, dir: 1, t: 2, pokeT: 0, spin: 0, spinV: 0 }
   ];
   lollyGate.x = lollyGate.fx * worldW;
   lollyGate.open = false;
+  lolliProps();
   unicorn.speed = 265;
   unicorn.x = unicorn.tx = viewW * 0.10;
   unicorn.y = unicorn.ty = lollyPathY() - viewH * 0.04;
@@ -66,6 +67,7 @@ function resizeLollipop(ratio) {
   }
   for (i = 0; i < lollyWheels.length; i++) lollyWheels[i].x *= ratio;
   lollyGate.x = lollyGate.fx * worldW;
+  lolliProps();
 }
 
 function collectLolly(lo) {
@@ -95,6 +97,19 @@ function handleLollipopTap(px, py) {
       return;
     }
   }
+  // Salmiakkipyörä hypähtää ja pyörähtää tökkäyksestä (pelkkä koriste);
+  // koristeet heilahtavat, ja napautus kävelyttää silti kuten ennen
+  for (i = 0; i < lollyWheels.length; i++) {
+    if (Math.hypot(wx - lollyWheels[i].x, wy - lollyWheels[i].y) < viewH * 0.06) {
+      lollyWheels[i].pokeT = 0.5;
+      lollyWheels[i].spinV = 12;
+      playNote(300, 0, 0.1, 'square', 0.1);
+      playNote(380, 0.08, 0.1, 'square', 0.1);
+      spawnSparkles(lollyWheels[i].x, lollyWheels[i].y - viewH * 0.03, 5, '#f4f0ff');
+      break;
+    }
+  }
+  propsTap(wx, wy);
   setWalkTarget(px, py);
 }
 
@@ -135,6 +150,8 @@ function updateLollipop(dt) {
   for (i = 0; i < lollyWheels.length; i++) {
     var wh = lollyWheels[i];
     wh.t += dt * 8;
+    if (wh.pokeT > 0) wh.pokeT -= dt;
+    if (wh.spinV > 0.01) { wh.spin += wh.spinV * wh.dir * dt; wh.spinV *= Math.max(0, 1 - dt * 2.5); }
     if (!busy && !celebrating) {
       wh.x += wh.dir * viewW * 0.06 * dt;
       if (wh.x < wh.zA * worldW) { wh.x = wh.zA * worldW; wh.dir = 1; }
@@ -154,6 +171,7 @@ function updateLollipop(dt) {
     startCelebration();
   }
 
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -187,11 +205,12 @@ function renderLollipopMid(b, w, h) {
   for (i = 0; i < 9; i++) {
     x = w * (i / 8);
     b.beginPath(); b.arc(x, groundTop + h * 0.02, h * (0.13 + (i % 3) * 0.04), Math.PI, 0); b.closePath();
-    artFillPath(b, '#f7a8cd', groundTop - h * 0.15, groundTop + h * 0.02, h * 0.13, { line: false });
+    // Keskikerros sävytetään taivaaseen (ilmaperspektiivi), ei reunaviivoja
+    artFillPath(b, artMix('#f7a8cd', '#ffe9f4', 0.3), groundTop - h * 0.15, groundTop + h * 0.02, h * 0.13, { line: false });
   }
   for (i = 0; i < 7; i++) {
     x = w * (0.07 + i * 0.14) + (i % 2) * h * 0.04;
-    loBgTree(b, x, groundTop - h * 0.01, h * 0.16, LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length]);
+    loBgTree(b, x, groundTop - h * 0.01, h * 0.16, LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length], 0.45);
   }
 }
 function renderLollipopNear(b, w, h) {
@@ -204,52 +223,117 @@ function renderLollipopNear(b, w, h) {
   b.fillStyle = 'rgba(255,240,250,0.55)';
   b.fillRect(0, groundTop + h * 0.02, w, groundBottom - groundTop - h * 0.02);
   for (i = 0; i < 7; i++) {
+    if (i % 2 === 1) continue; // puut 1, 3 ja 5 ovat tökättäviä koristeita (lolliProps)
     x = w * (0.07 + i * 0.14) + (i % 2) * h * 0.04;
-    loBgTree(b, x, groundTop - h * 0.01, h * 0.2, LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length]);
+    loBgTree(b, x, groundTop - h * 0.01, h * 0.2, LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length], 0);
   }
   for (i = 0; i < 40; i++) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, LOLLY_COLORS[i % LOLLY_COLORS.length]);
   }
-  var gx = lollyGate.x, gs = h * 0.3;
-  b.strokeStyle = '#ff5f7e';
-  b.lineWidth = h * 0.028;
-  b.lineCap = 'round';
-  b.beginPath(); b.moveTo(gx - gs * 0.32, groundTop); b.lineTo(gx - gs * 0.32, groundTop - gs); b.stroke();
-  b.beginPath(); b.moveTo(gx + gs * 0.32, groundTop); b.lineTo(gx + gs * 0.32, groundTop - gs); b.stroke();
-  b.strokeStyle = '#ffffff';
-  b.lineWidth = h * 0.012;
-  for (i = 0; i < 4; i++) {
-    b.beginPath(); b.moveTo(gx - gs * 0.32 - h * 0.012, groundTop - gs * (0.15 + i * 0.25)); b.lineTo(gx - gs * 0.32 + h * 0.012, groundTop - gs * (0.25 + i * 0.25)); b.stroke();
-    b.beginPath(); b.moveTo(gx + gs * 0.32 - h * 0.012, groundTop - gs * (0.15 + i * 0.25)); b.lineTo(gx + gs * 0.32 + h * 0.012, groundTop - gs * (0.25 + i * 0.25)); b.stroke();
-  }
-  b.strokeStyle = '#ff5f7e';
-  b.lineWidth = h * 0.028;
-  b.beginPath(); b.arc(gx, groundTop - gs, gs * 0.32, Math.PI, 0); b.stroke();
 }
 
-function loBgTree(b, x, baseY, s, color) {
-  b.strokeStyle = '#ffffff';
-  b.lineWidth = s * 0.09;
-  b.lineCap = 'round';
-  b.beginPath(); b.moveTo(x, baseY); b.lineTo(x, baseY - s * 0.75); b.stroke();
-  b.strokeStyle = 'rgba(255,95,126,0.6)';
+// Tikkaripuu: raidallinen tikku ja kierrekarkki. haze > 0 = keskikerros
+// (sävytetty taivaaseen, ei reunaviivaa). p = tökättävä koriste: kierre pyörii
+// (p.spin) ja viidennellä tökkäyksellä tikkarille kasvaa kasvot (p.face).
+function loBgTree(b, x, baseY, s, color, haze, p) {
+  haze = haze || 0;
+  var sky = '#ffe9f4', cy = baseY - s * 0.92, spin = p ? p.spin : 0;
+  var stick = artMix('#ffffff', sky, haze), col = artMix(color, sky, haze), line = artShade(color, -0.45);
+  if (!haze) artShadow(b, x, baseY + s * 0.02, s * 0.3, s * 0.07, 0.14);
+  artLimb(b, x, baseY, x, baseY - s * 0.75, s * 0.09, stick, haze > 0 ? false : '#d8b8d0');
+  b.strokeStyle = artRGBA(artMix('#ff5f7e', sky, haze), 0.6);
   b.lineWidth = s * 0.035;
+  b.lineCap = 'round';
   b.beginPath(); b.moveTo(x - s * 0.04, baseY - s * 0.1); b.lineTo(x + s * 0.04, baseY - s * 0.35); b.stroke();
   b.beginPath(); b.moveTo(x + s * 0.04, baseY - s * 0.4); b.lineTo(x - s * 0.04, baseY - s * 0.65); b.stroke();
-  b.fillStyle = color;
-  b.beginPath(); b.arc(x, baseY - s * 0.92, s * 0.28, 0, Math.PI * 2); b.fill();
-  b.fillStyle = 'rgba(255,255,255,0.65)';
-  b.beginPath(); b.arc(x - s * 0.09, baseY - s * 1.02, s * 0.09, 0, Math.PI * 2); b.fill();
+  artCircle(b, x, cy, s * 0.28, col, haze > 0 ? { line: false } : { lineColor: line, hi: 0.3 });
+  b.strokeStyle = 'rgba(255,255,255,0.7)';
+  b.lineWidth = s * 0.05;
+  b.beginPath(); b.arc(x, cy, s * 0.17, spin + 0.4, spin + Math.PI * 1.3); b.stroke();
+  b.beginPath(); b.arc(x, cy, s * 0.07, spin + Math.PI * 1.3, spin + Math.PI * 2.4); b.stroke();
+  if (p && p.face > 0) {
+    artEye(b, x - s * 0.1, cy - s * 0.04, s * 0.05, 0, false);
+    artEye(b, x + s * 0.1, cy - s * 0.04, s * 0.05, 0, Math.sin(p.face * 6) > 0.5);
+    b.strokeStyle = line;
+    b.lineWidth = Math.max(1, s * 0.03);
+    b.beginPath(); b.arc(x, cy + s * 0.06, s * 0.09, 0.2, Math.PI - 0.2); b.stroke();
+  }
+}
+
+// Tökättävät koristeet: tikkaripuut 1, 3 ja 5 sekä karkkiportti piirretään
+// joka ruudulla taustan sijaan, jotta ne heilahtavat napautuksesta. Paikat
+// ovat samat kuin taustan puilla; kutsutaan myös resize-koukusta.
+function lolliProps() {
+  var i, h = viewH;
+  propsReset();
+  for (i = 1; i < 7; i += 2) {
+    propAdd({
+      x: worldW * (0.07 + i * 0.14) + (i % 2) * h * 0.04, y: groundTop - h * 0.01, s: h * 0.2, col: LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length],
+      r: h * 0.09, hy: h * 0.2 * 0.92, color: LOLLY_COLORS[(i * 3) % LOLLY_COLORS.length], note: 600 + i * 40, spin: 0, spinV: 0, face: 0,
+      draw: function (c, p) { loBgTree(c, 0, 0, p.s, p.col, 0, p); },
+      update: function (p, dt) {
+        if (p.spinV > 0.01) { p.spin += p.spinV * dt; p.spinV *= Math.max(0, 1 - dt * 2.2); }
+        if (p.face > 0) { p.face += dt; if (p.face > 2.5) p.face = 0; }
+      },
+      poke: lolliTreePoke
+    });
+  }
+  propAdd({
+    x: lollyGate.x, y: groundTop, r: h * 0.15, hy: h * 0.27, amp: 0.05, color: '#ff5f7e', note: 1319,
+    draw: lolliDrawGate,
+    poke: function (p) {
+      // Portti kilisee
+      playNote(1760, 0.08, 0.12, 'triangle', 0.16);
+      spawnSparkles(p.x, p.y - viewH * 0.4, 8, '#ffd23e');
+    }
+  });
+}
+
+// Tikkari pyörähtää ja sirottelee sokeria ja pari karkkia; joka viides
+// tökkäys antaa sille kasvot, jotka iskevät silmää (yllätys)
+function lolliTreePoke(p) {
+  var j;
+  p.spinV = 10;
+  spawnSparkles(p.x, p.y - p.s * 0.92, 10, '#ffffff');
+  for (j = 0; j < 2; j++) {
+    propDropBall(p.x + (j - 0.5) * p.s * 0.3, p.y - p.s * 0.8, p.s * 0.05, LOLLY_COLORS[(p.n + j) % LOLLY_COLORS.length], p.y + viewH * 0.01);
+  }
+  if (p.n % 5 === 0 && !(p.face > 0)) {
+    p.face = 0.001;
+    playNote(880, 0.15, 0.1, 'triangle', 0.2);
+    playNote(1109, 0.25, 0.1, 'triangle', 0.2);
+    playNote(1319, 0.35, 0.2, 'triangle', 0.2);
+  }
+}
+
+// Karkkiportti (origo = portin keskikohta maassa): karkkikeppipylväät,
+// kaari ja sydänkarkki huipulla
+function lolliDrawGate(c, p) {
+  var h = viewH, gs = h * 0.3, i, lw = Math.max(1.2, h * 0.004);
+  artShadow(c, 0, 0, gs * 0.5, gs * 0.08, 0.14);
+  artLimb(c, -gs * 0.32, 0, -gs * 0.32, -gs, h * 0.028, '#ff5f7e', '#a83050');
+  artLimb(c, gs * 0.32, 0, gs * 0.32, -gs, h * 0.028, '#ff5f7e', '#a83050');
+  c.strokeStyle = '#ffffff';
+  c.lineWidth = h * 0.012;
+  c.lineCap = 'round';
+  for (i = 0; i < 4; i++) {
+    c.beginPath(); c.moveTo(-gs * 0.32 - h * 0.012, -gs * (0.15 + i * 0.25)); c.lineTo(-gs * 0.32 + h * 0.012, -gs * (0.25 + i * 0.25)); c.stroke();
+    c.beginPath(); c.moveTo(gs * 0.32 - h * 0.012, -gs * (0.15 + i * 0.25)); c.lineTo(gs * 0.32 + h * 0.012, -gs * (0.25 + i * 0.25)); c.stroke();
+  }
+  c.strokeStyle = '#a83050';
+  c.lineWidth = h * 0.028 + lw * 2;
+  c.beginPath(); c.arc(0, -gs, gs * 0.32, Math.PI, 0); c.stroke();
+  c.strokeStyle = '#ff5f7e';
+  c.lineWidth = h * 0.028;
+  c.beginPath(); c.arc(0, -gs, gs * 0.32, Math.PI, 0); c.stroke();
+  artCircle(c, 0, -gs * 1.32, gs * 0.07, '#ffd23e', { lineColor: '#b8862a', hi: 0.4 });
 }
 
 function loDrawLolly(c, x, y, s, color) {
-  c.strokeStyle = '#ffffff';
-  c.lineWidth = s * 0.22;
-  c.lineCap = 'round';
-  c.beginPath(); c.moveTo(x, y + s * 0.5); c.lineTo(x, y + s * 1.6); c.stroke();
-  c.fillStyle = color;
-  c.beginPath(); c.arc(x, y, s, 0, Math.PI * 2); c.fill();
+  artGlow(c, x, y, s * 1.8, color, 0.35);
+  artLimb(c, x, y + s * 0.5, x, y + s * 1.6, s * 0.22, '#ffffff', '#d8b8d0');
+  artCircle(c, x, y, s, color, { lineColor: artShade(color, -0.45), hi: 0.35 });
   c.strokeStyle = 'rgba(255,255,255,0.85)';
   c.lineWidth = s * 0.16;
   c.beginPath(); c.arc(x, y, s * 0.62, Math.PI * 0.2, Math.PI * 1.2); c.stroke();
@@ -257,25 +341,23 @@ function loDrawLolly(c, x, y, s, color) {
 }
 
 function loDrawWheel(c, wh) {
-  var x = wh.x - camX, y = wh.y, s = viewH * 0.035;
+  var x = wh.x - camX, y = wh.y, s = viewH * 0.035, i;
   if (x < -s * 4 || x > viewW + s * 4) return;
+  // Tökätty pyörä hypähtää ja pyörähtää vauhdilla (pelkkä piirto)
+  var hop = wh.pokeT > 0 ? Math.sin(Math.min(1, wh.pokeT / 0.5) * Math.PI) * s * 0.6 : 0;
+  artShadow(c, x, y + s * 0.85, s * 0.9, s * 0.22, 0.2);
   c.save();
-  c.translate(x, y);
-  c.fillStyle = 'rgba(0,0,0,0.15)';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(0, s * 0.85, s * 0.9, s * 0.22, 0, 0, Math.PI * 2);
-  else c.arc(0, s * 0.85, s * 0.6, 0, Math.PI * 2);
-  c.fill();
-  c.rotate(wh.t * wh.dir * 0.35);
-  c.fillStyle = '#2e2a38';
-  c.beginPath(); c.arc(0, 0, s, 0, Math.PI * 2); c.fill();
+  c.translate(x, y - hop);
+  c.rotate(wh.t * wh.dir * 0.35 + wh.spin);
+  artCircle(c, 0, 0, s, '#2e2a38', { lineColor: '#15121c' });
   c.strokeStyle = '#f4f0ff';
   c.lineWidth = s * 0.2;
-  var i;
+  c.lineCap = 'round';
   for (i = 0; i < 3; i++) {
     c.beginPath(); c.arc(0, 0, s * (0.35 + i * 0.24), i * 0.9, i * 0.9 + Math.PI * 1.1); c.stroke();
   }
   c.restore();
+  artHighlight(c, x - s * 0.35, y - hop - s * 0.4, s * 0.3, s * 0.18, 0.25);
 }
 
 function loDrawGateGlow(c) {
@@ -298,6 +380,7 @@ function loDrawGateGlow(c) {
 function drawLollipop() {
   var i;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   loDrawGateGlow(ctx);

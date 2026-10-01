@@ -15,6 +15,7 @@ var candyDefs = [
   { fx: 0.74, fy: 0.34 }, { fx: 0.80, fy: 0.46 }
 ];
 var CANDY_COLORS = ['#ff5f7e', '#ffb84f', '#6fd66f', '#5fa8ff', '#b678ff'];
+var candyTapSeen = 0;     // viimeksi käsitelty kosketuksen alkuhetki (juoksukentällä ei ole tap-koukkua)
 
 function layoutCandy() {
   var g = groundTop, i, seg;
@@ -33,6 +34,7 @@ function layoutCandy() {
   platforms.push({ kind: 'bounce', x: worldW * 0.80 - worldW * 0.02, y: g - viewH * 0.06, w: worldW * 0.04, squish: 0 });
   candyLiquidY = g + viewH * 0.06;
   candyDoor.x = candyDoor.fx * worldW;
+  candyProps();
 }
 
 function initCandy() {
@@ -49,10 +51,11 @@ function initCandy() {
     });
   }
   gumballs = [
-    { zA: 0.22, zB: 0.39, x: 0.30 * worldW, dir: 1, rot: 0, color: '#5fa8ff' },
-    { zA: 0.66, zB: 0.83, x: 0.74 * worldW, dir: -1, rot: 0, color: '#ff5f7e' }
+    { zA: 0.22, zB: 0.39, x: 0.30 * worldW, dir: 1, rot: 0, spin: 0, pokeT: 0, color: '#5fa8ff' },
+    { zA: 0.66, zB: 0.83, x: 0.74 * worldW, dir: -1, rot: 0, spin: 0, pokeT: 0, color: '#ff5f7e' }
   ];
   candyDoor.open = false;
+  candyTapSeen = holdStartG;
   resetPrincess(viewW * 0.08, groundTop);
   checkpoint.x = princess.x;
   checkpoint.y = groundTop;
@@ -115,6 +118,7 @@ function updateCandy(dt) {
   var i;
   updateTasks(dt);
   var busy = puzzleBusy();
+  candyPollTap();
 
   platformerStep(dt, {
     runSp: viewW * 0.22,
@@ -144,6 +148,7 @@ function updateCandy(dt) {
   // Kuulakarkit vierivät maassa: hyppää yli
   for (i = 0; i < gumballs.length; i++) {
     var gb = gumballs[i];
+    if (gb.pokeT > 0) { gb.pokeT -= dt; gb.spin += dt * 14 * gb.dir; } // tökätty: pyörähtää vauhdilla (koriste)
     if (!busy && !celebrating) {
       gb.x += gb.dir * viewW * 0.07 * dt;
       gb.rot += gb.dir * dt * 4;
@@ -162,6 +167,7 @@ function updateCandy(dt) {
     startCelebration();
   }
 
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -196,7 +202,8 @@ function renderCandyMid(b, w, h) {
     x = w * (0.05 + i * 0.115);
     var r = h * (0.12 + (i % 3) * 0.04);
     b.beginPath(); b.arc(x, horizon + r * 0.3, r, Math.PI, 0); b.closePath();
-    artFillPath(b, i % 2 ? '#ffb3d9' : '#c9a0ff', horizon - r, horizon + r * 0.3, r, { line: false });
+    // Kaukaiset karkkikukkulat sävytetään taivaaseen (ilmaperspektiivi), ei reunaviivaa
+    artFillPath(b, artMix(i % 2 ? '#ffb3d9' : '#c9a0ff', '#ffeef7', 0.3), horizon - r, horizon + r * 0.3, r, { line: false });
   }
 }
 function renderCandyNear(b, w, h) {
@@ -219,84 +226,168 @@ function renderCandyNear(b, w, h) {
     if (platforms[i].kind === 'ledge') drawMarshmallow(b, platforms[i].x, platforms[i].y, platforms[i].w, h * 0.055, false, 0);
   }
   for (i = 0; i < 10; i++) {
+    if (i % 4 === 0) continue; // puut 0, 4 ja 8 ovat tökättäviä koristeita (candyProps)
     x = w * (0.03 + i * 0.1) + (i % 2) * h * 0.06;
-    drawLollipopTree(b, x, groundTop, h * (0.14 + (i % 3) * 0.03), CANDY_COLORS[i % CANDY_COLORS.length]);
+    drawLollipopTree(b, x, groundTop, h * (0.14 + (i % 3) * 0.03), CANDY_COLORS[i % CANDY_COLORS.length], 0);
   }
-  drawCandyDoorFrame(b, candyDoor.x, groundTop, h);
 }
 
+// Keksilaatta: kaksisävyinen täyttö reunaviivalla, vaalea kuorrute yläreunassa
 function drawBiscuitSlab(b, x, y, w, hh, h) {
-  var g = b.createLinearGradient(0, y, 0, y + hh);
-  g.addColorStop(0, '#fff2d6');
-  g.addColorStop(0.12, '#e8c58f');
-  g.addColorStop(1, '#b8895a');
-  b.fillStyle = g;
-  roundRect(b, x, y, w, hh, Math.min(h * 0.015, w / 4));
+  var i, rr = Math.min(h * 0.015, w / 4);
+  roundRect(b, x, y, w, hh, rr);
+  artFillPath(b, '#e8c58f', y, y + h * 0.5, Math.min(w, hh) / 2, { lineColor: '#8a5a30', line: Math.max(1.2, h * 0.004), shadeTo: '#b8895a' });
+  b.fillStyle = '#fff2d6';
+  roundRect(b, x + rr * 0.3, y + h * 0.004, w - rr * 0.6, h * 0.02, h * 0.008);
   b.fill();
   b.fillStyle = 'rgba(120,70,30,0.25)';
-  var i;
   for (i = 0; i < w / (h * 0.06); i++) {
     b.beginPath(); b.arc(x + h * 0.03 + i * h * 0.06, y + h * 0.04, h * 0.004, 0, Math.PI * 2); b.fill();
   }
 }
 
+// Vaahtokarkki: valkoinen varjostetaan laventeliin, pomppiva on pinkki ja
+// strösselöity. squish litistää (pelkkä piirto).
 function drawMarshmallow(b, x, y, w, hh, bouncy, squish) {
-  var sq = 1 - squish;
-  var g = b.createLinearGradient(0, y - hh * 0.4, 0, y + hh);
-  g.addColorStop(0, bouncy ? '#ffd0e8' : '#ffffff');
-  g.addColorStop(1, bouncy ? '#ff8fc0' : '#f0dff0');
-  b.fillStyle = g;
-  roundRect(b, x, y - hh * 0.4 * (1 - sq) + (bouncy ? 0 : 0), w, hh * sq, hh * 0.45);
-  b.fill();
+  var sq = 1 - squish, top = y - hh * 0.4 * (1 - sq), i;
+  var cols = ['#ffe27a', '#6fd66f', '#5fa8ff'];
+  artRoundRect(b, x, top, w, hh * sq, hh * 0.45, bouncy ? '#ffb3d9' : '#ffffff',
+    bouncy ? { lineColor: '#c9608f' } : { lineColor: '#c9b3cf', shadeTo: '#e3d8f5' });
   b.fillStyle = 'rgba(255,255,255,0.6)';
-  roundRect(b, x + w * 0.1, y + hh * 0.08, w * 0.8, hh * 0.18, hh * 0.09);
+  roundRect(b, x + w * 0.1, top + hh * sq * 0.08, w * 0.8, hh * sq * 0.18, hh * 0.09);
   b.fill();
   if (bouncy) {
-    b.fillStyle = '#ffe27a';
-    var i;
     for (i = 0; i < 3; i++) {
-      b.beginPath(); b.arc(x + w * (0.25 + i * 0.25), y + hh * 0.55, hh * 0.1, 0, Math.PI * 2); b.fill();
+      artCircle(b, x + w * (0.25 + i * 0.25), top + hh * sq * 0.55, hh * 0.1, cols[i], { lineColor: artShade(cols[i], -0.45), line: Math.max(1, hh * 0.03) });
     }
   }
 }
 
-function drawLollipopTree(b, x, baseY, s, color) {
-  b.strokeStyle = '#ffffff';
-  b.lineWidth = s * 0.1;
-  b.beginPath(); b.moveTo(x, baseY); b.lineTo(x, baseY - s); b.stroke();
-  b.fillStyle = color;
-  b.beginPath(); b.arc(x, baseY - s - s * 0.35, s * 0.4, 0, Math.PI * 2); b.fill();
+// Tikkaripuu: tikku, kierrekarkki ja maavarjo. spin kiertää kierrettä
+// (tökätty puu pyörähtää). Sama piirto taustalle ja koristeille.
+function drawLollipopTree(b, x, baseY, s, color, spin) {
+  var a, r, px, py, cy = baseY - s - s * 0.35;
+  spin = spin || 0;
+  artShadow(b, x, baseY + s * 0.02, s * 0.3, s * 0.07, 0.14);
+  artLimb(b, x, baseY, x, baseY - s, s * 0.1, '#ffffff', '#d8b8d0');
+  artCircle(b, x, cy, s * 0.4, color, { lineColor: artShade(color, -0.45), hi: 0.3 });
   b.strokeStyle = 'rgba(255,255,255,0.75)';
   b.lineWidth = s * 0.07;
+  b.lineCap = 'round';
   b.beginPath();
-  var a, r;
   for (a = 0; a < Math.PI * 4; a += 0.2) {
     r = s * 0.05 + a / (Math.PI * 4) * s * 0.3;
-    var px = x + Math.cos(a) * r, py = baseY - s - s * 0.35 + Math.sin(a) * r;
+    px = x + Math.cos(a + spin) * r;
+    py = cy + Math.sin(a + spin) * r;
     if (a === 0) b.moveTo(px, py); else b.lineTo(px, py);
   }
   b.stroke();
 }
 
-function drawCandyDoorFrame(b, x, baseY, h) {
-  var dw = h * 0.12, dh = h * 0.24;
-  b.fillStyle = '#ff8fc0';
-  roundRect(b, x - dw * 0.7, baseY - dh * 1.1, dw * 1.4, dh * 1.1, dw * 0.3);
-  b.fill();
-  b.fillStyle = '#b8467e';
-  roundRect(b, x - dw / 2, baseY - dh, dw, dh, dw * 0.4);
-  b.fill();
+// Tökättävät koristeet: tikkaripuut 0, 4 ja 8 sekä karkkiovi piirretään joka
+// ruudulla taustan sijaan, jotta ne heilahtavat napautuksesta. Paikat ovat
+// samat kuin taustan puilla; kutsutaan layoutCandysta (init ja resize).
+function candyProps() {
+  var i, h = viewH, s;
+  propsReset();
+  for (i = 0; i < 10; i += 4) {
+    s = h * (0.14 + (i % 3) * 0.03);
+    propAdd({
+      x: worldW * (0.03 + i * 0.1) + (i % 2) * h * 0.06, y: groundTop, s: s, col: CANDY_COLORS[i % CANDY_COLORS.length],
+      r: s * 0.6, hy: s * 1.35, color: CANDY_COLORS[i % CANDY_COLORS.length], note: 620 + i * 30, spin: 0, spinV: 0,
+      draw: function (c, p) { drawLollipopTree(c, 0, 0, p.s, p.col, p.spin); },
+      update: function (p, dt) {
+        if (p.spinV > 0.01) { p.spin += p.spinV * dt; p.spinV *= Math.max(0, 1 - dt * 2.2); }
+      },
+      poke: function (p) {
+        // Tikkari pyörähtää ja sirottelee pari karkkia maahan
+        var j;
+        p.spinV = 9;
+        spawnSparkles(p.x, p.y - p.s * 1.35, 10, '#ffffff');
+        for (j = 0; j < 2; j++) {
+          propDropBall(p.x + (j - 0.5) * p.s * 0.5, p.y - p.s * 1.2, p.s * 0.06, CANDY_COLORS[(p.n + j) % CANDY_COLORS.length], p.y + viewH * 0.01);
+        }
+      }
+    });
+  }
+  propAdd({
+    x: candyDoor.x, y: groundTop, r: h * 0.14, hy: h * 0.13, amp: 0.05, color: '#ff8fc0', note: 1047, peek: 0,
+    draw: candyDrawDoor,
+    update: function (p, dt) { if (p.peek > 0) { p.peek += dt; if (p.peek > 2.2) p.peek = 0; } },
+    poke: candyDoorPoke
+  });
+}
+
+function candyDoorPoke(p) {
+  // Ovikello kilisee; joka kolmas tökkäys raottaa oven ja kuulakarkkipupu kurkistaa (yllätys)
+  playNote(1568, 0, 0.1, 'triangle', 0.18);
+  playNote(2093, 0.1, 0.14, 'triangle', 0.16);
+  if (p.n % 3 === 0 && !(p.peek > 0)) {
+    p.peek = 0.001;
+    playNote(660, 0.35, 0.1, 'sine', 0.2);
+    playNote(880, 0.45, 0.18, 'sine', 0.2);
+  }
+}
+
+// Karkkiovi (origo = kynnys): kehys, ovi, kahva ja karkkilyhdyt
+function candyDrawDoor(c, p) {
+  var h = viewH, dw = h * 0.12, dh = h * 0.24, lw = Math.max(1.2, h * 0.004), k;
+  artShadow(c, 0, 0, dw * 0.9, dw * 0.16, 0.16);
+  artRoundRect(c, -dw * 0.7, -dh * 1.1, dw * 1.4, dh * 1.1, dw * 0.3, '#ff8fc0', { lineColor: '#b8467e', line: lw });
+  artRoundRect(c, -dw / 2, -dh, dw, dh, dw * 0.4, '#b8467e', { lineColor: '#7a2a52', line: lw });
+  artCircle(c, dw * 0.3, -dh * 0.5, dw * 0.07, '#ffe27a', { lineColor: '#b8862a', line: lw });
+  if (p.peek > 0) {
+    k = p.peek < 0.5 ? easeOutBack(p.peek / 0.5) : (p.peek > 1.7 ? Math.max(0, (2.2 - p.peek) / 0.5) : 1);
+    c.save();
+    roundRect(c, -dw / 2, -dh, dw, dh, dw * 0.4);
+    c.clip();
+    c.fillStyle = '#4a1a3a';
+    c.fillRect(dw * 0.5 - dw * 0.5 * k, -dh, dw, dh);
+    drawBunny(c, dw * 0.62 - dw * 0.46 * k, -dh * 0.5, dw * 0.6, 0, globalT * 4, true);
+    c.restore();
+  }
+  artCircle(c, -dw * 0.56, -dh * 1.0, dw * 0.1, '#6fd66f', { lineColor: '#2f7a2f', line: lw, hi: 0.4 });
+  artCircle(c, dw * 0.56, -dh * 1.0, dw * 0.1, '#5fa8ff', { lineColor: '#2a5aa0', line: lw, hi: 0.4 });
+}
+
+// Juoksukentällä ei ole omaa napautuskoukkua: uusi kosketus tunnistetaan
+// otteen alkuhetkestä (hyppyalueen napautukset eivät tule tänne). Kuulakarkki
+// hypähtää, vaahtokarkki litistyy ja koristeet heilahtavat: pelkkää koristetta.
+function candyPollTap() {
+  if (holdStartG === candyTapSeen) return;
+  candyTapSeen = holdStartG;
+  if (!running || celebrating || puzzleBusy()) return;
+  var wx = holdSX + camX, wy = holdSY, i, gb, pl;
+  for (i = 0; i < gumballs.length; i++) {
+    gb = gumballs[i];
+    if (Math.hypot(wx - gb.x, wy - (groundTop - viewH * 0.035)) < viewH * 0.06) {
+      gb.pokeT = 0.6;
+      playNote(900 + i * 120, 0, 0.08, 'sine', 0.2);
+      playNote(1350 + i * 120, 0.08, 0.1, 'sine', 0.15);
+      spawnSparkles(gb.x, groundTop - viewH * 0.05, 6, gb.color);
+      return;
+    }
+  }
+  for (i = 0; i < platforms.length; i++) {
+    pl = platforms[i];
+    if (pl.kind === 'bounce' && wx > pl.x - viewH * 0.02 && wx < pl.x + pl.w + viewH * 0.02 && Math.abs(wy - pl.y) < viewH * 0.06) {
+      pl.squish = 0.3;
+      playNote(523, 0, 0.1, 'sine', 0.25);
+      playNote(1047, 0.06, 0.15, 'sine', 0.2);
+      spawnSparkles(pl.x + pl.w / 2, pl.y, 6, '#ffffff');
+      return;
+    }
+  }
+  propsTap(wx, wy);
 }
 
 function drawCandy(c, x, y, s, color, phase) {
+  artGlow(c, x, y, s * 1.5, color, 0.35);
   c.save();
   c.translate(x, y);
   c.rotate(Math.sin(phase) * 0.2);
-  c.strokeStyle = '#ffffff';
-  c.lineWidth = Math.max(1.5, s * 0.16);
-  c.beginPath(); c.moveTo(0, s * 0.3); c.lineTo(0, s * 1.3); c.stroke();
-  c.fillStyle = color;
-  c.beginPath(); c.arc(0, 0, s * 0.75, 0, Math.PI * 2); c.fill();
+  artLimb(c, 0, s * 0.3, 0, s * 1.3, Math.max(1.5, s * 0.16), '#ffffff', '#d8b8d0');
+  artCircle(c, 0, 0, s * 0.75, color, { lineColor: artShade(color, -0.45), hi: 0.3 });
   c.strokeStyle = 'rgba(255,255,255,0.8)';
   c.lineWidth = Math.max(1, s * 0.12);
   c.beginPath(); c.arc(0, 0, s * 0.42, 0, Math.PI * 1.4); c.stroke();
@@ -305,17 +396,16 @@ function drawCandy(c, x, y, s, color, phase) {
 }
 
 function drawGumball(c, gb) {
-  var x = gb.x - camX, y = groundTop - viewH * 0.035, r = viewH * 0.035;
+  var x = gb.x - camX, r = viewH * 0.035;
   if (x < -r * 3 || x > viewW + r * 3) return;
-  var g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
-  g.addColorStop(0, '#ffffff');
-  g.addColorStop(0.3, gb.color);
-  g.addColorStop(1, gb.color);
-  c.fillStyle = g;
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+  // Tökätty kuulakarkki hypähtää (pelkkä piirto, osuma-alue ei muutu)
+  var hop = gb.pokeT > 0 ? Math.sin(Math.min(1, gb.pokeT / 0.6) * Math.PI) * r * 0.8 : 0, y = groundTop - r - hop;
+  artShadow(c, x, groundTop, r * 1.1, r * 0.25, 0.18 * (1 - hop / (r * 2)));
+  artCircle(c, x, y, r, gb.color, { lineColor: artShade(gb.color, -0.45), hi: 0.45 });
   c.strokeStyle = 'rgba(255,255,255,0.7)';
   c.lineWidth = Math.max(1, r * 0.12);
-  c.beginPath(); c.arc(x, y, r * 0.6, gb.rot, gb.rot + Math.PI * 0.8); c.stroke();
+  c.lineCap = 'round';
+  c.beginPath(); c.arc(x, y, r * 0.6, gb.rot + gb.spin, gb.rot + gb.spin + Math.PI * 0.8); c.stroke();
 }
 
 function drawCandyDoorGlow(c) {
@@ -336,6 +426,7 @@ function drawCandyDoorGlow(c) {
 function drawCandy_() {
   var i;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'bounce') {

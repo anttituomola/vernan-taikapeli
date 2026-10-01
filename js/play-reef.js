@@ -20,6 +20,17 @@ var jellyDefs = [
   { fx: 0.80, baseY: 0.46, amp: 0.24, phase: 3, speed: 1.2 }
 ];
 var currentDefs = [{ fx: 0.36, fy: 0.5, dir: -1 }, { fx: 0.70, fy: 0.36, dir: 1 }];
+var REEF_CORALS = ['#ff7a9c', '#ffb46b', '#c98bff', '#6fe0d0'];
+var REEF_WATER = '#2a90c8'; // keskiveden sävy: kaukaiset koristeet sävytetään tähän
+// Taustarivistön (16 korallia ja levää) jäsenet, jotka piirretään tökättävinä
+// koristeina taustan sijaan: 3 ja 9 ovat leviä, 6 ja 12 koralleja
+var REEF_PROP_IDX = [3, 6, 9, 12];
+// Pikkukalat uiskentelevat paikallaan ja pyrähtävät karkuun tökättäessä
+var reefFishDefs = [
+  { fx: 0.13, fy: 0.44, color: '#ffb46b' }, { fx: 0.40, fy: 0.56, color: '#6fe0d0' },
+  { fx: 0.64, fy: 0.56, color: '#ff7a9c' }, { fx: 0.90, fy: 0.52, color: '#c98bff' }
+];
+var reefBubbles = []; // tökätyn levän ja kalan kuplat
 
 function reefFloorY() {
   return groundBottom - viewH * 0.03;

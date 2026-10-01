@@ -2,7 +2,8 @@
 
 // Marjaniitty: kiireetön hoivakenttä ilman sydämiä. Mansikat ja mustikat
 // kerätään koriin sormella tai ohitse ratsastaen. Kori hehkuu kun se on
-// täynnä — vie se perille.
+// täynnä — vie se perille. Marjapensaat ja kori ovat tökättäviä koristeita:
+// pensas pudottaa marjan, ja joka viides pudonnut marja on kultainen (yllätys).
 
 var BERRY_COUNT = 8;
 var berries = [];
@@ -35,6 +36,7 @@ function initBerry() {
   unicorn.y = unicorn.ty = berryPathY(0.5);
   unicorn.facing = 1;
   unicorn.moving = false;
+  berrySetupProps();
   renderBackground();
   playNote(523, 0, 0.25, 'sine', 0.35);
   playNote(659, 0.12, 0.3, 'triangle', 0.3);
@@ -49,6 +51,7 @@ function resizeBerry(ratio) {
     berries[i].ay = groundTop - berryDefs[i].fy * viewH;
   }
   berryBasket.x = berryBasket.fx * worldW;
+  berrySetupProps();
 }
 
 function collectBerry(be) {
@@ -77,6 +80,8 @@ function handleBerryTap(px, py) {
       return;
     }
   }
+  // Koristeet (pensaat, kori) heilahtavat; ratsastus jatkuu kuten ennen
+  propsTap(wx, wy);
   setWalkTarget(px, py);
 }
 
@@ -116,8 +121,71 @@ function updateBerry(dt) {
     startCelebration();
   }
 
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
+}
+
+// ---------- Koristeet (tökättävät) ----------
+// Kuusi marjapensasta ja kori piirretään joka ruudulla (props.js) samoihin
+// paikkoihin, joissa ne olivat taustakuvassa.
+function berrySetupProps() {
+  var i, h = viewH, w = worldW, x;
+  propsReset();
+  for (i = 0; i < 6; i++) {
+    x = w * (0.10 + i * 0.16) + (i % 2) * h * 0.03;
+    propAdd({ x: x, y: groundTop - h * 0.01, r: h * 0.1, hy: h * 0.045, kind: BERRY_KINDS[i % 2], color: i % 2 ? '#6f5cff' : '#ff5f7e',
+      amp: 0.1, note: 500 + (i % 3) * 60, draw: berryDrawBushProp, poke: berryPokeBush });
+  }
+  propAdd({ x: berryBasket.x, y: groundTop, r: h * 0.1, hy: h * 0.05, color: '#ffe27a', amp: 0.06, note: 420, draw: berryDrawBasketProp });
+}
+
+// Marjapensas: pensas ja neljä marjaa (mansikka- tai mustikkapensas)
+function berryDrawBushProp(c, p) {
+  var h = viewH, k, line = artShade(p.color, -0.5);
+  drawBush(c, 0, 0, h * 0.08);
+  for (k = 0; k < 4; k++) {
+    artCircle(c, -h * 0.03 + (k % 2) * h * 0.05, -h * (0.04 + 0.03 * (k > 1 ? 1 : 0)), h * 0.008, p.color, { lineColor: line, hi: 0.5 });
+  }
+}
+// Pensas rapisee ja pudottaa marjan; joka viides marja on kultainen (yllätys)
+function berryPokeBush(p) {
+  var h = viewH, gold = p.n % 5 === 0, kind = gold ? 'kulta' : p.kind;
+  propDrop({
+    x: p.x + (Math.random() - 0.5) * h * 0.04, y: p.y - h * 0.1, vx: (Math.random() - 0.5) * viewW * 0.06, vy: -h * 0.12,
+    ground: p.y + h * 0.02, kind: kind, life: gold ? 3 : 2.2,
+    draw: function (c, d) { beDrawBerry(c, 0, 0, h * 0.018, d.kind, d.kind === 'kulta'); }
+  });
+  if (gold) {
+    spawnSparkles(p.x, p.y - h * 0.1, 16, '#ffd24f');
+    artPop(p.x, p.y - h * 0.1, h * 0.06, '#ffe27a', 'burst');
+    playNote(1047, 0.05, 0.2, 'triangle', 0.3);
+    playNote(1319, 0.17, 0.22, 'triangle', 0.3);
+    playNote(1568, 0.29, 0.4, 'triangle', 0.3);
+  }
+}
+
+// Kori maailman lopussa: punottu kori, sanka ja raidat
+function berryDrawBasketProp(c, p) {
+  var s = viewH * 0.09, i;
+  artShadow(c, 0, s * 0.05, s * 1.1, s * 0.2, 0.16);
+  c.beginPath();
+  c.moveTo(-s, -s * 0.9);
+  c.lineTo(s, -s * 0.9);
+  c.lineTo(s * 0.72, 0);
+  c.lineTo(-s * 0.72, 0);
+  c.closePath();
+  artFillPath(c, '#c98b4a', -s * 0.9, 0, s, { lineColor: '#6b4520' });
+  c.fillStyle = 'rgba(0,0,0,0.12)';
+  for (i = -1; i <= 1; i++) c.fillRect(i * s * 0.5 - s * 0.04, -s * 0.82, s * 0.08, s * 0.72);
+  artHighlight(c, -s * 0.55, -s * 0.72, s * 0.25, s * 0.08, 0.3);
+  c.lineCap = 'round';
+  c.strokeStyle = '#6b4520';
+  c.lineWidth = s * 0.09 + 2.4;
+  c.beginPath(); c.arc(0, -s * 0.9, s * 0.72, Math.PI, 0); c.stroke();
+  c.strokeStyle = '#a9743f';
+  c.lineWidth = s * 0.09;
+  c.beginPath(); c.arc(0, -s * 0.9, s * 0.72, Math.PI, 0); c.stroke();
 }
 
 // ---------- Piirto ----------
@@ -135,72 +203,48 @@ function renderBerryBg(b, w, h) {
 }
 function renderBerryFar(b, w, h) { meadowFar(b, w, h, '#9fdcff', '#e8f7ff', '#d8f0c8'); }
 function renderBerryMid(b, w, h) { meadowMid(b, w, h, '#a7dd8f'); }
+// Lähin kerros: nurmi ja kukat. Marjapensaat ja kori ovat koristeita (berrySetupProps).
 function renderBerryNear(b, w, h) {
-  var i, x, k;
+  var i, x;
   meadowNearGrass(b, w, h);
-  for (i = 0; i < 6; i++) {
-    x = w * (0.10 + i * 0.16) + (i % 2) * h * 0.03;
-    drawBush(b, x, groundTop - h * 0.01, h * 0.08);
-    b.fillStyle = i % 2 ? '#6f5cff' : '#ff5f7e';
-    for (k = 0; k < 4; k++) {
-      b.beginPath();
-      b.arc(x - h * 0.03 + (k % 2) * h * 0.05, groundTop - h * (0.05 + 0.03 * (k > 1 ? 1 : 0)), h * 0.008, 0, Math.PI * 2);
-      b.fill();
-    }
-  }
   for (i = 0; i < 40; i++) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, ['#ff7bac', '#ffe27a', '#c9a0ff', '#7fd4ff'][i % 4]);
   }
-  var bx = berryBasket.x, s = h * 0.09;
-  b.fillStyle = '#c98b4a';
-  b.beginPath();
-  b.moveTo(bx - s, groundTop - s * 0.9);
-  b.lineTo(bx + s, groundTop - s * 0.9);
-  b.lineTo(bx + s * 0.72, groundTop);
-  b.lineTo(bx - s * 0.72, groundTop);
-  b.closePath(); b.fill();
-  b.strokeStyle = '#a9743f';
-  b.lineWidth = s * 0.09;
-  b.beginPath(); b.arc(bx, groundTop - s * 0.9, s * 0.72, Math.PI, 0); b.stroke();
-  b.fillStyle = 'rgba(0,0,0,0.12)';
-  for (i = -1; i <= 1; i++) b.fillRect(bx + i * s * 0.5 - s * 0.04, groundTop - s * 0.82, s * 0.08, s * 0.72);
 }
 
-function beDrawBerry(c, x, y, s, kind) {
-  var i;
-  if (kind === 'mansikka') {
-    c.fillStyle = '#ff5f7e';
-    c.beginPath();
-    c.moveTo(x - s * 0.8, y - s * 0.3);
-    c.quadraticCurveTo(x - s * 0.85, y + s * 0.6, x, y + s);
-    c.quadraticCurveTo(x + s * 0.85, y + s * 0.6, x + s * 0.8, y - s * 0.3);
-    c.quadraticCurveTo(x, y - s * 0.75, x - s * 0.8, y - s * 0.3);
-    c.fill();
-    c.fillStyle = '#ffe9b8';
-    for (i = 0; i < 5; i++) {
-      c.beginPath();
-      c.arc(x + (i % 2 ? 0.3 : -0.3) * s * (i < 3 ? 1 : 0.4), y - s * 0.1 + i * s * 0.22, s * 0.08, 0, Math.PI * 2);
-      c.fill();
-    }
-    c.fillStyle = '#5fd36b';
-    c.beginPath(); c.moveTo(x, y - s * 0.75); c.lineTo(x - s * 0.35, y - s * 0.5); c.lineTo(x + s * 0.35, y - s * 0.5); c.closePath(); c.fill();
-  } else {
-    c.fillStyle = '#6f5cff';
-    var offs = [[-0.4, 0.2], [0.4, 0.2], [0, -0.35], [0, 0.55]];
-    for (i = 0; i < offs.length; i++) {
-      c.beginPath(); c.arc(x + offs[i][0] * s, y + offs[i][1] * s, s * 0.42, 0, Math.PI * 2); c.fill();
-    }
-    c.fillStyle = 'rgba(255,255,255,0.5)';
-    for (i = 0; i < offs.length; i++) {
-      c.beginPath(); c.arc(x + offs[i][0] * s - s * 0.12, y + offs[i][1] * s - s * 0.12, s * 0.1, 0, Math.PI * 2); c.fill();
-    }
+// Marja: mansikka, mustikka tai kultainen mansikka ('kulta'). glow = keräiltävän hehku.
+function beDrawBerry(c, x, y, s, kind, glow) {
+  var i, col, offs;
+  if (kind === 'mustikka') {
+    if (glow) artGlow(c, x, y + s * 0.1, s * 2.2, '#b0a0ff', 0.36 + Math.sin(globalT * 3 + x * 0.01) * 0.1);
+    offs = [[-0.4, 0.2], [0.4, 0.2], [0, -0.35], [0, 0.55]];
+    for (i = 0; i < offs.length; i++) artCircle(c, x + offs[i][0] * s, y + offs[i][1] * s, s * 0.42, '#6f5cff', { lineColor: '#3a2a9a', hi: 0.45 });
+    return;
   }
+  col = kind === 'kulta' ? '#ffd24f' : '#ff5f7e';
+  if (glow) artGlow(c, x, y + s * 0.1, s * 2.2, kind === 'kulta' ? '#ffe27a' : '#ff9fb8', (kind === 'kulta' ? 0.6 : 0.36) + Math.sin(globalT * 3 + x * 0.01) * 0.1);
+  c.beginPath();
+  c.moveTo(x - s * 0.8, y - s * 0.3);
+  c.quadraticCurveTo(x - s * 0.85, y + s * 0.6, x, y + s);
+  c.quadraticCurveTo(x + s * 0.85, y + s * 0.6, x + s * 0.8, y - s * 0.3);
+  c.quadraticCurveTo(x, y - s * 0.75, x - s * 0.8, y - s * 0.3);
+  artFillPath(c, col, y - s * 0.75, y + s, s, { lineColor: artShade(col, -0.5) });
+  c.fillStyle = kind === 'kulta' ? '#fff6d0' : '#ffe9b8';
+  for (i = 0; i < 5; i++) {
+    c.beginPath();
+    c.arc(x + (i % 2 ? 0.3 : -0.3) * s * (i < 3 ? 1 : 0.4), y - s * 0.1 + i * s * 0.22, s * 0.08, 0, Math.PI * 2);
+    c.fill();
+  }
+  artHighlight(c, x - s * 0.38, y - s * 0.2, s * 0.2, s * 0.11, 0.4);
+  c.beginPath(); c.moveTo(x, y - s * 0.75); c.lineTo(x - s * 0.35, y - s * 0.5); c.lineTo(x + s * 0.35, y - s * 0.5); c.closePath();
+  artFillPath(c, '#5fd36b', y - s * 0.75, y - s * 0.5, s * 0.3, { lineColor: '#2f7a3a' });
 }
 
 function drawBerry() {
-  var i;
+  var i, sx;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   // Korin hehku kun se odottaa täyttä lastia
   if (berryBasket.ready) {
@@ -213,8 +257,10 @@ function drawBerry() {
   }
   for (i = 0; i < berries.length; i++) {
     if (berries[i].collected) continue;
+    sx = berries[i].ax - camX;
+    if (sx < -viewH * 0.1 || sx > viewW + viewH * 0.1) continue;
     var by = berries[i].ay + Math.sin(berries[i].phase) * viewH * 0.012;
-    beDrawBerry(ctx, berries[i].ax - camX, by, viewH * 0.026, berries[i].kind);
+    beDrawBerry(ctx, sx, by, viewH * 0.026, berries[i].kind, true);
   }
   // Yksisarvinen
   drawUnicorn(ctx, unicorn.x - camX, unicorn.y, viewH / 800 * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
@@ -222,6 +268,6 @@ function drawBerry() {
   if (berryBasket.ready && !celebrating) drawEdgeArrow(ctx, berryBasket.x);
   endPlayWorld();
   drawPickupHud(ctx, BERRY_COUNT, function (i2) { return berries[i2] && berries[i2].collected; },
-    function (c, x, y, s) { beDrawBerry(c, x, y, s, 'mansikka'); });
+    function (c, x, y, s) { beDrawBerry(c, x, y, s, 'mansikka', false); });
   drawTaskOverlay(ctx);
 }
