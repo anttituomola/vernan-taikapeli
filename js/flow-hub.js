@@ -98,6 +98,7 @@ function markPhaseCleared() {
   var k;
   for (k in PHASES) {
     if (PHASES[k].level === level) {
+      if (!hubCleared[k]) hubLastCleared = k;   // ensimmäinen läpäisy: mitali pomppaa sokkelossa
       hubCleared[k] = true;
       if (k === 'finale') finaleDone = true;
     }
@@ -163,6 +164,14 @@ function showHub() {
   lastTime = 0;
   hubPawn.path = [];
   hubOffer = null;
+  if (hubLastCleared) {
+    // Juuri läpäisty huone: mitali pomppaa esiin tähtien kera
+    hubFx.pop = { kind: hubLastCleared, t: 0 };
+    hubLastCleared = null;
+    playNote(784, 0.25, 0.12, 'triangle', 0.3);
+    playNote(988, 0.35, 0.12, 'triangle', 0.3);
+    playNote(1319, 0.45, 0.3, 'triangle', 0.3);
+  }
   if (hubPlaying && !hubCleared[hubPlaying] && hubApproach) {
     pos = hubFindByKind(hubPlaying);
     if (pos && hubPawn.c === pos.c && hubPawn.r === pos.r) {
@@ -404,7 +413,8 @@ var HUB_TILE_DECOR = {};
 // Pienet yllätykset sokkelossa: laudan ulkopuolelle ei-kulkukelpoiseen ruutuun
 // napautus istuttaa kukan, mökin ikkunasta kurkkaa pupu, nappula hyppää ja
 // hirnahtaa omasta ruudustaan napautettuna, aurinko hymyilee.
-var hubFx = { flowers: [], cottage: -1, hop: -1 };
+var hubFx = { flowers: [], cottage: -1, hop: -1, pop: null };
+var hubLastCleared = null;
 var HUB_FLOWER_COLS = ['#ff7bac', '#ffd24f', '#b78bff', '#ff9d5c', '#7fd4ff'];
 
 function hubCottagePos(lay) {
@@ -440,6 +450,7 @@ function hubFxUpdate(dt) {
   var i;
   if (hubFx.cottage >= 0) { hubFx.cottage += dt; if (hubFx.cottage > 1.8) hubFx.cottage = -1; }
   if (hubFx.hop >= 0) { hubFx.hop += dt; if (hubFx.hop > 0.45) hubFx.hop = -1; }
+  if (hubFx.pop) { hubFx.pop.t += dt; if (hubFx.pop.t > 1.8) hubFx.pop = null; }
   for (i = 0; i < hubFx.flowers.length; i++) hubFx.flowers[i].t += dt;
 }
 function hubFxHopOffset(lay) {
@@ -1403,6 +1414,14 @@ function drawHubFogRoom(c, x, y, s, seed) {
 
 function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
   var rad = s * (isNext ? 0.36 + Math.sin(globalT * 4) * 0.02 : 0.34);
+  var pop = hubFx.pop && hubFx.pop.kind === room.kind ? hubFx.pop : null, pk, i, a;
+  if (pop) {
+    pk = 0.5 + 0.5 * easeOutBack(Math.min(1, pop.t / 0.6));
+    c.save();
+    c.translate(x, y);
+    c.scale(pk, pk);
+    c.translate(-x, -y);
+  }
   if (isNext) {
     var gl = c.createRadialGradient(x, y, rad * 0.8, x, y, rad * 1.9);
     gl.addColorStop(0, 'rgba(255,230,140,0.55)');
@@ -1421,6 +1440,15 @@ function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
   c.globalAlpha = 1;
   if (isCleared) drawStar(c, x + rad * 0.72, y - rad * 0.72, s * 0.13, 0, 0.9);
   if (isNext) drawHintArrow(c, x, y - rad * 2.2);
+  if (pop) {
+    c.restore();
+    c.globalAlpha = Math.max(0, 1 - pop.t / 1.8);
+    for (i = 0; i < 6; i++) {
+      a = pop.t * 3 + i * Math.PI / 3;
+      drawStar(c, x + Math.cos(a) * rad * (1.2 + pop.t * 0.9), y + Math.sin(a) * rad * (1.2 + pop.t * 0.9), s * 0.1, a, 0.8);
+    }
+    c.globalAlpha = 1;
+  }
 }
 
 // ---------- Uusintakupla ----------
