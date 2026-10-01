@@ -147,9 +147,87 @@ function initBounce() {
   bounce.taskIdx = 0;
   bounce.spores = [];
   bounceSpawnAt(bounce.cp);
+  bounceSetupProps();
   renderBackground();
   playNote(523, 0, 0.12, 'sine', 0.25);
   playNote(784, 0.1, 0.2, 'sine', 0.25);
+}
+
+// Tökättävät koristeet: hohtosienet metsänpohjalla ja kielekkeillä lyhtyjen
+// vieressä (tökkäys puhaltaa hohtavia itiöitä, joka viides paljastaa nukkuvan
+// tontun) sekä saniainen (kastepisarat). Koristeet ovat ruudun laidoilla,
+// kaukana pompun kaistalta, ja ne seuraavat kameraa päivityksessä, koska
+// kenttä vierii pystysuunnassa.
+function bounceSetupProps() {
+  var W = viewW, h = viewH, i, p, side = 1, floorY;
+  propsReset();
+  if (!bounce.plats.length) return;
+  floorY = bounce.plats[0].y + h * 0.2;
+  bounceAddShroom(W * 0.07, floorY - h * 0.01, '#5fd4c8', false);
+  propAdd({
+    x: W * 0.93, wy: floorY - h * 0.01, y: floorY - h * 0.01 - bounce.camY, r: h * 0.06, hy: h * 0.05,
+    color: '#8ff0b0', note: 520, amp: 0.2, update: bouncePropFollow,
+    draw: function (c, p) {
+      var s = h * 0.035, k;
+      if (p.y < -h * 0.2 || p.y > h * 1.2) return;
+      for (k = -1; k <= 1; k++) artBlob(c, k * s * 0.9, -s * 1.1, s * 0.45, s * 1.3, k ? '#3a8a6a' : '#4aa07a', { rot: k * 0.5, lineColor: '#1e5a44' });
+    },
+    poke: function (p) {
+      propDropBall(p.x - h * 0.02, p.y - h * 0.08, h * 0.007, '#bff8ff', p.y, -h * 0.03);
+      propDropBall(p.x + h * 0.02, p.y - h * 0.1, h * 0.007, '#bff8ff', p.y, h * 0.03);
+    }
+  });
+  for (i = 0; i < bounce.plats.length; i++) {
+    p = bounce.plats[i];
+    if (p.type !== 'lantern' || p.section === 0) continue;
+    bounceAddShroom(side > 0 ? W * 0.94 : W * 0.06, p.y + h * 0.08, side > 0 ? '#ff8ad8' : '#b98aff', true);
+    side = -side;
+  }
+}
+function bouncePropFollow(p) { p.y = p.wy - bounce.camY; }
+function bounceAddShroom(x, wy, col, ledge) {
+  var h = viewH;
+  propAdd({
+    x: x, wy: wy, y: wy - bounce.camY, r: h * 0.06, hy: h * 0.05, color: col, note: 740, gnomeT: 0,
+    update: function (p, dt) { bouncePropFollow(p); if (p.gnomeT > 0) p.gnomeT -= dt; },
+    draw: function (c, p) {
+      var s = h * 0.03, k = p.t >= 0 ? Math.max(0, 1 - p.t / 1.4) : 0;
+      if (p.y < -h * 0.2 || p.y > h * 1.2) return;
+      if (ledge) artBlob(c, 0, s * 0.3, s * 2.4, s * 0.7, '#2a6a5a', { shadeTo: '#1a4a3a', lineColor: '#143a30' });
+      if (p.gnomeT > 0) bounceDrawGnome(c, -s * 1.4, s * 0.1, s * 1.1, p.gnomeT);
+      artRoundRect(c, -s * 0.3, -s * 1.6, s * 0.6, s * 1.6, s * 0.2, '#f0e8ff', { lineColor: '#8a7ab8' });
+      artRoundRect(c, s * 0.9, -s * 1.0, s * 0.45, s * 1.0, s * 0.15, '#f0e8ff', { lineColor: '#8a7ab8' });
+      artGlow(c, 0, -s * 1.7, s * 2.4 * (1 + k), col, 0.4 + k * 0.4);
+      c.beginPath(); c.arc(0, -s * 1.6, s * 1.1, Math.PI, 0); c.closePath();
+      artFillPath(c, col, -s * 2.7, -s * 1.6, s, { lineColor: artShade(col, -0.45) });
+      c.beginPath(); c.arc(s * 1.1, -s * 1.0, s * 0.7, Math.PI, 0); c.closePath();
+      artFillPath(c, col, -s * 1.7, -s * 1.0, s * 0.7, { lineColor: artShade(col, -0.45) });
+    },
+    poke: function (p) {
+      var k;
+      for (k = 0; k < 6; k++) bounce.spores.push({ x: p.x + (Math.random() - 0.5) * h * 0.05, y: p.wy - h * 0.06, vx: (Math.random() - 0.5) * h * 0.25, vy: -h * (0.15 + Math.random() * 0.2), t: 0, col: col });
+      if (p.n % 5 === 0) {
+        p.gnomeT = 3;
+        playNote(392, 0.1, 0.25, 'triangle', 0.25);
+        playNote(330, 0.35, 0.4, 'triangle', 0.22);
+      }
+    }
+  });
+}
+// Nukkuva tonttu kurkistaa sienen takaa (t: jäljellä oleva aika 3 s:sta)
+function bounceDrawGnome(c, x, y, s, t) {
+  var a = Math.min(1, (3 - t) * 2.5, t * 2.5), yy = y + (1 - a) * s * 2.4;
+  artBlob(c, x, yy - s * 0.5, s * 0.5, s * 0.55, '#4a78c8', { lineColor: '#243a70' });
+  artCircle(c, x, yy - s * 1.2, s * 0.36, '#ffd9b8', { lineColor: '#c99a7a' });
+  artBlob(c, x, yy - s * 0.95, s * 0.34, s * 0.28, '#ffffff', { lineColor: '#c9c0d8' });
+  c.beginPath(); c.moveTo(x - s * 0.42, yy - s * 1.35); c.lineTo(x + s * 0.42, yy - s * 1.35); c.lineTo(x + s * 0.1, yy - s * 2.3); c.closePath();
+  artFillPath(c, '#e0403a', yy - s * 2.3, yy - s * 1.35, s * 0.4, { lineColor: '#8a1a1a' });
+  artEye(c, x - s * 0.13, yy - s * 1.25, s * 0.06, 0, true);
+  artEye(c, x + s * 0.13, yy - s * 1.25, s * 0.06, 0, true);
+  c.fillStyle = 'rgba(255,255,255,' + (0.5 + Math.sin(globalT * 3) * 0.3) + ')';
+  c.font = 'bold ' + Math.round(s * 0.5) + 'px ' + UI_FONT;
+  c.textAlign = 'center';
+  c.fillText('z z', x + s * 0.7, yy - s * 2.0 - ((globalT * 0.5) % 1) * s * 0.4);
 }
 function bounceSpawnAt(p) {
   bounce.x = p.x;
@@ -187,10 +265,13 @@ function resizeBounce() {
   bounce.vw = viewW;
   bounce.vh = viewH;
   camX = 0;
+  bounceSetupProps();
 }
 
-function handleBounceTap() {
+function handleBounceTap(px, py) {
   bounce.holdSeen = true;
+  // Koristeet ovat ruudun laidoilla; tökkäys ei muuta ohjausta (sormi ohjaa silti)
+  if (px !== undefined) propsTap(px, py);
 }
 
 // ---------- Päivitys ----------
@@ -199,6 +280,7 @@ function updateBounce(dt) {
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
+  propsUpdate(dt);
   busy = puzzleBusy();
   if (bounce.taskDelay > 0 && !busy) {
     bounce.taskDelay -= dt;
@@ -490,6 +572,7 @@ function drawBounce() {
   var c = ctx, h = viewH, i, p, sy, cam = bounce.camY, s = bounceSize();
   if (!beginPlayWorld()) return;
   drawBounceParallax(c);
+  propsDraw(c);
   var part, pass;
   for (pass = 0; pass < 2; pass++) {
     part = pass === 0 ? 'stem' : 'cap';
@@ -512,7 +595,7 @@ function drawBounce() {
   for (i = 0; i < bounce.spores.length; i++) {
     p = bounce.spores[i];
     c.globalAlpha = Math.max(0, 1 - p.t / 1.2);
-    artCircle(c, p.x, p.y - cam, h * 0.008, '#c9a98a', { line: false });
+    artCircle(c, p.x, p.y - cam, h * 0.008, p.col || '#c9a98a', { line: false });
     c.globalAlpha = 1;
   }
   // Prinsessa: litistyy pompussa, venyy ilmassa
