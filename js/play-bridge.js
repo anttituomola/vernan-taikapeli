@@ -15,6 +15,97 @@ var ringDefs = [
   { fx: 0.56, fy: 0.46 }, { fx: 0.66, fy: 0.20 }, { fx: 0.78, fy: 0.42 }, { fx: 0.88, fy: 0.28 }
 ];
 
+// ---------- Tökättävät koristeet ----------
+// Paikat murto-osina pilvilattian tasolla; bridgePropSync laskee paikan joka
+// ruudulla. p.s = piirtokoko, p.sp = koristeen oma ajastin (haukotus, hehku).
+// bridgeShootT: tähdenlento (yllätys), sekunteja jäljellä.
+var bridgeShootT = 0;
+function bridgePropSync(p, dt) {
+  p.x = p.fx * worldW;
+  p.y = groundTop + p.dy * viewH;
+  p.s = p.fs * viewH;
+  p.r = p.s * 2.2;
+  p.hy = p.kind === 'puff' ? p.s * 0.3 : p.s * 1.0;
+  if (p.sp > 0) p.sp -= dt;
+}
+
+// Uninen pilvitupsu: laventelivarjo, kiinni olevat silmät ja haukotteleva suu (yawn 0..1)
+function bridgeDrawPuff(c, s, yawn) {
+  artUnion(c, cloudPath, 0, 0, s, -s * 1.4, s * 1.1, '#ffffff', { shadeTo: '#e3d8f5', lineColor: '#b9a8d8' });
+  artEye(c, -s * 0.4, -s * 0.1, s * 0.16, 0, true);
+  artEye(c, s * 0.4, -s * 0.1, s * 0.16, 0, true);
+  if (yawn > 0) {
+    artBlob(c, 0, s * 0.4, s * 0.18 + yawn * s * 0.1, s * 0.1 + yawn * s * 0.3, '#6a4a7a', { line: false });
+  } else {
+    c.strokeStyle = '#6a4a7a';
+    c.lineWidth = Math.max(1.2, s * 0.08);
+    c.lineCap = 'round';
+    c.beginPath(); c.arc(0, s * 0.3, s * 0.2, 0.3, Math.PI - 0.3); c.stroke();
+  }
+  artBlush(c, -s * 0.75, s * 0.2, s * 0.14);
+  artBlush(c, s * 0.75, s * 0.2, s * 0.14);
+}
+
+// Tähtilyhty: naru ylhäältä, hehku ja keinuva tähti (lit 0..1 kirkastaa)
+function bridgeDrawStarLantern(c, s, lit) {
+  var sway = Math.sin(globalT * 1.6) * 0.15;
+  artLimb(c, 0, -s * 3.2, 0, -s * 1.9, s * 0.06, '#e3d8f5', '#8a7aa8');
+  artGlow(c, 0, -s * 1.0, s * (2.0 + lit * 1.4), '#ffe678', 0.3 + lit * 0.4);
+  drawStar(c, 0, -s * 1.0, s * 0.9, sway, 0.4 + lit * 0.6);
+  artLimb(c, 0, -s * 0.15, 0, s * 0.4, s * 0.1, '#ff5f7e', '#8a2a3e');
+}
+
+function bridgePropsSetup() {
+  var i, defs = [
+    { kind: 'puff', fx: 0.25, fs: 0.028, color: '#ffffff', note: 440 },
+    { kind: 'star', fx: 0.40, fs: 0.03, color: '#ffe678', note: 988 },
+    { kind: 'star', fx: 0.72, fs: 0.03, color: '#ffe678', note: 1047 },
+    { kind: 'puff', fx: 0.93, fs: 0.03, color: '#ffffff', note: 392 }
+  ];
+  propsReset();
+  for (i = 0; i < defs.length; i++) {
+    defs[i].sp = 0;
+    defs[i].update = bridgePropSync;
+    if (defs[i].kind === 'puff') {
+      defs[i].dy = 0.03;
+      defs[i].draw = function (c, p) { bridgeDrawPuff(c, p.s, p.sp > 0 ? Math.sin(Math.min(1, p.sp / 1.2) * Math.PI) : 0); };
+      defs[i].poke = function (p) {
+        // Haukotus ja pöllähdys
+        p.sp = 1.2;
+        spawnSparkles(p.x, p.y - p.s * 0.5, 8, '#ffffff');
+      };
+    } else {
+      defs[i].dy = -0.02;
+      defs[i].draw = function (c, p) { bridgeDrawStarLantern(c, p.s, p.sp > 0 ? Math.min(1, p.sp) : 0); };
+      defs[i].poke = bridgeStarPoke;
+    }
+    bridgePropSync(propAdd(defs[i]), 0);
+  }
+}
+
+// Tähtilyhty helisee; joka viides tökkäys lähettää tähdenlennon taivaan yli (yllätys)
+function bridgeStarPoke(p) {
+  p.sp = 1.5;
+  playNote(1319, 0.1, 0.25, 'sine', 0.18);
+  playNote(1760, 0.22, 0.3, 'sine', 0.14);
+  if (p.n % 5 === 0 && bridgeShootT <= 0) {
+    bridgeShootT = 1.6;
+    playNote(2093, 0.4, 0.5, 'sine', 0.15);
+    playNote(2637, 0.5, 0.7, 'sine', 0.1);
+  }
+}
+
+// Tähdenlento: kaari ruudun yläosan poikki, perässä häipyvä vana
+function bridgeDrawShootingStar(c) {
+  if (bridgeShootT <= 0) return;
+  var k = 1 - bridgeShootT / 1.6, x = viewW * (0.05 + k * 0.9), y = viewH * (0.1 + k * 0.18), s = viewH * 0.02;
+  var a = Math.sin(k * Math.PI);
+  c.globalAlpha = a;
+  artLimb(c, x - s * 7, y - s * 1.4, x, y, s * 0.5, '#fff6c8', false);
+  drawStar(c, x, y, s, k * 6, 1);
+  c.globalAlpha = 1;
+}
+
 function initBridge() {
   var i;
   tasks = [makeTask(0.48, 'compare')];
@@ -34,8 +125,10 @@ function initBridge() {
   thunder = [];
   var tFx = [0.16, 0.36, 0.52, 0.62, 0.74, 0.84];
   for (i = 0; i < tFx.length; i++) {
-    thunder.push({ fx: tFx[i], x: tFx[i] * worldW, baseY: viewH * (0.3 + (i % 3) * 0.12), y: 0, amp: viewH * (0.08 + (i % 2) * 0.08), t: i * 1.3, f: 1.2 + (i % 3) * 0.3 });
+    thunder.push({ fx: tFx[i], x: tFx[i] * worldW, baseY: viewH * (0.3 + (i % 3) * 0.12), y: 0, amp: viewH * (0.08 + (i % 2) * 0.08), t: i * 1.3, f: 1.2 + (i % 3) * 0.3, pokeT: 0 });
   }
+  bridgePropsSetup();
+  bridgeShootT = 0;
   princess.x = viewW * 0.25;
   princess.y = groundTop - viewH * 0.25;
   princess.vx = 0;
@@ -112,7 +205,20 @@ function missRing(r) {
 }
 
 function handleBridgeTap(px, py) {
-  // Ohjaus on pito + siivenisku; napautukselle ei erillistä tointa
+  // Ohjaus on pito + siivenisku; napautus vain tökkää koristeita (ei pelivaikutusta):
+  // ukkospilvi jyrähtää, muuten koriste heilahtaa
+  if (!running || celebrating || puzzleBusy()) return;
+  var wx = px + camX, i;
+  for (i = 0; i < thunder.length; i++) {
+    if (Math.hypot(wx - thunder[i].x, py - thunder[i].y) < viewH * 0.08) {
+      thunder[i].pokeT = 0.8;
+      playNote(80, 0, 0.4, 'sawtooth', 0.15);
+      playNote(110, 0.1, 0.3, 'square', 0.08);
+      spawnSparkles(thunder[i].x, thunder[i].y + viewH * 0.04, 6, '#ffe94f');
+      return;
+    }
+  }
+  propsTap(wx, py);
 }
 
 function updateBridge(dt) {
@@ -181,10 +287,14 @@ function updateBridge(dt) {
     }
   }
 
+  propsUpdate(dt);
+  if (bridgeShootT > 0) bridgeShootT -= dt;
+
   // Ukkospilvet
   for (i = 0; i < thunder.length; i++) {
     var th = thunder[i];
     th.t += dt;
+    if (th.pokeT > 0) th.pokeT -= dt;
     th.y = th.baseY + Math.sin(th.t * th.f) * th.amp;
     var tdx = th.x - princess.x, tdy = th.y - (princess.y - viewH * 0.06);
     if (!celebrating && tdx * tdx + tdy * tdy < viewH * 0.075 * viewH * 0.075) {
@@ -285,12 +395,17 @@ function drawRing(c, r) {
   var x = r.ax - camX, y = r.ay + Math.sin(r.phase) * viewH * 0.01;
   var rr = viewH * 0.075;
   if (x < -rr * 2 || x > viewW + rr * 2) return;
+  // Rengas: tumma reunaviiva, väri ja valkoinen kiiltojuova
   c.save();
-  c.strokeStyle = r.color;
-  c.lineWidth = viewH * 0.014;
+  artGlow(c, x, y, rr * 1.3, r.color, 0.25);
   c.beginPath();
   if (c.ellipse) c.ellipse(x, y, rr * 0.45, rr, 0, 0, Math.PI * 2);
   else c.arc(x, y, rr * 0.7, 0, Math.PI * 2);
+  c.strokeStyle = artShade(r.color, -0.45);
+  c.lineWidth = viewH * 0.014 + Math.max(2.4, viewH * 0.005);
+  c.stroke();
+  c.strokeStyle = r.color;
+  c.lineWidth = viewH * 0.014;
   c.stroke();
   c.strokeStyle = 'rgba(255,255,255,0.6)';
   c.lineWidth = viewH * 0.005;
@@ -301,12 +416,11 @@ function drawRing(c, r) {
 function drawThunderCloud(c, th) {
   var x = th.x - camX, y = th.y, s = viewH * 0.035;
   if (x < -s * 6 || x > viewW + s * 6) return;
-  c.fillStyle = '#5a5f78';
-  cloudShape(c, x, y, s);
-  c.fillStyle = 'rgba(255,255,255,0.2)';
-  cloudShape(c, x - s * 0.3, y - s * 0.5, s * 0.5);
-  if (Math.sin(th.t * 9) > 0.6) {
-    c.fillStyle = '#ffe94f';
+  // Tökättynä pilvi jyrähtää: vaalenee hetkeksi ja salama välähtää
+  var poke = th.pokeT > 0;
+  artUnion(c, cloudPath, x, y, s, y - s * 1.4, y + s * 1.1, poke ? '#7a7f98' : '#5a5f78', { lineColor: '#2e3250', shadeTo: '#3a3e58' });
+  artHighlight(c, x - s * 0.6, y - s * 0.6, s * 0.6, s * 0.25, 0.2);
+  if (poke || Math.sin(th.t * 9) > 0.6) {
     c.beginPath();
     c.moveTo(x, y + s * 1.0);
     c.lineTo(x - s * 0.3, y + s * 1.7);
@@ -316,17 +430,22 @@ function drawThunderCloud(c, th) {
     c.lineTo(x + s * 0.05, y + s * 1.5);
     c.lineTo(x + s * 0.3, y + s * 1.0);
     c.closePath();
-    c.fill();
+    artFillPath(c, '#ffe94f', y + s * 1.0, y + s * 2.3, s * 0.4, { lineColor: '#c89a10' });
   }
 }
 
+// Sateenkaarihelmi (HUD): kolme kaarta tummalla reunaviivalla
 function drawRainbowGem(c, x, y, s) {
-  var i;
+  var i, lw = Math.max(2, s * 0.28);
+  c.lineCap = 'round';
   for (i = 0; i < 3; i++) {
-    c.strokeStyle = maneColors[i * 2];
-    c.lineWidth = Math.max(2, s * 0.28);
     c.beginPath();
     c.arc(x, y + s * 0.3, s * (1 - i * 0.28), Math.PI, 0);
+    c.strokeStyle = artShade(maneColors[i * 2], -0.45);
+    c.lineWidth = lw + Math.max(1.6, s * 0.08);
+    c.stroke();
+    c.strokeStyle = maneColors[i * 2];
+    c.lineWidth = lw;
     c.stroke();
   }
 }
@@ -334,24 +453,18 @@ function drawRainbowGem(c, x, y, s) {
 function drawSkyLantern(c, cp) {
   var x = cp.x - camX, y = viewH * 0.5, s = viewH * 0.04;
   if (x < -s * 3 || x > viewW + s * 3) return;
-  if (cp.lit) {
-    var g = c.createRadialGradient(x, y, s * 0.2, x, y, s * 2.2);
-    g.addColorStop(0, 'rgba(255,230,140,0.7)');
-    g.addColorStop(1, 'rgba(255,230,140,0)');
-    c.fillStyle = g;
-    c.beginPath(); c.arc(x, y, s * 2.2, 0, Math.PI * 2); c.fill();
-  }
-  c.fillStyle = cp.lit ? '#ffe27a' : 'rgba(255,255,255,0.35)';
-  roundRect(c, x - s * 0.5, y - s * 0.8, s, s * 1.6, s * 0.3);
-  c.fill();
-  c.fillStyle = '#7a6a8e';
-  c.fillRect(x - s * 0.6, y - s * 0.95, s * 1.2, s * 0.18);
-  c.fillRect(x - s * 0.6, y + s * 0.78, s * 1.2, s * 0.18);
+  if (cp.lit) artGlow(c, x, y, s * 2.2, '#ffe68c', 0.7);
+  artRoundRect(c, x - s * 0.5, y - s * 0.8, s, s * 1.6, s * 0.3, cp.lit ? '#ffe27a' : '#cfc4e8', { lineColor: '#5a4a6e', alpha: cp.lit ? 1 : 0.55 });
+  artRoundRect(c, x - s * 0.6, y - s * 0.95, s * 1.2, s * 0.18, s * 0.06, '#7a6a8e', { lineColor: '#3a3346' });
+  artRoundRect(c, x - s * 0.6, y + s * 0.78, s * 1.2, s * 0.18, s * 0.06, '#7a6a8e', { lineColor: '#3a3346' });
+  if (cp.lit) artHighlight(c, x - s * 0.2, y - s * 0.4, s * 0.12, s * 0.3, 0.4);
 }
 
 function drawBridge() {
   var i;
   if (!beginPlayWorld()) return;
+  bridgeDrawShootingStar(ctx);
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawSkyLantern(ctx, checkpoints[i]);
   for (i = 0; i < rings.length; i++) {
