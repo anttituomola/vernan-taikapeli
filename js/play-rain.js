@@ -38,6 +38,7 @@ function initRain() {
   rainBlots = [];
   rainT = 1.5;
   layoutRain();
+  rainProps();
   tasks = [makeTask(0.36, 'count'), makeTask(0.64, 'word', { maxSyl: 3 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.46, 0.72]);
@@ -64,6 +65,7 @@ function resizeRain(ratio) {
   var i;
   princess.x *= ratio;
   layoutRain();
+  rainProps();
   for (i = 0; i < rainBlots.length; i++) rainBlots[i].x *= ratio;
   penCoreResize(ratio);
 }
@@ -161,6 +163,11 @@ function updateRain(dt) {
     startCelebration();
   }
 
+  // Koristeiden tökkäys (ei kynätilassa, ks. penTapPoll)
+  var tp = penTapPoll();
+  if (tp) propsTap(tp.x, tp.y);
+  propsUpdate(dt);
+
   followCam(princess.x, dt);
   updateCheckpoints(princess.x, princess.y);
   updateParticles(dt);
@@ -176,39 +183,103 @@ function renderRainBg(b, w, h) {
   renderRainNear(b, w, h);
 }
 function renderRainNear(b, w, h) {
-  var i, k, x, z;
+  var i, k, x, z, cx;
   renderPaperNear(b, w, h, rainGround, null);
   for (i = 0; i < rainZones.length; i++) {
     z = rainZones[i];
-    b.fillStyle = '#8a8fa8';
-    for (x = z[0] * w; x < z[1] * w; x += h * 0.09) cloudShape(b, x + h * 0.04, h * 0.07 + (Math.floor(x / (h * 0.09)) % 2) * h * 0.02, h * 0.03);
-    b.fillStyle = 'rgba(120,150,220,0.35)';
+    cx = (z[0] + z[1]) / 2 * w;
+    for (x = z[0] * w; x < z[1] * w; x += h * 0.09) {
+      if (Math.abs(x + h * 0.04 - cx) < h * 0.08) continue; // sadealueen keskipilvi on tökättävä koriste (rainProps)
+      rainDrawCloud(b, x + h * 0.04, h * 0.07 + (Math.floor(x / (h * 0.09)) % 2) * h * 0.02, h * 0.03);
+    }
     for (k = 0; k < 4; k++) {
+      if (k === 1 && i !== 1) continue; // toinen lätäkkö on koriste (rainProps)
       x = z[0] * w + (k + 0.5) * (z[1] - z[0]) * w / 4;
-      b.beginPath();
-      if (b.ellipse) b.ellipse(x, groundTop + h * 0.05, h * 0.05, h * 0.012, 0, 0, Math.PI * 2);
-      else b.arc(x, groundTop + h * 0.05, h * 0.03, 0, Math.PI * 2);
-      b.fill();
+      rainDrawPuddle(b, x, groundTop + h * 0.05, h * 0.05);
     }
   }
-  var gx = rainGate.x, s = h * 0.12;
-  b.fillStyle = '#a9743f';
-  b.fillRect(gx - s * 0.75, groundTop - s * 1.6, s * 0.25, s * 1.6);
-  b.fillRect(gx + s * 0.5, groundTop - s * 1.6, s * 0.25, s * 1.6);
-  b.beginPath(); b.arc(gx, groundTop - s * 1.6, s * 0.75, Math.PI, 0); b.lineTo(gx + s * 0.5, groundTop - s * 1.6); b.arc(gx, groundTop - s * 1.6, s * 0.5, 0, Math.PI, true); b.closePath(); b.fill();
+  // Aurinkoportti on tökättävä koriste (rainProps), joten sitä ei piirretä taustaan
+}
+
+// Sadepilvi paperilla: kaksisävyinen harmaa, pehmeä reunaviiva
+function rainDrawCloud(c, x, y, s) {
+  artUnion(c, cloudPath, x, y, s, y - s * 1.4, y + s * 1.1, '#8a8fa8', { lineColor: '#5e6280', line: Math.max(1.2, s * 0.08) });
+  artHighlight(c, x - s * 0.5, y - s * 0.6, s * 0.5, s * 0.2, 0.3);
+}
+// Lätäkkö: haalea sininen soikio kiillolla, ei reunaviivaa
+function rainDrawPuddle(c, x, y, s) {
+  artBlob(c, x, y, s, s * 0.24, '#8fb4e8', { line: false, alpha: 0.5 });
+  artHighlight(c, x - s * 0.3, y - s * 0.04, s * 0.3, s * 0.06, 0.5);
+}
+// Aurinkoportti (tökättävä koriste, origo = juuri): pylväät ja kaari
+function rainDrawGate(c) {
+  var h = viewH, s = h * 0.12, lw = Math.max(1.2, h * 0.004);
+  artShadow(c, 0, 0, s, s * 0.12, 0.14);
+  artRoundRect(c, -s * 0.75, -s * 1.6, s * 0.25, s * 1.6, s * 0.06, '#a9743f', { lineColor: '#6a4a28', line: lw });
+  artRoundRect(c, s * 0.5, -s * 1.6, s * 0.25, s * 1.6, s * 0.06, '#a9743f', { lineColor: '#6a4a28', line: lw });
+  c.beginPath(); c.arc(0, -s * 1.6, s * 0.75, Math.PI, 0); c.lineTo(s * 0.5, -s * 1.6); c.arc(0, -s * 1.6, s * 0.5, 0, Math.PI, true); c.closePath();
+  artFillPath(c, '#a9743f', -s * 2.35, -s * 1.6, s * 0.4, { lineColor: '#6a4a28', line: lw });
+}
+
+// Tökättävät koristeet: joka sadealueen keskipilvi, kaksi lätäkköä ja portti.
+// Kutsutaan myös resize-koukusta (paikat osuuksina).
+function rainProps() {
+  var i, h = viewH, w = worldW, z;
+  propsReset();
+  for (i = 0; i < rainZones.length; i++) {
+    z = rainZones[i];
+    propAdd({ x: (z[0] + z[1]) / 2 * w, y: h * 0.08, s: h * 0.034, r: h * 0.07, hy: 0, amp: 0.06, color: '#ffffff', note: 400 + i * 60,
+      draw: function (c, p) { rainDrawCloud(c, 0, 0, p.s); }, poke: rainCloudPoke });
+    if (i !== 1) {
+      propAdd({ x: z[0] * w + 1.5 * (z[1] - z[0]) * w / 4, y: groundTop + h * 0.05, s: h * 0.05, r: h * 0.05, hy: 0, amp: 0.02, color: '#9ad0ff', note: 980,
+        draw: function (c, p) { rainDrawPuddle(c, 0, 0, p.s); }, poke: rainPuddlePoke });
+    }
+  }
+  propAdd({ x: rainGate.x, y: groundTop, r: h * 0.1, hy: h * 0.14, amp: 0.04, color: '#ffe27a', note: 740, draw: rainDrawGate });
+}
+
+// Vesipisara (koristepudotus, ei vahingoita)
+function rainDrawDroplet(c) {
+  var s = viewH * 0.008;
+  artCircle(c, 0, 0, s, '#9ad0ff', { lineColor: '#4a86c8', hi: 0.5 });
+}
+// Konfettilappu
+function rainConfettiDrop(x, y, col) {
+  propDrop({ x: x, y: y, vx: (Math.random() - 0.5) * viewW * 0.1, vy: -viewH * 0.05, ground: groundTop, life: 2.4, col: col,
+    draw: function (c, d) { var s = viewH * 0.008; c.fillStyle = d.col; c.fillRect(-s, -s * 0.6, s * 2, s * 1.2); } });
+}
+// Pilvi pöllähtää ja tiputtaa pari vesipisaraa; joka kolmas tökkäys sataa konfettia (yllätys)
+function rainCloudPoke(p) {
+  var i, cols = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'];
+  if (p.n % 3 === 0) {
+    for (i = 0; i < 8; i++) rainConfettiDrop(p.x + (Math.random() - 0.5) * p.s * 4, p.y + p.s, cols[i % cols.length]);
+    playNote(784, 0, 0.12, 'triangle', 0.25);
+    playNote(988, 0.1, 0.12, 'triangle', 0.25);
+    playNote(1319, 0.2, 0.3, 'triangle', 0.25);
+    return;
+  }
+  for (i = 0; i < 2; i++) propDrop({ x: p.x + (i - 0.5) * p.s * 1.6, y: p.y + p.s, vr: 0, ground: groundTop, life: 1.6, draw: rainDrawDroplet });
+  playNote(260, 0, 0.15, 'sine', 0.12);
+}
+// Lätäkkö roiskahtaa: kolme pisaraa ilmaan ja takaisin
+function rainPuddlePoke(p) {
+  var i;
+  for (i = 0; i < 3; i++) {
+    propDrop({ x: p.x + (i - 1) * p.s * 0.3, y: p.y, vx: (i - 1) * viewW * 0.04, vy: -viewH * (0.25 + Math.random() * 0.1), vr: 0, ground: p.y, life: 1.2, draw: rainDrawDroplet });
+  }
+  playNote(900, 0, 0.08, 'sine', 0.15);
+  playNote(1200, 0.06, 0.1, 'sine', 0.12);
 }
 
 function drawRainBlot(c, bl) {
   var x = bl.x - camX, y = bl.y, s = viewH * 0.022;
   if (x < -s * 4 || x > viewW + s * 4) return;
+  // Vana, kaksi sivutahraa ja päätahra kiillolla
   c.fillStyle = 'rgba(90,90,122,0.5)';
   c.beginPath(); c.moveTo(x - s * 0.3, y - s * 1.6); c.lineTo(x + s * 0.3, y - s * 1.6); c.lineTo(x + s * 0.15, y); c.lineTo(x - s * 0.15, y); c.closePath(); c.fill();
-  c.fillStyle = '#4a4560';
-  c.beginPath(); c.arc(x, y, s * 0.6, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x - s * 0.45, y + s * 0.3, s * 0.3, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + s * 0.5, y + s * 0.25, s * 0.25, 0, Math.PI * 2); c.fill();
-  c.fillStyle = 'rgba(255,255,255,0.5)';
-  c.beginPath(); c.arc(x - s * 0.2, y - s * 0.2, s * 0.15, 0, Math.PI * 2); c.fill();
+  artCircle(c, x - s * 0.45, y + s * 0.3, s * 0.3, '#4a4560', { lineColor: '#2a2640' });
+  artCircle(c, x + s * 0.5, y + s * 0.25, s * 0.25, '#4a4560', { lineColor: '#2a2640' });
+  artCircle(c, x, y, s * 0.6, '#4a4560', { lineColor: '#2a2640', hi: 0.5 });
 }
 
 function drawRainStreaks(c) {
@@ -230,10 +301,12 @@ function drawRainStreaks(c) {
 function drawRainGateGlow(c) {
   var x = rainGate.x - camX, h = viewH, s = h * 0.12;
   if (x < -s * 3 || x > viewW + s * 3) return;
-  c.fillStyle = rainGate.open ? 'rgba(255,240,170,' + (0.8 + Math.sin(globalT * 4) * 0.15) + ')' : 'rgba(90,90,122,0.6)';
-  c.beginPath(); c.arc(x, groundTop - s * 1.6, s * 0.5, Math.PI, 0); c.lineTo(x + s * 0.5, groundTop); c.lineTo(x - s * 0.5, groundTop); c.closePath(); c.fill();
-  c.fillStyle = rainGate.open ? '#ffe27a' : '#b8b4c8';
-  c.beginPath(); c.arc(x, groundTop - s * 1.0, s * 0.22, 0, Math.PI * 2); c.fill();
+  // Oviaukko: suljettuna hämärä, avattuna lämmin valo; aurinko keskellä
+  c.beginPath(); c.arc(x, groundTop - s * 1.6, s * 0.5, Math.PI, 0); c.lineTo(x + s * 0.5, groundTop); c.lineTo(x - s * 0.5, groundTop); c.closePath();
+  if (rainGate.open) artFillPath(c, '#fff0aa', groundTop - s * 2.1, groundTop, s * 0.5, { line: false, alpha: 0.8 + Math.sin(globalT * 4) * 0.15 });
+  else artFillPath(c, '#5a5a7a', groundTop - s * 2.1, groundTop, s * 0.5, { line: false, alpha: 0.6 });
+  if (rainGate.open) artGlow(c, x, groundTop - s, s * 0.9, '#fff0a0', 0.5);
+  artCircle(c, x, groundTop - s * 1.0, s * 0.22, rainGate.open ? '#ffe27a' : '#b8b4c8', { lineColor: rainGate.open ? '#d9a23a' : '#7a7690', hi: 0.4 });
   if (rainGate.open) drawStar(c, x, groundTop - s * 2.7, h * 0.035, globalT, 1);
 }
 
@@ -241,13 +314,14 @@ function drawRain() {
   var i;
   if (!beginPlayWorld()) return;
   drawRainStreaks(ctx);
+  propsDraw(ctx);
   drawPenStrokesLayer(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   drawRainGateGlow(ctx);
   for (i = 0; i < rainBottles.length; i++) {
     if (rainBottles[i].collected) continue;
-    drawInkBottle(ctx, rainBottles[i].ax - camX, rainBottles[i].ay + Math.sin(rainBottles[i].phase) * viewH * 0.012, viewH * 0.024);
+    penDrawBottle(ctx, rainBottles[i].ax - camX, rainBottles[i].ay + Math.sin(rainBottles[i].phase) * viewH * 0.012, viewH * 0.024);
   }
   drawPenPrincess(ctx);
   for (i = 0; i < rainBlots.length; i++) drawRainBlot(ctx, rainBlots[i]);
@@ -256,7 +330,7 @@ function drawRain() {
   if (rainGate.open && !celebrating) drawEdgeArrow(ctx, rainGate.x);
   endPlayWorld();
   drawPickupHud(ctx, RAIN_BOTTLES, function (i2) { return rainBottles[i2] && rainBottles[i2].collected; },
-    function (c, x, y, s2) { drawInkBottle(c, x, y, s2 * 0.75); });
+    function (c, x, y, s2) { penDrawBottle(c, x, y, s2 * 0.75); });
   drawHearts(ctx);
   drawPenInk(ctx);
   drawTaskOverlay(ctx);
