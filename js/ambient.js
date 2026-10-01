@@ -11,7 +11,8 @@ var introT = 0;
 var introKind = null;
 
 var AMBIENT_COUNT = {
-  butterflies: 4, petals: 18, snow: 45, bubbles: 16, stars: 30, dust: 30, fireflies: 14, sparkle: 22
+  butterflies: 4, petals: 18, snow: 45, bubbles: 16, stars: 30, dust: 30, fireflies: 14, sparkle: 22,
+  sand: 26, embers: 18
 };
 
 function ambientInit(kind) {
@@ -58,6 +59,18 @@ function ambientSpawn(kind, anywhere) {
     it.vy = viewH * 0.02;
     it.s = 2 + Math.random() * 2;
     it.c = Math.floor(Math.random() * 6);
+  } else if (kind === 'sand') {
+    // Hiekanjyvät lentävät tuulessa matalalla
+    it.y = viewH * (0.3 + Math.random() * 0.65);
+    it.vx = viewW * (0.05 + Math.random() * 0.06);
+    it.vy = 0;
+    it.s = 1 + Math.random() * 1.6;
+  } else if (kind === 'embers') {
+    // Kipinät nousevat hitaasti ja hiipuvat
+    it.y = anywhere ? Math.random() * viewH : viewH + 10;
+    it.vy = -viewH * (0.025 + Math.random() * 0.03);
+    it.s = 1.5 + Math.random() * 2;
+    it.c = Math.floor(Math.random() * 3);
   }
   return it;
 }
@@ -80,6 +93,8 @@ function updateAmbient(dt) {
     }
     if (k === 'butterflies') it.y += Math.sin(it.ph * 1.7) * viewH * 0.05 * dt;
     if (k === 'dust') it.x += Math.sin(it.ph * 0.5) * viewW * 0.01 * dt;
+    if (k === 'sand') it.y += Math.sin(it.ph * 1.3) * viewH * 0.02 * dt;
+    if (k === 'embers') it.x += Math.sin(it.ph * 0.8 + i) * viewW * 0.015 * dt;
     if (k === 'stars') {
       it.life -= dt;
       if (it.life < -0.7) {
@@ -92,7 +107,7 @@ function updateAmbient(dt) {
     if (it.x > viewW + 40) it.x -= viewW + 80;
     if (it.y > viewH + 20) { ns = ambientSpawn(k, false); it.x = ns.x; it.y = ns.y; }
     if (it.y < -20) {
-      if (k === 'bubbles') { ns = ambientSpawn(k, false); it.x = ns.x; it.y = ns.y; }
+      if (k === 'bubbles' || k === 'embers') { ns = ambientSpawn(k, false); it.x = ns.x; it.y = ns.y; }
       else it.y += viewH + 40;
     }
   }
@@ -154,6 +169,20 @@ function drawAmbient(c) {
       c.beginPath(); c.arc(it.x, it.y, it.s * 4, 0, Math.PI * 2); c.fill();
       c.fillStyle = 'rgba(240,255,220,' + Math.max(0, a + 0.3) + ')';
       c.beginPath(); c.arc(it.x, it.y, it.s * 0.7, 0, Math.PI * 2); c.fill();
+    } else if (k === 'sand') {
+      c.fillStyle = 'rgba(255,225,160,' + (0.35 + Math.sin(it.ph * 2 + i) * 0.2) + ')';
+      c.beginPath();
+      if (c.ellipse) c.ellipse(it.x, it.y, it.s * 2.2, it.s * 0.8, 0, 0, Math.PI * 2);
+      else c.arc(it.x, it.y, it.s, 0, Math.PI * 2);
+      c.fill();
+    } else if (k === 'embers') {
+      a = 0.35 + Math.sin(it.ph * 2.2 + i) * 0.3;
+      c.fillStyle = 'rgba(255,140,60,' + Math.max(0, a * 0.4) + ')';
+      c.beginPath(); c.arc(it.x, it.y, it.s * 2.4, 0, Math.PI * 2); c.fill();
+      c.fillStyle = ['#ffd27a', '#ffa040', '#ff7a3a'][it.c];
+      c.globalAlpha = Math.max(0, a + 0.3);
+      c.beginPath(); c.arc(it.x, it.y, it.s * 0.8, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 1;
     } else if (k === 'sparkle') {
       a = 0.4 + Math.sin(it.ph * 3 + i) * 0.4;
       c.globalAlpha = Math.max(0, a);
@@ -193,6 +222,8 @@ function ambientPoke(px, py) {
   else if (k === 'fireflies') col = '#d8ff9a';
   else if (k === 'bubbles') col = '#cfefff';
   else if (k === 'snow') col = '#ffffff';
+  else if (k === 'sand') col = '#ffe0a0';
+  else if (k === 'embers') col = '#ffa040';
   else col = maneColors[it.c % maneColors.length];
   spawnSparkles(px + camX, py, 8, col);
   artPop(px + camX, py, viewH * 0.03, col, 'burst');

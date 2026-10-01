@@ -984,7 +984,7 @@ var WORLDS = [
       {
         kind: 'nest', room: 'D', name: 'Pesäkallio', color: '#ff8a5a', script: 'play-nest',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
-        bgColor: '#43297a', ambient: 'sparkle', fg: { kind: 'grass', color: 'rgba(110,50,40,0.7)' },
+        bgColor: '#43297a', ambient: 'embers', fg: { kind: 'grass', color: 'rgba(110,50,40,0.7)' },
         init: function () { initNest(); },
         update: function (dt) { updateNest(dt); },
         draw: function () { drawNest(); },
@@ -998,7 +998,7 @@ var WORLDS = [
       {
         kind: 'dragonfly', room: 'T', name: 'Tulilento', color: '#ff6a2a', script: 'play-dragonfly',
         control: 'fly', usesJump: false, usesWand: false, usesHearts: true, usesFire: true,
-        bgColor: '#080820', ambient: 'sparkle', fg: null,
+        bgColor: '#080820', ambient: 'embers', fg: null,
         init: function () { initDragonfly(); },
         update: function (dt) { updateDragonfly(dt); },
         draw: function () { drawDragonfly(); },
@@ -1012,7 +1012,7 @@ var WORLDS = [
       {
         kind: 'eggs', room: 'M', name: 'Munapesä', color: '#ffb0e0', script: 'play-eggs',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5000,
-        bgColor: '#2a1428', ambient: 'sparkle', fg: null,
+        bgColor: '#2a1428', ambient: 'embers', fg: null,
         init: function () { initEggs(); },
         update: function (dt) { updateEggs(dt); },
         draw: function () { drawEggs(); },
@@ -1026,7 +1026,7 @@ var WORLDS = [
       {
         kind: 'scale', room: 'A', name: 'Aarrevaaka', color: '#ffd24f', script: 'play-scale',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
-        bgColor: '#1a1438', ambient: 'sparkle', fg: null,
+        bgColor: '#1a1438', ambient: 'dust', fg: null,
         init: function () { initScale(); },
         update: function (dt) { updateScale(dt); },
         draw: function () { drawScale(); },
@@ -1040,7 +1040,7 @@ var WORLDS = [
       {
         kind: 'giant', room: 'V', name: 'Tulivuoren jätti', color: '#8a6a6a', script: 'play-giant',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, usesFire: true, celebrateMs: 6500,
-        bgColor: '#1a0a2a', ambient: 'sparkle', fg: null,
+        bgColor: '#1a0a2a', ambient: 'embers', fg: null,
         init: function () { initGiant(); },
         update: function (dt) { updateGiant(dt); },
         draw: function () { drawGiant(); },
@@ -1074,7 +1074,7 @@ var WORLDS = [
       {
         kind: 'bounce', room: 'P', name: 'Sienipomppu', color: '#5fd4c8', script: 'play-bounce',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
-        bgColor: '#0e1540', ambient: 'sparkle', fg: null,
+        bgColor: '#0e1540', ambient: 'fireflies', fg: null,
         init: function () { initBounce(); },
         update: function (dt) { updateBounce(dt); },
         draw: function () { drawBounce(); },
@@ -1113,7 +1113,7 @@ var WORLDS = [
       {
         kind: 'moth', room: 'V', name: 'Varjoperhonen', color: '#6a4a9a', script: 'play-moth',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6500,
-        bgColor: '#07091f', ambient: 'sparkle', fg: null,
+        bgColor: '#07091f', ambient: 'fireflies', fg: null,
         init: function () { initMoth(); },
         update: function (dt) { updateMoth(dt); },
         draw: function () { drawMoth(); },
@@ -1145,7 +1145,7 @@ var WORLDS = [
       {
         kind: 'dune', room: 'D', name: 'Dyynilasku', color: '#ffb84a', script: 'play-dune',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6000,
-        bgColor: '#5ec8e8', ambient: 'sparkle', fg: null,
+        bgColor: '#5ec8e8', ambient: 'sand', fg: null,
         init: function () { initDune(); },
         update: function (dt) { updateDune(dt); },
         draw: function () { drawDune(); },
@@ -1158,7 +1158,7 @@ var WORLDS = [
       {
         kind: 'dowse', room: 'A', name: 'Aarrevarpu', color: '#ffd24f', script: 'play-dowse',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
-        bgColor: '#f0c078', ambient: 'sparkle', fg: null,
+        bgColor: '#f0c078', ambient: 'sand', fg: null,
         init: function () { initDowse(); },
         update: function (dt) { updateDowse(dt); },
         draw: function () { drawDowse(); },
@@ -1171,7 +1171,7 @@ var WORLDS = [
       {
         kind: 'caravan', room: 'K', name: 'Kamelikaravaani', color: '#e8b070', script: 'play-caravan',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
-        bgColor: '#f0c078', ambient: 'sparkle', fg: null,
+        bgColor: '#f0c078', ambient: 'sand', fg: null,
         init: function () { initCaravan(); },
         update: function (dt) { updateCaravan(dt); },
         draw: function () { drawCaravan(); },
@@ -1184,7 +1184,7 @@ var WORLDS = [
       {
         kind: 'whirl', room: 'V', name: 'Hiekkapyörre', color: '#c89060', script: 'play-whirl',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6500,
-        bgColor: '#e89a5a', ambient: 'sparkle', fg: null,
+        bgColor: '#e89a5a', ambient: 'sand', fg: null,
         init: function () { initWhirl(); },
         update: function (dt) { updateWhirl(dt); },
         draw: function () { drawWhirl(); },
@@ -1218,7 +1218,7 @@ var WORLDS = [
       {
         kind: 'bcode', room: 'C', name: 'Pupupolku', color: '#ff8f3a', script: 'play-bcode',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
-        bgColor: '#8fd8ff', ambient: 'sparkle', fg: null,
+        bgColor: '#8fd8ff', ambient: 'butterflies', fg: null,
         init: function () { initBcode(); },
         update: function (dt) { updateBcode(dt); },
         draw: function () { drawBcode(); },
@@ -1244,7 +1244,7 @@ var WORLDS = [
       {
         kind: 'bloop', room: 'L', name: 'Loitsupolku', color: '#ffd24f', script: 'play-bloop',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
-        bgColor: '#7fc8f0', ambient: 'sparkle', fg: null,
+        bgColor: '#7fc8f0', ambient: 'butterflies', fg: null,
         init: function () { initBloop(); },
         update: function (dt) { updateBloop(dt); },
         draw: function () { drawBloop(); },
@@ -1257,7 +1257,7 @@ var WORLDS = [
       {
         kind: 'mole', room: 'V', name: 'Myyräkuningas', color: '#8a6a5a', script: 'play-mole',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6500,
-        bgColor: '#9ab8c8', ambient: 'sparkle', fg: null,
+        bgColor: '#9ab8c8', ambient: 'dust', fg: null,
         init: function () { initMole(); },
         update: function (dt) { updateMole(dt); },
         draw: function () { drawMole(); },
@@ -1271,7 +1271,7 @@ var WORLDS = [
         // Bonushuone vartijan jälkeen: yhteispeli lapselle ja aikuiselle
         kind: 'duo', room: 'Y', name: 'Yhteispolku', color: '#5fa8ff', script: 'play-duo',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
-        bgColor: '#8fd0ff', ambient: 'sparkle', fg: null,
+        bgColor: '#8fd0ff', ambient: 'butterflies', fg: null,
         init: function () { initDuo(); },
         update: function (dt) { updateDuo(dt); },
         draw: function () { drawDuo(); },
