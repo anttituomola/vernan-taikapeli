@@ -29,7 +29,8 @@ function initReindeer() {
   for (i = 0; i < REIN_N; i++) {
     reinDeer.push({
       x: reinStart[i].fx * worldW, y: reinPathY(reinStart[i].fy),
-      tx: 0, ty: 0, state: 'follow', hop: 0, rock: -1, facing: 1, idleT: 1 + i
+      tx: 0, ty: 0, state: 'follow', hop: 0, rock: -1, facing: 1, idleT: 1 + i,
+      shakeT: 0, noseT: 0
     });
     reinDeer[i].tx = reinDeer[i].x;
     reinDeer[i].ty = reinDeer[i].y;
@@ -40,6 +41,7 @@ function initReindeer() {
   unicorn.y = unicorn.ty = reinPathY(0.5);
   unicorn.facing = 1;
   unicorn.moving = false;
+  reinSetupProps();
   renderBackground();
   playNote(392, 0, 0.22, 'sine', 0.3);
   playNote(523, 0.12, 0.28, 'triangle', 0.3);
@@ -52,6 +54,117 @@ function resizeReindeer(ratio) {
   for (i = 0; i < reinDeer.length; i++) { reinDeer[i].x *= ratio; reinDeer[i].tx *= ratio; }
   for (i = 0; i < reinRocks.length; i++) reinRocks[i].x = reinRockDefs[i] * worldW;
   reinPen.x = reinPen.fx * worldW;
+  reinSetupProps();
+}
+
+// Tökättävät koristeet: porot (sarvet tärisevät, huurteinen pärskähdys; joka
+// kolmas tökkäys sytyttää punaisen kuonon), lumiukko (viides tökkäys aivastaa),
+// kota (savurengas) ja lähikuusi (lumitupsu).
+function reinSetupProps() {
+  var i, h = viewH, w = worldW;
+  propsReset();
+  for (i = 0; i < reinDeer.length; i++) reinDeerProp(reinDeer[i]);
+  voyPineProp(w * 0.05, groundTop, h * 0.14, '#1a3850');
+  reinKotaProp(w * 0.88, groundTop + h * 0.01, h * 0.16, 0);
+  reinSnowmanProp(w * 0.24, groundTop - h * 0.01, h * 0.08);
+}
+
+// Poron osuma-alue seuraa poroa; piilossa oleva poro ei ole tökättävä
+// (sen napautus on pelimekaniikkaa ja käsitellään ennen koristeita).
+function reinDeerProp(b) {
+  propAdd({
+    x: b.x, y: b.y, r: viewH * 0.06, hy: viewH * 0.045, color: '#f0d2aa', note: 587,
+    draw: function () {},
+    update: function (p, dt) {
+      p.x = (b.state === 'hid' || b.state === 'hiding') ? -1e6 : b.x;
+      p.y = b.y;
+      if (b.shakeT > 0) b.shakeT -= dt;
+      if (b.noseT > 0) b.noseT -= dt;
+    },
+    poke: function (p) {
+      b.shakeT = 0.7;
+      spawnSparkles(b.x + b.facing * viewH * 0.062, b.y - viewH * 0.044, 5, '#ffffff');
+      playNote(196, 0, 0.1, 'triangle', 0.2);
+      if (p.n % 3 === 0) {
+        b.noseT = 2.2;
+        playNote(784, 0.1, 0.15, 'sine', 0.25);
+        playNote(1047, 0.25, 0.3, 'sine', 0.25);
+      }
+    }
+  });
+}
+
+function reinSnowmanProp(x, y, s) {
+  propAdd({
+    x: x, y: y, r: s * 0.7, hy: s * 0.25, color: '#ffffff', note: 523, amp: 0.1,
+    draw: function (c) { drawNorthSnowman(c, 0, 0, s); },
+    poke: function (p) {
+      var k;
+      if (p.n % 5 === 0) {
+        // Aivastus: lumi pöllähtää ja ääni laskee
+        for (k = 0; k < 4; k++) voySnowPuff(p.x + (k - 1.5) * s * 0.14, p.y - s * 0.5, s * 0.05, p.y + s * 0.15);
+        playNote(880, 0, 0.08, 'sine', 0.2);
+        playNote(660, 0.08, 0.08, 'sine', 0.2);
+        playNote(330, 0.16, 0.3, 'triangle', 0.3);
+      } else voySnowPuff(p.x + (Math.random() - 0.5) * s * 0.3, p.y - s * 0.6, s * 0.05, p.y + s * 0.15);
+    }
+  });
+}
+
+// Sydänpolku savurenkaalle (yllätys muissa kentissä)
+function reinHeartPath(c, x, y, s) {
+  c.beginPath();
+  c.moveTo(x, y + s * 0.9);
+  c.bezierCurveTo(x - s * 1.4, y - s * 0.1, x - s * 0.7, y - s * 1.1, x, y - s * 0.4);
+  c.bezierCurveTo(x + s * 0.7, y - s * 1.1, x + s * 1.4, y - s * 0.1, x, y + s * 0.9);
+  c.closePath();
+}
+
+// Kota: tökkäys puhaltaa savupiipusta renkaan, joka nousee, laajenee ja
+// haihtuu. heartEvery > 0: joka n:s rengas on sydän (Revontulimaan yhteinen).
+function reinKotaProp(x, baseY, s, heartEvery) {
+  propAdd({
+    x: x, y: baseY, r: s * 0.6, hy: s * 0.5, color: '#ffd24f', note: 349, amp: 0.05, rings: [],
+    draw: function (c, p) {
+      var k, rg, ry, rs;
+      drawNorthKota(c, 0, 0, s);
+      for (k = 0; k < p.rings.length; k++) {
+        rg = p.rings[k];
+        ry = -s * 1.08 - rg.t * s * 0.5;
+        rs = s * (0.07 + rg.t * 0.1);
+        c.globalAlpha = Math.max(0, 1 - rg.t / 1.6) * 0.75;
+        c.lineCap = 'round';
+        if (rg.heart) reinHeartPath(c, Math.sin(rg.t * 2) * s * 0.05, ry, rs);
+        else {
+          c.beginPath();
+          if (c.ellipse) c.ellipse(Math.sin(rg.t * 2) * s * 0.05, ry, rs, rs * 0.45, 0, 0, Math.PI * 2);
+          else c.arc(0, ry, rs, 0, Math.PI * 2);
+        }
+        c.strokeStyle = '#8aa0b4';
+        c.lineWidth = Math.max(3, s * 0.06);
+        c.stroke();
+        c.strokeStyle = '#eef4fa';
+        c.lineWidth = Math.max(1.5, s * 0.03);
+        c.stroke();
+      }
+      c.globalAlpha = 1;
+    },
+    update: function (p, dt) {
+      var k;
+      for (k = p.rings.length - 1; k >= 0; k--) {
+        p.rings[k].t += dt;
+        if (p.rings[k].t > 1.6) p.rings.splice(k, 1);
+      }
+    },
+    poke: function (p) {
+      var heart = heartEvery > 0 && p.n % heartEvery === 0;
+      if (p.rings.length < 4) p.rings.push({ t: 0, heart: heart });
+      if (heart) {
+        playNote(659, 0, 0.18, 'sine', 0.22);
+        playNote(988, 0.14, 0.3, 'sine', 0.22);
+      }
+    }
+  });
 }
 
 function reinHomeCount() {
@@ -90,12 +203,15 @@ function handleReindeerTap(px, py) {
       return;
     }
   }
+  // Ei osunut piilossa olevaan poroon: koriste saa heilahtaa, ratsastus jatkuu kuten ennen
+  propsTap(wx, py);
   setWalkTarget(px, py);
 }
 
 function updateReindeer(dt) {
   var i, b, dx, dy, dist, step, busy, spd;
   updateTasks(dt);
+  propsUpdate(dt);
   busy = puzzleBusy();
   northRideUnicorn(dt, busy);
   if (!busy && !celebrating) {
@@ -171,9 +287,7 @@ function renderReindeerNear(b, w, h) {
     else b.arc(x, groundTop + h * 0.08, h * 0.008, 0, Math.PI * 2);
     b.fill();
   }
-  drawNorthPine(b, w * 0.05, groundTop, h * 0.14, '#1a3850');
-  drawNorthKota(b, w * 0.88, groundTop + h * 0.01, h * 0.16);
-  drawNorthSnowman(b, w * 0.24, groundTop - h * 0.01, h * 0.08);
+  // Lähikuusi, kota ja lumiukko ovat tökättäviä koristeita (reinSetupProps)
 }
 
 function drawDeerAntler(c, x, y, s, dir) {
@@ -183,8 +297,9 @@ function drawDeerAntler(c, x, y, s, dir) {
   artLimb(c, x + dir * s * 0.03, y - s * 0.28, x + dir * s * 0.1, y - s * 0.52, s * 0.05, col);
 }
 
-function drawNorthDeer(c, x, y, s, facing, hop) {
-  var body = '#b06a38', cream = '#f0d2aa';
+// fx (valinnainen): poro-olio, jonka shakeT tärisyttää sarvia ja noseT hehkuttaa kuonon
+function drawNorthDeer(c, x, y, s, facing, hop, fx) {
+  var body = '#b06a38', cream = '#f0d2aa', shake = fx && fx.shakeT > 0, nose = fx && fx.noseT > 0;
   c.save();
   c.translate(x, y);
   artShadow(c, 0, s * 0.08, s * 1.15, s * 0.28, 0.16);
@@ -198,13 +313,24 @@ function drawNorthDeer(c, x, y, s, facing, hop) {
   artBlob(c, 0, -s * 0.4, s * 0.58, s * 0.34, body, { hi: 0.28 });
   artBlob(c, s * 0.06, -s * 0.24, s * 0.3, s * 0.15, cream, { line: false });
   artLimb(c, s * 0.36, -s * 0.5, s * 0.56, -s * 0.74, s * 0.17, body);
+  if (shake) {
+    c.save();
+    c.translate(s * 0.54, -s * 0.84);
+    c.rotate(Math.sin(globalT * 40) * 0.18 * Math.min(1, fx.shakeT / 0.3));
+    c.translate(-s * 0.54, s * 0.84);
+  }
   drawDeerAntler(c, s * 0.46, -s * 0.9, s, -1);
   drawDeerAntler(c, s * 0.62, -s * 0.9, s, 1);
+  if (shake) c.restore();
   artBlob(c, s * 0.48, -s * 0.9, s * 0.07, s * 0.13, body, { rot: -0.45 });
   artBlob(c, s * 0.66, -s * 0.9, s * 0.07, s * 0.13, body, { rot: 0.4 });
   artBlob(c, s * 0.58, -s * 0.74, s * 0.24, s * 0.2, body, { hi: 0.3 });
   artBlob(c, s * 0.78, -s * 0.64, s * 0.15, s * 0.11, cream, { hi: 0.25 });
-  artCircle(c, s * 0.88, -s * 0.62, s * 0.04, '#6a3018', { line: false });
+  if (nose) {
+    // Yllätys: punainen hehkuva kuono hetken ajan
+    artGlow(c, s * 0.88, -s * 0.62, s * 0.16, '#ff3a4a', (0.45 + Math.sin(globalT * 8) * 0.15) * Math.min(1, fx.noseT / 0.4));
+    artCircle(c, s * 0.88, -s * 0.62, s * 0.05, '#ff3a4a', { lineColor: '#9a1a28', hi: 0.5 });
+  } else artCircle(c, s * 0.88, -s * 0.62, s * 0.04, '#6a3018', { line: false });
   artEye(c, s * 0.6, -s * 0.78, s * 0.055, 0.35, false);
   artBlush(c, s * 0.7, -s * 0.68, s * 0.05);
   c.restore();
@@ -228,6 +354,7 @@ function drawReindeer() {
   if (!beginPlayWorld()) return;
   drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
+  propsDraw(ctx);
   drawNorthPen(ctx, reinPen.x - camX, groundTop + viewH * 0.02, viewH * 0.12);
   us = viewH / 800;
   for (i = 0; i < reinDeer.length; i++) {
@@ -242,7 +369,7 @@ function drawReindeer() {
       drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
     } else {
       b = order[i].d;
-      drawNorthDeer(ctx, b.x - camX, b.y, viewH * 0.07, b.facing, b.hop);
+      drawNorthDeer(ctx, b.x - camX, b.y, viewH * 0.07, b.facing, b.hop, b);
     }
   }
   for (i = 0; i < reinRocks.length; i++) {
@@ -259,9 +386,9 @@ function drawReindeer() {
     if (hid && hid.state === 'hid') {
       hx = hid.x - camX;
       hy = groundTop - viewH * 0.09 + Math.sin(globalT * 3) * viewH * 0.006;
-      ctx.fillStyle = '#ff5f7e';
-      ctx.fillRect(hx - 3, hy, 6, viewH * 0.028);
-      ctx.beginPath(); ctx.arc(hx, hy + viewH * 0.038, 3.5, 0, Math.PI * 2); ctx.fill();
+      // Huutomerkki piilossa olevan poron kohdalla: reunaviivalla tarrakirja-ilmeeseen
+      artRoundRect(ctx, hx - 3, hy, 6, viewH * 0.028, 3, '#ff5f7e', { lineColor: '#b03050', line: 1.4 });
+      artCircle(ctx, hx, hy + viewH * 0.038, 3.5, '#ff5f7e', { lineColor: '#b03050', line: 1.4 });
     }
   }
   drawParticlesLayer(ctx);
