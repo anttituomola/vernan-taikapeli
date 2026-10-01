@@ -25,7 +25,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/world.js` — koko, taustojen esirenderöinti kerroksiksi (parallaksi), maiseman yhteiset muodot (puu, pensas, kukka, linna, pilvi)
 - `js/draw-actors.js` — tähti, pupu, yksisarvinen
 - `js/fx.js` — kipinät, konfetti, opastenuoli
-- `js/ambient.js` — tunnelmahiukkaset, etualan siluetit, valaistus (`drawLight`) ja kentän alkukortti (PHASES: `ambient`, `fg`, `light`)
+- `js/ambient.js` — tunnelmahiukkaset, etualan siluetit, valaistus (`drawLight`) ja kentän alkukortti (PHASES: `ambient`, `fg`, `light`); `ambientPoke` poksauttaa napautetun hiukkasen
+- `js/props.js` — **tökättävät koristeet**: kentän koriste piirretään joka ruudulla ja heilahtaa napautuksesta (`propAdd`/`propsTap`/`propsDraw`, pudotukset `propDrop`)
 - `js/flow-sea.js` — saaristokartta (ylin navigaatio), saaret ja sateenkaari
 - `js/flow-land.js` — **Kaukamaa**: mantereen kartta (toinen ylätason kartta), purjehdus
   saaristosta mantereelle ja takaisin, saaristokartan avomerimerkki ja sokkelon tienviitta
@@ -1134,6 +1135,35 @@ Säännöt:
   SVG-ikoneita `index.html`:ssä, ei emojeja.
 - **Paletti per saari**: pehmeät, kylläiset päävärit; taivaan yläreuna tummempi kuin
   horisontti; polku ja maa lämpimiä.
+- **Yhdistetyt muodot** (pilvi, pensas): ääriviiva `artUnion`-apurilla (sama muoto tummana
+  hieman suurempana alle), koska yhdistetyn polun stroke piirtäisi sisäiset kaaret.
+- **HUD**: paneelit `drawHudPanel`-apurilla (läpikuultava pohja, hento vaalea reunaviiva).
+
+### Napautettavuus ja yllätykset
+
+Sääntö: kaikesta hiukan interaktiivista. Jokainen koriste, kiinteä rakenne ja otus
+reagoi napautukseen (heilahdus + kipinät + ääni), eikä mikään reaktio vaikuta
+peliin. Työkalut:
+
+- **Tökättävät koristeet** (`js/props.js`): kentän koriste siirretään esirenderöidystä
+  taustasta `propAdd`-listaan, jolloin se piirretään joka ruudulla (ruudun ulkopuoliset
+  ohitetaan) ja heilahtaa napautuksesta. `propsTap(px + camX, py)` ei kuluta
+  napautusta: ratsastuskentissä napautus myös kävelyttää. `p.n` laskee tökkäykset, joten
+  joka kolmas tai viides voi laukaista pienen yllätyksen; `propDrop` pudottaa jotain
+  (kookos, omena), joka pomppaa kerran.
+- **Tunnelmahiukkaset** (`ambientPoke`): perhonen, kupla, tulikärpänen, terälehti tai
+  lumihiutale poksahtaa napautuksesta ja syntyy muualle.
+- **Aurinko ja kuu** (`bgSunPoke`): kentän taustan aurinko tai kuu (`bgSun`) hymyilee ja
+  räpäyttää napautuksesta; sama `drawMapSun` toimii karttojen auringoille.
+- **Kosketusrengas**: kävelykohteen rengas piirretään kaikissa ratsastuskentissä
+  (`drawTapRing`, `update-draw.js`).
+- **Kartat**: saaristossa sateenkaari soi väri kerrallaan, meressä hyppii kala ja joka
+  seitsemäs napautus nostaa valaan, pilvi sataa; Kaukamaalla tulivuori puhahtaa ja
+  täräyttää karttaa, joessa hyppii kala ja lohikäärme karjuu; sokkelossa ruudukon
+  ulkopuoliseen ruutuun napautus istuttaa kukan, mökin ikkunasta kurkkaa pupu
+  (Linnasaari) ja nappula hypähtää omasta ruudustaan napautettuna.
+- **Metsä**: liikkuvat pilvet heilahtavat ja satavat kipinöitä; joka kolmas napautus
+  loihtii pilven alle pienen sateenkaaren.
 
 ## Tekniikka
 

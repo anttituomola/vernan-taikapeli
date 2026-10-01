@@ -48,6 +48,7 @@ function updateFlyStars(dt) {
 
 function updateForest(dt) {
   var i;
+  forestCloudsUpdate(dt);
 
   // Yksisarvisen liike
   var dx = unicorn.tx - unicorn.x;
@@ -343,11 +344,8 @@ function drawForest() {
   ctx.translate(sh.x, sh.y);
   drawWorldBg();
 
-  // Liikkuvat pilvet
-  var c1x = ((globalT * 12) % (viewW + 300)) - 150;
-  var c2x = ((globalT * 8 + viewW * 0.6) % (viewW + 300)) - 150;
-  drawCloud(ctx, c1x, viewH * 0.08, viewH * 0.025, 0.9);
-  drawCloud(ctx, c2x, viewH * 0.20, viewH * 0.020, 0.9);
+  // Liikkuvat pilvet (napautettavia: heilahtavat ja satavat kipinöitä)
+  drawForestClouds(ctx);
 
   // Taikaportit
   for (i = 0; i < gates.length; i++) drawGate(ctx, gates[i]);
@@ -454,6 +452,76 @@ function drawForest() {
   drawFlyStars(ctx);
   drawSpellOverlay(ctx);
   drawTaskOverlay(ctx);
+}
+
+// Metsän liikkuvat pilvet kulkevat ruudun poikki ruutukoordinaateissa. Napautus
+// heilauttaa pilveä ja sataa tähtikipinöitä; joka kolmas napautus loihtii pilven
+// alle pienen sateenkaaren (piilotettu yllätys).
+var forestClouds = [{ t: -1, n: 0, rb: -1 }, { t: -1, n: 0, rb: -1 }];
+function forestCloudPos(i) {
+  if (i === 0) return { x: ((globalT * 12) % (viewW + 300)) - 150, y: viewH * 0.08, s: viewH * 0.025 };
+  return { x: ((globalT * 8 + viewW * 0.6) % (viewW + 300)) - 150, y: viewH * 0.20, s: viewH * 0.020 };
+}
+function forestCloudTap(px, py) {
+  var i, p, cl;
+  for (i = 0; i < 2; i++) {
+    p = forestCloudPos(i);
+    if (Math.hypot(px - p.x, py - p.y) < p.s * 3.2) {
+      cl = forestClouds[i];
+      cl.t = 0;
+      cl.n++;
+      spawnSparkles(px + camX, p.y + p.s, 10, '#fff3b0');
+      playNote(988, 0, 0.1, 'sine', 0.25);
+      playNote(1319, 0.08, 0.14, 'sine', 0.2);
+      if (cl.n % 3 === 0) {
+        cl.rb = 0;
+        playNote(659, 0.2, 0.2, 'triangle', 0.3);
+        playNote(784, 0.35, 0.2, 'triangle', 0.3);
+        playNote(1047, 0.5, 0.4, 'triangle', 0.3);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+function forestCloudsUpdate(dt) {
+  var i, cl;
+  for (i = 0; i < 2; i++) {
+    cl = forestClouds[i];
+    if (cl.t >= 0) { cl.t += dt; if (cl.t > 1.2) cl.t = -1; }
+    if (cl.rb >= 0) { cl.rb += dt; if (cl.rb > 2.4) cl.rb = -1; }
+  }
+}
+function drawForestClouds(c) {
+  var i, j, p, cl, q, k;
+  for (i = 0; i < 2; i++) {
+    p = forestCloudPos(i);
+    cl = forestClouds[i];
+    if (cl.rb >= 0) {
+      k = cl.rb / 2.4;
+      c.globalAlpha = Math.sin(k * Math.PI) * 0.85;
+      c.lineWidth = Math.max(2, p.s * 0.22);
+      for (j = 0; j < maneColors.length; j++) {
+        c.strokeStyle = maneColors[j];
+        c.beginPath(); c.arc(p.x, p.y + p.s * 3.2, p.s * (3.4 - j * 0.24), Math.PI, Math.PI * 2); c.stroke();
+      }
+      c.globalAlpha = 1;
+    }
+    q = cl.t >= 0 ? Math.sin(cl.t * 16) * Math.exp(-cl.t * 3) * 0.12 : 0;
+    c.save();
+    c.translate(p.x, p.y);
+    c.scale(1 + q, 1 - q);
+    drawCloud(c, 0, 0, p.s, 0.9);
+    c.restore();
+    if (cl.t >= 0 && cl.t < 0.8) {
+      c.fillStyle = 'rgba(255,240,170,' + (1 - cl.t / 0.8) + ')';
+      for (j = 0; j < 5; j++) {
+        c.beginPath();
+        c.arc(p.x + (j - 2) * p.s * 0.8, p.y + p.s * 1.5 + cl.t * viewH * 0.12 + (j % 2) * p.s, p.s * 0.14, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+  }
 }
 
 // HUD-tähden paikka ruudulla

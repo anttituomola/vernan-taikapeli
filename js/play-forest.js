@@ -30,6 +30,9 @@ function handleTap(px, py) {
   var wx = px + camX;
   var wy = py;
 
+  // Liikkuvat pilvet reagoivat (napautus jatkuu silti kävelyksi)
+  forestCloudTap(px, py);
+
   // Osuiko tähteen? Suora osuma nappaa, läheltä ohi mennyt säikäyttää
   // tähden uuteen paikkaan.
   var starHit = viewH * 0.07;
