@@ -52,6 +52,7 @@ function initOrchard() {
     });
   }
   for (i = 0; i < orchardApples.length; i++) orchardAppleHome(orchardApples[i]);
+  orchardProps();
   tasks = [makeTask(0.42, 'pattern'), makeTask(0.74, 'shadow')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.36, 0.68]);
@@ -87,6 +88,7 @@ function resizeOrchard(ratio) {
   var i;
   princess.x *= ratio;
   layoutOrchard();
+  orchardProps();
   for (i = 0; i < orchardApples.length; i++) {
     orchardApples[i].x *= ratio;
     if (orchardApples[i].state === 'tree') orchardAppleHome(orchardApples[i]);
@@ -141,6 +143,8 @@ function handleOrchardTap(px, py) {
     dy = py - a.y;
     if (dx * dx + dy * dy < r * r) { dropOrchardApple(a); return; }
   }
+  // Ei omenaa eikä kynää kädessä: koristeet saavat tökkäyksen (kävely jatkuu silti)
+  if (!penMode) propsTap(wx, py);
 }
 
 function updateOrchard(dt) {
@@ -173,6 +177,7 @@ function updateOrchard(dt) {
     }
   }
 
+  propsUpdate(dt);
   followCam(princess.x, dt);
   updateCheckpoints(princess.x, princess.y);
   updateParticles(dt);
@@ -188,61 +193,105 @@ function renderOrchardBg(b, w, h) {
   renderOrchardNear(b, w, h);
 }
 function renderOrchardNear(b, w, h) {
-  var i, x, tr, ty;
+  var i, x;
   renderPaperNear(b, w, h, [], null);
   for (i = 0; i < orchardTerraces.length; i++) {
     drawPaperGround(b, orchardTerraces[i].seg[0] * w, orchardTerraceY(i), (orchardTerraces[i].seg[1] - orchardTerraces[i].seg[0]) * w, h);
   }
-  for (i = 0; i < orchardTrees.length; i++) {
-    tr = orchardTrees[i];
-    ty = orchardTerraceY(tr.terrace);
-    x = tr.x;
-    b.fillStyle = '#8a6a44';
-    b.fillRect(x - h * 0.012, ty - h * 0.14, h * 0.024, h * 0.14);
-    b.fillStyle = '#6fb35a';
-    b.beginPath(); b.arc(x, ty - h * 0.19, h * 0.075, 0, Math.PI * 2); b.fill();
-    b.beginPath(); b.arc(x - h * 0.055, ty - h * 0.15, h * 0.055, 0, Math.PI * 2); b.fill();
-    b.beginPath(); b.arc(x + h * 0.055, ty - h * 0.15, h * 0.055, 0, Math.PI * 2); b.fill();
-    b.fillStyle = 'rgba(255,255,255,0.25)';
-    b.beginPath(); b.arc(x - h * 0.03, ty - h * 0.21, h * 0.03, 0, Math.PI * 2); b.fill();
-  }
+  // Puut ja kori ovat tökättäviä koristeita (orchardProps), joten ne eivät ole taustassa
   for (i = 0; i < 16; i++) {
     x = w * (0.02 + i * 0.062);
     drawFlower(b, x, orchardTerraceY(2) - h * 0.015, h * 0.011, i % 2 ? '#ff7bac' : '#ffe27a');
   }
-  var bx = orchardBasket.x, s = h * 0.09;
-  b.fillStyle = '#c98b4a';
-  b.beginPath();
-  b.moveTo(bx - s, groundTop - s * 0.9);
-  b.lineTo(bx + s, groundTop - s * 0.9);
-  b.lineTo(bx + s * 0.72, groundTop);
-  b.lineTo(bx - s * 0.72, groundTop);
-  b.closePath(); b.fill();
-  b.strokeStyle = '#a9743f';
-  b.lineWidth = s * 0.09;
-  b.beginPath(); b.arc(bx, groundTop - s * 0.9, s * 0.72, Math.PI, 0); b.stroke();
 }
 
-function orDrawApple(c, x, y, s, rot) {
+// Omena: kaksi lohkoa yhtenä reunaviivallisena muotona, kiilto, varsi ja lehti.
+// col = väri (kultainen yllätysomena saa oman).
+function orchardApplePath(c, x, y, s) {
+  c.beginPath();
+  c.arc(x - s * 0.28, y, s * 0.62, 0, Math.PI * 2);
+  c.arc(x + s * 0.28, y, s * 0.62, 0, Math.PI * 2);
+}
+function orDrawApple(c, x, y, s, rot, col) {
+  col = col || '#ff5f5f';
   c.save();
   c.translate(x, y);
   c.rotate(rot || 0);
-  c.fillStyle = '#ff5f5f';
-  c.beginPath(); c.arc(-s * 0.28, 0, s * 0.62, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(s * 0.28, 0, s * 0.62, 0, Math.PI * 2); c.fill();
-  c.fillStyle = 'rgba(255,255,255,0.5)';
-  c.beginPath(); c.arc(-s * 0.35, -s * 0.28, s * 0.18, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#8a6a44';
-  c.lineWidth = Math.max(1.5, s * 0.1);
-  c.beginPath(); c.moveTo(0, -s * 0.5); c.quadraticCurveTo(s * 0.1, -s * 0.85, s * 0.25, -s * 0.95); c.stroke();
-  c.fillStyle = '#6fb35a';
-  c.beginPath(); c.ellipse(s * 0.34, -s * 0.78, s * 0.22, s * 0.1, -0.5, 0, Math.PI * 2); c.fill();
+  artUnion(c, orchardApplePath, 0, 0, s, -s * 0.62, s * 0.62, col, { lineColor: artShade(col, -0.45), line: Math.max(1.2, s * 0.1) });
+  artHighlight(c, -s * 0.35, -s * 0.28, s * 0.18, s * 0.1, 0.5);
+  artLimb(c, 0, -s * 0.5, s * 0.25, -s * 0.95, s * 0.1, '#8a6a44', '#4a3418');
+  artBlob(c, s * 0.34, -s * 0.78, s * 0.22, s * 0.1, '#6fb35a', { rot: -0.5, lineColor: '#3f7a35' });
   c.restore();
+}
+
+// Omenapuu (tökättävä koriste, origo = juuri): runko ja kolmilatvuksinen kruunu
+function orchardCanopyPath(c, x, y, s) {
+  c.beginPath();
+  c.arc(x, y, s, 0, Math.PI * 2);
+  c.arc(x - s * 0.733, y + s * 0.533, s * 0.733, 0, Math.PI * 2);
+  c.arc(x + s * 0.733, y + s * 0.533, s * 0.733, 0, Math.PI * 2);
+}
+function orchardDrawTree(c) {
+  var h = viewH, lw = Math.max(1.2, h * 0.004);
+  artShadow(c, 0, 0, h * 0.07, h * 0.014, 0.14);
+  artRoundRect(c, -h * 0.012, -h * 0.14, h * 0.024, h * 0.14, h * 0.006, '#8a6a44', { lineColor: '#4a3418', line: lw });
+  artUnion(c, orchardCanopyPath, 0, -h * 0.19, h * 0.075, -h * 0.265, -h * 0.095, '#6fb35a', { lineColor: '#3f7a35', line: lw });
+  artHighlight(c, -h * 0.03, -h * 0.21, h * 0.03, h * 0.015, 0.3);
+}
+// Puusta putoaa koristeomena; joka viides on kultainen ja kimaltaa (yllätys)
+function orchardTreePoke(p) {
+  var gold = p.n % 5 === 0, h = viewH;
+  propDrop({ x: p.x + (Math.random() - 0.5) * h * 0.1, y: p.y - h * 0.17, vx: (Math.random() - 0.5) * viewW * 0.05, ground: p.y,
+    s: h * 0.02, gold: gold, life: gold ? 3.2 : 2.2,
+    draw: function (c, d) {
+      if (d.gold) artGlow(c, 0, 0, d.s * 2.5, '#fff0a0', 0.6);
+      orDrawApple(c, 0, 0, d.s, 0, d.gold ? '#ffd24f' : '#ff5f5f');
+    },
+    onLand: gold ? function (d) { spawnSparkles(d.x, d.y, 16, '#ffe27a'); } : null });
+  if (gold) {
+    playNote(1047, 0, 0.12, 'sine', 0.3);
+    playNote(1319, 0.1, 0.12, 'sine', 0.3);
+    playNote(1568, 0.2, 0.35, 'sine', 0.3);
+  } else {
+    playNote(420, 0, 0.1, 'triangle', 0.18);
+  }
+}
+// Kori (tökättävä koriste, origo = pohjan keskikohta): sanka, punos ja kerätyt omenat kurkistavat
+function orchardDrawBasket(c, p) {
+  var s = p.s, lw = Math.max(1.2, s * 0.05), n = Math.min(3, orchardBasketCount()), i;
+  artShadow(c, 0, 0, s * 0.9, s * 0.12, 0.14);
+  c.lineCap = 'round';
+  c.beginPath(); c.arc(0, -s * 0.9, s * 0.72, Math.PI, 0);
+  c.strokeStyle = '#6a4a28'; c.lineWidth = s * 0.09 + lw * 2; c.stroke();
+  c.strokeStyle = '#a9743f'; c.lineWidth = s * 0.09; c.stroke();
+  for (i = 0; i < n; i++) artCircle(c, (i - (n - 1) / 2) * s * 0.45, -s * 0.95, s * 0.22, '#ff5f5f', { lineColor: '#8a2a2a', hi: 0.4 });
+  c.beginPath(); c.moveTo(-s, -s * 0.9); c.lineTo(s, -s * 0.9); c.lineTo(s * 0.72, 0); c.lineTo(-s * 0.72, 0); c.closePath();
+  artFillPath(c, '#c98b4a', -s * 0.9, 0, s * 0.5, { lineColor: '#6a4a28', line: lw });
+  c.strokeStyle = 'rgba(90,55,25,0.35)'; c.lineWidth = lw;
+  for (i = 1; i < 3; i++) { c.beginPath(); c.moveTo(-s * (1 - i * 0.09), -s * (0.9 - i * 0.3)); c.lineTo(s * (1 - i * 0.09), -s * (0.9 - i * 0.3)); c.stroke(); }
+  c.lineCap = 'butt';
+}
+function orchardBasketPoke(p) {
+  if (orchardBasketCount() > 0) spawnSparkles(p.x, p.y - p.s, 8, '#ff5f5f');
+}
+
+// Tökättävät koristeet: kolme omenapuuta ja kori. Kutsutaan myös resize-koukusta.
+function orchardProps() {
+  var i, h = viewH, tr;
+  propsReset();
+  for (i = 0; i < orchardTrees.length; i++) {
+    tr = orchardTrees[i];
+    propAdd({ x: tr.x, y: orchardTerraceY(tr.terrace), r: h * 0.09, hy: h * 0.1, amp: 0.05, color: '#8fd87a', note: 500 + i * 60,
+      draw: orchardDrawTree, poke: orchardTreePoke });
+  }
+  propAdd({ x: orchardBasket.x, y: groundTop, s: h * 0.09, r: h * 0.08, hy: h * 0.05, amp: 0.06, color: '#ffb060', note: 720,
+    draw: orchardDrawBasket, poke: orchardBasketPoke });
 }
 
 function drawOrchard() {
   var i, a;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   drawPenStrokesLayer(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) {
