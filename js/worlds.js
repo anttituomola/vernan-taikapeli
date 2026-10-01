@@ -1288,12 +1288,12 @@ var WORLDS = [
     // rinteellä. Verbi: rattaat. Usvahuoneet: Vesikouru ja vartija Kellokoneisto
     // (finaleKind siirtyy vartijalle, kun se tehdään).
     id: 14, name: 'Kellopaja', region: 'land', band: 'clock',
-    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'gear', deco: ['gear'] },
+    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'chute', deco: ['gear', 'chute'] },
     map: [
       '#########',
       '#B.....R#',
       '#######.#',
-      '#?......#',
+      '#K......#',
       '#.#######',
       '#......?#',
       '#########'
@@ -1311,6 +1311,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderGearBg(b, w, h); },
         light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.4 },
         respawn: function () { respawnGear(); }
+      },
+      {
+        kind: 'chute', room: 'K', name: 'Vesikouru', color: '#4fb8f0', script: 'play-chute',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#8fd0ff', ambient: 'sparkle', fg: null,
+        init: function () { initChute(); },
+        update: function (dt) { updateChute(dt); },
+        draw: function () { drawChute(); },
+        tap: function (x, y) { handleChuteTap(x, y); },
+        resize: function () { resizeChute(); },
+        renderBg: function (b, w, h) { renderChuteBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(120,200,255,0.05)'], vignette: 0.25 },
+        respawn: function () { respawnChute(); }
       }
     ]
   }

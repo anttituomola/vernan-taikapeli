@@ -62,7 +62,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-bounce.js`, `js/play-catch.js`, `js/play-moth.js` — Kaukamaa, Hohtometsä (maailma 11): Sienipomppu (pomppu), Tulikärpässieppo (sipaisu) ja vartija Varjoperhonen (sipaisu + pomppu)
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
-- `js/play-gear.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), sokkelon maasto `HUB_TILE_DECOR.clock`
+- `js/play-gear.js`, `play-chute.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi) ja Vesikouru (kourupalojen kääntö, vesi myllyihin), sokkelon maasto `HUB_TILE_DECOR.clock`
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -741,8 +741,8 @@ Mantereen viides paikka, tonttujen mekaaninen paja lounaisrannalla. Aukeaa,
 kun Porkkanakummun vartija Myyräkuningas on läpäisty. Jatkaa loogisten
 pulmien linjaa (palaute 1.10.2026: Loitsupolku ja Kamelikaravaani olivat
 "liki täydellinen ylätaso vaikeudelle"). Uusi verbi: **rattaat**. Sokkelossa
-on kaksi usvahuonetta: Vesikouru (kourupalojen kääntö, vesi myllylle) ja
-vartija Kellokoneisto. Kunnes vartija on tehty, `finaleKind` on `'gear'`.
+on yksi usvahuone vartijalle Kellokoneistolle. Kunnes vartija on tehty,
+`finaleKind` on viimeisin kenttä (`'chute'`).
 
 - **Rataspaja** — tonttu veivaa moottoriratasta pajan seinällä. Raahaa
   rattaita laatikosta tappitaulun tappeihin: ratas, joka koskettaa pyörivää
@@ -764,6 +764,21 @@ vartija Kellokoneisto. Kunnes vartija on tehty, `finaleKind` on `'gear'`.
   kierroksella käsi vie rattaan moottorin viereen. Kierros ilman yhtään jumia
   antaa kultaisen rattaan. Tonttuun voi napauttaa. Ei sydämiä. Tehtävät:
   kello, kuviosarja.
+- **Vesikouru** — Kuunsäteen sukulainen vedellä. Napautus kääntää kourupalaa
+  neljänneskierroksen myötäpäivään, ja vesi virtaa lähdesuulta pala palalta
+  pitkin yhteen sopivia paloja. Kun vesi yltää myllyyn (vesiratas tappitaulun
+  reunalla), ratas pyörii. Jos kourussa on avoin pää (pala ei jatku, osoittaa
+  kiveen tai reunan yli muualle kuin myllyyn), vesi roiskuu siitä yli. Kierros
+  onnistuu, kun kaikki myllyt pyörivät eikä vettä vuoda mihinkään. Palat:
+  suora, kulma ja jakopala (T); ruuvatut palat eivät käänny (ne ovat valmiiksi
+  oikein), kivet tukkivat. Neljä arvottua, kovenevaa kierrosta: 5×4 ja yksi
+  mylly; 6×4, hämäyspalat ja pidempi reitti; 6×5, kaksi myllyä ja jakopala;
+  7×5 ja kolme myllyä. Kolmannesta kierroksesta alkaen pajan kello käy (90 /
+  100 s): ajan loppuessa pato sulkeutuu ja kierros arvotaan uudestaan.
+  Ratkaisu rakennetaan ensin (puu lähteestä myllyihin), joten kierros ratkeaa
+  aina. Kierros, joka ratkeaa enintään kolmella ylimääräisellä käännöllä,
+  antaa kultaisen pisaran. Ensimmäisellä kierroksella käsi napauttaa lähteen
+  vieressä olevaa palaa. Ei sydämiä. Tehtävät: lasku, pisteet.
 
 ### Linnan sisustus
 
@@ -1079,6 +1094,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Loitsupolku: kierrokset `BLOOP_ROUNDS` (ruudukko, pupurivi `main`, ★-rivi `spell`, loitsuja pääohjelmassa `stars`, odotukset `waits`, myyrät reitillä `moles` ja vieressä `decoys`, porkkanat, reitin pituus `len`, pensaat, valmis loitsu `given`), askeleen kesto `BLOOP_STEP_T`, myyrien tahti `bloopMoleUpAt`; arvonta `bloopTryGenerate`, tarkistus `bloopSimulate`. Reitti 8 / 11 / 11 / 14 askelta, lyhin reitti keskimäärin 8,6 / 9,3 / 9,2 askelta
 - Yhteispolku: kierrokset `DUO_ROUNDS` (ruudukko, aitojen määrä `walls`, laatat aidoittain `plates` ('n' lähtöpuoli, 'f' takana), sinisen kolon alue `homeB`, porkkanat, rivin pituus `slots`, ratkaisun askeleet `len`, pensaat), askeleen kesto `DUO_STEP_T`; säännöt `duoStep`, ratkaisija `duoSolve` (yhteinen leveyshaku), arvonta `duoTryGenerate`. Arvonta vie 8×5-kierroksilla n. 30–90 ms
 - Rataspaja: kierrokset `GEAR_ROUNDS` (hila `cols`×`rows`, soittorasiat `targets`, ketjun pituus rasiaa kohti `len`, suuntavaatimus `dir`, ansa `trick` = suorin reitti väärään suuntaan, ylimääräiset rattaat `spare`, rikkinäiset tapit `broken`), moottorin nopeus `GEAR_SPEED`, voiton odotus `GEAR_WIN_T`; arvonta `gearTryGenerate`, verkon suunnat ja jumi `gearEvalNet`
+- Vesikouru: kierrokset `CHUTE_ROUNDS` (ruudukko, myllyt `mills`, reitin pituus myllyä kohti `len`, hämäyspalat `decoys`, kivet `rocks`, ruuvatut reittipalat `fixed`, aikaraja `time`), täyttymisnopeus `CHUTE_FILL`, voiton odotus `CHUTE_WIN_T`, kultaisen pisaran väljyys `CHUTE_PAR`; arvonta `chuteTryGenerate`, virtaus ja vuodot `chuteEvalFlow`
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
