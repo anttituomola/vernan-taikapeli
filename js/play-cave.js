@@ -13,6 +13,120 @@ var caveWaterY = 0;
 
 var CRYSTAL_COLORS = ['#8fd3ff', '#c9a0ff', '#ff9ec6', '#9fffd8', '#ffe27a'];
 
+// ---------- Tökättävät koristeet ----------
+// Paikat murto-osina maanpinnalla; cavePropSync laskee paikan joka ruudulla.
+// p.s = piirtokoko, p.sp = hehkuajastin. caveRainbowT: sateenkaariaalto (yllätys).
+var caveHoldPrev = false;
+var caveRainbowT = 0;
+function cavePropSync(p, dt) {
+  p.x = p.fx * worldW;
+  p.y = groundTop;
+  p.s = p.fs * viewH;
+  p.r = p.s * 1.7;
+  p.hy = p.s * 0.8;
+  if (p.sp > 0) p.sp -= dt;
+}
+
+// Sateenkaariaallon väri: aalto kulkee vasemmalta oikealle kentän läpi
+function caveRainbowColor(fx) {
+  var k = Math.floor(globalT * 5 - fx * 10);
+  return maneColors[((k % 6) + 6) % 6];
+}
+
+// Yksi kidesärmä (origo = juuri); h = korkeus, rot = kallistus
+function caveGemShard(c, x, h, rot, color) {
+  c.save();
+  c.translate(x, 0);
+  c.rotate(rot);
+  c.beginPath(); c.moveTo(0, -h); c.lineTo(h * 0.38, -h * 0.55); c.lineTo(h * 0.28, 0); c.lineTo(-h * 0.28, 0); c.lineTo(-h * 0.38, -h * 0.55); c.closePath();
+  artFillPath(c, color, -h, 0, h * 0.38, { lineColor: artShade(color, -0.45) });
+  artHighlight(c, -h * 0.12, -h * 0.6, h * 0.08, h * 0.25, 0.5);
+  c.restore();
+}
+
+// Kideryhmä: kolme särmää ja hehku (lit 0..1 kirkastaa)
+function caveDrawGem(c, s, color, lit) {
+  artShadow(c, 0, 0, s * 1.1, s * 0.22, 0.16);
+  artGlow(c, 0, -s * 0.8, s * (2 + lit * 1.4), color, 0.25 + lit * 0.45);
+  caveGemShard(c, -s * 0.55, s * 0.75, -0.35, color);
+  caveGemShard(c, s * 0.5, s * 0.85, 0.3, color);
+  caveGemShard(c, 0, s * 1.25, 0, color);
+}
+
+// Hehkusieni: vaalea jalka, turkoosi lakki täplineen
+function caveDrawShroom(c, s) {
+  artShadow(c, 0, 0, s * 0.9, s * 0.2, 0.16);
+  artRoundRect(c, -s * 0.26, -s * 0.9, s * 0.52, s * 0.95, s * 0.2, '#d8d0f0', { lineColor: '#6a5a90' });
+  artGlow(c, 0, -s * 1.0, s * 1.9, '#5fe0d0', 0.3 + Math.sin(globalT * 4) * 0.1);
+  artBlob(c, 0, -s * 1.0, s * 1.05, s * 0.6, '#3fbfb0', { lineColor: '#1a6a60', hi: 0.3 });
+  artCircle(c, -s * 0.42, -s * 1.1, s * 0.15, '#d8fff8', { line: false });
+  artCircle(c, s * 0.32, -s * 1.27, s * 0.11, '#d8fff8', { line: false });
+  artCircle(c, s * 0.55, -s * 0.86, s * 0.09, '#d8fff8', { line: false });
+}
+
+function cavePropsSetup() {
+  var i, defs = [
+    { kind: 'gem', fx: 0.05, fs: 0.04, color: '#c9a0ff', note: 988 },
+    { kind: 'shroom', fx: 0.22, fs: 0.04, color: '#5fe0d0', note: 523 },
+    { kind: 'gem', fx: 0.385, fs: 0.036, color: '#ff9ec6', note: 1175 },
+    { kind: 'shroom', fx: 0.84, fs: 0.042, color: '#5fe0d0', note: 587 }
+  ];
+  propsReset();
+  for (i = 0; i < defs.length; i++) {
+    defs[i].sp = 0;
+    defs[i].update = cavePropSync;
+    if (defs[i].kind === 'gem') {
+      defs[i].draw = function (c, p) {
+        caveDrawGem(c, p.s, caveRainbowT > 0 ? caveRainbowColor(p.fx) : p.color, p.sp > 0 ? Math.min(1, p.sp) : 0);
+      };
+      defs[i].poke = caveGemPoke;
+    } else {
+      defs[i].draw = function (c, p) { caveDrawShroom(c, p.s); };
+      defs[i].poke = function (p) {
+        // Itiöpöllähdys
+        spawnSparkles(p.x, p.y - p.s * 1.3, 10, '#9fffd8');
+      };
+    }
+    cavePropSync(propAdd(defs[i]), 0);
+  }
+}
+
+// Kide helisee ja hehkuu; joka viides tökkäys sytyttää kaikki kiteet
+// sateenkaariaalloksi (yllätys)
+function caveGemPoke(p) {
+  p.sp = 1.4;
+  playNote(1568, 0.1, 0.3, 'sine', 0.2);
+  playNote(2093, 0.25, 0.4, 'sine', 0.15);
+  if (p.n % 5 === 0) {
+    caveRainbowT = 4;
+    playNote(523, 0.3, 0.2, 'triangle', 0.25);
+    playNote(659, 0.45, 0.2, 'triangle', 0.25);
+    playNote(784, 0.6, 0.2, 'triangle', 0.25);
+    playNote(1047, 0.75, 0.5, 'triangle', 0.25);
+  }
+}
+
+// Juoksukentässä ei ole tap-koukkua: napautus tunnistetaan pidon alkamisesta.
+// Lepakko vikisee, muuten tökätään koristetta. Ei pelivaikutusta.
+function caveTapCheck() {
+  var wx, wy, i, bt;
+  if (holding && !caveHoldPrev && running && !celebrating && !puzzleBusy()) {
+    wx = holdWorldX; wy = holdSY;
+    for (i = 0; i < bats.length; i++) {
+      bt = bats[i];
+      if (bt.stunT <= 0 && Math.hypot(wx - bt.x, wy - bt.y) < viewH * 0.07) {
+        bt.pokeT = 0.8;
+        playNote(2200, 0, 0.05, 'square', 0.08);
+        playNote(2600, 0.06, 0.06, 'square', 0.08);
+        spawnSparkles(bt.x, bt.y, 4, '#c9a0ff');
+        break;
+      }
+    }
+    if (i >= bats.length) propsTap(wx, wy);
+  }
+  caveHoldPrev = holding;
+}
+
 function layoutCave() {
   var g = groundTop, i, seg;
   platforms = [];
@@ -74,7 +188,11 @@ function initCave() {
   bats.push({ zA: 0.22, zB: 0.33, x: worldW * 0.27, baseY: groundTop - viewH * 0.22, y: 0, dir: 1, t: 0, stunT: 0, amp: viewH * 0.08, f: 1.5 });
   bats.push({ zA: 0.58, zB: 0.70, x: worldW * 0.62, baseY: groundTop - viewH * 0.18, y: 0, dir: -1, t: 1, stunT: 0, amp: viewH * 0.10, f: 1.3 });
   bats.push({ zA: 0.74, zB: 0.86, x: worldW * 0.80, baseY: groundTop - viewH * 0.28, y: 0, dir: 1, t: 2, stunT: 0, amp: viewH * 0.07, f: 1.8 });
+  for (i = 0; i < bats.length; i++) bats[i].pokeT = 0;
   caveDoor.open = false;
+  cavePropsSetup();
+  caveHoldPrev = false;
+  caveRainbowT = 0;
   resetPrincess(viewW * 0.08, groundTop);
   checkpoint.x = princess.x;
   checkpoint.y = groundTop;
@@ -144,6 +262,9 @@ function respawnAtPitEdge() {
 function updateCave(dt) {
   var i, k;
   updateTasks(dt);
+  propsUpdate(dt);
+  caveTapCheck();
+  if (caveRainbowT > 0) caveRainbowT -= dt;
 
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'mover' && !puzzleBusy()) moverStep(platforms[i], dt);
@@ -204,6 +325,7 @@ function updateCave(dt) {
   for (i = 0; i < bats.length; i++) {
     var bt = bats[i];
     bt.t += dt;
+    if (bt.pokeT > 0) bt.pokeT -= dt;
     if (bt.stunT > 0) {
       bt.stunT -= dt;
       bt.y = bt.baseY - viewH * 0.3 - Math.sin(bt.t * 6) * 6;
@@ -265,10 +387,11 @@ function renderCaveFar(b, w, h) {
   var gx = w * 0.72, gy = h * 0.22, gr = h * 0.05;
   bgSun = { x: gx, y: gy, r: gr, speed: 0.22 };
   artGlow(b, gx, gy, gr * 4, '#a898ff', 0.4);
+  // Kaukaiset kiteet: usvan sävyttämät, ei reunaviivaa
+  b.fillStyle = artRGBA(artMix('#8c78dc', '#1a1440', 0.45), 0.4);
   for (i = 0; i < 30; i++) {
     x = (i * 211.7) % w;
     var cy = h * (0.25 + (i % 5) * 0.09);
-    b.fillStyle = 'rgba(140,120,220,0.18)';
     b.beginPath();
     b.moveTo(x, cy - h * 0.03);
     b.lineTo(x + h * 0.012, cy);
@@ -319,24 +442,23 @@ function drawStoneSlab(b, x, y, w, hh, h) {
   b.fillStyle = g;
   roundRect(b, x, y, w, hh, Math.min(h * 0.015, w / 4));
   b.fill();
+  b.strokeStyle = '#1a1630';
+  b.lineWidth = Math.max(1.2, h * 0.004);
+  b.lineJoin = 'round';
+  b.stroke();
   b.fillStyle = 'rgba(255,255,255,0.12)';
   b.fillRect(x + w * 0.05, y + 2, w * 0.9, Math.max(2, h * 0.006));
 }
 
 function drawCaveDoorFrame(b, x, baseY, h) {
   var dw = h * 0.12, dh = h * 0.24;
-  b.fillStyle = '#3e3960';
-  roundRect(b, x - dw * 0.7, baseY - dh * 1.1, dw * 1.4, dh * 1.1, dw * 0.3);
-  b.fill();
-  b.fillStyle = '#14102c';
-  roundRect(b, x - dw / 2, baseY - dh, dw, dh, dw * 0.4);
-  b.fill();
+  artRoundRect(b, x - dw * 0.7, baseY - dh * 1.1, dw * 1.4, dh * 1.1, dw * 0.3, '#3e3960', { lineColor: '#1a1630' });
+  artRoundRect(b, x - dw / 2, baseY - dh, dw, dh, dw * 0.4, '#14102c', { lineColor: '#0a0818', flat: true });
 }
 
 function drawCrystal(c, x, y, s, color) {
   c.save();
   c.translate(x, y);
-  c.fillStyle = color;
   c.beginPath();
   c.moveTo(0, -s);
   c.lineTo(s * 0.55, -s * 0.3);
@@ -344,7 +466,7 @@ function drawCrystal(c, x, y, s, color) {
   c.lineTo(-s * 0.4, s * 0.9);
   c.lineTo(-s * 0.55, -s * 0.3);
   c.closePath();
-  c.fill();
+  artFillPath(c, color, -s, s * 0.9, s * 0.55, { lineColor: artShade(color, -0.45) });
   c.fillStyle = 'rgba(255,255,255,0.55)';
   c.beginPath();
   c.moveTo(0, -s);
@@ -356,13 +478,7 @@ function drawCrystal(c, x, y, s, color) {
 }
 
 function drawCrystalGlow(c, x, y, r, color) {
-  var g = c.createRadialGradient(x, y, r * 0.2, x, y, r);
-  g.addColorStop(0, color);
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  c.globalAlpha = 0.45;
-  c.fillStyle = g;
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-  c.globalAlpha = 1;
+  artGlow(c, x, y, r, color, 0.5);
 }
 
 function drawStalactite(c, st) {
@@ -371,35 +487,36 @@ function drawStalactite(c, st) {
   if (x < -s * 3 || x > viewW + s * 3) return;
   if (st.state === 'gone') return;
   var shake = st.state === 'shake' ? Math.sin(globalT * 40) * s * 0.15 : 0;
-  c.fillStyle = st.state === 'shake' ? '#d8d0f0' : '#a89ecf';
   c.beginPath();
   c.moveTo(x - s * 0.8 + shake, st.y - s * 0.5);
   c.lineTo(x + s * 0.8 + shake, st.y - s * 0.5);
   c.lineTo(x + shake, st.y + s * 2.2);
   c.closePath();
-  c.fill();
+  artFillPath(c, st.state === 'shake' ? '#d8d0f0' : '#a89ecf', st.y - s * 0.5, st.y + s * 2.2, s * 0.8, { lineColor: '#5a5080' });
+  artHighlight(c, x - s * 0.25 + shake, st.y + s * 0.3, s * 0.12, s * 0.5, 0.35);
 }
 
 function drawBat(c, bt) {
   var x = bt.x - camX, y = bt.y, s = viewH * 0.03;
   if (x < -s * 4 || x > viewW + s * 4) return;
-  var flap = Math.sin(bt.t * 14) * 0.6;
+  // Tökättynä lepakko vikisee ja räpyttää tiheämmin
+  var poke = bt.pokeT > 0 ? bt.pokeT : 0;
+  var flap = Math.sin(bt.t * (14 + poke * 25)) * 0.6;
+  var col = bt.stunT > 0 ? '#7a6f9a' : '#4a3a70', line = '#1e1538';
   c.save();
   c.translate(x, y);
-  c.fillStyle = bt.stunT > 0 ? '#7a6f9a' : '#3b2f5c';
   c.beginPath();
   c.moveTo(0, 0);
   c.quadraticCurveTo(-s * 1.4, -s * (0.6 + flap), -s * 2.4, s * 0.2);
   c.quadraticCurveTo(-s * 1.2, s * 0.1, 0, s * 0.5);
   c.quadraticCurveTo(s * 1.2, s * 0.1, s * 2.4, s * 0.2);
   c.quadraticCurveTo(s * 1.4, -s * (0.6 + flap), 0, 0);
-  c.fill();
-  c.beginPath(); c.arc(0, s * 0.1, s * 0.55, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#3b2f5c';
+  artFillPath(c, col, -s * 1.2, s * 0.5, s, { lineColor: line });
   c.beginPath();
-  c.moveTo(-s * 0.4, -s * 0.3); c.lineTo(-s * 0.25, -s * 0.9); c.lineTo(-s * 0.05, -s * 0.3);
-  c.moveTo(s * 0.4, -s * 0.3); c.lineTo(s * 0.25, -s * 0.9); c.lineTo(s * 0.05, -s * 0.3);
-  c.fill();
+  c.moveTo(-s * 0.4, -s * 0.3); c.lineTo(-s * 0.25, -s * 0.95); c.lineTo(-s * 0.05, -s * 0.3); c.closePath();
+  c.moveTo(s * 0.4, -s * 0.3); c.lineTo(s * 0.25, -s * 0.95); c.lineTo(s * 0.05, -s * 0.3); c.closePath();
+  artFillPath(c, col, -s * 0.95, -s * 0.3, s * 0.2, { lineColor: line });
+  artCircle(c, 0, s * 0.1, s * 0.55, col, { lineColor: line, hi: 0.25 });
   c.restore();
 }
 
@@ -407,6 +524,14 @@ function drawBatEyes(c, bt) {
   var x = bt.x - camX, y = bt.y, s = viewH * 0.03;
   if (x < -s * 4 || x > viewW + s * 4) return;
   c.fillStyle = bt.stunT > 0 ? '#ffe27a' : '#ffd0d0';
+  if (bt.pokeT > 0) {
+    // Vikinä: silmät siristyvät
+    c.strokeStyle = c.fillStyle;
+    c.lineWidth = Math.max(1.2, s * 0.08);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x - s * 0.32, y); c.lineTo(x - s * 0.08, y); c.moveTo(x + s * 0.08, y); c.lineTo(x + s * 0.32, y); c.stroke();
+    return;
+  }
   c.beginPath(); c.arc(x - s * 0.2, y, s * 0.1, 0, Math.PI * 2); c.fill();
   c.beginPath(); c.arc(x + s * 0.2, y, s * 0.1, 0, Math.PI * 2); c.fill();
 }
@@ -443,6 +568,7 @@ function drawDarkness(c, lx, ly, radius) {
 function drawCave() {
   var i;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'mover') {
@@ -462,12 +588,20 @@ function drawCave() {
   drawParticlesLayer(ctx);
 
   if (!celebrating) drawDarkness(ctx, princess.x - camX, princess.y - viewH * 0.08, viewH * 0.72);
+  // Kideryhmien hehku loistaa pimeyden läpi tökättynä ja sateenkaariaallossa
+  for (i = 0; i < props.length; i++) {
+    if (props[i].kind !== 'gem' || (props[i].sp <= 0 && caveRainbowT <= 0)) continue;
+    if (props[i].x - camX < -viewH * 0.2 || props[i].x - camX > viewW + viewH * 0.2) continue;
+    artGlow(ctx, props[i].x - camX, props[i].y - props[i].s * 0.8, props[i].s * 2.6,
+      caveRainbowT > 0 ? caveRainbowColor(props[i].fx) : props[i].color, 0.45);
+  }
   for (i = 0; i < crystals.length; i++) {
     var cr = crystals[i];
     if (cr.collected) continue;
     var cy = cr.ay + Math.sin(cr.phase) * viewH * 0.012;
-    drawCrystalGlow(ctx, cr.ax - camX, cy, viewH * 0.07, cr.color);
-    drawCrystal(ctx, cr.ax - camX, cy, viewH * 0.024, cr.color);
+    var ccol = caveRainbowT > 0 ? caveRainbowColor(cr.ax / worldW) : cr.color;
+    drawCrystalGlow(ctx, cr.ax - camX, cy, viewH * 0.07, ccol);
+    drawCrystal(ctx, cr.ax - camX, cy, viewH * 0.024, ccol);
   }
   for (i = 0; i < checkpoints.length; i++) {
     if (checkpoints[i].lit) drawLantern(ctx, checkpoints[i], groundTop);
