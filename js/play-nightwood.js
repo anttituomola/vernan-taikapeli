@@ -14,6 +14,10 @@ var glowDefs = [
 ];
 var owlDefs = [{ fx: 0.20 }, { fx: 0.52 }, { fx: 0.82 }];
 var GLOW_ON = 1.5, GLOW_CYCLE = 2.9;
+var NW_SKY = '#2a3f78';            // taivaan alareuna: kaukaiset kuuset sävytetään tähän
+var NW_PINE_IDX = [1, 4, 7];       // lähirivistön (10 kuusta) tökättävät kuuset
+var NW_SHROOM_IDX = [5, 14];       // hehkusienistä (22) tökättävät
+var nwHiddenOwl = null;            // yllätys: piilopöllö kurkistaa kuusen latvasta (5. tökkäys)
 
 function glowLit(g) {
   return (g.t % GLOW_CYCLE) < GLOW_ON;
@@ -30,6 +34,7 @@ function layoutNightwood() {
     owls[i].py = viewH * 0.30;
   }
   moonGate.x = moonGate.fx * worldW;
+  nwProps();
 }
 
 function initNightwood() {
@@ -40,7 +45,8 @@ function initNightwood() {
   glowBugs = [];
   for (i = 0; i < GLOW_COUNT; i++) glowBugs.push({ ax: 0, ay: 0, collected: false, t: glowDefs[i].off, phase: Math.random() * Math.PI * 2 });
   owls = [];
-  for (i = 0; i < owlDefs.length; i++) owls.push({ px: 0, py: 0, x: 0, y: 0, state: 'sleep', timer: 3 + i * 1.5, diveT: 0, tx: 0, ty: 0, hit: false });
+  for (i = 0; i < owlDefs.length; i++) owls.push({ px: 0, py: 0, x: 0, y: 0, state: 'sleep', timer: 3 + i * 1.5, diveT: 0, tx: 0, ty: 0, hit: false, pokeT: 0 });
+  nwHiddenOwl = null;
   layoutNightwood();
   for (i = 0; i < owls.length; i++) { owls[i].x = owls[i].px; owls[i].y = owls[i].py; }
   moonGate.open = false;
@@ -103,6 +109,18 @@ function handleNightwoodTap(px, py) {
       return;
     }
   }
+  // Oksalla istuva pöllö avaa silmänsä ja huhuilee hiljaa tökkäyksestä (pelkkä
+  // koriste, ei muuta pöllön tilaa); koristeet heilahtavat ja ratsastus jatkuu
+  for (i = 0; i < owls.length; i++) {
+    if (owls[i].state !== 'dive' && Math.hypot(wx - owls[i].x, py - owls[i].y) < viewH * 0.07) {
+      owls[i].pokeT = 0.9;
+      playNote(392, 0, 0.14, 'sine', 0.15);
+      playNote(330, 0.16, 0.2, 'sine', 0.15);
+      spawnSparkles(owls[i].x, owls[i].y - viewH * 0.04, 5, '#c9a97a');
+      break;
+    }
+  }
+  propsTap(wx, py);
   setWalkTarget(px, py);
 }
 
@@ -142,6 +160,7 @@ function updateNightwood(dt) {
   // Pöllöt: uni -> huhuilu (varoitus) -> syöksy polulle -> takaisin oksalle
   for (i = 0; i < owls.length; i++) {
     var o = owls[i];
+    if (o.pokeT > 0) o.pokeT -= dt;
     if (busy || celebrating) continue;
     if (o.state === 'sleep') {
       o.timer -= dt;
@@ -192,6 +211,11 @@ function updateNightwood(dt) {
     startCelebration();
   }
 
+  if (nwHiddenOwl) {
+    nwHiddenOwl.t += dt;
+    if (nwHiddenOwl.t > 3.2) nwHiddenOwl = null;
+  }
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -232,9 +256,10 @@ function renderNightwoodFar(b, w, h) {
 }
 function renderNightwoodMid(b, w, h) {
   var i, x;
+  // Kaukaiset kuuset: taivaan sävyyn hälvennetyt siluetit ilman reunaviivaa
   for (i = 0; i < 26; i++) {
     x = w * (0.01 + i * 0.039) + (i % 2) * h * 0.02;
-    drawPine(b, x, groundTop - h * 0.02, h * (0.22 + (i % 3) * 0.06), i % 2 ? '#0e1538' : '#16204a');
+    drawPine(b, x, groundTop - h * 0.02, h * (0.22 + (i % 3) * 0.06), artMix(i % 2 ? '#0e1538' : '#16204a', NW_SKY, 0.3), true);
   }
 }
 function renderNightwoodNear(b, w, h) {
@@ -248,107 +273,167 @@ function renderNightwoodNear(b, w, h) {
   b.fillStyle = '#1a2a52';
   b.fillRect(0, groundBottom, w, h - groundBottom);
   for (i = 0; i < 10; i++) {
+    if (NW_PINE_IDX.indexOf(i) >= 0) continue; // tökättävät kuuset piirretään joka ruudulla (nwProps)
     x = w * (0.04 + i * 0.1);
     drawPine(b, x, groundTop - h * 0.01, h * (0.18 + (i % 3) * 0.04), i % 2 ? '#1a2a58' : '#243868');
   }
   for (i = 0; i < 22; i++) {
+    if (NW_SHROOM_IDX.indexOf(i) >= 0) continue;
     x = (i * 311.7) % w;
-    var my2 = i % 2 ? groundTop + h * 0.02 : groundBottom - h * 0.01;
-    artGlow(b, x, my2 - h * 0.02, h * 0.05, '#7fd4ff', 0.45);
-    b.fillStyle = '#d9e8ff';
-    b.fillRect(x - h * 0.005, my2 - h * 0.025, h * 0.01, h * 0.025);
-    artCircle(b, x, my2 - h * 0.025, h * 0.016, '#7fd4ff', { line: false, hi: 0.4 });
+    nwDrawMushroom(b, x, i % 2 ? groundTop + h * 0.02 : groundBottom - h * 0.01, h, 0.45);
   }
   drawMoonGateFrame(b, moonGate.x, groundTop - h * 0.02, h);
 }
 
-function drawPine(b, x, baseY, s, color) {
-  var i;
-  b.fillStyle = color;
-  b.fillRect(x - s * 0.05, baseY - s * 0.2, s * 0.1, s * 0.2);
+// Hehkusieni (origo = juuri): hehku, jalka ja pyöreä lakki. glow = hehkun voimakkuus
+function nwDrawMushroom(b, x, y, h, glow) {
+  artGlow(b, x, y - h * 0.02, h * 0.05, '#7fd4ff', glow);
+  artRoundRect(b, x - h * 0.005, y - h * 0.025, h * 0.01, h * 0.025, h * 0.003, '#d9e8ff', { lineColor: '#6a7aa8', shadeTo: '#b8c4e8' });
+  artCircle(b, x, y - h * 0.025, h * 0.016, '#7fd4ff', { lineColor: '#2a6a98', hi: 0.4 });
+}
+
+// Kuusi: runko ja kolme kerrosta reunaviivalla (vaalea ylä, tumma ala).
+// far = kaukainen: ei reunaviivaa eikä varjoa, runko puun väriin
+function drawPine(b, x, baseY, s, color, far) {
+  var i, ty, tw, o = far ? { line: false } : {};
+  if (!far) artShadow(b, x, baseY + s * 0.02, s * 0.4, s * 0.07, 0.16);
+  artRoundRect(b, x - s * 0.05, baseY - s * 0.22, s * 0.1, s * 0.22, s * 0.03, far ? color : '#4a3324', far ? o : { lineColor: '#241810' });
   for (i = 0; i < 3; i++) {
-    var ty = baseY - s * 0.15 - i * s * 0.27;
-    var tw = s * (0.42 - i * 0.1);
+    ty = baseY - s * 0.15 - i * s * 0.27;
+    tw = s * (0.42 - i * 0.1);
     b.beginPath();
-    b.moveTo(x - tw, ty); b.lineTo(x + tw, ty); b.lineTo(x, ty - s * 0.4);
-    b.closePath(); b.fill();
+    b.moveTo(x - tw, ty); b.quadraticCurveTo(x, ty + s * 0.05, x + tw, ty); b.lineTo(x, ty - s * 0.4);
+    b.closePath();
+    artFillPath(b, color, ty - s * 0.4, ty, tw, o);
   }
 }
 
+// Kuuportti: kaksi pylvästä ja kaari reunaviivoin
 function drawMoonGateFrame(b, x, baseY, h) {
-  var s = h * 0.12;
-  b.fillStyle = '#4a4470';
-  b.fillRect(x - s * 0.75, baseY - s * 1.6, s * 0.25, s * 1.6);
-  b.fillRect(x + s * 0.5, baseY - s * 1.6, s * 0.25, s * 1.6);
-  b.beginPath(); b.arc(x, baseY - s * 1.6, s * 0.75, Math.PI, 0); b.lineTo(x + s * 0.5, baseY - s * 1.6); b.arc(x, baseY - s * 1.6, s * 0.5, 0, Math.PI, true); b.closePath(); b.fill();
+  var s = h * 0.12, lw = Math.max(1.2, s * 0.05), col = '#5a5488', line = '#2a2446';
+  artShadow(b, x, baseY + s * 0.02, s, s * 0.12, 0.2);
+  artRoundRect(b, x - s * 0.75, baseY - s * 1.6, s * 0.25, s * 1.6, s * 0.06, col, { lineColor: line, line: lw });
+  artRoundRect(b, x + s * 0.5, baseY - s * 1.6, s * 0.25, s * 1.6, s * 0.06, col, { lineColor: line, line: lw });
+  b.beginPath(); b.arc(x, baseY - s * 1.6, s * 0.75, Math.PI, 0); b.lineTo(x + s * 0.5, baseY - s * 1.6); b.arc(x, baseY - s * 1.6, s * 0.5, 0, Math.PI, true); b.closePath();
+  artFillPath(b, col, baseY - s * 2.35, baseY - s * 1.6, s * 0.75, { lineColor: line, line: lw });
+  artHighlight(b, x - s * 0.3, baseY - s * 2.2, s * 0.18, s * 0.06, 0.25);
 }
 
-function drawGlowBug(c, x, y, s, lit, t) {
-  if (lit) {
-    var g = c.createRadialGradient(x, y, s * 0.2, x, y, s * 2.2);
-    g.addColorStop(0, 'rgba(220,255,140,0.9)');
-    g.addColorStop(1, 'rgba(220,255,140,0)');
-    c.fillStyle = g;
-    c.beginPath(); c.arc(x, y, s * 2.2, 0, Math.PI * 2); c.fill();
+// Tökättävät koristeet: kolme lähikuusta ja kaksi hehkusientä piirretään joka
+// ruudulla taustan sijaan. Paikat samat kuin taustassa; kutsutaan myös resize-koukusta.
+function nwProps() {
+  var i, idx, h = viewH;
+  propsReset();
+  for (i = 0; i < NW_PINE_IDX.length; i++) {
+    idx = NW_PINE_IDX[i];
+    propAdd({
+      x: worldW * (0.04 + idx * 0.1), y: groundTop - h * 0.01, s: h * (0.18 + (idx % 3) * 0.04),
+      r: h * 0.08, hy: h * (0.18 + (idx % 3) * 0.04) * 0.6, amp: 0.06, color: '#7fd4ff', note: 380 + idx * 40,
+      pine: idx % 2 ? '#1a2a58' : '#243868',
+      draw: function (c, p) { drawPine(c, 0, 0, p.s, p.pine); },
+      poke: nwPinePoke
+    });
   }
-  c.fillStyle = 'rgba(255,255,255,0.5)';
+  for (i = 0; i < NW_SHROOM_IDX.length; i++) {
+    idx = NW_SHROOM_IDX[i];
+    propAdd({
+      x: (idx * 311.7) % worldW, y: idx % 2 ? groundTop + h * 0.02 : groundBottom - h * 0.01,
+      r: h * 0.05, hy: h * 0.02, amp: 0.2, color: '#7fd4ff', note: 880,
+      draw: function (c, p) { nwDrawMushroom(c, 0, 0, h, p.t >= 0 && p.t < 0.5 ? 0.9 : 0.45); },
+      poke: function (p) { spawnSparkles(p.x, p.y - h * 0.03, 8, '#bfe8ff'); }
+    });
+  }
+}
+
+// Kuusesta putoaa käpy; joka viides tökkäys herättää piilopöllön latvasta (yllätys)
+function nwPinePoke(p) {
+  var h = viewH;
+  propDropBall(p.x + (Math.random() - 0.5) * p.s * 0.4, p.y - p.s * 0.5, p.s * 0.045, '#6b4a2a', p.y + h * 0.02);
+  if (p.n % 5 === 0 && !nwHiddenOwl) {
+    nwHiddenOwl = { x: p.x, y: p.y - p.s * 0.78, t: 0 };
+    playNote(294, 0.4, 0.25, 'sine', 0.3);
+    playNote(247, 0.7, 0.35, 'sine', 0.3);
+  }
+}
+
+// Piilopöllö: pieni pää kurkistaa latvasta, räpäyttää silmiään ja katoaa
+function nwDrawHiddenOwl(c) {
+  var o = nwHiddenOwl;
+  if (!o) return;
+  var x = o.x - camX, s = viewH * 0.02, k = o.t > 2.7 ? 1 - (o.t - 2.7) / 0.5 : easeOutBack(o.t / 0.4);
+  var y = o.y + (1 - k) * s * 2, blink = o.t > 1.2 && o.t < 1.4;
+  if (x < -s * 4 || x > viewW + s * 4) return;
+  artBlob(c, x, y, s * 0.9, s * 0.8, '#8a6a44', { lineColor: '#3a2a1a' });
+  c.beginPath(); c.moveTo(x - s * 0.7, y - s * 0.4); c.lineTo(x - s * 0.5, y - s * 1.1); c.lineTo(x - s * 0.15, y - s * 0.6); c.closePath();
+  artFillPath(c, '#8a6a44', y - s * 1.1, y - s * 0.4, s * 0.3, { lineColor: '#3a2a1a' });
+  c.beginPath(); c.moveTo(x + s * 0.7, y - s * 0.4); c.lineTo(x + s * 0.5, y - s * 1.1); c.lineTo(x + s * 0.15, y - s * 0.6); c.closePath();
+  artFillPath(c, '#8a6a44', y - s * 1.1, y - s * 0.4, s * 0.3, { lineColor: '#3a2a1a' });
+  artEye(c, x - s * 0.33, y - s * 0.1, s * 0.3, 0, blink);
+  artEye(c, x + s * 0.33, y - s * 0.1, s * 0.3, 0, blink);
+  c.fillStyle = '#ffb84f';
+  c.beginPath(); c.moveTo(x - s * 0.12, y + s * 0.2); c.lineTo(x + s * 0.12, y + s * 0.2); c.lineTo(x, y + s * 0.42); c.closePath(); c.fill();
+}
+
+// Kiiltomato: hehku, siivet (laventeliin varjostettu valkoinen), vartalo ja pää
+function drawGlowBug(c, x, y, s, lit, t) {
+  if (lit) artGlow(c, x, y, s * 2.2, '#dcff8c', 0.9);
+  c.fillStyle = 'rgba(255,255,255,0.55)';
+  c.strokeStyle = 'rgba(200,190,230,0.7)';
+  c.lineWidth = Math.max(1, s * 0.08);
   c.beginPath();
   if (c.ellipse) { c.ellipse(x - s * 0.5, y - s * 0.4, s * 0.55, s * 0.25, -0.5 + Math.sin(t * 20) * 0.2, 0, Math.PI * 2); c.ellipse(x + s * 0.5, y - s * 0.4, s * 0.55, s * 0.25, 0.5 - Math.sin(t * 20) * 0.2, 0, Math.PI * 2); }
   else { c.arc(x - s * 0.5, y - s * 0.4, s * 0.3, 0, Math.PI * 2); c.arc(x + s * 0.5, y - s * 0.4, s * 0.3, 0, Math.PI * 2); }
   c.fill();
-  c.fillStyle = lit ? '#e8ff7a' : '#4a5570';
-  c.beginPath(); c.arc(x, y + s * 0.15, s * 0.42, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#2a2a3a';
-  c.beginPath(); c.arc(x, y - s * 0.3, s * 0.3, 0, Math.PI * 2); c.fill();
+  c.stroke();
+  artCircle(c, x, y + s * 0.15, s * 0.42, lit ? '#e8ff7a' : '#4a5570', { lineColor: lit ? '#8a9a2a' : '#262c3c', hi: 0.4 });
+  artCircle(c, x, y - s * 0.3, s * 0.3, '#3a3a4e', { lineColor: '#1a1a24', hi: 0.3 });
 }
 
+// Pöllö: oksa, siivet (syöksyssä), vartalo, vatsa, korvatupsut, silmät ja nokka.
+// Tökättynä (o.pokeT) nukkuva pöllö avaa silmänsä hetkeksi ja kohottautuu.
 function drawNightOwl(c, o) {
-  var x = o.x - camX, y = o.y, s = viewH * 0.045;
+  var x = o.x - camX, y = o.y, s = viewH * 0.045, line = '#3a2a1a', body = '#8a6a44';
   if (x < -s * 4 || x > viewW + s * 4) return;
-  var awake = o.state !== 'sleep';
+  var poke = o.pokeT > 0 ? Math.sin(Math.min(1, o.pokeT / 0.9) * Math.PI) : 0;
+  var awake = o.state !== 'sleep' || poke > 0.15;
   c.save();
-  c.translate(x, y);
+  c.translate(x, y - poke * s * 0.25);
   if (o.state === 'dive') {
-    c.fillStyle = '#6b4a2a';
-    c.beginPath(); c.moveTo(-s * 0.5, 0); c.lineTo(-s * 1.9, -s * 0.8); c.lineTo(-s * 0.6, s * 0.5); c.closePath(); c.fill();
-    c.beginPath(); c.moveTo(s * 0.5, 0); c.lineTo(s * 1.9, -s * 0.8); c.lineTo(s * 0.6, s * 0.5); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(-s * 0.5, 0); c.lineTo(-s * 1.9, -s * 0.8); c.lineTo(-s * 0.6, s * 0.5); c.closePath();
+    artFillPath(c, '#6b4a2a', -s * 0.8, s * 0.5, s * 0.6, { lineColor: line });
+    c.beginPath(); c.moveTo(s * 0.5, 0); c.lineTo(s * 1.9, -s * 0.8); c.lineTo(s * 0.6, s * 0.5); c.closePath();
+    artFillPath(c, '#6b4a2a', -s * 0.8, s * 0.5, s * 0.6, { lineColor: line });
   }
-  c.fillStyle = '#8a6a44';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(0, 0, s * 0.75, s, 0, 0, Math.PI * 2);
-  else c.arc(0, 0, s * 0.85, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = '#c9a97a';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(0, s * 0.25, s * 0.45, s * 0.6, 0, 0, Math.PI * 2);
-  else c.arc(0, s * 0.25, s * 0.5, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = '#8a6a44';
-  c.beginPath(); c.moveTo(-s * 0.6, -s * 0.6); c.lineTo(-s * 0.4, -s * 1.15); c.lineTo(-s * 0.1, -s * 0.7); c.closePath(); c.fill();
-  c.beginPath(); c.moveTo(s * 0.6, -s * 0.6); c.lineTo(s * 0.4, -s * 1.15); c.lineTo(s * 0.1, -s * 0.7); c.closePath(); c.fill();
+  artBlob(c, 0, 0, s * 0.75, s, body, { lineColor: line });
+  artBlob(c, 0, s * 0.25, s * 0.45, s * 0.6, '#c9a97a', { lineColor: '#7a5a34', line: Math.max(1, s * 0.05) });
+  c.beginPath(); c.moveTo(-s * 0.6, -s * 0.6); c.lineTo(-s * 0.4, -s * 1.15); c.lineTo(-s * 0.1, -s * 0.7); c.closePath();
+  artFillPath(c, body, -s * 1.15, -s * 0.6, s * 0.3, { lineColor: line });
+  c.beginPath(); c.moveTo(s * 0.6, -s * 0.6); c.lineTo(s * 0.4, -s * 1.15); c.lineTo(s * 0.1, -s * 0.7); c.closePath();
+  artFillPath(c, body, -s * 1.15, -s * 0.6, s * 0.3, { lineColor: line });
   if (awake) {
     var glow = o.state === 'hoot' ? 0.6 + Math.sin(globalT * 16) * 0.4 : 1;
     c.fillStyle = 'rgba(255,230,120,' + glow + ')';
-    c.beginPath(); c.arc(-s * 0.3, -s * 0.35, s * 0.3, 0, Math.PI * 2); c.fill();
-    c.beginPath(); c.arc(s * 0.3, -s * 0.35, s * 0.3, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = line;
+    c.lineWidth = Math.max(1.2, s * 0.06);
+    c.beginPath(); c.arc(-s * 0.3, -s * 0.35, s * 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
+    c.beginPath(); c.arc(s * 0.3, -s * 0.35, s * 0.3, 0, Math.PI * 2); c.fill(); c.stroke();
     c.fillStyle = '#222';
     c.beginPath(); c.arc(-s * 0.3, -s * 0.35, s * 0.13, 0, Math.PI * 2); c.fill();
     c.beginPath(); c.arc(s * 0.3, -s * 0.35, s * 0.13, 0, Math.PI * 2); c.fill();
+    artHighlight(c, -s * 0.36, -s * 0.42, s * 0.06, s * 0.04, 0.6);
+    artHighlight(c, s * 0.24, -s * 0.42, s * 0.06, s * 0.04, 0.6);
   } else {
-    c.strokeStyle = '#3a2a1a';
+    c.strokeStyle = line;
     c.lineWidth = Math.max(1.5, s * 0.1);
+    c.lineCap = 'round';
     c.beginPath(); c.arc(-s * 0.3, -s * 0.35, s * 0.25, 0.2, Math.PI - 0.2); c.stroke();
     c.beginPath(); c.arc(s * 0.3, -s * 0.35, s * 0.25, 0.2, Math.PI - 0.2); c.stroke();
   }
-  c.fillStyle = '#ffb84f';
-  c.beginPath(); c.moveTo(-s * 0.12, -s * 0.1); c.lineTo(s * 0.12, -s * 0.1); c.lineTo(0, s * 0.12); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(-s * 0.12, -s * 0.1); c.lineTo(s * 0.12, -s * 0.1); c.lineTo(0, s * 0.12); c.closePath();
+  artFillPath(c, '#ffb84f', -s * 0.1, s * 0.12, s * 0.12, { lineColor: '#9a6a1a', line: Math.max(1, s * 0.04) });
   c.restore();
   // Oksa
-  if (o.state !== 'dive') {
-    c.strokeStyle = '#3a2a1a';
-    c.lineWidth = Math.max(3, s * 0.2);
-    c.beginPath(); c.moveTo(x - s * 1.6, y + s * 1.05); c.lineTo(x + s * 1.6, y + s * 0.95); c.stroke();
-  }
+  if (o.state !== 'dive') artLimb(c, x - s * 1.6, y + s * 1.05, x + s * 1.6, y + s * 0.95, s * 0.2, '#5a3f26', line);
 }
 
 function drawMoonGateGlow(c) {
@@ -371,6 +456,8 @@ function drawMoonGateGlow(c) {
 function drawNightwood() {
   var i;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
+  nwDrawHiddenOwl(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   drawMoonGateGlow(ctx);
