@@ -111,13 +111,76 @@ function initMine() {
   mine.shakeT = 0;
   mine.lampT = 0;
   mineLayout();
+  mineSetupProps();
   renderBackground();
   playNote(330, 0, 0.25, 'triangle', 0.3);
   playNote(494, 0.14, 0.3, 'triangle', 0.3);
 }
 
 function respawnMine() {}
-function resizeMine() { mineLayout(); }
+function resizeMine() { mineLayout(); mineSetupProps(); }
+
+// Tökättävät koristeet tukipalkilla ruudukon yläpuolella: kaivosvaunu (joka
+// kolmas tökkäys pudottaa kultaisen jalokiven) ja nukkuva lepakko (viides
+// tökkäys herättää sen silmänisku ja lepatus).
+function mineSetupProps() {
+  var h = viewH, vw = viewW;
+  propsReset();
+  propAdd({
+    x: vw * 0.86, y: h * 0.145, r: h * 0.05, hy: h * 0.03, color: '#ffd24f', note: 440, amp: 0.06,
+    draw: function (c, p) {
+      var s = h * 0.03, roll = p.t >= 0 ? Math.sin(p.t * 10) * Math.exp(-p.t * 3) * s * 0.4 : 0, gold = p.t >= 0 && p.n % 3 === 0;
+      c.save();
+      c.translate(roll, 0);
+      artCircle(c, -s * 0.6, -s * 0.2, s * 0.26, '#4a3a2a', { lineColor: '#2a1a10' });
+      artCircle(c, s * 0.6, -s * 0.2, s * 0.26, '#4a3a2a', { lineColor: '#2a1a10' });
+      c.beginPath(); c.moveTo(-s * 1.1, -s * 1.3); c.lineTo(s * 1.1, -s * 1.3); c.lineTo(s * 0.8, -s * 0.35); c.lineTo(-s * 0.8, -s * 0.35); c.closePath();
+      artFillPath(c, '#8a6a4a', -s * 1.3, -s * 0.35, s * 0.9, { lineColor: '#4a3020' });
+      drawGem(c, -s * 0.35, -s * 1.35, s * 0.32, GEM_COLORS[0]);
+      drawGem(c, s * 0.3, -s * 1.4, s * 0.3, GEM_COLORS[2]);
+      c.restore();
+      if (gold) {
+        var k = Math.min(1, p.t / 1.4);
+        artGlow(c, s * 1.6, -s * 2.0 - k * s * 1.2, s * 0.8, '#ffe27a', 0.6 * (1 - k));
+        drawGem(c, s * 1.6, -s * 2.0 - k * s * 1.2, s * 0.4, '#ffd24f');
+      }
+    },
+    poke: function (p) {
+      playNote(330, 0, 0.1, 'square', 0.12);
+      if (p.n % 3 === 0) { playNote(1319, 0.1, 0.2, 'sine', 0.3); playNote(1760, 0.2, 0.3, 'sine', 0.25); }
+    }
+  });
+  propAdd({
+    x: vw * 0.68, y: h * 0.165, r: h * 0.05, hy: -h * 0.04, color: '#c9a0ff', note: 1760, amp: 0.1,
+    draw: function (c, p) {
+      var s = h * 0.022, awake = p.t >= 0, flap = awake ? Math.sin(p.t * 30) * 0.5 : 0, wink = awake && p.n % 5 === 0;
+      // Roikkuu palkista pää alaspäin: jalat, siivet kääreenä, pää
+      artLimb(c, -s * 0.3, 0, -s * 0.2, s * 0.6, Math.max(1.5, s * 0.15), '#5a4a7a', '#2e2440');
+      artLimb(c, s * 0.3, 0, s * 0.2, s * 0.6, Math.max(1.5, s * 0.15), '#5a4a7a', '#2e2440');
+      artBlob(c, -s * 0.9 - flap * s, s * 1.6, s * 0.8, s * 1.1, '#6a5a9a', { lineColor: '#2e2440', rot: -0.3 - flap });
+      artBlob(c, s * 0.9 + flap * s, s * 1.6, s * 0.8, s * 1.1, '#6a5a9a', { lineColor: '#2e2440', rot: 0.3 + flap });
+      artBlob(c, 0, s * 1.5, s * 0.75, s * 1.0, '#7a6aa8', { lineColor: '#2e2440', hi: 0.25 });
+      artCircle(c, 0, s * 2.5, s * 0.6, '#8a7ab8', { lineColor: '#2e2440' });
+      c.beginPath(); c.moveTo(-s * 0.5, s * 2.2); c.lineTo(-s * 0.7, s * 1.5); c.lineTo(-s * 0.2, s * 2.0); c.closePath();
+      artFillPath(c, '#8a7ab8', s * 1.5, s * 2.2, s * 0.3, { lineColor: '#2e2440' });
+      c.beginPath(); c.moveTo(s * 0.5, s * 2.2); c.lineTo(s * 0.7, s * 1.5); c.lineTo(s * 0.2, s * 2.0); c.closePath();
+      artFillPath(c, '#8a7ab8', s * 1.5, s * 2.2, s * 0.3, { lineColor: '#2e2440' });
+      artEye(c, -s * 0.22, s * 2.55, s * 0.14, 0, !awake || wink);
+      artEye(c, s * 0.22, s * 2.55, s * 0.14, 0, !awake);
+      if (!awake) {
+        c.fillStyle = 'rgba(255,255,255,0.7)';
+        c.font = 'bold ' + Math.round(s * 0.9) + 'px ' + UI_FONT;
+        c.textAlign = 'center';
+        c.fillText('z', s * 1.3, s * 1.0 - Math.sin(globalT * 2) * s * 0.3);
+      }
+    },
+    poke: function (p) {
+      playNote(1760, 0, 0.06, 'square', 0.08);
+      playNote(2200, 0.05, 0.06, 'square', 0.06);
+      if (p.n % 5 === 0) playNote(1047, 0.15, 0.2, 'sine', 0.2);
+    }
+  });
+}
 
 function mineBonk(cell) {
   mine.shakeT = 0.35;
@@ -132,7 +195,7 @@ function mineBonk(cell) {
 function handleMineTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
   var cell = mineCellAt(px, py);
-  if (!cell) return;
+  if (!cell) { propsTap(px, py); return; }
   var t = mine.grid[cell.r][cell.c];
   if (t.rock) { mineBonk(cell); return; }
   if (t.exit && !mine.open) {
@@ -178,6 +241,7 @@ function updateMine(dt) {
   var busy = puzzleBusy();
   if (mine.shakeT > 0) mine.shakeT -= dt;
   mine.lampT += dt;
+  propsUpdate(dt);
 
   // Avattu arkku tyhjenee
   for (i = 0; i < mine.rows; i++) {
@@ -270,27 +334,20 @@ function renderMineMid(b, w, h) {
   }
 }
 function renderMineNear(b, w, h) {
-  var i, x, vw = viewW;
-  b.fillStyle = '#5a3a1e';
-  b.fillRect(0, h * 0.145, vw, h * 0.02);
+  var i, x, vw = viewW, lw = Math.max(1.2, h * 0.003);
   for (i = 0; i < 9; i++) {
     x = vw * (0.04 + i * 0.115);
-    b.fillRect(x - h * 0.01, h * 0.145, h * 0.02, h * 0.035);
+    artRoundRect(b, x - h * 0.01, h * 0.145, h * 0.02, h * 0.035, h * 0.004, '#5a3a1e', { lineColor: '#2e1a0a', line: lw });
   }
+  artRoundRect(b, -h * 0.01, h * 0.145, vw + h * 0.02, h * 0.02, h * 0.005, '#6a4a2a', { lineColor: '#2e1a0a', line: lw });
   // Ruudukon kehys
-  b.fillStyle = '#4a3a2a';
-  roundRect(b, mine.ox - mine.cell * 0.12, mine.oy - mine.cell * 0.12, mine.cell * mine.cols + mine.cell * 0.24, mine.cell * mine.rows + mine.cell * 0.24, mine.cell * 0.15);
-  b.fill();
+  artRoundRect(b, mine.ox - mine.cell * 0.12, mine.oy - mine.cell * 0.12, mine.cell * mine.cols + mine.cell * 0.24, mine.cell * mine.rows + mine.cell * 0.24, mine.cell * 0.15, '#4a3a2a', { lineColor: '#241a10', line: lw });
 }
 
 function drawMineTile(c, t, x, y, s, shake) {
   var i, sx = x + shake;
   if (t.rock) {
-    c.fillStyle = '#6b6478';
-    roundRect(c, sx - s * 0.48, y - s * 0.48, s * 0.96, s * 0.96, s * 0.22);
-    c.fill();
-    c.fillStyle = 'rgba(255,255,255,0.18)';
-    c.beginPath(); c.arc(sx - s * 0.15, y - s * 0.15, s * 0.18, 0, Math.PI * 2); c.fill();
+    artRoundRect(c, sx - s * 0.48, y - s * 0.48, s * 0.96, s * 0.96, s * 0.22, '#6b6478', { lineColor: '#3a3346', hi: 0.2 });
     c.fillStyle = 'rgba(0,0,0,0.2)';
     c.beginPath(); c.arc(sx + s * 0.18, y + s * 0.15, s * 0.14, 0, Math.PI * 2); c.fill();
     return;
@@ -298,15 +355,22 @@ function drawMineTile(c, t, x, y, s, shake) {
   if (t.exit) {
     c.fillStyle = '#2a1a10';
     c.fillRect(sx - s * 0.5, y - s * 0.5, s, s);
-    c.fillStyle = mine.open ? 'rgba(255,240,180,' + (0.75 + Math.sin(globalT * 4) * 0.2) + ')' : '#4a3020';
     c.beginPath();
     c.moveTo(sx - s * 0.3, y + s * 0.48);
     c.lineTo(sx - s * 0.3, y - s * 0.1);
     c.arc(sx, y - s * 0.1, s * 0.3, Math.PI, 0);
     c.lineTo(sx + s * 0.3, y + s * 0.48);
     c.closePath();
-    c.fill();
-    if (!mine.open) drawHubLock(c, sx, y + s * 0.05, s * 0.5);
+    if (mine.open) {
+      c.fillStyle = 'rgba(255,240,180,' + (0.75 + Math.sin(globalT * 4) * 0.2) + ')';
+      c.fill();
+      c.strokeStyle = '#b8862a';
+      c.lineWidth = Math.max(1.2, s * 0.04);
+      c.stroke();
+    } else {
+      artFillPath(c, '#5a3a24', y - s * 0.4, y + s * 0.48, s * 0.3, { lineColor: '#2a1a10' });
+      drawHubLock(c, sx, y + s * 0.05, s * 0.5);
+    }
     return;
   }
   if (t.dug) {
@@ -329,14 +393,9 @@ function drawMineTile(c, t, x, y, s, shake) {
   c.lineWidth = 1;
   c.strokeRect(sx - s * 0.5, y - s * 0.5, s, s);
   if (t.chest >= 0) {
-    c.fillStyle = '#8a5a30';
-    roundRect(c, sx - s * 0.3, y - s * 0.12, s * 0.6, s * 0.36, s * 0.06);
-    c.fill();
-    c.fillStyle = '#5a3416';
-    roundRect(c, sx - s * 0.32, y - s * 0.28, s * 0.64, s * 0.2, s * 0.08);
-    c.fill();
-    c.fillStyle = '#ffd24f';
-    c.fillRect(sx - s * 0.05, y - s * 0.1, s * 0.1, s * 0.14);
+    artRoundRect(c, sx - s * 0.3, y - s * 0.12, s * 0.6, s * 0.36, s * 0.06, '#a9743f', { lineColor: '#4a2a10' });
+    artRoundRect(c, sx - s * 0.32, y - s * 0.28, s * 0.64, s * 0.2, s * 0.08, '#8a5a30', { lineColor: '#4a2a10' });
+    artRoundRect(c, sx - s * 0.06, y - s * 0.12, s * 0.12, s * 0.16, s * 0.03, '#ffd24f', { lineColor: '#b8862a' });
     drawStar(c, sx + s * 0.3, y - s * 0.32, s * 0.09, globalT * 2, 0.6);
   }
 }
@@ -357,12 +416,9 @@ function drawMinePrincess(c) {
     c.translate(p.x + p.facing * mine.cell * 0.22, p.y - mine.cell * 0.05);
     c.scale(p.facing, 1);
     c.rotate(a);
-    c.strokeStyle = '#8a5a30';
-    c.lineWidth = Math.max(2, mine.cell * 0.05);
-    c.lineCap = 'round';
-    c.beginPath(); c.moveTo(0, 0); c.lineTo(0, -mine.cell * 0.42); c.stroke();
-    c.fillStyle = '#b8b8c8';
-    c.beginPath(); c.moveTo(-mine.cell * 0.2, -mine.cell * 0.42); c.lineTo(mine.cell * 0.2, -mine.cell * 0.42); c.lineTo(0, -mine.cell * 0.3); c.closePath(); c.fill();
+    artLimb(c, 0, 0, 0, -mine.cell * 0.42, Math.max(2, mine.cell * 0.05), '#a9743f', '#5a3a1e');
+    c.beginPath(); c.moveTo(-mine.cell * 0.2, -mine.cell * 0.42); c.lineTo(mine.cell * 0.2, -mine.cell * 0.42); c.lineTo(0, -mine.cell * 0.3); c.closePath();
+    artFillPath(c, '#c8c8d8', -mine.cell * 0.42, -mine.cell * 0.3, mine.cell * 0.15, { lineColor: '#5a5a70' });
     c.restore();
   }
 }
@@ -386,6 +442,7 @@ function drawMine() {
   dg.addColorStop(1, 'rgba(5,4,20,0.55)');
   ctx.fillStyle = dg;
   ctx.fillRect(0, 0, viewW, viewH);
+  propsDraw(ctx);
   for (r = 0; r < mine.rows; r++) {
     for (k = 0; k < mine.cols; k++) {
       t = mine.grid[r][k];

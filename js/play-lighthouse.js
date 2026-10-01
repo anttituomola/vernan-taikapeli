@@ -48,6 +48,7 @@ function initLighthouse() {
   lh.misses = 0;
   for (i = 0; i < lh.bunnies.length; i++) lh.bunnies[i].hop = 0;
   lhLayout();
+  lhSetupProps();
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(784, 0.14, 0.3, 'triangle', 0.35);
@@ -56,7 +57,62 @@ function initLighthouse() {
 function respawnLighthouse() {}
 function resizeLighthouse() {
   lhLayout();
+  lhSetupProps();
   if (lh.falling) { lh.falling.x = Math.min(Math.max(lh.falling.x, 0), viewW - lh.bw); lh.falling.w = lh.bw; }
+}
+
+// Tökättävät koristeet: poiju meressä (kello soi), lokki nosturin palkilla
+// (joka kolmas tökkäys pudottaa sulan) ja hurraavat puput laitureilla.
+function lhSetupProps() {
+  var h = viewH, vw = viewW, i;
+  propsReset();
+  propAdd({
+    x: vw * 0.06, y: h * 0.93, r: h * 0.05, hy: h * 0.05, color: '#ff6a5a', note: 988, amp: 0.2,
+    draw: function (c, p) {
+      var s = h * 0.03, bob = Math.sin(globalT * 2.2) * s * 0.15;
+      artBlob(c, 0, bob, s * 1.1, s * 0.3, '#7ec8e8', { line: false, alpha: 0.4 });
+      artBlob(c, 0, bob - s * 0.3, s * 0.9, s * 0.5, '#ff6a5a', { lineColor: '#b03a2a', hi: 0.3 });
+      artRoundRect(c, -s * 0.12, bob - s * 1.9, s * 0.24, s * 1.6, s * 0.08, '#8a5a30', { lineColor: '#4a2a10' });
+      artCircle(c, 0, bob - s * 1.95, s * 0.25, '#ffd24f', { lineColor: '#b8862a', hi: 0.4 });
+      if (p.t >= 0) artGlow(c, 0, bob - s * 1.95, s * 0.6, '#ffe27a', 0.5 * Math.max(0, 1 - p.t));
+    },
+    poke: function () { playNote(1319, 0, 0.3, 'sine', 0.25); playNote(1760, 0.12, 0.35, 'sine', 0.18); }
+  });
+  propAdd({
+    x: vw * 0.93, y: h * 0.05, r: h * 0.05, hy: h * 0.02, color: '#ffffff', note: 1568, amp: 0.1,
+    draw: function (c, p) {
+      var s = h * 0.022, fly = p.t >= 0, k = fly ? Math.min(1, p.t / 1.4) : 0, lift = fly ? Math.sin(k * Math.PI) * s * 2.5 : 0;
+      var wing = fly ? Math.sin(p.t * 25) * 0.8 : 0.1, feather = fly && p.n % 3 === 0;
+      c.save();
+      c.translate(0, -lift);
+      artBlob(c, -s * 1.0, -s * 0.9, s * 0.9, s * 0.3, '#e8e8f0', { lineColor: '#9aa0b8', rot: -0.5 - wing });
+      artBlob(c, s * 1.0, -s * 0.9, s * 0.9, s * 0.3, '#e8e8f0', { lineColor: '#9aa0b8', rot: 0.5 + wing });
+      artBlob(c, 0, -s * 0.8, s * 0.9, s * 0.6, '#ffffff', { lineColor: '#9aa0b8', shadeTo: '#dcdce8', hi: 0.35 });
+      artCircle(c, s * 0.7, -s * 1.4, s * 0.4, '#ffffff', { lineColor: '#9aa0b8', shadeTo: '#dcdce8' });
+      artBlob(c, s * 1.15, -s * 1.35, s * 0.25, s * 0.12, '#ffb300', { lineColor: '#b87a00' });
+      artEye(c, s * 0.75, -s * 1.5, s * 0.1, 0.4, false);
+      artLimb(c, -s * 0.2, -s * 0.3, -s * 0.2, 0, Math.max(1, s * 0.1), '#ffb300', '#b87a00');
+      artLimb(c, s * 0.2, -s * 0.3, s * 0.2, 0, Math.max(1, s * 0.1), '#ffb300', '#b87a00');
+      c.restore();
+      if (feather) {
+        var fy = k * h * 0.5, fx = Math.sin(k * 7) * s * 1.5;
+        c.globalAlpha = 1 - k * 0.6;
+        artBlob(c, fx - s * 2, fy, s * 0.7, s * 0.22, '#f4f4ff', { lineColor: '#b0b4cc', rot: 0.4 + Math.sin(k * 7) * 0.5 });
+        c.globalAlpha = 1;
+      }
+    },
+    poke: function (p) {
+      playNote(1760, 0, 0.08, 'square', 0.08);
+      playNote(2093, 0.08, 0.1, 'square', 0.08);
+    }
+  });
+  for (i = 0; i < lh.bunnies.length; i++) {
+    propAdd({
+      x: vw * lh.bunnies[i].fx, y: lh.baseY + h * 0.02, r: h * 0.06, hy: h * 0.05, color: '#ff9ec6', note: 1047 + i * 120, idx: i,
+      draw: function () {},
+      poke: function (p) { lh.bunnies[p.idx].hop = 1; }
+    });
+  }
 }
 
 function lhTopY() {
@@ -64,7 +120,10 @@ function lhTopY() {
 }
 
 function handleLighthouseTap(px, py) {
-  if (!running || celebrating || puzzleBusy() || lh.phase !== 'swing') return;
+  if (!running || celebrating || puzzleBusy()) return;
+  // Koristeet reunoilla eivät pudota palikkaa
+  if (propsTap(px, py)) return;
+  if (lh.phase !== 'swing') return;
   var h = lhHook();
   lh.falling = { x: h.x - lh.bw / 2, y: h.y, vy: 0, w: lh.bw, lamp: lh.stack.length >= LH_BLOCKS };
   lh.phase = 'drop';
@@ -138,6 +197,7 @@ function updateLighthouse(dt) {
     }
   }
   for (i = 0; i < lh.stack.length; i++) if (lh.stack[i].squish > 0) lh.stack[i].squish -= dt;
+  propsUpdate(dt);
   for (i = 0; i < lh.bunnies.length; i++) if (lh.bunnies[i].hop > 0) lh.bunnies[i].hop = Math.max(0, lh.bunnies[i].hop - dt * 2.5);
   if (lh.lit) lh.beamA += dt * 1.2;
   if (lh.finishT > 0 && !celebrating) {
@@ -189,25 +249,20 @@ function renderLighthouseMid(b, w, h) {
   for (i = 0; i < 24; i++) b.fillRect((i * 173.3) % vw, seaY + h * 0.02 + ((i * 41) % Math.round(h * 0.18)), vw * 0.03, Math.max(1, h * 0.003));
 }
 function renderLighthouseNear(b, w, h) {
-  var i, vw = viewW;
-  b.fillStyle = '#6b6478';
+  var i, vw = viewW, lw = Math.max(1.2, h * 0.003);
   b.beginPath();
   b.moveTo(vw * 0.5 - lh.base.w * 1.6, h);
   b.quadraticCurveTo(vw * 0.5 - lh.base.w * 1.2, lh.baseY - h * 0.01, vw * 0.5, lh.baseY - h * 0.02);
   b.quadraticCurveTo(vw * 0.5 + lh.base.w * 1.2, lh.baseY - h * 0.01, vw * 0.5 + lh.base.w * 1.6, h);
-  b.closePath(); b.fill();
-  b.fillStyle = '#8a8298';
-  roundRect(b, lh.base.x, lh.baseY - h * 0.005, lh.base.w, h * 0.05, h * 0.012);
-  b.fill();
+  b.closePath();
+  artFillPath(b, '#6b6478', lh.baseY - h * 0.02, h, h * 0.1, { lineColor: '#3a3346', line: lw });
+  artRoundRect(b, lh.base.x, lh.baseY - h * 0.005, lh.base.w, h * 0.05, h * 0.012, '#8a8298', { lineColor: '#4a4458', line: lw });
   // Nosturin palkki
-  b.fillStyle = '#5a4a3a';
-  b.fillRect(0, h * 0.05, vw, h * 0.022);
-  b.fillStyle = '#7a6a5a';
-  for (i = 0; i < 12; i++) b.fillRect(vw * (i / 12) + h * 0.01, h * 0.072, h * 0.012, h * 0.02);
+  artRoundRect(b, -h * 0.01, h * 0.05, vw + h * 0.02, h * 0.022, h * 0.005, '#5a4a3a', { lineColor: '#2e2218', line: lw });
+  for (i = 0; i < 12; i++) artRoundRect(b, vw * (i / 12) + h * 0.01, h * 0.072, h * 0.012, h * 0.02, h * 0.003, '#7a6a5a', { lineColor: '#2e2218', line: lw });
   // Laiturit pupuille
-  b.fillStyle = '#a9743f';
-  b.fillRect(vw * 0.08, lh.baseY + h * 0.02, vw * 0.16, h * 0.02);
-  b.fillRect(vw * 0.76, lh.baseY + h * 0.02, vw * 0.16, h * 0.02);
+  artRoundRect(b, vw * 0.08, lh.baseY + h * 0.02, vw * 0.16, h * 0.02, h * 0.005, '#a9743f', { lineColor: '#5a3a1e', line: lw });
+  artRoundRect(b, vw * 0.76, lh.baseY + h * 0.02, vw * 0.16, h * 0.02, h * 0.005, '#a9743f', { lineColor: '#5a3a1e', line: lw });
 }
 
 function drawLhBlock(c, x, y, w, hh, idx, squish) {
@@ -215,31 +270,19 @@ function drawLhBlock(c, x, y, w, hh, idx, squish) {
   var yy = y + sq * hh * 0.15, hh2 = hh - sq * hh * 0.15;
   c.fillStyle = 'rgba(0,0,0,0.15)';
   c.fillRect(x + 3, yy + 4, w, hh2);
-  c.fillStyle = red ? '#ff5f5f' : '#ffffff';
-  roundRect(c, x, yy, w, hh2, hh * 0.15);
-  c.fill();
-  c.fillStyle = red ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)';
-  c.fillRect(x + w * 0.06, yy + hh2 * 0.12, w * 0.88, hh2 * 0.18);
-  if (!red) {
-    c.fillStyle = '#7fd4ff';
-    roundRect(c, x + w / 2 - w * 0.09, yy + hh2 * 0.3, w * 0.18, hh2 * 0.5, w * 0.05);
-    c.fill();
-    c.strokeStyle = '#3a3346';
-    c.lineWidth = Math.max(1, hh * 0.03);
-    c.stroke();
-  }
+  artRoundRect(c, x, yy, w, hh2, hh * 0.15, red ? '#ff5f5f' : '#ffffff', { lineColor: red ? '#a82a2a' : '#8a8298', shadeTo: red ? undefined : '#dcdce8', line: Math.max(1.2, hh * 0.04) });
+  artHighlight(c, x + w * 0.2, yy + hh2 * 0.25, w * 0.14, hh2 * 0.12, 0.45);
+  if (!red) artRoundRect(c, x + w / 2 - w * 0.09, yy + hh2 * 0.3, w * 0.18, hh2 * 0.5, w * 0.05, '#7fd4ff', { lineColor: '#3a3346', line: Math.max(1, hh * 0.03) });
 }
 
 function drawLhLamp(c, x, y, w, hh, lit) {
   // Lasikupu, lamppu ja katto
-  c.fillStyle = lit ? 'rgba(255,240,170,0.9)' : 'rgba(210,230,255,0.8)';
-  roundRect(c, x + w * 0.15, y, w * 0.7, hh, hh * 0.2);
-  c.fill();
-  c.fillStyle = '#3a3346';
-  c.fillRect(x + w * 0.1, y - hh * 0.05, w * 0.8, hh * 0.12);
-  c.beginPath(); c.moveTo(x + w * 0.1, y - hh * 0.05); c.lineTo(x + w * 0.9, y - hh * 0.05); c.lineTo(x + w * 0.5, y - hh * 0.55); c.closePath(); c.fill();
-  c.fillStyle = lit ? '#fff6c8' : '#8a8298';
-  c.beginPath(); c.arc(x + w / 2, y + hh * 0.55, hh * 0.28, 0, Math.PI * 2); c.fill();
+  artRoundRect(c, x + w * 0.15, y, w * 0.7, hh, hh * 0.2, lit ? '#fff0b0' : '#d2e6ff', { lineColor: '#3a3346', alpha: 0.9 });
+  artRoundRect(c, x + w * 0.1, y - hh * 0.05, w * 0.8, hh * 0.12, hh * 0.03, '#4a4458', { lineColor: '#1e1a28' });
+  c.beginPath(); c.moveTo(x + w * 0.1, y - hh * 0.05); c.lineTo(x + w * 0.9, y - hh * 0.05); c.lineTo(x + w * 0.5, y - hh * 0.55); c.closePath();
+  artFillPath(c, '#4a4458', y - hh * 0.55, y - hh * 0.05, w * 0.3, { lineColor: '#1e1a28' });
+  if (lit) artGlow(c, x + w / 2, y + hh * 0.55, hh * 0.9, '#ffe27a', 0.5);
+  artCircle(c, x + w / 2, y + hh * 0.55, hh * 0.28, lit ? '#fff6c8' : '#8a8298', { lineColor: lit ? '#d9a000' : '#4a4458', hi: 0.4 });
   c.fillStyle = '#3a3346';
   c.fillRect(x + w * 0.25, y + hh * 0.35, w * 0.04, hh * 0.65);
   c.fillRect(x + w * 0.71, y + hh * 0.35, w * 0.04, hh * 0.65);
@@ -304,6 +347,7 @@ function drawLighthouse() {
     else drawLhBlock(ctx, -tb.w / 2, -lh.bh / 2, tb.w, lh.bh, lh.stack.length, 0);
     ctx.restore();
   }
+  propsDraw(ctx);
   // Prinsessa katsoo laiturilta, puput hurraavat
   drawPrincessFree(ctx, viewW * 0.3, lh.baseY + viewH * 0.02, viewH / 620, 1, 0, false, globalT);
   for (i = 0; i < lh.bunnies.length; i++) {

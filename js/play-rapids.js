@@ -155,6 +155,7 @@ function initRapids(mode) {
   rapids.fish = [];
   for (i = 0; i < 4; i++) rapids.fish.push({ x: Math.random() * viewW, row: 1 + (i * 2) % Math.max(1, rapids.rows - 2), t: Math.random() * 6 });
   rapLayout();
+  rapSetupProps();
   checkpoint.x = rapids.p.x;
   checkpoint.y = rapRowY(0);
   renderBackground();
@@ -178,8 +179,50 @@ function respawnRapids() { rapReturn(); }
 function resizeRapids() {
   rapids.lanes = {};
   rapLayout();
+  rapSetupProps();
   rapids.p.x = Math.min(Math.max(rapids.p.x, 0), viewW);
   checkpoints[0].x = viewW * 0.5;
+}
+
+// Tökättävät koristeet rannoilla (eivät hyppäytä): kaksi puuta (lehtiä
+// varisee, viides tökkäys pudottaa omenan) ja ylärannan teltta (joka kolmas
+// tökkäys päästää pupun kurkkaamaan). Pilvikentässä (letters) ei rantoja.
+function rapSetupProps() {
+  var rh = rapids.rowH, vw = viewW, ty = rapRowY(rapTop()) + rh * 0.45, i;
+  propsReset();
+  if (rapSky()) return;
+  var trees = [{ x: vw * 0.12, y: ty, s: rh * 1.2 }, { x: vw * 0.94, y: rapRowY(0) + rh * 0.45, s: rh * 1.1 }];
+  for (i = 0; i < trees.length; i++) {
+    propAdd({
+      x: trees[i].x, y: trees[i].y, r: trees[i].s * 0.8, hy: trees[i].s * 0.75, color: '#8fd97a', note: 520 + i * 90, amp: 0.07, ts: trees[i].s,
+      draw: function (c, p) {
+        var s = p.ts, k;
+        drawTree(c, 0, 0, s, 0);
+        if (p.t >= 0 && p.t < 1.2) {
+          c.fillStyle = '#6cc45c';
+          for (k = 0; k < 4; k++) artBlob(c, (k - 1.5) * s * 0.3 + Math.sin(p.t * 6 + k) * s * 0.1, -s * 0.6 + p.t * s * 0.8 + k * s * 0.1, s * 0.07, s * 0.04, '#6cc45c', { lineColor: '#3a8a3a', rot: p.t * 4 + k });
+        }
+        if (p.t >= 0 && p.n % 5 === 0) {
+          var fy = -s * 0.9 + Math.min(1, p.t / 0.6) * Math.min(1, p.t / 0.6) * s * 0.9;
+          artCircle(c, s * 0.25, fy, s * 0.09, '#ff5f5f', { lineColor: '#a82a2a', hi: 0.4 });
+        }
+      }
+    });
+  }
+  propAdd({
+    x: vw * 0.85, y: ty, r: rh * 0.7, hy: rh * 0.45, color: '#ff7bac', note: 880, amp: 0.05,
+    draw: function (c, p) {
+      var peek = p.t >= 0 && p.n % 3 === 0 ? Math.sin(Math.min(1, p.t / 1.4) * Math.PI) : 0;
+      if (peek > 0) drawBunny(c, 0, -rh * 0.02 - peek * rh * 0.35, rh * 0.26, 0, globalT * 6, true);
+      c.beginPath(); c.moveTo(-vw * 0.07, 0); c.lineTo(0, -rh * 0.9); c.lineTo(vw * 0.07, 0); c.closePath();
+      artFillPath(c, '#ff7bac', -rh * 0.9, 0, rh * 0.5, { lineColor: '#b03a6a' });
+      c.beginPath(); c.moveTo(-vw * 0.02, 0); c.lineTo(0, -rh * 0.45); c.lineTo(vw * 0.02, 0); c.closePath();
+      artFillPath(c, '#c94f7e', -rh * 0.45, 0, rh * 0.2, { lineColor: '#7a2a4a' });
+      artLimb(c, 0, -rh * 0.9, 0, -rh * 1.15, Math.max(1.5, rh * 0.03), '#8a5a30', '#5a3a1e');
+      c.beginPath(); c.moveTo(0, -rh * 1.15); c.lineTo(rh * 0.25, -rh * 1.08); c.lineTo(0, -rh * 1.0); c.closePath();
+      artFillPath(c, '#ffd24f', -rh * 1.15, -rh * 1.0, rh * 0.1, { lineColor: '#b8862a' });
+    }
+  });
 }
 
 // Sanakuplan napautus lukee sanan (tavut/kirjaimet soivat)
@@ -196,6 +239,7 @@ function handleRapidsTap(px, py) {
   var p = rapids.p, hr = rapids.hudRect;
   if (!running || celebrating || puzzleBusy()) return;
   if (hr && px >= hr.x && px <= hr.x + hr.w && py >= hr.y && py <= hr.y + hr.h) { rapSayWord(); return; }
+  if (propsTap(px, py)) return;
   if (p.hop || p.splashT > 0) return;
   var to, tx = null, i, lg, lane;
   if (py > p.y + rapids.rowH * 0.5 && p.row > 0) to = p.row - 1;
@@ -327,6 +371,7 @@ function updateRapids(dt) {
     if (rapids.fish[i].t > 6) { rapids.fish[i].t = 0; rapids.fish[i].x = Math.random() * viewW; }
   }
   if (rapids.sayT >= 0) { rapids.sayT += dt; if (rapids.sayT > 0.32 * 5) rapids.sayT = -1; }
+  propsUpdate(dt);
 
   if (p.splashT > 0) {
     p.splashT -= dt;
@@ -475,15 +520,8 @@ function renderRapidsNear(b, w, h) {
     // Sanapöllön oksa ylärannalla
     b.fillStyle = '#8a5a30';
     b.fillRect(vw * 0.78, ty - rh * 0.35, vw * 0.16, rh * 0.08);
-  } else {
-    // Yläranta: teltta ja lippu
-    b.fillStyle = '#ff7bac';
-    b.beginPath(); b.moveTo(vw * 0.78, ty); b.lineTo(vw * 0.85, ty - rh * 0.9); b.lineTo(vw * 0.92, ty); b.closePath(); b.fill();
-    b.fillStyle = '#c94f7e';
-    b.beginPath(); b.moveTo(vw * 0.83, ty); b.lineTo(vw * 0.85, ty - rh * 0.45); b.lineTo(vw * 0.87, ty); b.closePath(); b.fill();
-    drawTree(b, vw * 0.12, ty, rh * 1.2);
-    drawTree(b, vw * 0.94, rapRowY(0) + rh * 0.45, rh * 1.1);
   }
+  // (Teltta ja puut ovat tökättäviä koristeita, ks. rapSetupProps)
 }
 
 function drawLog(c, lg, y) {
@@ -502,16 +540,12 @@ function drawLog(c, lg, y) {
       c.beginPath(); c.arc(x + w * 0.4, y - hh * 0.2 - ((globalT * 0.7) % 1) * hh * 0.4, hh * 0.08, 0, Math.PI * 2); c.fill();
       return;
     }
-    c.fillStyle = warn ? '#6fa85a' : '#4f9a4a';
-    c.beginPath();
-    if (c.ellipse) c.ellipse(x + w / 2, y + wob, w / 2, hh * 0.55, 0, 0, Math.PI * 2);
-    else c.arc(x + w / 2, y + wob, hh * 0.55, 0, Math.PI * 2);
-    c.fill();
+    artBlob(c, x + w / 2, y + wob, w / 2, hh * 0.55, warn ? '#6fa85a' : '#4f9a4a', { lineColor: '#225a2a', hi: 0.25 });
     c.strokeStyle = 'rgba(0,60,0,0.35)';
     c.lineWidth = Math.max(1.5, hh * 0.06);
     c.beginPath(); c.moveTo(x + w * 0.25, y - hh * 0.3 + wob); c.lineTo(x + w * 0.35, y + hh * 0.3 + wob); c.moveTo(x + w * 0.5, y - hh * 0.4 + wob); c.lineTo(x + w * 0.5, y + hh * 0.4 + wob); c.moveTo(x + w * 0.75, y - hh * 0.3 + wob); c.lineTo(x + w * 0.65, y + hh * 0.3 + wob); c.stroke();
-    c.fillStyle = '#7bc46a';
-    c.beginPath(); c.arc(x + (lg.dir > 0 ? w + hh * 0.2 : -hh * 0.2), y + wob, hh * 0.24, 0, Math.PI * 2); c.fill();
+    artCircle(c, x + (lg.dir > 0 ? w + hh * 0.2 : -hh * 0.2), y + wob, hh * 0.24, '#7bc46a', { lineColor: '#225a2a' });
+    artEye(c, x + (lg.dir > 0 ? w + hh * 0.3 : -hh * 0.3), y + wob - hh * 0.06, hh * 0.05, lg.dir * 0.4, false);
     return;
   }
   c.save();
@@ -522,26 +556,16 @@ function drawLog(c, lg, y) {
     c.globalAlpha = Math.max(0.2, lg.tipT / 1.2);
   }
   if (rapSky()) {
-    // Pilvi
-    c.fillStyle = '#ffffff';
-    c.beginPath();
-    c.arc(x + w * 0.25, y + hh * 0.2, hh * 0.55, 0, Math.PI * 2);
-    c.arc(x + w * 0.5, y + hh * 0.05, hh * 0.7, 0, Math.PI * 2);
-    c.arc(x + w * 0.75, y + hh * 0.2, hh * 0.55, 0, Math.PI * 2);
-    c.fill();
+    // Pilvi: pehmeä ääriviiva artUnion-apurilla
+    artUnion(c, rapCloudPath, x + w * 0.5, y, hh, y - hh * 0.65, y + hh * 0.75, '#ffffff', { lineColor: '#b8c8e8', shadeTo: '#e4ecfa', ww: w });
     c.fillStyle = 'rgba(200,215,255,0.6)';
     roundRect(c, x + hh * 0.2, y + hh * 0.35, w - hh * 0.4, hh * 0.3, hh * 0.15);
     c.fill();
   } else {
-    c.fillStyle = '#8a5a30';
-    roundRect(c, x, y - hh * 0.45, w, hh * 0.9, hh * 0.45);
-    c.fill();
-    c.fillStyle = '#a9743f';
-    roundRect(c, x + hh * 0.2, y - hh * 0.3, w - hh * 0.4, hh * 0.3, hh * 0.15);
-    c.fill();
-    c.fillStyle = '#c98b4a';
-    c.beginPath(); c.arc(x + hh * 0.45, y, hh * 0.32, 0, Math.PI * 2); c.fill();
-    c.beginPath(); c.arc(x + w - hh * 0.45, y, hh * 0.32, 0, Math.PI * 2); c.fill();
+    artRoundRect(c, x, y - hh * 0.45, w, hh * 0.9, hh * 0.45, '#8a5a30', { lineColor: '#4a2a10', line: Math.max(1.2, hh * 0.06) });
+    artRoundRect(c, x + hh * 0.2, y - hh * 0.3, w - hh * 0.4, hh * 0.3, hh * 0.15, '#a9743f', { line: false });
+    artCircle(c, x + hh * 0.45, y, hh * 0.32, '#c98b4a', { lineColor: '#4a2a10' });
+    artCircle(c, x + w - hh * 0.45, y, hh * 0.32, '#c98b4a', { lineColor: '#4a2a10' });
     c.strokeStyle = '#8a5a30';
     c.lineWidth = Math.max(1, hh * 0.05);
     c.beginPath(); c.arc(x + hh * 0.45, y, hh * 0.16, 0, Math.PI * 2); c.stroke();
@@ -550,12 +574,7 @@ function drawLog(c, lg, y) {
   if (lg.token) {
     // Tavu tai kirjain kyltissä tukin/pilven päällä
     var th = hh * 1.05, tw = Math.max(th * 1.2, th * 0.62 * lg.token.length + th * 0.5);
-    c.fillStyle = 'rgba(255,255,255,0.95)';
-    roundRect(c, x + w / 2 - tw / 2, y - th * 0.55, tw, th, th * 0.25);
-    c.fill();
-    c.strokeStyle = rapSky() ? '#9fc8ff' : '#c98b4a';
-    c.lineWidth = Math.max(1.5, th * 0.06);
-    c.stroke();
+    artRoundRect(c, x + w / 2 - tw / 2, y - th * 0.55, tw, th, th * 0.25, '#ffffff', { lineColor: rapSky() ? '#9fc8ff' : '#c98b4a', shadeTo: '#ece4f8', line: Math.max(1.5, th * 0.06) });
     readFont(c, th * 0.68);
     c.fillStyle = '#8a2be2';
     c.textAlign = 'center';
@@ -564,6 +583,16 @@ function drawLog(c, lg, y) {
     c.textBaseline = 'alphabetic';
   }
   c.restore();
+}
+
+// Pilvitukin polku: leveys kulkee muodon koon mukana (rapCloudW asetetaan ennen kutsua)
+var rapCloudW = 0;
+function rapCloudPath(c, cx, cy, hh) {
+  var w = rapCloudW, k = hh / rapids.rowH * 2;   // laajennettu koko skaalaa myös leveyttä hieman
+  c.beginPath();
+  c.arc(cx - w * 0.25 * k, cy + hh * 0.2, hh * 0.55, 0, Math.PI * 2);
+  c.arc(cx, cy + hh * 0.05, hh * 0.7, 0, Math.PI * 2);
+  c.arc(cx + w * 0.25 * k, cy + hh * 0.2, hh * 0.55, 0, Math.PI * 2);
 }
 
 function drawRapidsWaves(c) {
@@ -588,9 +617,7 @@ function drawRapidsWaves(c) {
 }
 
 function drawQuestionStone(c, x, y, s) {
-  c.fillStyle = '#c9c4d8';
-  roundRect(c, x - s * 0.5, y - s * 0.7, s, s * 0.9, s * 0.25);
-  c.fill();
+  artRoundRect(c, x - s * 0.5, y - s * 0.7, s, s * 0.9, s * 0.25, '#c9c4d8', { lineColor: '#6a6480', hi: 0.3 });
   c.fillStyle = '#8a2be2';
   c.font = 'bold ' + Math.round(s * 0.7) + 'px ' + UI_FONT;
   c.textAlign = 'center';
@@ -670,19 +697,16 @@ function drawRapids() {
       var f = rapids.fish[i];
       if (f.t < 1 && rapIsWater(f.row)) {
         var fy = rapRowY(f.row) - Math.sin(f.t * Math.PI) * rh * 0.6;
-        ctx.fillStyle = '#ffb347';
-        ctx.beginPath();
-        if (ctx.ellipse) ctx.ellipse(f.x, fy, rh * 0.16, rh * 0.09, (f.t - 0.5) * 2, 0, Math.PI * 2);
-        else ctx.arc(f.x, fy, rh * 0.1, 0, Math.PI * 2);
-        ctx.fill();
+        drawMapFish(ctx, f.x, fy, rh * 0.14, 1, '#ffb347', -(f.t - 0.5) * 2);
       }
     }
   }
   for (r in rapids.lanes) {
     lane = rapids.lanes[r];
     y = rapRowY(r);
-    for (i = 0; i < lane.logs.length; i++) drawLog(ctx, lane.logs[i], y);
+    for (i = 0; i < lane.logs.length; i++) { rapCloudW = lane.logs[i].w; drawLog(ctx, lane.logs[i], y); }
   }
+  propsDraw(ctx);
   drawLantern(ctx, checkpoints[0], rapRowY(rapids.island) + rh * 0.4);
   if (!tasks[0].opened) drawQuestionStone(ctx, viewW * 0.5 + rh * 1.6, rapRowY(rapids.island) + rh * 0.35, rh * 0.7);
   if (!tasks[1].opened) drawQuestionStone(ctx, viewW * 0.5 + rh * 1.6, rapRowY(rapTop()) + rh * 0.35, rh * 0.7);
@@ -702,11 +726,6 @@ function drawRapids() {
     }
   } else {
     if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.beginPath();
-    if (ctx.ellipse) ctx.ellipse(p.x, p.y + rh * 0.4, rh * 0.3, rh * 0.09, 0, 0, Math.PI * 2);
-    else ctx.arc(p.x, p.y + rh * 0.4, rh * 0.15, 0, Math.PI * 2);
-    ctx.fill();
     drawPrincessFree(ctx, p.x, p.y + rh * 0.4 - hopLift, s, p.facing, globalT * 8, !!p.hop, globalT);
     ctx.globalAlpha = 1;
   }
