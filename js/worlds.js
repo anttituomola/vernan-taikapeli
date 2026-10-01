@@ -1210,6 +1210,8 @@ var WORLDS = [
       '#........L#',
       '#########.#',
       '#V........#',
+      '#.#########',
+      '#........Y#',
       '###########'
     ],
     levels: [
@@ -1264,6 +1266,20 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderMoleBg(b, w, h); },
         light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.3, tint: ['rgba(80,100,120,0.08)', 'rgba(255,220,160,0.05)'], vignette: 0.35 },
         respawn: function () { respawnMole(); }
+      },
+      {
+        // Bonushuone vartijan jälkeen: yhteispeli lapselle ja aikuiselle
+        kind: 'duo', room: 'Y', name: 'Yhteispolku', color: '#5fa8ff', script: 'play-duo',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#8fd0ff', ambient: 'sparkle', fg: null,
+        init: function () { initDuo(); },
+        update: function (dt) { updateDuo(dt); },
+        draw: function () { drawDuo(); },
+        tap: function (x, y) { handleDuoTap(x, y); },
+        resize: function () { resizeDuo(); },
+        renderBg: function (b, w, h) { renderDuoBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(120,200,255,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnDuo(); }
       }
     ]
   }
