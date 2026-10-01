@@ -75,6 +75,7 @@ function initGiant() {
   princess.y = groundTop + viewH * 0.03;
   princess.facing = 1;
   camX = 0;
+  giantSetupProps();
   renderBackground();
   playNote(196, 0, 0.5, 'triangle', 0.3);
   playNote(147, 0.3, 0.7, 'triangle', 0.3);
@@ -93,6 +94,67 @@ function resizeGiant() {
   princess.x = viewW * 0.20;
   princess.y = groundTop + viewH * 0.03;
   camX = 0;
+  giantSetupProps();
+}
+
+// Tökättävät koristeet ruudun laidoilla, kaukana ritsasta ja jätistä: laavakivi
+// vasemmassa nurkassa (pöllähdyttää savurenkaan; kolmas tökkäys nostaa kiven
+// takaa kurkistamaan poikasen, joka räpäyttää silmiä) sekä kristallit
+// vasemmalla ja oikeassa laidassa (kilahtavat ja hehkuvat). Nämä on jätetty
+// pois taustasta.
+function giantSetupProps() {
+  var h = viewH, vw = viewW;
+  propsReset();
+  propAdd({
+    x: vw * 0.04, y: groundTop + h * 0.01, r: h * 0.065, hy: h * 0.04, amp: 0.08, s: h * 0.04, kind: 'rock', showT: 0,
+    color: '#ffb080', note: 220, draw: giantDrawProp, poke: giantPokeProp, update: giantUpdateProp
+  });
+  propAdd({
+    x: vw * 0.10, y: groundTop + h * 0.01, r: h * 0.06, hy: h * 0.04, amp: 0.1, s: h * 0.05, kind: 'crystal',
+    color: '#ffb080', note: 1319, draw: giantDrawProp, poke: giantPokeProp
+  });
+  propAdd({
+    x: vw * 0.94, y: groundTop + h * 0.01, r: h * 0.07, hy: h * 0.05, amp: 0.1, s: h * 0.06, kind: 'crystal',
+    color: '#ffb080', note: 1568, draw: giantDrawProp, poke: giantPokeProp
+  });
+}
+function giantUpdateProp(p, dt) {
+  if (p.showT > 0) p.showT -= dt;
+}
+function giantDrawProp(c, p) {
+  var s = p.s, k, hx, hy, hs;
+  if (p.kind === 'rock') {
+    if (p.showT > 0) {
+      // Poikasen pää nousee kiven takaa (kivi piirretään päälle)
+      k = Math.min(1, p.showT * 3, (2.6 - p.showT) * 3);
+      hx = s * 0.3; hy = -s * 0.3 - k * s * 1.1; hs = s * 0.55;
+      drawDragonHead(c, hx, hy, hs, '#ff9d7a');
+      if ((globalT % 1.7) < 0.14) {
+        artCircle(c, hx - hs * 0.3, hy - hs * 0.2, hs * 0.3, '#ff9d7a', { line: false });
+        artCircle(c, hx + hs * 0.32, hy - hs * 0.15, hs * 0.3, '#ff9d7a', { line: false });
+        artEye(c, hx - hs * 0.3, hy - hs * 0.2, hs * 0.26, 0, true);
+        artEye(c, hx + hs * 0.32, hy - hs * 0.15, hs * 0.26, 0, true);
+      }
+    }
+    artBlob(c, 0, -s * 0.5, s * 1.4, s * 0.8, '#7a4a4a', { shadeTo: '#3a1a1a', lineColor: '#2a0a0a', hi: 0.2 });
+    c.strokeStyle = p.t >= 0 ? '#ffd27a' : '#ff9a4a';
+    c.lineWidth = Math.max(2, s * 0.12);
+    c.lineCap = 'round';
+    c.beginPath(); c.moveTo(-s * 0.6, -s * 0.5); c.lineTo(-s * 0.2, -s * 0.85); c.lineTo(s * 0.3, -s * 0.45); c.stroke();
+  } else {
+    drawNestCrystal(c, 0, 0, s);
+    if (p.t >= 0) {
+      artGlow(c, 0, -s * 0.6, s * 2.4, '#ffd0a0', 0.5 * (1 - p.t / 1.4));
+      drawStar(c, 0, -s * 1.45, s * 0.3, globalT * 4, 0.8);
+    }
+  }
+}
+function giantPokeProp(p) {
+  var s = p.s;
+  if (p.kind !== 'rock') return;
+  artPop(p.x, p.y - s * 1.2, s * 1.3, '#d8c8c8', 'ring');
+  spawnDust(p.x, p.y - s * 1.0, 4, 0);
+  if (p.n % 3 === 0) { p.showT = 2.6; soundDragonHappy(2); }
 }
 
 // ---------- Tuli: Minttu sulattaa lähellä olevan kiven ----------
@@ -126,6 +188,8 @@ function giantFire() {
 // ---------- Ritsa ----------
 function handleGiantTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
+  // Koristeet ovat ruudun laidoilla kaukana ritsasta: tökkäys ei estä tähtäystä
+  propsTap(px, py);
   giant.aim.active = true;
   giant.aim.sx = px;
   giant.aim.sy = py;
@@ -182,6 +246,7 @@ function updateGiant(dt) {
   updateParticles(dt);
   updateConfetti(dt);
   busy = puzzleBusy();
+  propsUpdate(dt);
   if (giant.fireCd > 0) giant.fireCd -= dt;
   if (giant.reload > 0) giant.reload -= dt;
   if (giant.hurtT > 0) giant.hurtT -= dt;
@@ -406,13 +471,11 @@ function renderGiantNear(b, w, h) {
   }
   b.fillStyle = 'rgba(255,200,160,0.12)';
   b.fillRect(0, groundTop + h * 0.015, w, Math.max(0, groundBottom - groundTop - h * 0.02));
-  // Kivet ja kristallit reunoilla
-  for (i = 0; i < 4; i++) {
+  // Kivet vasemmalla (nurkan laavakivi ja kristallit ovat tökättäviä koristeita)
+  for (i = 1; i < 4; i++) {
     x = vw * (0.04 + i * 0.05);
     artBlob(b, x, groundTop - h * 0.01, h * (0.03 + (i % 2) * 0.02), h * 0.025, '#7a4a4a', { shadeTo: '#3a1a1a', lineColor: '#2a0a0a', hi: 0.2 });
   }
-  drawNestCrystal(b, vw * 0.1, groundTop + h * 0.01, h * 0.05);
-  drawNestCrystal(b, vw * 0.94, groundTop + h * 0.01, h * 0.06);
 }
 
 // ---------- Piirto: jätti ----------
@@ -521,6 +584,7 @@ function drawGiantRock(c, r) {
 function drawGiant() {
   var i, c = ctx, s = viewH * 0.055, f, v, pouch, pv, fr, sp, k, a, m = giantMinttu(), w;
   if (!beginPlayWorld()) return;
+  propsDraw(c);
   drawGiantBody(c);
   for (i = 0; i < tasks.length; i++) drawTaskArch(c, tasks[i]);
   // Prinsessa, ritsa ja Minttu
