@@ -241,6 +241,7 @@ function initGear() {
   gear.gold = [];
   gear.taskDelay = -1;
   gear.placed = false;
+  gearSetupProps();
   renderBackground();
 }
 function respawnGear() { gearStartRound(); }
@@ -248,12 +249,84 @@ function resizeGear() {
   var i;
   camX = 0;
   for (i = 0; i < gear.items.length; i++) gearHome(gear.items[i], true);
+  gearSetupProps();
+}
+
+// Tökättävät koristeet: kolme seinän koristeratasta (tökkäys pyöräyttää ja
+// kilahtaa; joka viides tökkäys avaa navassa käkikellon luukun, josta pupu
+// kurkistaa) ja öljykannu työpöydällä (kallistuu ja tiputtaa öljypisaran).
+// Ne ovat tappitaulun ja rataslaatikon ulkopuolella, eivätkä raahattavien tiellä.
+function gearSetupProps() {
+  var W = viewW, h = viewH;
+  propsReset();
+  gearAddWallGear(W * 0.05, h * 0.45, h * 0.04, 0);
+  gearAddWallGear(W * 0.06, h * 0.7, h * 0.04, 0.8);
+  gearAddWallGear(W * 0.94, h * 0.88, h * 0.04, 1.2);
+  propAdd({
+    x: W * 0.12, y: h * 0.92, r: h * 0.06, hy: h * 0.045, color: '#c0c8d8', note: 523, amp: 0.1,
+    update: function (p, dt) {
+      var s = h * 0.045;
+      // Pisara irtoaa nokasta, kun kannu on kallistunut
+      if (p.t >= 0.25 && p.t - dt < 0.25) {
+        propDrop({
+          x: p.x + s * 2.0, y: p.y - s * 1.0, vx: 0, vy: 0, vr: 0, ground: p.y - s * 0.1, life: 1.2,
+          draw: function (c) { artBlob(c, 0, 0, s * 0.12, s * 0.18, '#3a2a10', { line: false }); }
+        });
+      }
+    },
+    draw: function (c, p) {
+      var s = h * 0.045, tilt = p.t >= 0 ? Math.sin(Math.min(1, p.t / 0.5) * Math.PI) * 0.5 : 0;
+      artShadow(c, 0, s * 0.05, s * 0.9, s * 0.18, 0.2);
+      c.rotate(tilt);
+      artRoundRect(c, -s * 0.7, -s * 0.9, s * 1.4, s * 0.9, s * 0.15, '#c0c8d8', { shadeTo: '#8a92a8', lineColor: '#4a5060', hi: 0.3 });
+      artBlob(c, 0, -s * 0.9, s * 0.5, s * 0.22, '#d8e0ec', { lineColor: '#4a5060' });
+      artLimb(c, s * 0.3, -s * 1.0, s * 1.3, -s * 1.9, s * 0.16, '#c0c8d8', '#4a5060');
+      artLimb(c, -s * 0.7, -s * 0.6, -s * 1.1, -s * 0.2, s * 0.12, '#8a92a8', '#4a5060');
+    }
+  });
+}
+function gearAddWallGear(x, y, r, ang0) {
+  propAdd({
+    x: x, y: y, r: r * 1.6, hy: 0, color: '#ffd24f', note: 1175, amp: 0.05, ang: ang0, spin: 0, cuckooT: 0,
+    update: function (p, dt) {
+      p.ang += p.spin * dt;
+      p.spin *= Math.max(0, 1 - dt * 1.6);
+      if (p.cuckooT > 0) p.cuckooT -= dt;
+    },
+    draw: function (c, p) {
+      c.globalAlpha = p.t >= 0 || p.cuckooT > 0 ? 0.9 : 0.45;
+      gearDrawWheel(c, 0, 0, r, p.ang, '#d9b070', 8);
+      if (p.cuckooT > 0) gearDrawCuckoo(c, r, p.cuckooT);
+      c.globalAlpha = 1;
+    },
+    poke: function (p) {
+      p.spin = (p.n % 2 ? 1 : -1) * 7;
+      playNote(1568, 0.05, 0.25, 'sine', 0.2);
+      if (p.n % 5 === 0) {
+        p.cuckooT = 2.2;
+        playNote(784, 0.3, 0.2, 'triangle', 0.3);
+        playNote(622, 0.55, 0.3, 'triangle', 0.3);
+      }
+    }
+  });
+}
+// Käkikellon luukku rattaan navassa: ovi kääntyy auki ja pupu kurkistaa (t: aikaa jäljellä 2,2 s:sta)
+function gearDrawCuckoo(c, r, t) {
+  var k = Math.min(1, (2.2 - t) * 4, t * 3), s = r * 0.5;
+  artRoundRect(c, -s * 0.8, -s * 0.8, s * 1.6, s * 1.6, s * 0.2, '#3a2010', { lineColor: '#1e1008' });
+  drawBunny(c, 0, s * 0.3 - k * s * 0.5, s * 0.5 * k, 0, globalT * 8, true);
+  c.save();
+  c.translate(-s * 0.8, 0);
+  c.scale(Math.max(0.05, 1 - k), 1);
+  artRoundRect(c, 0, -s * 0.8, s * 1.6, s * 1.6, s * 0.2, '#8a5a30', { lineColor: '#3a2010' });
+  c.restore();
 }
 
 // ---------- Syöte ----------
 function handleGearTap(px, py) {
   var i, it, d, best = null, bd = 1e9, r = gearR() * 1.1, Lz, p;
-  if (gear.state !== 'play' || puzzleBusy() || celebrating) return;
+  if (puzzleBusy() || celebrating) return;
+  if (gear.state !== 'play') { propsTap(px, py); return; }
   for (i = 0; i < gear.items.length; i++) {
     it = gear.items[i];
     if (it.back || it.appear < 1) continue;
@@ -273,7 +346,10 @@ function handleGearTap(px, py) {
     gear.tonttu.blink = 0.5;
     playNote(660, 0, 0.1, 'triangle', 0.25);
     playNote(880, 0.1, 0.12, 'triangle', 0.25);
+    return;
   }
+  // Koristeet (seinän rattaat, öljykannu) vain, kun napautus ei osunut rattaaseen eikä tonttuun
+  propsTap(px, py);
 }
 function gearDrop(it) {
   var R = gear.R, Lz = gearLayout(), best = null, bd = Lz.d * 0.55, c, r, p, d;
@@ -303,6 +379,7 @@ function updateGear(dt) {
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
+  propsUpdate(dt);
   busy = puzzleBusy();
   if (gear.tonttu.blink > 0) gear.tonttu.blink -= dt;
   if (gear.jamT > 0) gear.jamT -= dt;
@@ -386,7 +463,7 @@ function gearRoundDone() {
 
 // ---------- Piirto ----------
 function renderGearBg(b, w, h) {
-  var vw = viewW, g = b.createLinearGradient(0, 0, 0, h), i, x, y;
+  var vw = viewW, g = b.createLinearGradient(0, 0, 0, h), i, x;
   g.addColorStop(0, '#6a4a3a');
   g.addColorStop(1, '#4a3028');
   b.fillStyle = g;
@@ -407,13 +484,10 @@ function renderGearBg(b, w, h) {
   // Työpöytä ja rattaiden laatikko
   artRoundRect(b, vw * 0.0, h * 0.8, vw, h * 0.2, 0, '#8a5a30', { shadeTo: '#5a3a1a', line: false });
   artRoundRect(b, vw * 0.22, h * 0.82, vw * 0.66, h * 0.13, h * 0.03, '#b07840', { shadeTo: '#7a4a20', lineColor: '#4a2a10' });
-  // Seinän koristerattaat
-  for (i = 0; i < 4; i++) {
-    x = vw * [0.05, 0.95, 0.06, 0.94][i]; y = h * [0.45, 0.06, 0.7, 0.88][i];
-    b.globalAlpha = 0.35;
-    gearDrawWheel(b, x, y, h * 0.04, i * 0.4, '#d9b070', 8);
-    b.globalAlpha = 1;
-  }
+  // Seinän koristeratas oikeassa yläkulmassa; muut kolme ovat tökättäviä koristeita (gearSetupProps)
+  b.globalAlpha = 0.35;
+  gearDrawWheel(b, vw * 0.95, h * 0.06, h * 0.04, 0.4, '#d9b070', 8);
+  b.globalAlpha = 1;
 }
 function gearDrawWheel(c, x, y, r, ang, color, teeth) {
   var i, n = teeth || GEAR_TEETH, a, ro = r * 1.12, ri = r * 0.88, dark = artShade(color, -0.45);
@@ -479,6 +553,7 @@ function gearDrawTonttu(c, x, y, s, crankA, strain) {
 function drawGear() {
   var c = ctx, R = gear.R, L = gear.L, Lz, i, k, p, it, r, net = gear.net, ang, d, sh;
   if (!beginPlayWorld()) return;
+  propsDraw(c);
   if (L) {
     Lz = gearLayout();
     r = Lz.d * 0.5;
