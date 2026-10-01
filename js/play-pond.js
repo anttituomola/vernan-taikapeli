@@ -2,6 +2,125 @@
 
 // Helmilampi: hyppely lumpeilla, helmet, sammakko ja sauva.
 
+// ---------- Tökättävät koristeet ----------
+// Paikat murto-osina; pondPropSync laskee paikan joka ruudulla (resizePond on
+// world.js:ssä). p.s = piirtokoko, p.sp = koristeen oma ajastin.
+var pondHoldPrev = false;
+function pondPropSync(p, dt) {
+  p.x = p.fx * worldW;
+  p.y = groundTop + p.dy * viewH;
+  p.s = p.fs * viewH;
+  p.r = p.s * 1.5;
+  p.hy = p.s * 1.1;
+  if (p.sp > 0) p.sp -= dt;
+}
+
+// Osmankäämi: varsi, kaksi lehteä ja tupsu (fluff: tupsu on pöllähtänyt vaaleaksi)
+function pondDrawCattail(c, s, fluff) {
+  artShadow(c, 0, 0, s * 0.6, s * 0.14, 0.12);
+  artLimb(c, 0, 0, -s * 0.5, -s * 1.5, s * 0.08, '#4f9a3a', '#2a5a1a');
+  artLimb(c, s * 0.05, -s * 0.3, s * 0.7, -s * 1.7, s * 0.08, '#4f9a3a', '#2a5a1a');
+  artLimb(c, 0, 0, s * 0.1, -s * 2.2, s * 0.1, '#4f9a3a', '#2a5a1a');
+  artLimb(c, s * 0.1, -s * 2.3, s * 0.12, -s * 2.65, s * 0.07, '#d8c470', '#8a7a30');
+  artBlob(c, s * 0.08, -s * 1.75, s * 0.2, s * 0.55, fluff ? '#d8c4a0' : '#7a4a2a', { lineColor: '#3a2210', hi: 0.3 });
+}
+
+// Lumpeenkukka lehdellä: terälehdet avautuvat tökkäyksestä (open 0..1)
+function pondDrawLily(c, s, open) {
+  var i, a, k = 0.8 + open * 0.3;
+  artBlob(c, 0, 0, s * 1.3, s * 0.4, '#4faa5a', { lineColor: '#2a6a30' });
+  if (open > 0) artGlow(c, 0, -s * 0.35, s * 1.6, '#ffd0e0', open * 0.4);
+  for (i = 0; i < 6; i++) {
+    a = i * Math.PI / 3;
+    artBlob(c, Math.cos(a) * s * 0.45 * k, -s * 0.35 + Math.sin(a) * s * 0.2 * k, s * 0.42 * k, s * 0.2, '#ffb0d0', { rot: a, lineColor: '#c05080' });
+  }
+  artCircle(c, 0, -s * 0.35, s * 0.2, '#ffe27a', { lineColor: '#b08a20' });
+}
+
+// Lumpeenlehti; sen takaa kurkistaa nukkuva kala (fish 0..1 = kuinka ylhäällä)
+function pondDrawPad(c, s, fish) {
+  var fy;
+  if (fish > 0) {
+    fy = -s * 0.3 - fish * s * 0.9;
+    c.beginPath(); c.moveTo(s * 0.5, fy); c.lineTo(s * 0.95, fy - s * 0.35); c.lineTo(s * 0.95, fy + s * 0.35); c.closePath();
+    artFillPath(c, '#ffb347', fy - s * 0.35, fy + s * 0.35, s * 0.3, { lineColor: '#b06a10' });
+    artBlob(c, 0, fy, s * 0.6, s * 0.36, '#ffb347', { lineColor: '#b06a10', hi: 0.3 });
+    artEye(c, -s * 0.3, fy - s * 0.08, s * 0.1, 0, true);
+    c.fillStyle = '#ffffff';
+    c.font = 'bold ' + Math.round(s * 0.4) + 'px sans-serif';
+    c.fillText('z', -s * 0.5, fy - s * 0.5);
+    c.fillText('z', -s * 0.7, fy - s * 0.85);
+  }
+  artBlob(c, 0, 0, s * 1.4, s * 0.45, '#5fbf6a', { lineColor: '#2a6a30', hi: 0.2 });
+  c.strokeStyle = '#2a6a30';
+  c.lineWidth = Math.max(1.2, s * 0.08);
+  c.lineCap = 'round';
+  c.beginPath(); c.moveTo(0, 0); c.lineTo(s * 1.2, -s * 0.25); c.stroke();
+}
+
+function pondPropsSetup() {
+  var i, defs = [
+    { kind: 'cattail', fx: 0.08, fs: 0.04, color: '#d8c470', note: 520 },
+    { kind: 'lily', fx: 0.44, fs: 0.04, color: '#ffb0d0', note: 880 },
+    { kind: 'pad', fx: 0.60, fs: 0.04, color: '#9fe0a0', note: 660 },
+    { kind: 'cattail', fx: 0.92, fs: 0.04, color: '#d8c470', note: 560 }
+  ];
+  propsReset();
+  for (i = 0; i < defs.length; i++) {
+    defs[i].dy = 0.005;
+    defs[i].sp = 0;
+    defs[i].update = pondPropSync;
+    if (defs[i].kind === 'cattail') {
+      defs[i].draw = function (c, p) { pondDrawCattail(c, p.s, p.sp > 0); };
+      defs[i].poke = function (p) {
+        // Tupsusta pöllähtää untuvaa
+        p.sp = 2.5;
+        spawnSparkles(p.x, p.y - p.s * 1.9, 12, '#fff4e0');
+      };
+    } else if (defs[i].kind === 'lily') {
+      defs[i].draw = function (c, p) { pondDrawLily(c, p.s, p.sp > 0 ? Math.sin(Math.min(1, p.sp / 1.5) * Math.PI) : 0); };
+      defs[i].poke = function (p) {
+        p.sp = 1.5;
+        spawnSparkles(p.x, p.y - p.s * 0.5, 8, '#ffd0e0');
+      };
+    } else {
+      defs[i].draw = function (c, p) {
+        var k = p.sp > 0 ? Math.min(1, (2.5 - p.sp) / 0.4, p.sp / 0.4) : 0;
+        pondDrawPad(c, p.s, k > 0 ? easeOutBack(k) : 0);
+      };
+      defs[i].poke = function (p) {
+        // Roiske; joka kolmas tökkäys herättää lehden alla nukkuvan kalan (yllätys)
+        spawnSparkles(p.x, p.y, 8, '#c8f4ff');
+        if (p.n % 3 === 0 && p.sp <= 0) {
+          p.sp = 2.5;
+          playNote(392, 0.1, 0.12, 'triangle', 0.2);
+          playNote(523, 0.22, 0.2, 'triangle', 0.2);
+        }
+      };
+    }
+    pondPropSync(propAdd(defs[i]), 0);
+  }
+}
+
+// Juoksukentässä ei ole tap-koukkua: napautus tunnistetaan pidon alkamisesta.
+// Sammakko kurnuttaa, muuten tökätään koristetta. Ei pelivaikutusta.
+function pondTapCheck() {
+  var wx, wy, s;
+  if (holding && !pondHoldPrev && running && !celebrating && !puzzleBusy()) {
+    wx = holdWorldX; wy = holdSY;
+    s = viewH * 0.05;
+    if (!frog.awake && Math.hypot(wx - frog.x, wy - (frog.y - s)) < s * 1.6) {
+      frog.pokeT = 0.9;
+      playNote(196, 0, 0.12, 'square', 0.12);
+      playNote(165, 0.12, 0.16, 'square', 0.12);
+      spawnSparkles(frog.x, frog.y - s * 1.2, 5, '#b6ff9a');
+    } else {
+      propsTap(wx, wy);
+    }
+  }
+  pondHoldPrev = holding;
+}
+
 function layoutPond() {
   var g = groundTop;
   platforms = [
@@ -34,6 +153,9 @@ function initPond() {
   }
   frog.awake = false;
   frog.hopT = 0;
+  frog.pokeT = 0;
+  pondPropsSetup();
+  pondHoldPrev = false;
   princess.x = viewW * 0.12;
   princess.y = groundTop;
   princess.vx = 0;
@@ -61,6 +183,9 @@ function collectPondPearl(p) {
 function updatePond(dt) {
   var i, g = groundTop, pw = viewH * 0.045, runSp = viewW * 0.18;
   updateTasks(dt);
+  propsUpdate(dt);
+  pondTapCheck();
+  if (frog.pokeT > 0) frog.pokeT -= dt;
 
   if (!celebrating && holding && !puzzleBusy()) {
     var dxh = holdWorldX - princess.x;
@@ -163,11 +288,14 @@ function drawFrog(c) {
   var x = frog.x - camX;
   var y = frog.y - viewH * 0.04 - (frog.awake ? frog.hopT * viewH * 0.04 : Math.abs(Math.sin(frog.hopT)) * 6);
   var s = viewH * 0.05;
+  // Tökättynä kurkkupussi pullistuu (kurnutus)
+  var croak = frog.pokeT > 0 ? Math.sin(Math.min(1, frog.pokeT / 0.9) * Math.PI) : 0;
   if (!frog.awake) artShadow(c, x, frog.y, s * 1.2, s * 0.28, 0.16);
   c.save();
   c.translate(x, y);
   artLimb(c, -s * 0.45, s * 0.25, -s * 0.7, s * 0.5, s * 0.16, '#4aaa58', false);
   artLimb(c, s * 0.45, s * 0.25, s * 0.7, s * 0.5, s * 0.16, '#4aaa58', false);
+  if (croak > 0) artCircle(c, 0, s * 0.42, s * 0.36 * croak, '#c8f0a0', { lineColor: '#4a8a40' });
   artBlob(c, 0, 0, s * 0.8, s * 0.55, '#5ecf6a', { hi: 0.3 });
   artEye(c, -s * 0.28, -s * 0.22, s * 0.18, 0.25, !frog.awake);
   artEye(c, s * 0.28, -s * 0.22, s * 0.18, 0.25, !frog.awake);
@@ -182,6 +310,7 @@ function drawPearl(c, x, y, r) {
 function drawPond() {
   var i, hs, pad, bump;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   drawFrog(ctx);
   for (i = 0; i < pearls.length; i++) {
