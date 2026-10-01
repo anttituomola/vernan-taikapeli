@@ -10,6 +10,7 @@ var voy = { x: 0, y: 0, vy: 0 };
 var voyStars = [];
 var voyIce = [];
 var voyDock = { fx: 0.94, x: 0, ready: false };
+var voyFx = { hopT: 0 };   // veneen pomppu tökkäyksestä (vain piirtoon)
 var voyStarDefs = [
   { fx: 0.12, fy: 0.42 }, { fx: 0.22, fy: 0.28 }, { fx: 0.32, fy: 0.50 }, { fx: 0.44, fy: 0.32 },
   { fx: 0.55, fy: 0.48 }, { fx: 0.66, fy: 0.26 }, { fx: 0.76, fy: 0.44 }, { fx: 0.86, fy: 0.30 }
@@ -52,6 +53,8 @@ function initVoyage() {
   princess.facing = 1;
   checkpoint.x = voy.x;
   checkpoint.y = voy.y;
+  voyFx.hopT = 0;
+  voySetupProps();
   renderBackground();
   playNote(392, 0, 0.25, 'sine', 0.35);
   playNote(523, 0.14, 0.3, 'triangle', 0.3);
@@ -79,9 +82,115 @@ function resizeVoyage(ratio) {
     voyIce[i].r = voyIceDefs[i].r * viewH;
   }
   voyDock.x = voyDock.fx * worldW;
+  voySetupProps();
 }
 
-function handleVoyageTap() {}
+// Napautus ohjaa venettä pidon kautta kuten ennenkin; koriste saa lisäksi heilahtaa
+function handleVoyageTap(px, py) {
+  if (!running || puzzleBusy()) return;
+  propsTap(px + camX, py);
+}
+
+function voyBoatY() { return voy.y + viewH * 0.04; }
+
+// ---------- Revontulimaan yhteiset koristeapurit ----------
+// (Käytössä myös saaren muissa kentissä; sopisivat myöhemmin world.js:ään.)
+// Lumitupsu putoaa koristeesta, pomppaa kerran ja haihtuu
+function voySnowPuff(x, y, r, ground) {
+  propDrop({
+    x: x, y: y, vx: (Math.random() - 0.5) * viewW * 0.05, vy: -viewH * 0.06, ground: ground, life: 1.4,
+    draw: function (c) { artCircle(c, 0, 0, r, '#ffffff', { shadeTo: '#e3d8f5', lineColor: '#b8c8d8', hi: 0.45 }); }
+  });
+}
+// Luminen kuusi: tökkäys heilauttaa ja pudottaa pari lumitupsua oksilta
+function voyPineProp(x, baseY, s, color) {
+  return propAdd({
+    x: x, y: baseY, r: s * 0.45, hy: s * 0.5, color: '#ffffff', note: 440, amp: 0.08,
+    draw: function (c) { drawNorthPine(c, 0, 0, s, color); },
+    poke: function (p) {
+      var k;
+      for (k = 0; k < 2; k++) {
+        voySnowPuff(p.x + (Math.random() - 0.5) * s * 0.5, p.y - s * (0.45 + Math.random() * 0.3), s * 0.06, p.y - s * 0.03);
+      }
+    }
+  });
+}
+
+// Vesipisara veneen tökkäyksestä
+function voyDroplet(x, y, ground) {
+  propDrop({
+    x: x, y: y, vx: (Math.random() - 0.5) * viewW * 0.08, vy: -viewH * (0.12 + Math.random() * 0.08), ground: ground, life: 0.9,
+    draw: function (c) { artCircle(c, 0, 0, viewH * 0.008, '#bfe8ff', { lineColor: '#5a9cc0', hi: 0.5 }); }
+  });
+}
+
+// Hylje kurkistaa jäälautan takaa (yllätys: kolmas tökkäys)
+function voyDrawSeal(c, x, y, s) {
+  artBlob(c, x, y + s * 0.9, s * 0.7, s * 0.8, '#8fa6b8', { shadeTo: '#5a7284', lineColor: '#3e5466', hi: 0.2 });
+  artCircle(c, x, y, s * 0.62, '#9fb6c8', { shadeTo: '#6a8294', lineColor: '#3e5466', hi: 0.3 });
+  artEye(c, x - s * 0.22, y - s * 0.08, s * 0.11, 0, false);
+  artEye(c, x + s * 0.22, y - s * 0.08, s * 0.11, 0, false);
+  artBlob(c, x, y + s * 0.2, s * 0.14, s * 0.1, '#2a3a48', { line: false });
+  artBlush(c, x - s * 0.38, y + s * 0.18, s * 0.1);
+  artBlush(c, x + s * 0.38, y + s * 0.18, s * 0.1);
+}
+
+// Jäälautta koristeena: piirto siirtyy tänne (keinunta ja litistys tökkäyksestä),
+// törmäys lasketaan yhä updateVoyage:ssa. Joka kolmas tökkäys: hylje kurkistaa.
+function voyIceProp(ice) {
+  ice.sealT = 0;
+  propAdd({
+    x: ice.x, y: ice.y, r: ice.r * 1.4, hy: 0, color: '#c8f0ff', note: 523, amp: 0.1,
+    update: function (p, dt) {
+      p.y = ice.y;
+      if (ice.sealT > 0) ice.sealT -= dt;
+    },
+    draw: function (c) {
+      var r = ice.r * 1.15, up;
+      if (ice.sealT > 0) {
+        up = easeOutBack(Math.min(1, (2.4 - ice.sealT) / 0.5)) * Math.min(1, ice.sealT / 0.4) * r * 0.75;
+        voyDrawSeal(c, r * 0.15, r * 0.1 - up, r * 0.5);
+      }
+      drawNorthIce(c, 0, 0, r);
+    },
+    poke: function (p) {
+      if (p.n % 3 === 0 && ice.sealT <= 0) {
+        ice.sealT = 2.4;
+        playNote(330, 0.1, 0.18, 'triangle', 0.25);
+        playNote(392, 0.3, 0.22, 'triangle', 0.25);
+      }
+    }
+  });
+}
+
+// Tökättävät koristeet: jäälautat, vene (pomppaa ja roiskii), laiturin kuuset
+// (lumitupsu) ja kiinnityspaalu (lumihattu hyppää).
+function voySetupProps() {
+  var i, h = viewH;
+  propsReset();
+  for (i = 0; i < voyIce.length; i++) voyIceProp(voyIce[i]);
+  propAdd({
+    x: voy.x, y: voyBoatY(), r: h * 0.1, hy: h * 0.03, color: '#c8f0ff', note: 494,
+    draw: function () {},
+    update: function (p) { p.x = voy.x; p.y = voyBoatY(); },
+    poke: function (p) {
+      var k;
+      voyFx.hopT = 0.5;
+      for (k = 0; k < 3; k++) voyDroplet(p.x + (k - 1) * h * 0.06, p.y + h * 0.04, p.y + h * 0.07);
+    }
+  });
+  voyPineProp(voyDock.x + h * 0.2, h * 0.52, h * 0.16, '#1a3850');
+  voyPineProp(voyDock.x + h * 0.32, h * 0.54, h * 0.12, '#245068');
+  propAdd({
+    x: voyDock.x + h * 0.094, y: h * 0.54, r: h * 0.07, hy: h * 0.17, color: '#ffffff', note: 660, amp: 0.06,
+    draw: function (c, p) {
+      var hop = p.t >= 0 ? Math.sin(Math.min(1, p.t / 0.45) * Math.PI) * h * 0.03 : 0;
+      artRoundRect(c, -h * 0.014, -h * 0.2, h * 0.028, h * 0.2, 4, '#8a5a30', {});
+      artBlob(c, 0, -h * 0.22 - hop, h * 0.04, h * 0.02, '#ffffff', { shadeTo: '#e3d8f5', lineColor: '#b8c8d8', hi: 0.4 });
+    },
+    poke: function (p) { voySnowPuff(p.x + h * 0.02, p.y - h * 0.2, h * 0.012, p.y); }
+  });
+}
 
 function voyXMin() { return viewW * 0.1; }
 function voyXMax() { return voyDock.x; }
@@ -112,6 +221,8 @@ function voyMissedStar() {
 function updateVoyage(dt) {
   var i, n, dx, dy, busy, blocked, wantY, wantX, rr, atEnd;
   updateTasks(dt);
+  propsUpdate(dt);
+  if (voyFx.hopT > 0) voyFx.hopT -= dt;
   busy = puzzleBusy();
   blocked = false;
   atEnd = voyAtDock();
@@ -252,23 +363,21 @@ function renderVoyageNear(b, w, h) {
     if (px < edge) return h + 4;
     return h * 0.52 + Math.sin((px - edge) * 0.012) * h * 0.02;
   });
-  b.fillStyle = '#eef6fc';
+  // Ranta: lumi vaalenee ylhäältä laventeliin, reunaviiva vesirajaan
   b.beginPath();
   b.moveTo(voyDock.x - h * 0.04, h * 0.52);
   b.quadraticCurveTo(voyDock.x + h * 0.18, h * 0.46, w, h * 0.5);
   b.lineTo(w, h); b.lineTo(voyDock.x - h * 0.08, h);
-  b.closePath(); b.fill();
+  b.closePath();
+  artFillPath(b, '#f4f9ff', h * 0.46, h, h * 0.2, { shadeTo: '#e3d8f5', lineColor: '#9ab4c8', line: Math.max(1.5, h * 0.004) });
   for (i = 0; i < 5; i++) {
     artRoundRect(b, voyDock.x - h * 0.22, h * 0.50 + i * h * 0.018, h * 0.38, h * 0.014, 3, i % 2 ? '#d2b080' : '#b89060', {});
   }
-  artRoundRect(b, voyDock.x + h * 0.08, h * 0.34, h * 0.028, h * 0.2, 4, '#8a5a30', {});
-  artBlob(b, voyDock.x + h * 0.094, h * 0.32, h * 0.04, h * 0.02, '#eef6fc', { line: false });
-  drawNorthPine(b, voyDock.x + h * 0.2, h * 0.52, h * 0.16, '#1a3850');
-  drawNorthPine(b, voyDock.x + h * 0.32, h * 0.54, h * 0.12, '#245068');
+  // Kiinnityspaalu ja laiturin kuuset ovat tökättäviä koristeita (voySetupProps)
 }
 
 function drawVoyage() {
-  var i, s, ice, ps, miss;
+  var i, s, ps, miss, hop;
   if (!beginPlayWorld()) return;
   drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
@@ -278,10 +387,8 @@ function drawVoyage() {
     if (s.collected) continue;
     drawStar(ctx, s.ax - camX, s.ay + Math.sin(s.phase) * viewH * 0.01, viewH * 0.028, Math.sin(s.phase) * 0.3, 0.8);
   }
-  for (i = 0; i < voyIce.length; i++) {
-    ice = voyIce[i];
-    drawNorthIce(ctx, ice.x - camX, ice.y, ice.r * 1.15);
-  }
+  // Jäälautat, laiturin koristeet ja pudonneet lumitupsut
+  propsDraw(ctx);
   if (voyDock.ready) {
     var gx = voyDock.x - camX, gy = viewH * 0.55;
     var glow = ctx.createRadialGradient(gx, gy, viewH * 0.02, gx, gy, viewH * 0.16);
@@ -291,9 +398,10 @@ function drawVoyage() {
     ctx.beginPath(); ctx.arc(gx, gy, viewH * 0.16, 0, Math.PI * 2); ctx.fill();
   }
   ps = viewH / 520;
+  hop = voyFx.hopT > 0 ? Math.sin(Math.min(1, (0.5 - voyFx.hopT) / 0.5) * Math.PI) * viewH * 0.03 : 0;
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
-  drawNorthBoat(ctx, voy.x - camX, voy.y + viewH * 0.04, viewH * 0.12);
-  drawPrincessFree(ctx, voy.x - camX, voy.y, ps, princess.facing, globalT * 4, true, globalT);
+  drawNorthBoat(ctx, voy.x - camX, voyBoatY() - hop, viewH * 0.12);
+  drawPrincessFree(ctx, voy.x - camX, voy.y - hop, ps, princess.facing, globalT * 4, true, globalT);
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   if (!celebrating) {
