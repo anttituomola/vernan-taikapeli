@@ -38,6 +38,7 @@ function initWordshop() {
   princess.x = viewW * 0.4;
   princess.y = viewH * 0.8;
   princess.facing = 1;
+  wsSetupProps();
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(659, 0.12, 0.2, 'triangle', 0.35);
@@ -48,6 +49,98 @@ function respawnWordshop() {}
 function resizeWordshop() {
   princess.x = viewW * 0.4;
   princess.y = viewH * 0.8;
+  wsSetupProps();
+}
+
+// Tökättävät koristeet: tiskin kello (joka kolmas tökkäys sataa kirjaimia),
+// työpöydän kukkaruukku ja seinän kirjainmobile.
+var WS_CONFETTI = 'ABEIKLMOSTUV';
+function wsSetupProps() {
+  var h = viewH, vw = viewW;
+  propsReset();
+  propAdd({
+    x: vw * 0.75, y: h * 0.66, r: h * 0.05, hy: h * 0.035, color: '#ffd24f', note: 1319, amp: 0.12,
+    draw: function (c) {
+      var s = h * 0.028;
+      artBlob(c, 0, 0, s * 1.1, s * 0.25, '#a9743f', { lineColor: '#5a3a1e' });
+      c.beginPath(); c.arc(0, -s * 0.5, s * 0.9, Math.PI, 0); c.lineTo(s * 0.9, -s * 0.2); c.lineTo(-s * 0.9, -s * 0.2); c.closePath();
+      artFillPath(c, '#ffd24f', -s * 1.4, -s * 0.2, s * 0.9, { lineColor: '#b8862a' });
+      artCircle(c, 0, -s * 1.45, s * 0.18, '#ffd24f', { lineColor: '#b8862a' });
+      artHighlight(c, -s * 0.4, -s * 0.9, s * 0.25, s * 0.15, 0.45);
+    },
+    poke: function (p) {
+      playNote(2093, 0, 0.25, 'sine', 0.25);
+      playNote(2637, 0.05, 0.3, 'sine', 0.15);
+      if (p.n % 3 === 0) wsLetterConfetti(p.x, p.y - h * 0.08);
+    }
+  });
+  propAdd({
+    x: vw * 0.57, y: h * 0.5, r: h * 0.06, hy: h * 0.06, color: '#ff7bac', note: 740, amp: 0.1,
+    draw: function (c) {
+      var s = h * 0.028;
+      artRoundRect(c, -s * 0.7, -s * 0.9, s * 1.4, s * 0.9, s * 0.15, '#c9a0ff', { lineColor: '#7a4fb8' });
+      artLimb(c, 0, -s * 0.9, 0, -s * 2.0, Math.max(1.5, s * 0.14), '#5fb356', '#2e7a3a');
+      drawFlower(c, 0, -s * 2.15, s * 0.42, '#ff7bac');
+    }
+  });
+  propAdd({
+    x: vw * 0.68, y: h * 0.4, r: h * 0.07, hy: h * 0.02, color: '#7fd4ff', note: 988, amp: 0.14,
+    draw: function (c, p) {
+      var s = h * 0.03, k, cols = ['#ff5f7e', '#ffd24f', '#7fd4ff'], sw = p.t >= 0 ? Math.sin(p.t * 12) * Math.exp(-p.t * 3) : 0;
+      c.strokeStyle = '#8a5a30';
+      c.lineWidth = Math.max(1.5, s * 0.08);
+      c.beginPath(); c.moveTo(0, -s * 4); c.lineTo(0, -s * 2.4); c.moveTo(-s * 1.6, -s * 2.4); c.lineTo(s * 1.6, -s * 2.4); c.stroke();
+      for (k = 0; k < 3; k++) {
+        var lx = (k - 1) * s * 1.6 + sw * s * 0.4 * (k - 1), ly = -s * 2.4 + s * (1.0 + (k % 2) * 0.5);
+        c.beginPath(); c.moveTo((k - 1) * s * 1.6, -s * 2.4); c.lineTo(lx, ly - s * 0.6); c.stroke();
+        artCircle(c, lx, ly, s * 0.6, cols[k], { lineColor: artShade(cols[k], -0.4), hi: 0.4 });
+        c.fillStyle = '#ffffff';
+        readFont(c, s * 0.7);
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText('AEI'.charAt(k), lx, ly + s * 0.04);
+        c.textBaseline = 'alphabetic';
+      }
+    }
+  });
+}
+// Pieniä kirjaimia sataa kellosta
+var wsConfetti = [];
+function wsLetterConfetti(x, y) {
+  var i;
+  wsConfetti = [];
+  for (i = 0; i < 10; i++) {
+    wsConfetti.push({ x: x, y: y, vx: (Math.random() - 0.5) * viewW * 0.25, vy: -viewH * (0.25 + Math.random() * 0.25), ch: WS_CONFETTI.charAt(randInt(WS_CONFETTI.length)), c: maneColors[i % maneColors.length], t: 0, rot: Math.random() * 6 });
+  }
+}
+function wsConfettiUpdate(dt) {
+  var i, f;
+  for (i = wsConfetti.length - 1; i >= 0; i--) {
+    f = wsConfetti[i];
+    f.t += dt;
+    f.vy += viewH * 0.8 * dt;
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+    if (f.t > 1.6) wsConfetti.splice(i, 1);
+  }
+}
+function wsConfettiDraw(c) {
+  var i, f;
+  for (i = 0; i < wsConfetti.length; i++) {
+    f = wsConfetti[i];
+    c.save();
+    c.translate(f.x, f.y);
+    c.rotate(f.rot + f.t * 3);
+    c.globalAlpha = Math.max(0, 1 - f.t / 1.6);
+    c.fillStyle = f.c;
+    readFont(c, viewH * 0.035);
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText(f.ch, 0, 0);
+    c.restore();
+  }
+  c.globalAlpha = 1;
+  c.textBaseline = 'alphabetic';
 }
 
 function handleWordshopTap(px, py) {
@@ -57,7 +150,9 @@ function handleWordshopTap(px, py) {
     wshop.customer.hop = 1;
     playNote(1300, 0, 0.08, 'sine', 0.25);
     playNote(1600, 0.07, 0.1, 'sine', 0.2);
+    return;
   }
+  propsTap(px, py);
 }
 
 function updateWordshop(dt) {
@@ -96,6 +191,8 @@ function updateWordshop(dt) {
   }
   var i;
   for (i = 0; i < k.signs.length; i++) k.signs[i].t += dt;
+  propsUpdate(dt);
+  wsConfettiUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -134,16 +231,12 @@ function renderWordshopMid(b, w, h) {
   b.textBaseline = 'alphabetic';
 }
 function renderWordshopNear(b, w, h) {
-  var vw = viewW, y;
-  b.fillStyle = '#c98b4a';
-  roundRect(b, vw * 0.06, h * 0.13, vw * 0.6, h * 0.02, h * 0.008);
-  b.fill();
+  var vw = viewW, y, lw = Math.max(1.2, h * 0.003);
+  artRoundRect(b, vw * 0.06, h * 0.13, vw * 0.6, h * 0.02, h * 0.008, '#c98b4a', { lineColor: '#7a4a20', line: lw });
   // Työpöytä
-  b.fillStyle = '#a9743f';
-  roundRect(b, vw * 0.1, h * 0.5, vw * 0.5, h * 0.05, h * 0.012);
-  b.fill();
-  b.fillRect(vw * 0.13, h * 0.55, h * 0.02, h * 0.1);
-  b.fillRect(vw * 0.55, h * 0.55, h * 0.02, h * 0.1);
+  artRoundRect(b, vw * 0.13, h * 0.55, h * 0.02, h * 0.1, h * 0.005, '#8a5a30', { lineColor: '#5a3a1e', line: lw });
+  artRoundRect(b, vw * 0.55, h * 0.55, h * 0.02, h * 0.1, h * 0.005, '#8a5a30', { lineColor: '#5a3a1e', line: lw });
+  artRoundRect(b, vw * 0.1, h * 0.5, vw * 0.5, h * 0.05, h * 0.012, '#a9743f', { lineColor: '#5a3a1e', line: lw });
   // Lattia
   var floor = b.createLinearGradient(0, h * 0.62, 0, h);
   floor.addColorStop(0, '#e2b98a');
@@ -155,11 +248,8 @@ function renderWordshopNear(b, w, h) {
   b.fillStyle = '#c9a0ff';
   b.fillRect(0, h * 0.6, w, h * 0.025);
   // Tiski asiakkaalle
-  b.fillStyle = '#8a5a30';
-  roundRect(b, vw * 0.7, h * 0.66, vw * 0.26, h * 0.06, h * 0.015);
-  b.fill();
-  b.fillStyle = '#a9743f';
-  b.fillRect(vw * 0.71, h * 0.72, vw * 0.24, h * 0.2);
+  artRoundRect(b, vw * 0.71, h * 0.7, vw * 0.24, h * 0.22, h * 0.01, '#a9743f', { lineColor: '#5a3a1e', line: lw });
+  artRoundRect(b, vw * 0.7, h * 0.66, vw * 0.26, h * 0.06, h * 0.015, '#8a5a30', { lineColor: '#5a3a1e', line: lw });
 }
 
 function drawWordshopCustomer(c) {
@@ -193,11 +283,7 @@ function drawWordshopSigns(c) {
     c.strokeStyle = '#8a5a30';
     c.lineWidth = Math.max(1.5, h * 0.05);
     c.beginPath(); c.moveTo(x + w * 0.5, viewH * 0.15); c.lineTo(x + w * 0.5, yy - h / 2); c.stroke();
-    c.fillStyle = '#fff6d8';
-    roundRect(c, x, yy - h / 2, w, h, h * 0.2);
-    c.fill();
-    c.strokeStyle = '#c98b4a';
-    c.stroke();
+    artRoundRect(c, x, yy - h / 2, w, h, h * 0.2, '#fff6d8', { lineColor: '#c98b4a', line: Math.max(1.5, h * 0.05) });
     drawWordIcon(c, sg.icon, x + h * 0.5, yy, h * 0.36);
     readFont(c, h * 0.5);
     c.fillStyle = '#8a2be2';
@@ -213,8 +299,10 @@ function drawWordshopSigns(c) {
 function drawWordshop() {
   if (!beginPlayWorld()) return;
   drawWordshopSigns(ctx);
+  propsDraw(ctx);
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawWordshopCustomer(ctx);
+  wsConfettiDraw(ctx);
   drawParticlesLayer(ctx);
   endPlayWorld();
   drawPickupHud(ctx, WS_ORDERS, function (i2) { return i2 < wshop.served; },

@@ -71,6 +71,7 @@ function initGrove() {
   princess.y = viewH * 0.92;
   princess.facing = 1;
   princess.walkPhase = 0;
+  groveSetupProps();
   renderBackground();
   playNote(523, 0.6, 0.25, 'sine', 0.3);
   playNote(659, 0.75, 0.3, 'triangle', 0.3);
@@ -80,6 +81,42 @@ function respawnGrove() {}
 function resizeGrove() {
   princess.x = viewW * 0.5;
   princess.y = viewH * 0.92;
+  groveSetupProps();
+}
+
+// Tökättävät koristeet nurkissa (pensaat ovat peliä): sieni, jonka takaa
+// kirjatoukka kurkkaa joka kolmannella tökkäyksellä, ja kirjapino, jonka
+// päällimmäinen kirja aukeaa ja näyttää viidennellä tökkäyksellä V-kirjaimen.
+function groveSetupProps() {
+  var h = viewH, vw = viewW;
+  propsReset();
+  propAdd({
+    x: vw * 0.06, y: h * 0.96, r: h * 0.06, hy: h * 0.05, color: '#ff8a8a', note: 520, amp: 0.1,
+    draw: function (c, p) {
+      var s = h * 0.035, worm = p.t >= 0 && p.n % 3 === 0;
+      if (worm) lfDrawWorm(c, s * 0.9, -s * 1.3 - Math.sin(Math.min(1, p.t / 1.4) * Math.PI) * s * 0.9, s * 0.3);
+      artRoundRect(c, -s * 0.3, -s * 0.9, s * 0.6, s * 0.9, s * 0.15, '#fff3e0', { lineColor: '#c9a070' });
+      artBlob(c, 0, -s * 0.95, s * 1.0, s * 0.55, '#ff5f5f', { lineColor: '#b03030', hi: 0.35 });
+      artCircle(c, -s * 0.35, -s * 1.1, s * 0.14, '#ffffff', { line: false });
+      artCircle(c, s * 0.3, -s * 0.95, s * 0.11, '#ffffff', { line: false });
+    }
+  });
+  propAdd({
+    x: vw * 0.94, y: h * 0.96, r: h * 0.06, hy: h * 0.05, color: '#c9a0ff', note: 988, amp: 0.08,
+    draw: function (c, p) {
+      var s = h * 0.03, open = p.t >= 0, v = open && p.n % 5 === 0, cols = ['#5fa8ff', '#5fd36b', '#ff7bac'], k;
+      for (k = 0; k < 3; k++) artRoundRect(c, -s * 1.1 + (k % 2) * s * 0.15, -s * 0.45 * (k + 1), s * 2.2, s * 0.45, s * 0.1, cols[k], { lineColor: artShade(cols[k], -0.45) });
+      if (open) {
+        artRoundRect(c, -s * 1.3, -s * 2.1, s * 2.6, s * 0.75, s * 0.1, '#ffffff', { lineColor: '#9a7ab8', shadeTo: '#e3d8f5' });
+        c.fillStyle = v ? '#ff5f7e' : '#8a2be2';
+        c.font = 'bold ' + Math.round(s * 0.7) + 'px ' + UI_FONT;
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(v ? 'V' : 'ABC', 0, -s * 1.72);
+        c.textBaseline = 'alphabetic';
+      }
+    }
+  });
 }
 
 // Sana-HUD: tavutettu sana + kuva, kerätyt kirjaimet värillisinä, seuraava hehkuu
@@ -110,9 +147,12 @@ function drawGroveWordHud(c) {
   var g = groveHudGeom(), w = g.w, syl = g.syl, h = g.h, bx = g.bx, by = g.by, i, k, x, li = 0;
   var sayIdx = grove.sayT >= 0 ? Math.floor(grove.sayT / WORD_SYL_T) : -1;
   groveWordLayout();
-  c.fillStyle = 'rgba(255,255,255,0.92)';
   roundRect(c, bx - g.bw / 2, by - h / 2, g.bw, h, h * 0.4);
+  c.fillStyle = 'rgba(255,255,255,0.92)';
   c.fill();
+  c.strokeStyle = '#e4d4f5';
+  c.lineWidth = Math.max(1.5, h * 0.05);
+  c.stroke();
   c.textAlign = 'left';
   c.textBaseline = 'middle';
   x = bx - g.bw / 2 + h * 0.5;
@@ -171,6 +211,7 @@ function handleGroveTap(px, py) {
     groveWordSay();
     return;
   }
+  if (propsTap(px, py)) return;
   var need = groveLettersOf(grove.words[grove.wi])[grove.next];
   for (i = 0; i < GROVE_BUSHES; i++) {
     p = groveBushPos(i);
@@ -222,6 +263,7 @@ function updateGrove(dt) {
     if (grove.sayT > grove.words[grove.wi].w.split('-').length * WORD_SYL_T + 0.3) grove.sayT = -1;
   }
   if (grove.wrongT > 0) grove.wrongT -= dt;
+  propsUpdate(dt);
   for (i = grove.anims.length - 1; i >= 0; i--) {
     grove.anims[i].t += dt * 2.2;
     if (grove.anims[i].t >= 1) {
@@ -266,11 +308,10 @@ function groveDrawBush(c, p, ch, wrong) {
   var jx = wrong ? Math.sin(globalT * 40) * viewH * 0.006 : 0;
   drawBush(c, p.x + jx, p.y + viewH * 0.045, viewH * 0.075);
   if (!ch) return;
-  c.fillStyle = 'rgba(255,255,255,0.92)';
-  c.beginPath(); c.arc(p.x + jx, p.y - viewH * 0.02, viewH * 0.042, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#c9a0ff';
-  c.lineWidth = Math.max(2, viewH * 0.005);
-  c.stroke();
+  var r = viewH * 0.042;
+  c.beginPath(); c.arc(p.x + jx, p.y - viewH * 0.02, r, 0, Math.PI * 2);
+  artFillPath(c, '#ffffff', p.y - viewH * 0.02 - r, p.y - viewH * 0.02 + r, r, { shadeTo: '#ece4f8', lineColor: '#c9a0ff', line: Math.max(2, viewH * 0.005) });
+  artHighlight(c, p.x + jx - r * 0.4, p.y - viewH * 0.02 - r * 0.45, r * 0.26, r * 0.14, 0.5);
   c.fillStyle = '#8a2be2';
   c.font = 'bold ' + Math.round(viewH * 0.05) + 'px ' + UI_FONT;
   c.textAlign = 'center';
@@ -282,6 +323,7 @@ function groveDrawBush(c, p, ch, wrong) {
 function drawGrove() {
   var i, p;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   // Pensaat kirjaimineen
   for (i = 0; i < GROVE_BUSHES; i++) {
     p = groveBushPos(i);

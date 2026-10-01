@@ -79,13 +79,75 @@ function initLetterfield() {
   unicorn.y = unicorn.ty = (groundTop + groundBottom) / 2;
   unicorn.facing = 1;
   unicorn.moving = false;
+  lfSetupProps();
   renderBackground();
   playNote(523, 0, 0.25, 'sine', 0.35);
   playNote(659, 0.12, 0.3, 'triangle', 0.3);
 }
 
 function respawnLetterfield() {}
-function resizeLetterfield() { lf.gate.x = lf.gate.fx * worldW; }
+function resizeLetterfield() { lf.gate.x = lf.gate.fx * worldW; lfSetupProps(); }
+
+// Tökättävät koristeet: alueiden numerokyltit (viides tökkäys näyttää V-kirjaimen
+// kipinöineen) ja kaksi avointa kirjaa polun varrella (joka kolmas tökkäys
+// päästää kirjatoukan kurkkaamaan).
+function lfSetupProps() {
+  var i, h = viewH;
+  propsReset();
+  for (i = 0; i < LF_ZONES.length; i++) {
+    propAdd({
+      x: LF_ZONES[i][0] * worldW - h * 0.03, y: groundTop + h * 0.01, r: h * 0.08, hy: h * 0.11,
+      color: '#ffd24f', note: 660 + i * 110, amp: 0.1, num: String(i + 1),
+      draw: function (c, p) {
+        var s = h * 0.09, v = p.t >= 0 && p.n % 5 === 0;
+        artRoundRect(c, -s * 0.06, -s * 1.1, s * 0.12, s * 1.1, s * 0.03, '#8a5a30', { lineColor: '#5a3a1e' });
+        artRoundRect(c, -s * 0.45, -s * 1.6, s * 0.9, s * 0.55, s * 0.1, v ? '#ffe9a8' : '#fff6d8', { lineColor: '#b8862a' });
+        if (v) artGlow(c, 0, -s * 1.3, s * 0.6, '#ffe27a', 0.5);
+        c.fillStyle = v ? '#ff5f7e' : '#8a2be2';
+        readFont(c, s * 0.42);
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText(v ? 'V' : p.num, 0, -s * 1.3);
+        c.textBaseline = 'alphabetic';
+      }
+    });
+  }
+  for (i = 0; i < 2; i++) {
+    propAdd({
+      x: [0.32, 0.80][i] * worldW, y: groundBottom + h * 0.03, r: h * 0.06, hy: h * 0.025,
+      color: '#c9a0ff', note: 880 + i * 80, amp: 0.08,
+      draw: function (c, p) {
+        var s = h * 0.04, worm = p.t >= 0 && p.n % 3 === 0;
+        if (worm) lfDrawWorm(c, s * 0.3, -s * 0.5 - Math.sin(Math.min(1, p.t / 1.4) * Math.PI) * s * 0.8, s * 0.32);
+        artRoundRect(c, -s * 1.1, -s * 0.5, s * 2.2, s * 0.5, s * 0.1, '#ffffff', { lineColor: '#9a7ab8', shadeTo: '#e3d8f5' });
+        c.strokeStyle = '#8a5cb8';
+        c.lineWidth = Math.max(1, s * 0.05);
+        c.beginPath(); c.moveTo(0, -s * 0.5); c.lineTo(0, 0); c.stroke();
+        c.strokeStyle = 'rgba(138,43,226,0.35)';
+        var k;
+        for (k = 0; k < 3; k++) {
+          c.beginPath(); c.moveTo(-s * 0.9, -s * 0.38 + k * s * 0.12); c.lineTo(-s * 0.2, -s * 0.38 + k * s * 0.12); c.stroke();
+          c.beginPath(); c.moveTo(s * 0.2, -s * 0.38 + k * s * 0.12); c.lineTo(s * 0.9, -s * 0.38 + k * s * 0.12); c.stroke();
+        }
+      }
+    });
+  }
+}
+// Kirjatoukka silmälaseineen (yllätys kirjoissa ja Kirjainpuutarhassa)
+function lfDrawWorm(c, x, y, s) {
+  artCircle(c, x - s * 1.4, y + s * 0.3, s * 0.55, '#8fd45a', { lineColor: '#3a8a3a' });
+  artCircle(c, x - s * 0.7, y + s * 0.1, s * 0.6, '#9fe06a', { lineColor: '#3a8a3a' });
+  artCircle(c, x, y - s * 0.2, s * 0.7, '#9fe06a', { lineColor: '#3a8a3a', hi: 0.35 });
+  c.strokeStyle = '#5a3a8a';
+  c.lineWidth = Math.max(1, s * 0.12);
+  c.beginPath(); c.arc(x - s * 0.25, y - s * 0.3, s * 0.22, 0, Math.PI * 2); c.stroke();
+  c.beginPath(); c.arc(x + s * 0.25, y - s * 0.3, s * 0.22, 0, Math.PI * 2); c.stroke();
+  artEye(c, x - s * 0.25, y - s * 0.3, s * 0.14, 0.2, false);
+  artEye(c, x + s * 0.25, y - s * 0.3, s * 0.14, 0.2, false);
+  c.strokeStyle = '#2e6a2a';
+  c.lineWidth = Math.max(1, s * 0.1);
+  c.beginPath(); c.arc(x, y + s * 0.05, s * 0.25, 0.3, Math.PI - 0.3); c.stroke();
+}
 
 function lfNeeded() {
   var w = lf.words[lf.cur];
@@ -130,6 +192,8 @@ function handleLetterfieldTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
   var wx = px + camX, i, l, p, dx, dy, need = lfNeeded(), hr = lf.hudRect;
   if (hr && px >= hr.x && px <= hr.x + hr.w && py >= hr.y && py <= hr.y + hr.h) { lfSayCurrent(); return; }
+  // Koristeet heilahtavat; napautus jatkuu silti kirjaimiin ja kävelyksi
+  propsTap(wx, py);
   for (i = 0; i < lf.letters.length; i++) {
     l = lf.letters[i];
     if (l.collected) continue;
@@ -188,6 +252,7 @@ function updateLetterfield(dt) {
     if (lf.sayT > 0.4 + lf.words[lf.sayWord].w.split('-').length * WORD_SYL_T + 0.6) lf.sayT = -1;
   }
   for (i = 0; i < lf.bunnies.length; i++) if (lf.bunnies[i].hop > 0) lf.bunnies[i].hop = Math.max(0, lf.bunnies[i].hop - dt * 1.5);
+  propsUpdate(dt);
   if (lf.gate.open && !celebrating && Math.abs(unicorn.x - lf.gate.x) < viewH * 0.09) startCelebration();
   updateParticles(dt);
   updateConfetti(dt);
@@ -215,22 +280,8 @@ function renderLetterfieldNear(b, w, h) {
     x = (i * 173.7) % w;
     drawFlower(b, x, groundBottom + h * 0.02 + ((i * 37) % Math.max(1, Math.round(h - groundBottom - h * 0.04))), h * 0.012, ['#ff7bac', '#ffe27a', '#c9a0ff', '#7fd4ff'][i % 4]);
   }
-  for (i = 0; i < LF_ZONES.length; i++) drawSignPost(b, LF_ZONES[i][0] * w - h * 0.03, groundTop + h * 0.01, h * 0.09, String(i + 1));
+  // (Numerokyltit ovat tökättäviä koristeita, ks. lfSetupProps)
   drawMoonGateFrame(b, lf.gate.x, groundTop - h * 0.02, h);
-}
-
-function drawSignPost(c, x, baseY, s, txt) {
-  c.fillStyle = '#8a5a30';
-  c.fillRect(x - s * 0.06, baseY - s * 1.1, s * 0.12, s * 1.1);
-  c.fillStyle = '#fff6d8';
-  roundRect(c, x - s * 0.45, baseY - s * 1.6, s * 0.9, s * 0.55, s * 0.1);
-  c.fill();
-  c.fillStyle = '#8a2be2';
-  readFont(c, s * 0.42);
-  c.textAlign = 'center';
-  c.textBaseline = 'middle';
-  c.fillText(txt, x, baseY - s * 1.3);
-  c.textBaseline = 'alphabetic';
 }
 
 function drawFieldLetter(c, l) {
@@ -247,11 +298,10 @@ function drawFieldLetter(c, l) {
     c.fillStyle = g;
     c.beginPath(); c.arc(x, y, r * 2.2, 0, Math.PI * 2); c.fill();
   }
-  c.fillStyle = active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.6)';
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = active ? '#ffd24f' : 'rgba(200,190,220,0.8)';
-  c.lineWidth = Math.max(2, r * 0.1);
-  c.stroke();
+  artShadow(c, x, groundTop + viewH * 0.012, r * 0.9, r * 0.22, active ? 0.12 : 0.06);
+  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2);
+  artFillPath(c, '#ffffff', y - r, y + r, r, { shadeTo: '#ece4f8', lineColor: active ? '#ffd24f' : '#c9c0dc', line: Math.max(2, r * 0.1), alpha: active ? 1 : 0.65 });
+  if (active) artHighlight(c, x - r * 0.4, y - r * 0.45, r * 0.26, r * 0.14, 0.5);
   readFont(c, r * 1.3);
   c.fillStyle = active ? '#8a2be2' : 'rgba(138,43,226,0.5)';
   c.textAlign = 'center';
@@ -283,9 +333,12 @@ function drawLfWordHud(c) {
   var total = c.measureText(w.w).width, bw = total + h * 1.6 + h * 1.1, bx = viewW / 2, by = viewH * 0.075;
   var sayIdx = lf.sayT >= 0 ? Math.floor((lf.sayT - 0.4) / WORD_SYL_T) : -1;
   lf.hudRect = { x: bx - bw / 2, y: by - h / 2, w: bw, h: h };
-  c.fillStyle = 'rgba(255,255,255,0.92)';
   roundRect(c, bx - bw / 2, by - h / 2, bw, h, h * 0.4);
+  c.fillStyle = 'rgba(255,255,255,0.92)';
   c.fill();
+  c.strokeStyle = '#e4d4f5';
+  c.lineWidth = Math.max(1.5, h * 0.05);
+  c.stroke();
   c.textAlign = 'left';
   c.textBaseline = 'middle';
   x = bx - bw / 2 + h * 0.5;
@@ -328,6 +381,7 @@ function drawLetterfield() {
   if (!beginPlayWorld()) return;
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   drawMoonGateGlowAt(ctx, lf.gate.x, lf.gate.open);
+  propsDraw(ctx);
   for (i = 0; i < lf.letters.length; i++) {
     l = lf.letters[i];
     if (!l.collected) drawFieldLetter(ctx, l);
