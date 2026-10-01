@@ -132,10 +132,91 @@ function initCaravan() {
   princess.y = viewH * 0.95;
   princess.facing = 1;
   caravanStartRound();
+  caravanSetupProps();
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(659, 0.12, 0.2, 'triangle', 0.35);
   playNote(784, 0.24, 0.3, 'triangle', 0.35);
+}
+
+// Tökättävät koristeet oikeassa laidassa, säkkimaton ja kamelien ulkopuolella:
+// teltta (heilahtaa; joka kolmas tökkäys kurkistuttaa pupun oviaukosta),
+// taatelikori (taateli hyppää korista) ja kivellä nukkuva kissa (haukottelee).
+// Kamelit ääntelevät jo napautuksesta (handleCaravanTap).
+function caravanSetupProps() {
+  var W = viewW, h = viewH;
+  propsReset();
+  propAdd({
+    x: W * 0.9, y: h * 0.64, r: h * 0.1, hy: h * 0.07, color: '#ffb04f', note: 494, amp: 0.06, bunnyT: 0,
+    update: function (p, dt) { if (p.bunnyT > 0) p.bunnyT -= dt; },
+    draw: function (c, p) {
+      var s = h * 0.09;
+      artShadow(c, 0, s * 0.05, s * 1.3, s * 0.15, 0.15);
+      c.beginPath(); c.moveTo(-s * 1.2, 0); c.lineTo(0, -s * 1.5); c.lineTo(s * 1.2, 0); c.closePath();
+      artFillPath(c, '#ffb04f', -s * 1.5, 0, s, { lineColor: '#8a4a20' });
+      c.fillStyle = 'rgba(200,60,40,0.5)';
+      c.beginPath(); c.moveTo(-s * 0.7, 0); c.lineTo(0, -s * 1.5); c.lineTo(-s * 0.35, 0); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(s * 0.6, 0); c.lineTo(0, -s * 1.5); c.lineTo(s * 1.0, 0); c.closePath(); c.fill();
+      c.fillStyle = '#4a2a18';
+      c.beginPath(); c.moveTo(-s * 0.3, 0); c.lineTo(0, -s * 0.8); c.lineTo(s * 0.3, 0); c.closePath(); c.fill();
+      if (p.bunnyT > 0) drawBunny(c, 0, -s * 0.3, s * 0.3 * Math.min(1, p.bunnyT * 3, (2 - p.bunnyT) * 4), 0, globalT * 8, true);
+      c.strokeStyle = '#6a3a18';
+      c.lineWidth = Math.max(1.5, s * 0.04);
+      c.beginPath(); c.moveTo(0, -s * 1.5); c.lineTo(0, -s * 1.85); c.stroke();
+      c.fillStyle = '#5fa8ff';
+      c.beginPath(); c.moveTo(0, -s * 1.85); c.lineTo(s * 0.35 + Math.sin(globalT * 6) * s * 0.04, -s * 1.75); c.lineTo(0, -s * 1.65); c.closePath(); c.fill();
+    },
+    poke: function (p) {
+      if (p.n % 3 === 0) {
+        p.bunnyT = 2;
+        playNote(784, 0.15, 0.1, 'sine', 0.22);
+        playNote(988, 0.27, 0.14, 'sine', 0.22);
+      }
+    }
+  });
+  propAdd({
+    x: W * 0.84, y: h * 0.93, r: h * 0.06, hy: h * 0.045, color: '#d9a860', note: 587,
+    draw: function (c) {
+      var s = h * 0.045;
+      artShadow(c, 0, s * 0.05, s * 1.1, s * 0.2, 0.15);
+      artCircle(c, -s * 0.35, -s * 0.95, s * 0.28, '#8a4a20', { lineColor: '#4a2810' });
+      artCircle(c, s * 0.3, -s * 1.0, s * 0.28, '#a05a28', { lineColor: '#4a2810' });
+      artCircle(c, 0, -s * 1.15, s * 0.28, '#8a4a20', { lineColor: '#4a2810' });
+      c.beginPath(); c.moveTo(-s * 0.8, 0); c.lineTo(-s * 1.0, -s * 1.0); c.lineTo(s * 1.0, -s * 1.0); c.lineTo(s * 0.8, 0); c.closePath();
+      artFillPath(c, '#d9a860', -s, 0, s, { lineColor: '#7a5028' });
+      c.strokeStyle = 'rgba(120,80,40,0.5)';
+      c.lineWidth = Math.max(1, s * 0.06);
+      c.beginPath(); c.moveTo(-s * 0.95, -s * 0.66); c.lineTo(s * 0.95, -s * 0.66); c.moveTo(-s * 0.88, -s * 0.33); c.lineTo(s * 0.88, -s * 0.33); c.stroke();
+      artRoundRect(c, -s * 1.05, -s * 1.15, s * 2.1, s * 0.25, s * 0.08, '#c08a48', { lineColor: '#7a5028' });
+    },
+    poke: function (p) {
+      var s = h * 0.045;
+      propDropBall(p.x + (Math.random() - 0.5) * s, p.y - s * 1.4, s * 0.26, '#8a4a20', p.y - s * 0.2, (Math.random() - 0.5) * W * 0.12);
+    }
+  });
+  propAdd({
+    x: W * 0.94, y: h * 0.86, r: h * 0.06, hy: h * 0.04, color: '#ffd9b8', note: 660, amp: 0.05, yawnT: 0,
+    update: function (p, dt) { if (p.yawnT > 0) p.yawnT -= dt; },
+    draw: function (c, p) { caravanDrawCat(c, 0, 0, h * 0.03, p.yawnT > 0); },
+    poke: function (p) {
+      p.yawnT = 0.9;
+      playNote(660, 0.05, 0.12, 'sine', 0.18);
+      playNote(880, 0.15, 0.25, 'sine', 0.16);
+    }
+  });
+}
+// Kerällä nukkuva kissa kivellä: origo kiven alla; yawn avaa suun ja silmät
+function caravanDrawCat(c, x, y, s, yawn) {
+  artBlob(c, x, y - s * 0.4, s * 1.5, s * 0.75, '#c9a070', { lineColor: '#8a6a40', hi: 0.3 });
+  artBlob(c, x, y - s * 1.2, s * 1.0, s * 0.55, '#9a9aa8', { shadeTo: '#6a6a78', lineColor: '#44444e', hi: 0.25 });
+  artLimb(c, x + s * 0.8, y - s * 1.1, x + s * 1.3, y - s * 1.7, s * 0.2, '#9a9aa8', '#44444e');
+  artCircle(c, x - s * 0.7, y - s * 1.55, s * 0.42, '#9a9aa8', { lineColor: '#44444e' });
+  c.fillStyle = '#9a9aa8';
+  c.beginPath(); c.moveTo(x - s * 1.05, y - s * 1.7); c.lineTo(x - s * 0.95, y - s * 2.15); c.lineTo(x - s * 0.7, y - s * 1.9); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(x - s * 0.35, y - s * 1.7); c.lineTo(x - s * 0.45, y - s * 2.15); c.lineTo(x - s * 0.7, y - s * 1.9); c.closePath(); c.fill();
+  artEye(c, x - s * 0.85, y - s * 1.6, s * 0.07, 0, !yawn);
+  artEye(c, x - s * 0.55, y - s * 1.6, s * 0.07, 0, !yawn);
+  if (yawn) artBlob(c, x - s * 0.7, y - s * 1.35, s * 0.1, s * 0.13, '#c0505a', { line: false });
 }
 function caravanStartRound() {
   var R = CARAVAN_ROUNDS[caravan.round], G = caravanGenerate(R), i, k, cm, n = G.camels.length, sk;
@@ -218,6 +299,7 @@ function resizeCaravan() {
   for (i = 0; i < caravan.sacks.length; i++) caravanSackHome(caravan.sacks[i], true);
   princess.x = viewW * 0.04;
   princess.y = viewH * 0.95;
+  caravanSetupProps();
 }
 
 // ---------- Syöte ----------
@@ -228,7 +310,8 @@ function caravanCamelHit(cm, px, py) {
 }
 function handleCaravanTap(px, py) {
   var i, sk, d, bd = 1e9, best = null, r = caravanSackR() * 1.35, cm;
-  if (!running || celebrating || puzzleBusy() || caravan.state !== 'play') return;
+  if (!running || celebrating || puzzleBusy()) return;
+  if (caravan.state !== 'play') { propsTap(px, py); return; }
   for (i = 0; i < caravan.sacks.length; i++) {
     sk = caravan.sacks[i];
     if (sk.back || (sk.on && sk.on.done)) continue;
@@ -260,6 +343,8 @@ function handleCaravanTap(px, py) {
       return;
     }
   }
+  // Koristeet (teltta, kori, kissa) vain, kun napautus ei osunut säkkiin eikä kameliin
+  propsTap(px, py);
 }
 function caravanDrop(sk) {
   var i, cm, target = null, sum;
@@ -308,6 +393,7 @@ function updateCaravan(dt) {
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
+  propsUpdate(dt);
   busy = puzzleBusy();
   caravan.t += dt;
   // Raahaus
@@ -437,7 +523,7 @@ function caravanStormHit() {
 
 // ---------- Piirto: tausta ----------
 function renderCaravanBg(b, w, h) {
-  var vw = viewW, g = b.createLinearGradient(0, 0, 0, h), x, i, by = caravanBaseY();
+  var vw = viewW, g = b.createLinearGradient(0, 0, 0, h), x, i;
   g.addColorStop(0, '#5ec8e8');
   g.addColorStop(0.42, '#ffe2b0');
   g.addColorStop(1, '#f0c078');
@@ -481,8 +567,7 @@ function renderCaravanBg(b, w, h) {
     var y = h * (0.55 + ((i * 0.377) % 1) * 0.22);
     b.beginPath(); b.moveTo(x - h * 0.03, y); b.quadraticCurveTo(x, y - h * 0.01, x + h * 0.03, y); b.stroke();
   }
-  artBlob(b, vw * 0.9, by + h * 0.24, h * 0.04, h * 0.022, '#c9a070', { lineColor: '#8a6a40', hi: 0.3 });
-  artBlob(b, vw * 0.84, by + h * 0.3, h * 0.025, h * 0.015, '#c9a070', { lineColor: '#8a6a40', hi: 0.3 });
+  // Oikean laidan kivi, kori ja teltta ovat tökättäviä koristeita (caravanSetupProps)
 }
 
 // ---------- Piirto: kameli, säkki, myrsky ----------
@@ -622,6 +707,7 @@ function drawCaravan() {
   var c = ctx, i, sk, cm, r = caravanSackR(), s = caravanS();
   if (!beginPlayWorld()) return;
   caravanDrawStorm(c);
+  propsDraw(c);
   drawPrincessFree(c, princess.x, princess.y, viewH / 560, 1, 0, false, globalT);
   for (i = 0; i < caravan.camels.length; i++) caravanDrawCamel(c, caravan.camels[i]);
   // Kohdekorostus raahatessa
