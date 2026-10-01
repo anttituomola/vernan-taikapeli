@@ -15,6 +15,7 @@ var scBottles = [];
 var scBottleDefs = [{ fx: 0.08, fy: 0.10 }, { fx: 0.20, fy: 0.34 }, { fx: 0.48, fy: 0.34 }, { fx: 0.70, fy: 0.34 }];
 var scShake = { t: 0, gate: null };
 var SC_SHAPES = ['circle', 'triangle', 'square', 'zigzag'];
+var scPokeT = 0, scPokeN = 0, scHeartT = 0;   // mörön tökkäys: hytkytys, laskuri, sydän (yllätys)
 
 function layoutScribble() {
   var i, seg;
@@ -52,7 +53,11 @@ function initScribble() {
   scMonster.hitT = 0;
   scDoor.open = false;
   scShake.t = 0;
+  scPokeT = 0;
+  scPokeN = 0;
+  scHeartT = 0;
   layoutScribble();
+  scProps();
   tasks = [makeTask(0.40, 'pattern')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   makeCheckpoints([0.34, 0.60, 0.82]);
@@ -79,6 +84,7 @@ function resizeScribble(ratio) {
   var i;
   princess.x *= ratio;
   layoutScribble();
+  scProps();
   for (i = 0; i < scBlots.length; i++) scBlots[i].x *= ratio;
   penCoreResize(ratio);
 }
@@ -236,6 +242,13 @@ function updateScribble(dt) {
     startCelebration();
   }
 
+  // Tökkäys: ensin mörkö (murahdus), muuten koristeet; ei kynätilassa
+  if (scPokeT > 0) scPokeT -= dt;
+  if (scHeartT > 0) scHeartT -= dt;
+  var tp = penTapPoll();
+  if (tp && !scPokeMonster(tp.x, tp.y)) propsTap(tp.x, tp.y);
+  propsUpdate(dt);
+
   followCam(princess.x, dt);
   updateCheckpoints(princess.x, princess.y);
   updateParticles(dt);
@@ -262,11 +275,74 @@ function renderScribbleNear(b, w, h) {
     b.bezierCurveTo(x + h * 0.06, h * 0.25, x - h * 0.05, h * 0.3, x + h * 0.04, h * 0.4);
     b.stroke();
   }
-  var s = h * 0.12, gx = scDoor.x;
-  b.fillStyle = '#8f8fc0';
-  b.fillRect(gx - s * 0.8, groundTop - s * 1.7, s * 0.28, s * 1.7);
-  b.fillRect(gx + s * 0.52, groundTop - s * 1.7, s * 0.28, s * 1.7);
-  b.beginPath(); b.arc(gx, groundTop - s * 1.7, s * 0.8, Math.PI, 0); b.lineTo(gx + s * 0.52, groundTop - s * 1.7); b.arc(gx, groundTop - s * 1.7, s * 0.52, 0, Math.PI, true); b.closePath(); b.fill();
+  scDrawDoor(b, scDoor.x, h * 0.12);
+}
+
+// Loppuovi taustaan: pylväät ja kaari reunaviivalla
+function scDrawDoor(c, gx, s) {
+  var lw = Math.max(1.2, s * 0.035), col = '#8f8fc0', line = '#4e4e80';
+  artRoundRect(c, gx - s * 0.8, groundTop - s * 1.7, s * 0.28, s * 1.7, s * 0.06, col, { lineColor: line, line: lw });
+  artRoundRect(c, gx + s * 0.52, groundTop - s * 1.7, s * 0.28, s * 1.7, s * 0.06, col, { lineColor: line, line: lw });
+  c.beginPath(); c.arc(gx, groundTop - s * 1.7, s * 0.8, Math.PI, 0); c.lineTo(gx + s * 0.52, groundTop - s * 1.7); c.arc(gx, groundTop - s * 1.7, s * 0.52, 0, Math.PI, true); c.closePath();
+  artFillPath(c, col, groundTop - s * 2.5, groundTop - s * 1.7, s * 0.4, { lineColor: line, line: lw });
+}
+
+// Maalipurkki siveltimineen (tökättävä koriste, origo = pohja). p.col = värin sävy.
+// Leveä ja pyöreä, jotta se erottuu kerättävistä mustepulloista.
+function scDrawInkPot(c, p) {
+  var s = p.s, lw = Math.max(1.2, s * 0.06), col = p.col;
+  artShadow(c, 0, 0, s * 1.1, s * 0.2, 0.14);
+  artLimb(c, s * 0.3, -s * 0.9, s * 0.95, -s * 2.3, s * 0.14, '#a9743f', '#6a4a28');
+  artBlob(c, s * 1.02, -s * 2.4, s * 0.16, s * 0.3, col, { rot: 0.45, lineColor: artShade(col, -0.45) });
+  artRoundRect(c, -s * 0.8, -s * 1.3, s * 1.6, s * 1.3, s * 0.3, '#efe6ff', { lineColor: '#7a5aa8', line: lw, shadeTo: '#e3d8f5' });
+  artRoundRect(c, -s * 0.64, -s * 0.85, s * 1.28, s * 0.72, s * 0.22, col, { line: false });
+  artHighlight(c, -s * 0.45, -s * 0.7, s * 0.12, s * 0.35, 0.55);
+}
+// Värillinen tahra, joka lentää purkista paperille ja jää hetkeksi
+function scDrawBlotDrop(c, d) {
+  var s = d.s, line = artShade(d.col, -0.45);
+  artCircle(c, 0, 0, s, d.col, { lineColor: line, hi: 0.4 });
+  artCircle(c, -s * 0.8, s * 0.4, s * 0.45, d.col, { lineColor: line });
+  artCircle(c, s * 0.85, s * 0.3, s * 0.38, d.col, { lineColor: line });
+}
+// Purkki roiskauttaa tahran; väri vaihtuu joka tökkäyksellä
+function scInkPotPoke(p) {
+  var cols = ['#ff7bac', '#5fa8ff', '#ffb84f', '#6fd66f', '#b678ff'], col = cols[p.n % cols.length];
+  propDrop({ x: p.x + p.s * 0.6, y: p.y - p.s * 1.4, vx: viewW * (0.05 + Math.random() * 0.05), vy: -viewH * 0.22, vr: 0, ground: p.y,
+    life: 3, col: col, s: p.s * 0.4, draw: scDrawBlotDrop });
+  playNote(500, 0, 0.1, 'sine', 0.2);
+  playNote(750, 0.08, 0.14, 'sine', 0.15);
+}
+// Mörkö murahtaa ja hytkyy tökkäyksestä; joka viides tökkäys kikattaa ja näyttää sydämen (yllätys)
+function scPokeMonster(wx, wy) {
+  var m = scMonster;
+  if (Math.hypot(wx - m.x, wy - m.y) > viewH * 0.14) return false;
+  scPokeT = 0.6;
+  scPokeN++;
+  spawnSparkles(m.x, m.y, 8, m.calm ? '#c9a0ff' : '#9aa0b8');
+  if (scPokeN % 5 === 0) {
+    scHeartT = 1.6;
+    playNote(880, 0, 0.08, 'sine', 0.25);
+    playNote(1100, 0.09, 0.08, 'sine', 0.25);
+    playNote(1320, 0.18, 0.08, 'sine', 0.25);
+    playNote(1100, 0.27, 0.15, 'sine', 0.25);
+  } else {
+    playNote(m.calm ? 300 : 110, 0, 0.25, m.calm ? 'triangle' : 'sawtooth', m.calm ? 0.15 : 0.12);
+  }
+  return true;
+}
+
+// Tökättävät koristeet: maalipurkki, vahaliitu ja paperikukka (yhteiset tarrat
+// play-pen.js:ssä). Kutsutaan myös resize-koukusta (paikat osuuksina).
+function scProps() {
+  var h = viewH;
+  propsReset();
+  propAdd({ x: worldW * 0.13, y: groundTop, s: h * 0.032, r: h * 0.06, hy: h * 0.03, amp: 0.08, col: '#ff7bac', color: '#ff7bac', note: 560,
+    draw: scDrawInkPot, poke: scInkPotPoke });
+  propAdd({ x: worldW * 0.25, y: groundTop, s: h * 0.07, r: h * 0.05, hy: h * 0.012, amp: 0.1, col: '#b678ff', color: '#d0a8ff', note: 520,
+    draw: penDrawCrayon, poke: penCrayonPoke, update: penCrayonUpdate });
+  propAdd({ x: worldW * 0.64, y: groundTop, s: h * 0.02, r: h * 0.05, hy: h * 0.05, amp: 0.12, col: '#ffe27a', color: '#ffe27a', note: 660,
+    draw: penFlowerDraw, poke: penFlowerPoke, update: penFlowerUpdate });
 }
 
 // Muotosymboli: ympyrä, kolmio, neliö tai salama (siksak)
@@ -296,22 +372,18 @@ function drawScGate(c, g) {
   var x = g.x - camX, h = viewH, s = h * 0.12;
   if (x < -s * 3 || x > viewW + s * 3) return;
   var shake = scShake.gate === g && scShake.t > 0 ? Math.sin(globalT * 50) * h * 0.008 : 0;
-  var spread = g.open ? s * 0.55 : 0;
-  c.fillStyle = '#8a4dff';
-  roundRect(c, x - s * 0.7 - spread + shake, groundTop - s * 1.8, s * 0.3, s * 1.8, s * 0.1);
-  c.fill();
-  roundRect(c, x + s * 0.4 + spread + shake, groundTop - s * 1.8, s * 0.3, s * 1.8, s * 0.1);
-  c.fill();
+  var spread = g.open ? s * 0.55 : 0, lw = Math.max(1.2, s * 0.035);
+  artRoundRect(c, x - s * 0.7 - spread + shake, groundTop - s * 1.8, s * 0.3, s * 1.8, s * 0.1, '#8a4dff', { lineColor: '#4a2a8a', line: lw });
+  artRoundRect(c, x + s * 0.4 + spread + shake, groundTop - s * 1.8, s * 0.3, s * 1.8, s * 0.1, '#8a4dff', { lineColor: '#4a2a8a', line: lw });
   if (!g.open) {
     c.fillStyle = 'rgba(138,77,255,0.18)';
     c.fillRect(x - s * 0.4 + shake, groundTop - s * 1.8, s * 0.8, s * 1.8);
   }
-  // Muotokortti portin päällä: piirrä tämä
+  // Muotokortti portin päällä: piirrä tämä (kortti valkoinen, varjopuoli laventeliin)
   var near = Math.abs(princess.x - g.x) < viewW * 0.45 && !g.open;
   var pulse = near ? 1 + Math.sin(globalT * 4) * 0.06 : 1;
-  c.fillStyle = g.open ? 'rgba(200,255,200,0.9)' : 'rgba(255,255,255,0.95)';
-  roundRect(c, x - s * 0.55 * pulse + shake, groundTop - s * 3.0 - s * 0.55 * pulse, s * 1.1 * pulse, s * 1.1 * pulse, s * 0.2);
-  c.fill();
+  artRoundRect(c, x - s * 0.55 * pulse + shake, groundTop - s * 3.0 - s * 0.55 * pulse, s * 1.1 * pulse, s * 1.1 * pulse, s * 0.2,
+    g.open ? '#c8ffc8' : '#ffffff', g.open ? { lineColor: '#7fc07f', line: lw, alpha: 0.9 } : { lineColor: '#c9b8e8', line: lw, shadeTo: '#e3d8f5', alpha: 0.95 });
   drawShapeSymbol(c, g.shape, x + shake, groundTop - s * 3.0, s * 0.33 * pulse, g.open ? '#4fb356' : '#8a4dff', !g.open);
   if (g.glow > 0) drawStar(c, x, groundTop - s * 3.9, h * 0.03, globalT, Math.min(1, g.glow));
 }
@@ -321,7 +393,9 @@ function drawScMonster(c) {
   if (x < -r * 3 || x > viewW + r * 3) return;
   var calm = m.calm;
   var shake = scShake.gate && scShake.gate.monster && scShake.t > 0 ? Math.sin(globalT * 50) * viewH * 0.008 : 0;
-  x += shake;
+  // Tökättynä mörkö hytkyy
+  var jig = scPokeT > 0 ? Math.sin(scPokeT * 40) * scPokeT * r * 0.12 : 0;
+  x += shake + jig;
   // Sotkupallo: monta töhryviivaa
   c.strokeStyle = calm ? '#c9a0ff' : '#4a4560';
   c.lineWidth = Math.max(3, r * 0.1);
@@ -333,15 +407,16 @@ function drawScMonster(c) {
     c.bezierCurveTo(x + Math.cos(a1 + 1) * r * 1.1, y + Math.sin(a1 + 1) * r * 1.0, x + Math.cos(a2 - 1) * r * 0.5, y + Math.sin(a2 - 1) * r * 0.6, x + Math.cos(a2) * r * 0.9, y + Math.sin(a2) * r * 0.75);
     c.stroke();
   }
-  c.fillStyle = calm ? 'rgba(201,160,255,0.55)' : 'rgba(74,69,96,0.75)';
-  c.beginPath(); c.arc(x, y, r * 0.7, 0, Math.PI * 2); c.fill();
-  // Silmät ja suu
-  c.fillStyle = '#fff';
-  c.beginPath(); c.arc(x - r * 0.28, y - r * 0.12, r * 0.18, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + r * 0.28, y - r * 0.12, r * 0.18, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#222';
-  c.beginPath(); c.arc(x - r * 0.28 + (calm ? 0 : Math.sin(m.phase * 3) * r * 0.05), y - r * 0.12, r * 0.08, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + r * 0.28 + (calm ? 0 : Math.sin(m.phase * 3) * r * 0.05), y - r * 0.12, r * 0.08, 0, Math.PI * 2); c.fill();
+  // Vartalo: kaksisävyinen pallo reunaviivalla, läpikuultava kuten ennen
+  artCircle(c, x, y, r * 0.7, calm ? '#c9a0ff' : '#4a4560', { lineColor: calm ? '#7a5aa8' : '#2a2640', line: Math.max(2, r * 0.06), alpha: calm ? 0.55 : 0.75, hi: 0.2 });
+  // Silmät (katse vilkuilee villinä, räpyttelee rauhoittuneena), posket ja suu
+  var look = calm ? 0 : Math.sin(m.phase * 3) * 0.9, blink = calm && Math.sin(m.phase * 2) > 0.96;
+  artEye(c, x - r * 0.28, y - r * 0.12, r * 0.18, look, blink);
+  artEye(c, x + r * 0.28, y - r * 0.12, r * 0.18, look, blink);
+  if (calm) {
+    artBlush(c, x - r * 0.42, y + r * 0.1, r * 0.09);
+    artBlush(c, x + r * 0.42, y + r * 0.1, r * 0.09);
+  }
   c.strokeStyle = '#222';
   c.lineWidth = Math.max(2, r * 0.06);
   c.beginPath();
@@ -362,6 +437,8 @@ function drawScMonster(c) {
   } else if (m.hitT > 0) {
     drawStar(c, x, y - r * 1.3, viewH * 0.05, globalT * 3, 1);
   }
+  // Yllätys: sydän kohoaa mörön vierestä
+  if (scHeartT > 0) drawHeartShape(c, x + r * 0.85, y - r * 0.8 - (1.6 - scHeartT) * r * 0.3, viewH * 0.03, true);
 }
 
 function drawScBlot(c, bl) {
@@ -375,24 +452,26 @@ function drawScBlot(c, bl) {
     c.fillStyle = 'rgba(74,69,96,0.5)';
     c.beginPath(); c.moveTo(x - s * 0.3, y - s * 1.8); c.lineTo(x + s * 0.3, y - s * 1.8); c.lineTo(x + s * 0.15, y); c.lineTo(x - s * 0.15, y); c.closePath(); c.fill();
   }
-  c.fillStyle = '#4a4560';
-  c.beginPath(); c.arc(x, y, s * 0.7, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x - s * 0.5, y + s * 0.35, s * 0.32, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + s * 0.55, y + s * 0.25, s * 0.28, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#fff';
-  c.beginPath(); c.arc(x - s * 0.22, y - s * 0.15, s * 0.16, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + s * 0.22, y - s * 0.15, s * 0.16, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#222';
-  c.beginPath(); c.arc(x - s * 0.22, y - s * 0.15, s * 0.07, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + s * 0.22, y - s * 0.15, s * 0.07, 0, Math.PI * 2); c.fill();
+  // Tahra: sivutahrat ja päätahra reunaviivalla, silmät kiiltoineen
+  artCircle(c, x - s * 0.5, y + s * 0.35, s * 0.32, '#4a4560', { lineColor: '#2a2640' });
+  artCircle(c, x + s * 0.55, y + s * 0.25, s * 0.28, '#4a4560', { lineColor: '#2a2640' });
+  artCircle(c, x, y, s * 0.7, '#4a4560', { lineColor: '#2a2640' });
+  artEye(c, x - s * 0.22, y - s * 0.15, s * 0.16, 0, false);
+  artEye(c, x + s * 0.22, y - s * 0.15, s * 0.16, 0, false);
 }
 
 function drawScDoorGlow(c) {
   var x = scDoor.x - camX, h = viewH, s = h * 0.12;
   if (x < -s * 3 || x > viewW + s * 3) return;
-  c.fillStyle = scDoor.open ? 'rgba(255,245,200,' + (0.75 + Math.sin(globalT * 4) * 0.15) + ')' : 'rgba(40,30,70,0.8)';
-  c.beginPath(); c.arc(x, groundTop - s * 1.7, s * 0.52, Math.PI, 0); c.lineTo(x + s * 0.52, groundTop); c.lineTo(x - s * 0.52, groundTop); c.closePath(); c.fill();
-  if (scDoor.open) drawStar(c, x, groundTop - s * 2.9, h * 0.035, globalT, 1);
+  // Oviaukko: suljettuna hämärä, avattuna lämmin valo
+  c.beginPath(); c.arc(x, groundTop - s * 1.7, s * 0.52, Math.PI, 0); c.lineTo(x + s * 0.52, groundTop); c.lineTo(x - s * 0.52, groundTop); c.closePath();
+  if (scDoor.open) {
+    artFillPath(c, '#fff5c8', groundTop - s * 2.2, groundTop, s * 0.5, { line: false, alpha: 0.75 + Math.sin(globalT * 4) * 0.15 });
+    artGlow(c, x, groundTop - s, s, '#fff0a0', 0.5);
+    drawStar(c, x, groundTop - s * 2.9, h * 0.035, globalT, 1);
+  } else {
+    artFillPath(c, '#281e46', groundTop - s * 2.2, groundTop, s * 0.5, { line: false, alpha: 0.8 });
+  }
 }
 
 // Muotorivi HUDiin: avatut portit värillä, avaamattomat haaleina
@@ -412,6 +491,7 @@ function drawScShapeHud(c) {
 function drawScribble() {
   var i;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   drawScMonster(ctx);
   drawScDoorGlow(ctx);
   drawPenStrokesLayer(ctx);
@@ -420,7 +500,7 @@ function drawScribble() {
   for (i = 0; i < scGates.length; i++) drawScGate(ctx, scGates[i]);
   for (i = 0; i < scBottles.length; i++) {
     if (scBottles[i].collected) continue;
-    drawInkBottle(ctx, scBottles[i].ax - camX, scBottles[i].ay + Math.sin(scBottles[i].phase) * viewH * 0.012, viewH * 0.024);
+    penDrawBottle(ctx, scBottles[i].ax - camX, scBottles[i].ay + Math.sin(scBottles[i].phase) * viewH * 0.012, viewH * 0.024);
   }
   drawPenPrincess(ctx);
   for (i = 0; i < scBlots.length; i++) drawScBlot(ctx, scBlots[i]);
