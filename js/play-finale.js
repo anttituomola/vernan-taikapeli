@@ -16,6 +16,120 @@ var BOSS_ROUNDS = 3;
 var finaleBunnies = [];
 var finaleFriends = [];
 
+// ---------- Tökättävät koristeet ----------
+// Paikat murto-osina areenan leveydestä lattialla; finalePropSync laskee paikan
+// joka ruudulla. p.s = piirtokoko, p.sp = koristeen oma ajastin (liekki, kansi).
+// finaleStarT: piilotähti tuikkii, kun kuuta napautetaan (yllätys).
+var finaleHoldPrev = false;
+var finaleStarT = 0;
+function finalePropSync(p, dt) {
+  p.x = p.fx * finale.arenaW;
+  p.y = groundTop;
+  p.s = p.fs * viewH;
+  p.r = p.s * 1.6;
+  p.hy = p.kind === 'torch' ? p.s * 1.6 : p.s * 0.6;
+  if (p.sp > 0) p.sp -= dt;
+}
+
+// Soihtu: tolppa, malja, hehku ja lepattava liekki (flare 0..1 suurentaa)
+function finaleDrawTorch(c, s, flare) {
+  var fl = 1 + flare * 0.6, flick = Math.sin(globalT * 11) * s * 0.05;
+  artShadow(c, 0, 0, s * 0.6, s * 0.14, 0.16);
+  artLimb(c, 0, 0, 0, -s * 1.6, s * 0.16, '#5a4a6e', '#2a2436');
+  artGlow(c, 0, -s * 2.0, s * (1.8 + flare * 1.4), '#ffb347', 0.35 + flare * 0.35);
+  artRoundRect(c, -s * 0.32, -s * 1.85, s * 0.64, s * 0.3, s * 0.1, '#c9a25a', { lineColor: '#7a5a20' });
+  artBlob(c, 0, -s * 2.1 - flick, s * 0.28 * fl, s * 0.5 * fl, '#ff9d3a', { lineColor: '#b05a10' });
+  artBlob(c, 0, -s * 2.0 - flick, s * 0.14 * fl, s * 0.26 * fl, '#ffe27a', { line: false });
+}
+
+// Aarrearkku: runko, kansi (hop 0..1 raottaa), vanne ja lukko
+function finaleDrawChest(c, s, hop) {
+  artShadow(c, 0, 0, s * 1.3, s * 0.24, 0.16);
+  artRoundRect(c, -s * 1.0, -s * 0.8, s * 2.0, s * 0.8, s * 0.12, '#8a5a30', { lineColor: '#4a2e14' });
+  artRoundRect(c, -s * 0.18, -s * 0.8, s * 0.36, s * 0.8, s * 0.06, '#c9a25a', { lineColor: '#7a5a20' });
+  if (hop > 0) artGlow(c, 0, -s * 0.9, s * 1.2, '#ffe27a', hop * 0.5);
+  artRoundRect(c, -s * 1.05, -s * 1.25 - hop * s * 0.3, s * 2.1, s * 0.5, s * 0.2, '#6a4020', { lineColor: '#3a2008' });
+  artCircle(c, 0, -s * 0.95 - hop * s * 0.15, s * 0.16, '#ffd24f', { lineColor: '#a07a10', hi: 0.4 });
+}
+
+function finalePropsSetup() {
+  var i, defs = [
+    { kind: 'torch', fx: 0.04, fs: 0.04, color: '#ffb347', note: 660 },
+    { kind: 'chest', fx: 0.42, fs: 0.04, color: '#ffd24f', note: 523 },
+    { kind: 'torch', fx: 0.96, fs: 0.04, color: '#ffb347', note: 698 }
+  ];
+  propsReset();
+  for (i = 0; i < defs.length; i++) {
+    defs[i].sp = 0;
+    defs[i].update = finalePropSync;
+    if (defs[i].kind === 'torch') {
+      defs[i].draw = function (c, p) { finaleDrawTorch(c, p.s, p.sp > 0 ? Math.min(1, p.sp) : 0); };
+      defs[i].poke = function (p) {
+        // Liekki leimahtaa ja rätisee
+        p.sp = 1.2;
+        spawnSparkles(p.x, p.y - p.s * 2.2, 8, '#ffb347');
+        playNote(1200, 0, 0.04, 'square', 0.08);
+        playNote(1500, 0.08, 0.04, 'square', 0.08);
+      };
+    } else {
+      defs[i].draw = function (c, p) { finaleDrawChest(c, p.s, p.sp > 0 ? Math.sin(Math.min(1, p.sp / 0.5) * Math.PI) : 0); };
+      defs[i].poke = finaleChestPoke;
+    }
+    finalePropSync(propAdd(defs[i]), 0);
+  }
+}
+
+// Kansi hyppää; joka kolmas tökkäys pärskäyttää kultakolikoita
+function finaleChestPoke(p) {
+  var k;
+  p.sp = 0.5;
+  if (p.n % 3 === 0) {
+    playNote(1319, 0.1, 0.1, 'triangle', 0.2);
+    playNote(1760, 0.2, 0.1, 'triangle', 0.2);
+    playNote(2093, 0.3, 0.25, 'triangle', 0.2);
+    for (k = 0; k < 4; k++) {
+      propDropBall(p.x + (k - 1.5) * p.s * 0.3, p.y - p.s * 1.1, p.s * 0.14, '#ffd24f', p.y + p.s * 0.05, (k - 1.5) * viewW * 0.03);
+    }
+  }
+}
+
+// Juoksukentässä ei ole tap-koukkua: napautus tunnistetaan pidon alkamisesta.
+// Kuu sytyttää piilotähden, häkissä oleva pupu heiluttaa korviaan, muuten
+// tökätään koristetta. Ei pelivaikutusta.
+function finaleTapCheck() {
+  var wx, wy, i, sx, fb;
+  if (holding && !finaleHoldPrev && running && !celebrating && !puzzleBusy()) {
+    wx = holdWorldX; wy = holdSY;
+    sx = bgSun ? bgSun.x - camX * bgSun.speed : -1e9;
+    if (bgSun && Math.hypot(holdSX - sx, wy - bgSun.y) < bgSun.r * 1.6) {
+      finaleStarT = 3;
+    } else {
+      for (i = 0; i < finaleBunnies.length; i++) {
+        fb = finaleBunnies[i];
+        if (!fb.freed && Math.hypot(wx - fb.x, wy - (groundTop - viewH * 0.05)) < viewH * 0.08) {
+          fb.pokeT = 0.8;
+          playNote(1175, 0, 0.06, 'sine', 0.15);
+          playNote(1568, 0.07, 0.08, 'sine', 0.15);
+          spawnSparkles(fb.x, groundTop - viewH * 0.1, 5, '#ff9ec6');
+          break;
+        }
+      }
+      if (i >= finaleBunnies.length) propsTap(wx, wy);
+    }
+  }
+  finaleHoldPrev = holding;
+}
+
+// Piilotähti linnan katossa: tuikkii hetken kuun napautuksesta
+function finaleDrawHiddenStar(c) {
+  if (finaleStarT <= 0) return;
+  var x = finale.arenaW * 0.3 - camX, y = viewH * 0.08, s = viewH * 0.022;
+  var a = Math.min(1, finaleStarT / 0.5, (3 - finaleStarT) / 0.3) * (0.7 + Math.sin(globalT * 12) * 0.3);
+  c.globalAlpha = Math.max(0, a);
+  drawStar(c, x, y, s, globalT * 0.8, 1);
+  c.globalAlpha = 1;
+}
+
 function initFinale() {
   var i;
   finale.phase = 'boss';
@@ -42,6 +156,9 @@ function initFinale() {
   bossStartSequence();
   finaleBunnies = [];
   finaleFriends = [];
+  finalePropsSetup();
+  finaleHoldPrev = false;
+  finaleStarT = 0;
   resetPrincess(finale.arenaW * 0.2, groundTop);
   checkpoint.x = princess.x;
   checkpoint.y = groundTop;
@@ -138,7 +255,7 @@ function bossDefeated() {
   }
   finaleBunnies = [];
   for (i = 0; i < tasks.length; i++) {
-    finaleBunnies.push({ x: tasks[i].x, y: groundTop, freed: false, hopT: i, earT: i });
+    finaleBunnies.push({ x: tasks[i].x, y: groundTop, freed: false, hopT: i, earT: i, pokeT: 0 });
   }
   soundFanfare();
 }
@@ -147,6 +264,9 @@ function updateFinale(dt) {
   var i;
   finale.t += dt;
   updateTasks(dt);
+  propsUpdate(dt);
+  finaleTapCheck();
+  if (finaleStarT > 0) finaleStarT -= dt;
   var busy = puzzleBusy();
 
   platformerStep(dt, { runSp: viewW * 0.24, blockTasks: finale.phase === 'cages' });
@@ -219,6 +339,8 @@ function updateFinale(dt) {
     for (i = 0; i < finaleBunnies.length; i++) {
       var fb = finaleBunnies[i];
       fb.earT += dt * 4;
+      // Tökätty pupu heiluttaa korviaan vauhdilla
+      if (fb.pokeT > 0) { fb.pokeT -= dt; fb.earT += dt * 14; }
       if (fb.freed) {
         fb.hopT += dt * 8;
         var lead = princess.x - princess.facing * viewH * (0.12 + i * 0.07);
@@ -359,33 +481,31 @@ function drawBoss(c) {
     c.translate(x + shake, y);
     c.scale(boss.dir, 1);
     // Luuta
-    c.strokeStyle = '#8a5a30';
-    c.lineWidth = s * 0.18;
-    c.lineCap = 'round';
-    c.beginPath(); c.moveTo(-s * 1.6, s * 0.9); c.lineTo(s * 1.1, s * 0.5); c.stroke();
-    c.fillStyle = '#c9a25a';
+    artLimb(c, -s * 1.6, s * 0.9, s * 1.1, s * 0.5, s * 0.18, '#8a5a30', '#4a2e14');
     c.beginPath();
     c.moveTo(-s * 1.5, s * 0.6); c.lineTo(-s * 2.4, s * 0.55); c.lineTo(-s * 2.5, s * 1.3); c.lineTo(-s * 1.6, s * 1.15);
-    c.closePath(); c.fill();
-    c.fillStyle = '#5a2d82';
+    c.closePath();
+    artFillPath(c, '#c9a25a', s * 0.55, s * 1.3, s * 0.4, { lineColor: '#7a5a20' });
+    // Kaapu
     c.beginPath();
     c.moveTo(0, -s * 0.9);
     c.quadraticCurveTo(-s * 1.3, s * 0.2, -s * 1.0, s * 0.8);
     c.lineTo(s * 0.8, s * 0.8);
     c.quadraticCurveTo(s * 0.9, 0, 0, -s * 0.9);
-    c.closePath(); c.fill();
-    c.fillStyle = '#b8e0a0';
-    c.beginPath(); c.arc(0, -s * 1.1, s * 0.45, 0, Math.PI * 2); c.fill();
-    c.fillStyle = '#333';
-    c.beginPath(); c.arc(s * 0.16, -s * 1.15, s * 0.08, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = '#333';
+    c.closePath();
+    artFillPath(c, '#6a3a98', -s * 0.9, s * 0.8, s * 0.9, { lineColor: '#2e1a4a' });
+    // Pää, silmä, virnistys ja hattu
+    artCircle(c, 0, -s * 1.1, s * 0.45, '#b8e0a0', { lineColor: '#4a7a3a' });
+    artEye(c, s * 0.16, -s * 1.15, s * 0.1, 0.3, false);
+    c.strokeStyle = '#2a1a3a';
     c.lineWidth = s * 0.06;
+    c.lineCap = 'round';
     c.beginPath(); c.arc(s * 0.1, -s * 0.9, s * 0.15, Math.PI * 1.2, Math.PI * 1.9); c.stroke();
-    c.fillStyle = '#2e1a4a';
     c.beginPath();
     c.moveTo(-s * 0.75, -s * 1.38); c.lineTo(s * 0.75, -s * 1.38); c.lineTo(s * 0.1, -s * 2.7);
-    c.closePath(); c.fill();
-    c.fillRect(-s * 0.9, -s * 1.48, s * 1.8, s * 0.15);
+    c.closePath();
+    artFillPath(c, '#3a2460', -s * 2.7, -s * 1.38, s * 0.75, { lineColor: '#1a1030' });
+    artRoundRect(c, -s * 0.9, -s * 1.48, s * 1.8, s * 0.15, s * 0.05, '#3a2460', { lineColor: '#1a1030' });
     c.fillStyle = '#ffe27a';
     c.fillRect(-s * 0.32, -s * 1.63, s * 0.64, s * 0.15);
     c.restore();
@@ -419,9 +539,12 @@ function drawBoss(c) {
     og.addColorStop(1, ORB_COLORS[i]);
     c.fillStyle = og;
     c.beginPath(); c.arc(ox, oy, r, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = artShade(ORB_COLORS[i], -0.45);
+    c.lineWidth = Math.max(1.2, r * 0.1);
+    c.stroke();
     c.strokeStyle = 'rgba(255,255,255,0.85)';
     c.lineWidth = viewH * 0.005;
-    c.stroke();
+    c.beginPath(); c.arc(ox, oy, r * 0.82, 0, Math.PI * 2); c.stroke();
   }
   // Loitsun edistyminen
   var dotR = viewH * 0.011;
@@ -482,10 +605,7 @@ function drawCage(c, t, i) {
     var bx = x - cw / 2 + cw * k / 5;
     c.beginPath(); c.moveTo(bx, groundTop + lift); c.lineTo(bx, groundTop - ch * 0.75 + lift); c.stroke();
   }
-  if (!open) {
-    c.fillStyle = '#ffd24f';
-    c.beginPath(); c.arc(x, groundTop - ch * 0.4, s * 0.22, 0, Math.PI * 2); c.fill();
-  }
+  if (!open) artCircle(c, x, groundTop - ch * 0.4, s * 0.22, '#ffd24f', { lineColor: '#a07a10', hi: 0.4 });
 }
 
 function drawFriend(c, fr) {
@@ -519,6 +639,8 @@ function drawFriend(c, fr) {
 function drawFinale() {
   var i;
   if (!beginPlayWorld()) return;
+  finaleDrawHiddenStar(ctx);
+  propsDraw(ctx);
   if (finale.phase !== 'boss') {
     for (i = 0; i < tasks.length; i++) drawCage(ctx, tasks[i], i);
     for (i = 0; i < finaleBunnies.length; i++) {
