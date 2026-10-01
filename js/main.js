@@ -102,6 +102,8 @@ function pointerDown(e) {
   holdStartG = globalT;
   holdMoved = false;
   holdWorldX = p.x + camX;
+  // Tunnelmahiukkanen (perhonen, kupla...) poksahtaa napautuksesta; ei kuluta napautusta
+  ambientPoke(p.x, p.y);
   var ph = phaseNow();
   if (ph.tap) ph.tap(p.x, p.y);
 }

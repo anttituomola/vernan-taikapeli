@@ -171,6 +171,41 @@ function drawAmbient(c) {
   c.globalAlpha = 1;
 }
 
+// Napautus tunnelmahiukkaseen: perhonen, kupla, tulikärpänen tai terälehti
+// poksahtaa kipinöiksi ja syntyy muualle uudestaan. Pieni yllätys, joka ei
+// kuluta napautusta (kenttä käsittelee sen normaalisti).
+var AMBIENT_POKE_COLS = {
+  butterflies: ['#ff7bac', '#c9a0ff', '#7fd4ff', '#ffd24f'],
+  petals: ['#ff9ec6', '#ffc4dd', '#e4b8ff']
+};
+function ambientPoke(px, py) {
+  if (!ambient.kind || mode !== 'play') return false;
+  var k = ambient.kind, i, it, d, best = -1, bd = viewH * 0.045, col, ns;
+  if (k === 'stars' || k === 'dust') return false;
+  for (i = 0; i < ambient.items.length; i++) {
+    it = ambient.items[i];
+    d = Math.hypot(px - it.x, py - it.y);
+    if (d < bd) { bd = d; best = i; }
+  }
+  if (best < 0) return false;
+  it = ambient.items[best];
+  if (k === 'butterflies' || k === 'petals') col = AMBIENT_POKE_COLS[k][it.c];
+  else if (k === 'fireflies') col = '#d8ff9a';
+  else if (k === 'bubbles') col = '#cfefff';
+  else if (k === 'snow') col = '#ffffff';
+  else col = maneColors[it.c % maneColors.length];
+  spawnSparkles(px + camX, py, 8, col);
+  artPop(px + camX, py, viewH * 0.03, col, 'burst');
+  playNote(k === 'bubbles' ? 1200 : 880 + (best % 5) * 70, 0, 0.08, 'sine', 0.2);
+  ns = ambientSpawn(k, false);
+  if (k === 'butterflies' || k === 'fireflies') {
+    ns.x = Math.random() * viewW;
+    ns.y = viewH * (0.15 + Math.random() * 0.4);
+  }
+  ambient.items[best] = ns;
+  return true;
+}
+
 // ---------- Etuala ----------
 function fgHash(i) {
   var h = (i + 1) * 2654435761;

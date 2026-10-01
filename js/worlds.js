@@ -1400,7 +1400,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
 // järjestyksessä (kukin kerran), pääsilmukka viimeisenä (main aina vika).
 function scriptManifest() {
   var files = [
-    'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient',
+    'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient', 'props',
     'flow-hub', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-yard', 'flow-castle',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north',
     'platformer', 'pen-core'
