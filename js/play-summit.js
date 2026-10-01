@@ -52,6 +52,7 @@ function initSummit() {
   resetPrincess(viewW * 0.08, groundTop);
   checkpoint.x = princess.x;
   checkpoint.y = groundTop;
+  sumSetupProps();
   renderBackground();
   playNote(392, 0, 0.3, 'sine', 0.3);
   playNote(587, 0.15, 0.3, 'sine', 0.3);
@@ -82,6 +83,50 @@ function resizeSummit(ratio) {
     sumCrystals[i].ax = scrystalDefs[i].fx * worldW;
     sumCrystals[i].ay = groundTop - scrystalDefs[i].fy * viewH;
   }
+  sumSetupProps();
+}
+
+// Tökättävät koristeet lumihuipulla: lumiukko (viides tökkäys antaa kruunun),
+// iglu (joka kolmas tökkäys tuo pupun ovelle) ja vuorikauris (määkii, joka
+// kolmas sydän). Napautus ei vaikuta juoksuun eikä hyppyyn.
+function sumSetupProps() {
+  var h = viewH;
+  propsReset();
+  propAdd({
+    x: worldW * 0.10, y: groundTop, r: h * 0.07, hy: h * 0.07, color: '#ffffff', note: 523, amp: 0.08,
+    draw: function (c, p) {
+      var s = h * 0.09, crown = p.t >= 0 && p.n % 5 === 0;
+      drawNorthSnowman(c, 0, -s * 0.3, s);
+      if (crown) {
+        artGlow(c, 0, -s * 0.95, s * 0.5, '#ffe27a', 0.5);
+        drawStar(c, 0, -s * 0.95, s * 0.16, globalT * 2, 0.8);
+      }
+    },
+    poke: function (p) { if (p.n % 5 === 0) { playNote(1047, 0, 0.15, 'triangle', 0.3); playNote(1319, 0.12, 0.25, 'triangle', 0.3); } }
+  });
+  propAdd({
+    x: worldW * 0.555, y: groundTop, r: h * 0.08, hy: h * 0.05, color: '#cfe6ff', note: 659, amp: 0.04,
+    draw: function (c, p) {
+      var s = h * 0.06, k, peek = p.t >= 0 && p.n % 3 === 0 ? Math.sin(Math.min(1, p.t / 1.4) * Math.PI) : 0;
+      c.beginPath(); c.arc(0, 0, s * 1.4, Math.PI, 0); c.closePath();
+      artFillPath(c, '#eaf4ff', -s * 1.4, 0, s, { lineColor: '#8ab0d0', shadeTo: '#b8d0e8' });
+      c.strokeStyle = 'rgba(138,176,208,0.6)';
+      c.lineWidth = Math.max(1, s * 0.04);
+      for (k = 1; k < 4; k++) { c.beginPath(); c.arc(0, 0, s * 1.4 * (1 - k * 0.25), Math.PI, 0); c.stroke(); }
+      c.beginPath(); c.arc(s * 0.9, 0, s * 0.5, Math.PI, 0); c.closePath();
+      artFillPath(c, '#4a5a80', -s * 0.5, 0, s * 0.3, { lineColor: '#2e3a58' });
+      if (peek > 0) drawBunny(c, s * 0.9, s * 0.1 - peek * s * 0.45, s * 0.3, 0, globalT * 6, true);
+    }
+  });
+  propAdd({
+    x: worldW * 0.70, y: groundTop, r: h * 0.08, hy: h * 0.06, color: '#f4f0e8', note: 440, amp: 0.05,
+    draw: function (c, p) { glideDrawGoat(c, h * 0.035, p); },
+    poke: function () { playNote(440, 0, 0.12, 'sawtooth', 0.1); playNote(415, 0.1, 0.16, 'sawtooth', 0.1); }
+  });
+}
+function handleSummitTap(px, py) {
+  if (!running || celebrating || puzzleBusy()) return;
+  propsTap(px + camX, py);
 }
 
 function sumTasksSolved() {
@@ -181,6 +226,7 @@ function updateSummit(dt) {
 
   updateCheckpoints(princess.x, groundTop);
   followCam(princess.x, dt);
+  propsUpdate(dt);
 
   for (i = 0; i < sumCrystals.length; i++) {
     var cr = sumCrystals[i];
@@ -275,18 +321,13 @@ function sumOnGround(x, w) {
 }
 
 function drawSnowBank(b, x, y, w, h) {
-  var g = b.createLinearGradient(0, y, 0, h);
-  g.addColorStop(0, '#ffffff');
-  g.addColorStop(0.25, '#e6f0ff');
-  g.addColorStop(1, '#8fa8c8');
-  b.fillStyle = g;
   b.beginPath();
-  b.moveTo(x, h);
+  b.moveTo(x, h + 10);
   b.lineTo(x, y + h * 0.01);
   b.quadraticCurveTo(x + w * 0.5, y - h * 0.015, x + w, y + h * 0.01);
-  b.lineTo(x + w, h);
+  b.lineTo(x + w, h + 10);
   b.closePath();
-  b.fill();
+  artFillPath(b, '#e6f0ff', y, h, h * 0.1, { lineColor: '#8aa4c4', shadeTo: '#8fa8c8', line: Math.max(1.5, h * 0.004) });
   b.fillStyle = 'rgba(120,140,180,0.25)';
   var i;
   for (i = 0; i < Math.max(1, Math.round(w / (h * 0.3))); i++) {
@@ -295,46 +336,41 @@ function drawSnowBank(b, x, y, w, h) {
 }
 
 function drawSnowLedge(b, x, y, w, hh) {
-  b.fillStyle = '#8fa8c8';
-  roundRect(b, x, y + hh * 0.3, w, hh * 0.7, hh * 0.3);
-  b.fill();
-  b.fillStyle = '#ffffff';
-  roundRect(b, x - hh * 0.1, y - hh * 0.1, w + hh * 0.2, hh * 0.55, hh * 0.3);
-  b.fill();
+  artRoundRect(b, x, y + hh * 0.3, w, hh * 0.7, hh * 0.3, '#8fa8c8', { lineColor: '#4a6080' });
+  artRoundRect(b, x - hh * 0.1, y - hh * 0.1, w + hh * 0.2, hh * 0.55, hh * 0.3, '#ffffff', { lineColor: '#8aa4c4', shadeTo: '#dce8f8', hi: 0.4 });
 }
 
 function drawSumRock(c, x, baseY, w) {
-  c.fillStyle = '#6b6478';
+  artShadow(c, x, baseY + w * 0.05, w * 0.6, w * 0.12, 0.15);
   c.beginPath();
   c.moveTo(x - w * 0.5, baseY + w * 0.05);
   c.quadraticCurveTo(x - w * 0.45, baseY - w * 0.55, x - w * 0.1, baseY - w * 0.62);
   c.quadraticCurveTo(x + w * 0.4, baseY - w * 0.7, x + w * 0.5, baseY + w * 0.05);
   c.closePath();
-  c.fill();
-  c.fillStyle = '#ffffff';
+  artFillPath(c, '#7a7290', baseY - w * 0.7, baseY + w * 0.05, w * 0.4, { lineColor: '#3a3346' });
   c.beginPath();
   c.moveTo(x - w * 0.38, baseY - w * 0.42);
   c.quadraticCurveTo(x - w * 0.1, baseY - w * 0.66, x + w * 0.35, baseY - w * 0.6);
   c.quadraticCurveTo(x + w * 0.1, baseY - w * 0.5, x - w * 0.38, baseY - w * 0.42);
-  c.fill();
+  c.closePath();
+  artFillPath(c, '#ffffff', baseY - w * 0.66, baseY - w * 0.42, w * 0.2, { line: false, shadeTo: '#dce8f8' });
   c.fillStyle = 'rgba(255,255,255,0.2)';
   c.beginPath(); c.arc(x - w * 0.15, baseY - w * 0.25, w * 0.1, 0, Math.PI * 2); c.fill();
 }
 
 function drawFlagPole(b, x, baseY, h) {
-  b.fillStyle = '#5a4a3a';
-  b.fillRect(x - h * 0.006, baseY - h * 0.3, h * 0.012, h * 0.3);
-  b.beginPath(); b.arc(x, baseY - h * 0.3, h * 0.012, 0, Math.PI * 2); b.fill();
+  artRoundRect(b, x - h * 0.006, baseY - h * 0.3, h * 0.012, h * 0.3, h * 0.003, '#6a5a4a', { lineColor: '#2e2218' });
+  artCircle(b, x, baseY - h * 0.3, h * 0.012, '#ffd24f', { lineColor: '#b8862a' });
 }
 
 function drawSummitDoorFrame(b, x, baseY, h) {
   var s = h * 0.12;
-  b.fillStyle = '#8fa8c8';
-  b.fillRect(x - s * 0.8, baseY - s * 1.7, s * 0.28, s * 1.7);
-  b.fillRect(x + s * 0.52, baseY - s * 1.7, s * 0.28, s * 1.7);
-  b.beginPath(); b.arc(x, baseY - s * 1.7, s * 0.8, Math.PI, 0); b.lineTo(x + s * 0.52, baseY - s * 1.7); b.arc(x, baseY - s * 1.7, s * 0.52, 0, Math.PI, true); b.closePath(); b.fill();
-  b.fillStyle = '#ffffff';
-  b.beginPath(); b.arc(x, baseY - s * 1.7, s * 0.9, Math.PI * 1.1, Math.PI * 1.9); b.lineTo(x + s * 0.8, baseY - s * 1.55); b.arc(x, baseY - s * 1.7, s * 0.8, 0, Math.PI, true); b.closePath(); b.fill();
+  artRoundRect(b, x - s * 0.8, baseY - s * 1.7, s * 0.28, s * 1.7, s * 0.05, '#9fb8dc', { lineColor: '#4a6080' });
+  artRoundRect(b, x + s * 0.52, baseY - s * 1.7, s * 0.28, s * 1.7, s * 0.05, '#9fb8dc', { lineColor: '#4a6080' });
+  b.beginPath(); b.arc(x, baseY - s * 1.7, s * 0.8, Math.PI, 0); b.lineTo(x + s * 0.52, baseY - s * 1.7); b.arc(x, baseY - s * 1.7, s * 0.52, 0, Math.PI, true); b.closePath();
+  artFillPath(b, '#9fb8dc', baseY - s * 2.5, baseY - s * 1.7, s * 0.3, { lineColor: '#4a6080' });
+  b.beginPath(); b.arc(x, baseY - s * 1.7, s * 0.9, Math.PI * 1.1, Math.PI * 1.9); b.lineTo(x + s * 0.8, baseY - s * 1.55); b.arc(x, baseY - s * 1.7, s * 0.8, 0, Math.PI, true); b.closePath();
+  artFillPath(b, '#ffffff', baseY - s * 2.6, baseY - s * 1.5, s * 0.3, { line: false, shadeTo: '#dce8f8' });
 }
 
 // Liput heiluvat tuulen tilan mukaan
@@ -383,8 +419,7 @@ function drawWindSpirit(c) {
   if (x < -r * 3 || x > viewW + r * 3) return;
   var blowing = !sumDoor.open && w && w.state === 'blow';
   var calm = sumDoor.open;
-  c.fillStyle = calm ? 'rgba(255,255,255,0.97)' : 'rgba(235,240,250,0.95)';
-  cloudShape(c, x, y, r * 0.55);
+  artUnion(c, cloudPath, x, y, r * 0.55, y - r * 0.8, y + r * 0.6, calm ? '#ffffff' : '#ebf0fa', { lineColor: '#9aa8c8', shadeTo: '#d4dcee' });
   c.strokeStyle = '#6b6a90';
   c.lineWidth = Math.max(2, r * 0.06);
   c.lineCap = 'round';
@@ -440,6 +475,7 @@ function drawSummit() {
   drawFlags(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
+  propsDraw(ctx);
   for (i = 0; i < sumCrystals.length; i++) {
     if (sumCrystals[i].collected) continue;
     drawCrystal(ctx, sumCrystals[i].ax - camX, sumCrystals[i].ay + Math.sin(sumCrystals[i].phase) * viewH * 0.012, viewH * 0.026, sumCrystals[i].color);

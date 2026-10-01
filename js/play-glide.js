@@ -47,9 +47,84 @@ function initGlide() {
   princess.coyote = 0;
   checkpoint.x = princess.x;
   checkpoint.y = princess.y;
+  glideSetupProps();
   renderBackground();
   playNote(392, 0, 0.25, 'sine', 0.35);
   playNote(587, 0.15, 0.35, 'triangle', 0.35);
+}
+
+// Tökättävät koristeet rinteellä: vuoristomökki (savu puhahtaa, joka kolmas
+// tökkäys tuo pupun ikkunaan), vuorikauris (määkii ja hyppää, joka kolmas
+// tökkäys sydän) ja kivikasa (viides tökkäys päästää murmelin kurkkaamaan).
+function glideSetupProps() {
+  var h = viewH;
+  propsReset();
+  propAdd({
+    x: worldW * 0.12, y: groundTop, r: h * 0.09, hy: h * 0.07, color: '#ffd24f', note: 392, amp: 0.05,
+    draw: function (c, p) {
+      var s = h * 0.05, k, peek = p.t >= 0 && p.n % 3 === 0 ? Math.sin(Math.min(1, p.t / 1.4) * Math.PI) : 0;
+      artRoundRect(c, -s * 1.1, -s * 1.3, s * 2.2, s * 1.3, s * 0.1, '#c48a48', { lineColor: '#6a4420' });
+      c.beginPath(); c.moveTo(-s * 1.35, -s * 1.3); c.lineTo(0, -s * 2.3); c.lineTo(s * 1.35, -s * 1.3); c.closePath();
+      artFillPath(c, '#e8f0ff', -s * 2.3, -s * 1.3, s, { lineColor: '#7a8aa8', shadeTo: '#b8c8e0' });
+      artRoundRect(c, -s * 0.3, -s * 0.8, s * 0.6, s * 0.8, s * 0.1, '#6a4420', { lineColor: '#3a2410' });
+      c.save();
+      c.beginPath(); c.rect(s * 0.3, -s * 1.1, s * 0.6, s * 0.6); c.clip();
+      artRoundRect(c, s * 0.3, -s * 1.1, s * 0.6, s * 0.6, s * 0.05, '#ffe9a8', { line: false });
+      if (peek > 0) drawBunny(c, s * 0.6, -s * 0.5 - peek * s * 0.55, s * 0.28, 0, globalT * 6, true);
+      c.restore();
+      artRoundRect(c, s * 0.3, -s * 1.1, s * 0.6, s * 0.6, s * 0.05, '#ffe9a8', { lineColor: '#6a4420', flat: true, alpha: 0.001 });
+      c.strokeStyle = '#6a4420'; c.lineWidth = Math.max(1.2, s * 0.06);
+      c.strokeRect(s * 0.3, -s * 1.1, s * 0.6, s * 0.6);
+      artRoundRect(c, s * 0.55, -s * 2.3, s * 0.3, s * 0.6, s * 0.05, '#8a8298', { lineColor: '#4a4458' });
+      // Savu: aina pari puffia, tökkäys lisää kolme
+      for (k = 0; k < (p.t >= 0 ? 5 : 2); k++) {
+        var a = ((globalT * 0.5 + k * 0.37) % 1), px = s * 0.7 + Math.sin(a * 6 + k) * s * 0.2, py = -s * 2.4 - a * s * 1.4;
+        artCircle(c, px, py, s * (0.12 + a * 0.2), '#f0f0f8', { line: false, alpha: 0.7 * (1 - a) });
+      }
+    },
+    poke: function () { playNote(330, 0, 0.12, 'sine', 0.2); }
+  });
+  propAdd({
+    x: worldW * 0.38, y: groundTop, r: h * 0.08, hy: h * 0.06, color: '#f4f0e8', note: 440, amp: 0.05,
+    draw: function (c, p) { glideDrawGoat(c, h * 0.035, p); },
+    poke: function () { playNote(440, 0, 0.12, 'sawtooth', 0.1); playNote(415, 0.1, 0.16, 'sawtooth', 0.1); }
+  });
+  propAdd({
+    x: worldW * 0.72, y: groundTop, r: h * 0.07, hy: h * 0.05, color: '#b8c0d0', note: 262, amp: 0.08,
+    draw: function (c, p) {
+      var s = h * 0.03, k, peek = p.t >= 0 && p.n % 5 === 0 ? Math.sin(Math.min(1, p.t / 1.4) * Math.PI) : 0;
+      if (peek > 0) {
+        artCircle(c, 0, -s * 2.6 - peek * s * 0.9, s * 0.45, '#a87a4a', { lineColor: '#5a3a1e', hi: 0.3 });
+        artCircle(c, -s * 0.3, -s * 2.95 - peek * s * 0.9, s * 0.14, '#a87a4a', { lineColor: '#5a3a1e' });
+        artCircle(c, s * 0.3, -s * 2.95 - peek * s * 0.9, s * 0.14, '#a87a4a', { lineColor: '#5a3a1e' });
+        artEye(c, -s * 0.16, -s * 2.65 - peek * s * 0.9, s * 0.08, 0, false);
+        artEye(c, s * 0.16, -s * 2.65 - peek * s * 0.9, s * 0.08, 0, false);
+        artCircle(c, 0, -s * 2.45 - peek * s * 0.9, s * 0.07, '#4a2a10', { line: false });
+      }
+      for (k = 0; k < 4; k++) artBlob(c, (k % 2 ? s * 0.15 : -s * 0.1), -s * 0.3 - k * s * 0.55, s * (1.0 - k * 0.15), s * 0.34, k % 2 ? '#8a92a8' : '#9aa2b8', { lineColor: '#4a5068', hi: 0.2 });
+    },
+    poke: function () { playNote(220, 0, 0.1, 'square', 0.1); playNote(180, 0.08, 0.12, 'square', 0.08); }
+  });
+}
+// Vuorikauris (origo jalkojen kohdalla): hyppää ja räpäyttää tökkäyksestä
+function glideDrawGoat(c, s, p) {
+  var hop = p && p.t >= 0 ? Math.sin(Math.min(1, p.t / 0.5) * Math.PI) * s * 0.5 : 0, blink = p && p.t >= 0 && p.t < 0.15;
+  artShadow(c, 0, 0, s * 1.3, s * 0.25, 0.15);
+  c.save();
+  c.translate(0, -hop);
+  artLimb(c, -s * 0.6, -s * 0.9, -s * 0.65, 0, s * 0.22, '#e0dad0', '#8a8070');
+  artLimb(c, s * 0.5, -s * 0.9, s * 0.55, 0, s * 0.22, '#e0dad0', '#8a8070');
+  artBlob(c, 0, -s * 1.1, s * 0.95, s * 0.6, '#f4f0e8', { lineColor: '#8a8070', shadeTo: '#d8d0c8', hi: 0.3 });
+  artLimb(c, -s * 0.3, -s * 0.9, -s * 0.35, 0, s * 0.22, '#f4f0e8', '#8a8070');
+  artLimb(c, s * 0.25, -s * 0.9, s * 0.3, 0, s * 0.22, '#f4f0e8', '#8a8070');
+  artLimb(c, s * 0.8, -s * 1.95, s * 0.6, -s * 2.4, s * 0.1, '#c9b89a', '#7a6a50');
+  artLimb(c, s * 1.05, -s * 1.95, s * 1.15, -s * 2.45, s * 0.1, '#c9b89a', '#7a6a50');
+  artCircle(c, s * 0.95, -s * 1.6, s * 0.42, '#f4f0e8', { lineColor: '#8a8070', shadeTo: '#d8d0c8', hi: 0.3 });
+  artBlob(c, s * 0.55, -s * 1.7, s * 0.2, s * 0.1, '#f4f0e8', { lineColor: '#8a8070', rot: -0.6 });
+  artLimb(c, s * 1.15, -s * 1.25, s * 1.2, -s * 0.95, s * 0.12, '#e0dad0', '#8a8070');
+  artEye(c, s * 1.05, -s * 1.68, s * 0.08, 0.3, blink);
+  if (p && p.t >= 0 && p.n % 3 === 0) drawHeartShape(c, s * 1.3, -s * 2.7 - Math.min(1, p.t) * s * 0.6, s * 0.2, true);
+  c.restore();
 }
 
 function respawnGlide() {
@@ -71,6 +146,7 @@ function resizeGlide(ratio) {
   }
   for (i = 0; i < glideThunder.length; i++) glideThunder[i].x = glideThunder[i].fx * worldW;
   glideGate.x = glideGate.fx * worldW;
+  glideSetupProps();
 }
 
 function collectFeather(f) {
@@ -99,6 +175,8 @@ function handleGlideTap(px, py) {
       return;
     }
   }
+  // Rinteen koristeet reagoivat; lento jatkuu normaalisti
+  propsTap(wx, py);
 }
 
 function updateGlide(dt) {
@@ -161,6 +239,7 @@ function updateGlide(dt) {
   }
 
   followCam(princess.x, dt);
+  propsUpdate(dt);
   if (Math.random() < dt * 8) spawnSparkles(princess.x - princess.facing * 20, princess.y - viewH * 0.02, 1, '#cfe6ff');
   updateParticles(dt);
   updateConfetti(dt);
@@ -216,23 +295,27 @@ function renderGlideNear(b, w, h) {
   gr.addColorStop(1, '#7f9cbd');
   b.fillStyle = gr;
   b.fillRect(0, groundTop, w, h - groundTop);
-  // Tuuliportti maailman lopussa: kaksi lippua ja kaari
+  // Tuuliportti maailman lopussa: kaari reunaviivoin ja kaksi viiriä
   var gx = glideGate.x, gs = h * 0.16;
-  b.strokeStyle = '#5a7fa8';
-  b.lineWidth = gs * 0.1;
   b.lineCap = 'round';
+  b.strokeStyle = '#2e4a70';
+  b.lineWidth = gs * 0.1 + Math.max(2, gs * 0.03) * 2;
   b.beginPath(); b.arc(gx, groundTop, gs * 0.9, Math.PI, 0); b.stroke();
-  b.fillStyle = '#ff8fc0';
+  b.strokeStyle = '#7fa8d8';
+  b.lineWidth = gs * 0.1;
+  b.beginPath(); b.arc(gx, groundTop, gs * 0.9, Math.PI, 0); b.stroke();
   b.beginPath();
   b.moveTo(gx - gs * 0.9, groundTop - gs * 0.02);
   b.lineTo(gx - gs * 0.9, groundTop - gs * 0.4);
   b.lineTo(gx - gs * 0.6, groundTop - gs * 0.3);
-  b.closePath(); b.fill();
+  b.closePath();
+  artFillPath(b, '#ff8fc0', groundTop - gs * 0.4, groundTop, gs * 0.2, { lineColor: '#b03a6a' });
   b.beginPath();
   b.moveTo(gx + gs * 0.9, groundTop - gs * 0.02);
   b.lineTo(gx + gs * 0.9, groundTop - gs * 0.4);
   b.lineTo(gx + gs * 0.6, groundTop - gs * 0.3);
-  b.closePath(); b.fill();
+  b.closePath();
+  artFillPath(b, '#ff8fc0', groundTop - gs * 0.4, groundTop, gs * 0.2, { lineColor: '#b03a6a' });
 }
 
 function glDrawFeather(c, x, y, s) {
@@ -240,14 +323,14 @@ function glDrawFeather(c, x, y, s) {
   c.save();
   c.translate(x, y);
   c.rotate(-0.5);
-  c.fillStyle = '#fff8ea';
   c.beginPath();
   c.moveTo(0, s * 1.1);
   c.quadraticCurveTo(-s * 0.75, s * 0.2, 0, -s * 1.1);
   c.quadraticCurveTo(s * 0.75, s * 0.2, 0, s * 1.1);
-  c.fill();
-  c.strokeStyle = '#d9c9a8';
-  c.lineWidth = Math.max(1.5, s * 0.1);
+  c.closePath();
+  artFillPath(c, '#fff8ea', -s * 1.1, s * 1.1, s * 0.6, { lineColor: '#b8a888', shadeTo: '#e8dcc8' });
+  c.strokeStyle = '#b8a888';
+  c.lineWidth = Math.max(1.2, s * 0.08);
   c.beginPath(); c.moveTo(0, s * 1.15); c.lineTo(0, -s * 0.95); c.stroke();
   c.restore();
 }
@@ -266,6 +349,7 @@ function drawGlide() {
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(gx, gy, viewH * 0.2, 0, Math.PI * 2); ctx.fill();
   }
+  propsDraw(ctx);
   for (i = 0; i < feathers.length; i++) {
     var f = feathers[i];
     if (f.collected) continue;

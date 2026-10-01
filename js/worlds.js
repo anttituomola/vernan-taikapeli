@@ -634,6 +634,7 @@ var WORLDS = [
         init: function () { initSummit(); },
         update: function (dt) { updateSummit(dt); },
         draw: function () { drawSummit(); },
+        tap: function (x, y) { handleSummitTap(x, y); },
         resize: function (ratio) { resizeSummit(ratio); },
         renderBg: function (b, w, h) { renderSummitBg(b, w, h); },
         renderBgLayers: function () { return summitLayers(); },
