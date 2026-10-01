@@ -41,7 +41,7 @@ var EGG_BABY_COLORS = ['#ff9ec6', '#8fd4ff', '#a8e07a'];
 
 var eggs = {
   list: [], nests: [], drag: null, back: [],
-  minttu: { x: 0, y: 0, tx: 0, ty: 0, facing: 1, breathing: false, flap: 0 },
+  minttu: { x: 0, y: 0, tx: 0, ty: 0, facing: 1, breathing: false, flap: 0, pokeT: 0, heartT: 0 },
   holdNest: null, taskDelay: 0, hatched: 0, finishT: 0, hintT: 0,
   round: 0, roundHatched: 0, gust: { on: false, phase: 'calm', t: 0 }, shiverT: 0
 };
@@ -69,6 +69,9 @@ function initEggs() {
   eggs.minttu.ty = eggs.minttu.y;
   eggs.minttu.facing = 1;
   eggs.minttu.breathing = false;
+  eggs.minttu.pokeT = 0;
+  eggs.minttu.heartT = 0;
+  eggsSetupProps();
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(659, 0.12, 0.2, 'triangle', 0.35);
@@ -116,6 +119,67 @@ function resizeEggs() {
   princess.x = viewW * 0.11;
   princess.y = groundTop + viewH * 0.03;
   eggs.minttu.y = groundTop + viewH * 0.02;
+  eggsSetupProps();
+}
+
+// Tökättävät koristeet: kolme isoa kristallia lattialla (kilahtavat ja
+// hehkuvat), kolme tippukiveä katossa (tiputtavat pisaran) ja Minttu (tyhjä
+// piirto, osuma-alue seuraa lohikäärmettä). Yllätys: Mintun kolmas tökkäys
+// saa sen hypähtämään ja puhaltamaan sydämiä. Taustasta jätetään samat
+// kristallit (i parillinen) ja tippukivet (i % 3 === 2) piirtämättä.
+function eggsSetupProps() {
+  var i, h = viewH, vw = viewW, tip;
+  propsReset();
+  for (i = 0; i < 5; i += 2) {
+    propAdd({
+      x: vw * (0.08 + i * 0.22) + (i % 2) * vw * 0.05, y: groundTop + h * 0.01, r: h * 0.07, hy: h * 0.05, amp: 0.08,
+      s: h * (0.07 + (i % 2) * 0.03), col: i % 2 ? '#7fd4ff' : '#ff7bac', color: i % 2 ? '#7fd4ff' : '#ff7bac', note: 1319 + i * 60,
+      draw: eggsDrawCrystalProp
+    });
+  }
+  for (i = 2; i < 10; i += 3) {
+    tip = h * (0.08 + (i % 3) * 0.04);
+    propAdd({
+      x: vw * (0.16 + i * 0.09), y: 0, r: h * 0.06, hy: -(tip - h * 0.03), amp: 0.05, tip: tip,
+      color: '#bfe8ff', note: 1976,
+      draw: eggsDrawStalactite, poke: eggsPokeStalactite
+    });
+  }
+  propAdd({
+    x: eggs.minttu.x, y: eggs.minttu.y, r: h * 0.08, hy: h * 0.06, color: '#7fe0c8', note: 988,
+    draw: function () {}, poke: eggsPokeMinttu,
+    update: function (p) { p.x = eggs.minttu.x; p.y = eggs.minttu.y; }
+  });
+}
+function eggsDrawCrystalProp(c, p) {
+  drawEggCrystal(c, 0, 0, p.s, p.col, 1);
+  if (p.t >= 0) {
+    artGlow(c, 0, -p.s * 0.6, p.s * 2.4, p.col, 0.5 * (1 - p.t / 1.4));
+    drawStar(c, -p.s * 0.2, -p.s * 1.45, p.s * 0.25, globalT * 4, 0.8);
+  }
+}
+function eggsDrawStalactite(c, p) {
+  var s = eggS(), tip = p.tip;
+  c.beginPath(); c.moveTo(-s * 1.1, -4); c.lineTo(s * 1.1, -4); c.lineTo(0, tip); c.closePath();
+  artFillPath(c, '#3a1a2a', 0, tip, s, { shadeTo: '#6a3a4a', lineColor: '#1a0a12' });
+  // Pisara muodostuu kärkeen tökkäyksen jälkeen
+  if (p.t >= 0) artBlob(c, 0, tip + s * 0.1, s * 0.12, s * 0.16, '#bfe8ff', { line: false });
+}
+function eggsPokeStalactite(p) {
+  var s = eggS();
+  propDrop({
+    x: p.x, y: p.tip + s * 0.2, vx: 0, vy: 0, vr: 0, ground: groundTop + viewH * 0.01, life: 2.0,
+    draw: function (c) { artBlob(c, 0, 0, s * 0.14, s * 0.2, '#bfe8ff', { line: false }); },
+    onLand: function (d) { spawnSparkles(d.x, d.y, 4, '#bfe8ff'); playNote(2093, 0, 0.06, 'sine', 0.12); }
+  });
+}
+function eggsPokeMinttu(p) {
+  var m = eggs.minttu, i;
+  m.pokeT = 0.6;
+  if (p.n % 3 === 0) {
+    m.heartT = 1.4;
+    for (i = 0; i < 4; i++) playNote(784 * Math.pow(1.19, i), 0.1 + i * 0.09, 0.2, 'triangle', 0.22);
+  }
 }
 
 // ---------- Apurit ----------
@@ -178,12 +242,17 @@ function handleEggsTap(px, py) {
   }
   // Pidä pesän päällä: hautominen
   n = eggNestAt(px, py);
-  if (n && eggNestReady(n)) {
-    eggs.holdNest = n;
-    eggs.minttu.tx = n.x - s * 3.2;
-    eggs.minttu.ty = n.y - s * 0.2;
-    eggs.minttu.facing = 1;
+  if (n) {
+    if (eggNestReady(n)) {
+      eggs.holdNest = n;
+      eggs.minttu.tx = n.x - s * 3.2;
+      eggs.minttu.ty = n.y - s * 0.2;
+      eggs.minttu.facing = 1;
+    }
+    return;
   }
+  // Ei munaa eikä pesää: tökättävät koristeet (kristallit, tippukivet, Minttu)
+  propsTap(px, py);
 }
 
 // ---------- Päivitys ----------
@@ -233,6 +302,9 @@ function updateEggs(dt) {
     if (n && eggNestReady(n)) { eggs.holdNest = n; m.tx = n.x - s * 3.2; m.ty = n.y - s * 0.2; }
   }
   m.breathing = false;
+  propsUpdate(dt);
+  if (m.pokeT > 0) m.pokeT -= dt;
+  if (m.heartT > 0) m.heartT -= dt;
   var blowing = eggsUpdateGust(dt, busy);
   if (eggs.shiverT > 0) eggs.shiverT -= dt;
   for (i = 0; i < eggs.nests.length; i++) {
@@ -370,8 +442,9 @@ function renderEggsFar(b, w, h) {
 }
 function renderEggsNear(b, w, h) {
   var i, x, sh, s = eggS(), g, vw = viewW;
-  // Tippukivet katosta
+  // Tippukivet katosta (tökättävät piirretään joka ruudulla)
   for (i = 0; i < 10; i++) {
+    if (i % 3 === 2) continue;
     x = vw * (0.16 + i * 0.09);
     b.beginPath(); b.moveTo(x - s * 1.1, -4); b.lineTo(x + s * 1.1, -4); b.lineTo(x, h * (0.08 + (i % 3) * 0.04)); b.closePath();
     artFillPath(b, '#3a1a2a', 0, h * 0.15, s, { shadeTo: '#6a3a4a', lineColor: '#1a0a12' });
@@ -391,8 +464,9 @@ function renderEggsNear(b, w, h) {
     artBlob(b, x, sh.fy * h + s * 1.05, s * 1.7, s * 0.4, '#7a4a4a', { shadeTo: '#3a1a1a', lineColor: '#2a0a0a', hi: 0.15 });
     artBlob(b, x - s * 1.2, sh.fy * h + s * 0.95, s * 0.35, s * 0.2, '#6dbb6a', { line: false });
   }
-  // Isot kristallit ja hehku
+  // Isot kristallit ja hehku (tökättävät piirretään joka ruudulla)
   for (i = 0; i < 5; i++) {
+    if (i % 2 === 0) continue;
     x = vw * (0.08 + i * 0.22) + (i % 2) * vw * 0.05;
     drawEggCrystal(b, x, groundTop + h * 0.01, h * (0.07 + (i % 2) * 0.03), i % 2 ? '#7fd4ff' : '#ff7bac', 1);
   }
@@ -523,6 +597,7 @@ function drawEggNest(c, n) {
 function drawEggs() {
   var i, e, m = eggs.minttu, s = eggS(), c = ctx;
   if (!beginPlayWorld()) return;
+  propsDraw(c);
   for (i = 0; i < eggs.nests.length; i++) drawEggNest(c, eggs.nests[i]);
   // Munat hyllyillä ja raahattava muna viimeisenä
   for (i = 0; i < eggs.list.length; i++) {
@@ -536,7 +611,15 @@ function drawEggs() {
   // Minttu: lentää pesän viereen ja puhaltaa lämpöä
   var flying = Math.abs(m.x - m.tx) + Math.abs(m.y - m.ty) > s * 0.5 || !!eggs.holdNest;
   var shv = eggs.shiverT > 0 ? Math.sin(globalT * 60) * s * 0.06 : 0;
-  drawBabyDragon(c, m.x + shv, m.y, s * 1.1, '#7fe0c8', { mouth: m.breathing ? 0.7 : 0, flap: Math.sin(m.flap) * (flying ? 0.9 : 0.2), look: -0.3, blink: (globalT % 4.3) < 0.12, facing: -m.facing, noShadow: flying });
+  // Tökkäys: hypähdys, suu auki ja litistys; kolmas tökkäys puhaltaa sydämiä
+  var pk = m.pokeT > 0 ? Math.sin(m.pokeT / 0.6 * Math.PI) : 0;
+  drawBabyDragon(c, m.x + shv, m.y - pk * s * 0.6, s * 1.1, '#7fe0c8', { mouth: m.breathing ? 0.7 : pk * 0.6, flap: Math.sin(m.flap) * (flying ? 0.9 : 0.2), look: -0.3, blink: (globalT % 4.3) < 0.12, facing: -m.facing, noShadow: flying, squash: pk * 0.08 });
+  if (m.heartT > 0) {
+    var hk = 1 - m.heartT / 1.4;
+    c.globalAlpha = Math.max(0, 1 - hk);
+    for (i = 0; i < 3; i++) drawHeartShape(c, m.x + m.facing * s * 2 + (i - 1) * s * 0.9 + Math.sin(hk * 7 + i) * s * 0.2, m.y - s * 2 - hk * s * 2.5 - i * s * 0.4, s * 0.35, true);
+    c.globalAlpha = 1;
+  }
   if (m.breathing && eggs.holdNest) {
     var n = eggs.holdNest, mx = m.x + m.facing * s * 1.9, my = m.y - s * 1.5;
     c.save();
