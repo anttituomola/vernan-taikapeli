@@ -7,6 +7,7 @@ var SLED_RINGS = 8;
 var sledRings = [];
 var sledRocks = [];
 var SLED_SPEEDS = [0.14, 0.17, 0.20];
+var sledFx = { hopT: 0, bellT: 0 };   // kelkan pomppu ja kulkunen tökkäyksestä (vain piirtoon)
 var sledRingDefs = [
   { fx: 0.12, fy: 0.38 }, { fx: 0.22, fy: 0.22 }, { fx: 0.32, fy: 0.48 }, { fx: 0.44, fy: 0.28 },
   { fx: 0.56, fy: 0.44 }, { fx: 0.66, fy: 0.20 }, { fx: 0.78, fy: 0.40 }, { fx: 0.88, fy: 0.26 }
@@ -49,9 +50,44 @@ function initSled() {
   princess.onGround = false; princess.walkPhase = 0;
   checkpoint.x = princess.x;
   checkpoint.y = princess.y;
+  sledFx.hopT = 0;
+  sledFx.bellT = 0;
+  sledSetupProps();
   renderBackground();
   playNote(523, 0, 0.2, 'sine', 0.32);
   playNote(784, 0.14, 0.28, 'triangle', 0.32);
+}
+
+// Tökättävät koristeet mäen juurella: kuuset (lumitupsu) ja lumiukko, sekä
+// kelkka itse: tökkäys pomppauttaa ja kilauttaa; joka viides soittaa kulkussävelen.
+function sledSetupProps() {
+  var h = viewH, w = worldW;
+  propsReset();
+  voyPineProp(w * 0.15, groundTop, h * 0.12, '#1a3850');
+  voyPineProp(w * 0.5, groundTop, h * 0.13, '#245068');
+  voyPineProp(w * 0.85, groundTop, h * 0.12, '#1a3850');
+  propAdd({
+    x: w * 0.35, y: groundTop - h * 0.01, r: h * 0.055, hy: h * 0.02, color: '#ffffff', note: 523, amp: 0.1,
+    draw: function (c) { drawNorthSnowman(c, 0, 0, h * 0.07); },
+    poke: function (p) { voySnowPuff(p.x + (Math.random() - 0.5) * h * 0.02, p.y - h * 0.045, h * 0.004, p.y + h * 0.01); }
+  });
+  propAdd({
+    x: princess.x, y: princess.y, r: h * 0.09, hy: h * 0.02, color: '#ffd24f', note: 1047,
+    draw: function () {},
+    update: function (p) { p.x = princess.x; p.y = princess.y; },
+    poke: function (p) {
+      sledFx.hopT = 0.45;
+      if (p.n % 5 === 0) sledBellTune();
+    }
+  });
+}
+
+// Yllätys: kulkunen ilmestyy kelkan keulaan ja soittaa tutun sävelen alun
+function sledBellTune() {
+  var seq = [659, 659, 659, 659, 659, 659, 659, 784, 523, 587, 659];
+  var dl = [0, 0.18, 0.36, 0.72, 0.9, 1.08, 1.44, 1.62, 1.8, 1.98, 2.16], i;
+  for (i = 0; i < seq.length; i++) playNote(seq[i], dl[i], 0.16, 'triangle', 0.22);
+  sledFx.bellT = 2.8;
 }
 
 function respawnSled() {
@@ -80,9 +116,14 @@ function resizeSled(ratio) {
     sledRings[i].ay = sledRings[i].homeY;
   }
   for (i = 0; i < sledRocks.length; i++) sledRocks[i].x = sledRocks[i].fx * worldW;
+  sledSetupProps();
 }
 
-function handleSledTap() {}
+// Napautus ohjaa kelkkaa pidon kautta kuten ennenkin; koriste saa lisäksi heilahtaa
+function handleSledTap(px, py) {
+  if (!running || puzzleBusy()) return;
+  propsTap(px + camX, py);
+}
 
 function sledCollect(r) {
   r.collected = true;
@@ -102,6 +143,9 @@ function sledMiss(r) {
 function updateSled(dt) {
   var i, pw = viewH * 0.045, r, dx, dy, rr, busy, scrolling, maxCam;
   updateTasks(dt);
+  propsUpdate(dt);
+  if (sledFx.hopT > 0) sledFx.hopT -= dt;
+  if (sledFx.bellT > 0) sledFx.bellT -= dt;
   busy = puzzleBusy();
   scrolling = !busy && !celebrating;
   for (i = 0; i < tasks.length; i++) {
@@ -178,15 +222,26 @@ function drawSledBody(c, x, y, s, facing) {
   artLimb(c, s * 14, s * 8, s * 22, s * 0, s * 3.4, '#6a4020');
   artRoundRect(c, -s * 18, -s * 2, s * 34, s * 9, s * 2.4, '#e24a3a', { hi: 0.2 });
   artRoundRect(c, -s * 8, -s * 4, s * 12, s * 4, s * 1.5, '#ffd24f', { line: false });
+  if (sledFx.bellT > 0) {
+    // Kulkunen keulassa heiluu sävelen ajan
+    c.save();
+    c.translate(s * 19, -s * 1);
+    c.rotate(Math.sin(globalT * 18) * 0.4 * Math.min(1, sledFx.bellT / 0.4));
+    artLimb(c, 0, 0, 0, s * 3, s * 0.9, '#e24a3a');
+    artCircle(c, 0, s * 4.6, s * 2.2, '#ffd24f', { lineColor: '#9a6a10', hi: 0.5 });
+    artCircle(c, 0, s * 6.2, s * 0.6, '#9a6a10', { line: false });
+    c.restore();
+  }
   c.restore();
 }
 
 function drawSled() {
-  var i, r, ry, us;
+  var i, r, ry, us, hop;
   if (!beginPlayWorld()) return;
   drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
+  propsDraw(ctx);
   for (i = 0; i < sledRings.length; i++) {
     r = sledRings[i];
     if (r.collected) continue;
@@ -197,14 +252,20 @@ function drawSled() {
     drawNorthIce(ctx, sledRocks[i].x - camX, sledRocks[i].y, viewH * 0.05);
   }
   us = viewH / 520;
+  hop = sledFx.hopT > 0 ? Math.sin(Math.min(1, (0.45 - sledFx.hopT) / 0.45) * Math.PI) * viewH * 0.025 : 0;
   if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
-  drawSledBody(ctx, princess.x - camX, princess.y + us * 6, us, princess.facing);
-  drawPrincessFree(ctx, princess.x - camX, princess.y, us, princess.facing, princess.walkPhase, true, globalT);
+  drawSledBody(ctx, princess.x - camX, princess.y + us * 6 - hop, us, princess.facing);
+  drawPrincessFree(ctx, princess.x - camX, princess.y - hop, us, princess.facing, princess.walkPhase, true, globalT);
   ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   endPlayWorld();
   drawPickupHud(ctx, SLED_RINGS, function (k) { return sledRings[k] && sledRings[k].collected; },
-    function (c, x, y, sz) { c.strokeStyle = '#7cffc4'; c.lineWidth = 3; c.beginPath(); c.arc(x, y, sz * 0.4, 0, Math.PI * 2); c.stroke(); });
+    function (c, x, y, sz) {
+      // Rengas reunaviivalla: tumma ulkorengas ja vaalea sisärengas
+      c.beginPath(); c.arc(x, y, sz * 0.4, 0, Math.PI * 2);
+      c.strokeStyle = '#2a9a70'; c.lineWidth = 5; c.stroke();
+      c.strokeStyle = '#7cffc4'; c.lineWidth = 3; c.stroke();
+    });
   drawHearts(ctx);
   drawTaskOverlay(ctx);
 }
