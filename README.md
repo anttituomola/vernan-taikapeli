@@ -1206,6 +1206,16 @@ avautuu 3. tai 5. tökkäyksellä tai harvoin itsestään):
   halkeava kookos, tynnyrikaktus kukkii sateenkaaren ja kameli sylkäisee taatelin;
   Kamelikaravaanin teltasta kurkkaa pupu ja kissa haukottelee; Rataspajan
   seinärattaan viides tökkäys avaa käkikellon oven.
+- **Revontulimaa**: Horisontin jäälautan takaa kurkkaa hylje; Revontulipolun kiven
+  takaa pyrähtää riekko; Porolaakson poron kuono hehkuu punaisena ja lumiukko
+  aivastaa; Kelkkamäen kelkkaan ilmestyy kulkunen, joka soittaa Jingle Bellsin
+  alun; Lumisanan kota puhaltaa sydämen muotoisen savurenkaan; Revontuliketun
+  häntä pyyhkäisee revontulijuovat taivaalle.
+
+Lauta- ja pulmakentissä (Pupupolku, Loitsupolku, Kuunsäde, Värisäde, Aarrevarpu,
+Hiekkapyörre, Myyräkuningas, Vesikouru, Yhteispolku) ei ole erillisiä koristeita:
+kaikki ruudulla näkyvä on pelielementti, joka reagoi jo napautukseen tai raahaukseen.
+Niissä tunnelmahiukkaset ja taustan aurinko tai kuu reagoivat silti.
 
 ## Tekniikka
 
