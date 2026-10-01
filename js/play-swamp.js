@@ -17,6 +17,102 @@ var wispDefs = [
   { fx: 0.86, fy: 0.20, dir: -1 }, { fx: 0.92, fy: 0.34, dir: 1 }
 ];
 
+// ---------- Tökättävät koristeet ----------
+// Paikat murto-osina polun yläreunassa; swampPropSync laskee paikan joka
+// ruudulla. p.s = piirtokoko, p.sp = koristeen oma ajastin, p.crown = kruunu.
+function swampPropSync(p, dt) {
+  p.x = p.fx * worldW;
+  p.y = groundTop - p.dy * viewH;
+  p.s = p.fs * viewH;
+  p.r = p.s * 1.6;
+  p.hy = p.s * 1.0;
+  if (p.sp > 0) p.sp -= dt;
+}
+
+// Osmankäämi suon reunalla (fluff: tupsu pöllähtänyt vaaleaksi)
+function swampDrawCattail(c, s, fluff) {
+  artShadow(c, 0, 0, s * 0.6, s * 0.14, 0.14);
+  artLimb(c, 0, 0, -s * 0.55, -s * 1.4, s * 0.08, '#4a7a3a', '#243a1a');
+  artLimb(c, 0, -s * 0.2, s * 0.65, -s * 1.6, s * 0.08, '#4a7a3a', '#243a1a');
+  artLimb(c, 0, 0, s * 0.08, -s * 2.1, s * 0.1, '#4a7a3a', '#243a1a');
+  artLimb(c, s * 0.08, -s * 2.2, s * 0.1, -s * 2.55, s * 0.07, '#c8b460', '#6a5a20');
+  artBlob(c, s * 0.07, -s * 1.7, s * 0.2, s * 0.52, fluff ? '#d8c4a0' : '#6a3a22', { lineColor: '#2a1a0a', hi: 0.3 });
+}
+
+// Sammakko kannolla: kanto, sammakko, kurkkupussi (croak 0..1) ja kruunu
+function swampDrawStumpFrog(c, s, croak, crown) {
+  artShadow(c, 0, 0, s * 1.1, s * 0.22, 0.16);
+  artRoundRect(c, -s * 0.6, -s * 0.7, s * 1.2, s * 0.75, s * 0.15, '#6b4f3a', { lineColor: '#3a2a18' });
+  artBlob(c, 0, -s * 0.68, s * 0.6, s * 0.14, '#a88a60', { lineColor: '#3a2a18' });
+  artLimb(c, -s * 0.3, -s * 0.8, -s * 0.55, -s * 0.65, s * 0.14, '#4aaa58', '#2a6a30');
+  artLimb(c, s * 0.3, -s * 0.8, s * 0.55, -s * 0.65, s * 0.14, '#4aaa58', '#2a6a30');
+  if (croak > 0) artCircle(c, 0, -s * 0.78, s * 0.34 * croak, '#c8f0a0', { lineColor: '#4a8a40' });
+  artBlob(c, 0, -s * 1.05, s * 0.62, s * 0.42, '#5ecf6a', { lineColor: '#2a7a34', hi: 0.3 });
+  artEye(c, -s * 0.24, -s * 1.28, s * 0.14, 0.2, false);
+  artEye(c, s * 0.24, -s * 1.28, s * 0.14, 0.2, false);
+  if (crown) {
+    c.beginPath();
+    c.moveTo(-s * 0.3, -s * 1.42); c.lineTo(-s * 0.3, -s * 1.78); c.lineTo(-s * 0.12, -s * 1.6); c.lineTo(0, -s * 1.85);
+    c.lineTo(s * 0.12, -s * 1.6); c.lineTo(s * 0.3, -s * 1.78); c.lineTo(s * 0.3, -s * 1.42); c.closePath();
+    artFillPath(c, '#ffd24f', -s * 1.85, -s * 1.42, s * 0.3, { lineColor: '#a07a10' });
+  }
+}
+
+// Suon hehkusieni: tumma jalka, violetti lakki
+function swampDrawShroom(c, s) {
+  artShadow(c, 0, 0, s * 0.9, s * 0.2, 0.16);
+  artRoundRect(c, -s * 0.26, -s * 0.9, s * 0.52, s * 0.95, s * 0.2, '#d8d0c0', { lineColor: '#5a4a40' });
+  artGlow(c, 0, -s * 1.0, s * 1.9, '#c9a0ff', 0.3 + Math.sin(globalT * 4) * 0.1);
+  artBlob(c, 0, -s * 1.0, s * 1.05, s * 0.6, '#8a5ad8', { lineColor: '#3a2060', hi: 0.3 });
+  artCircle(c, -s * 0.42, -s * 1.1, s * 0.15, '#e9d8ff', { line: false });
+  artCircle(c, s * 0.32, -s * 1.27, s * 0.11, '#e9d8ff', { line: false });
+  artCircle(c, s * 0.55, -s * 0.86, s * 0.09, '#e9d8ff', { line: false });
+}
+
+function swampPropsSetup() {
+  var i, defs = [
+    { kind: 'cattail', fx: 0.12, fs: 0.042, color: '#c8b460', note: 494 },
+    { kind: 'frog', fx: 0.26, fs: 0.045, color: '#9fe08a', note: 330 },
+    { kind: 'shroom', fx: 0.49, fs: 0.04, color: '#c9a0ff', note: 587 },
+    { kind: 'cattail', fx: 0.88, fs: 0.042, color: '#c8b460', note: 523 }
+  ];
+  propsReset();
+  for (i = 0; i < defs.length; i++) {
+    defs[i].dy = 0.01;
+    defs[i].sp = 0;
+    defs[i].crown = false;
+    defs[i].update = swampPropSync;
+    if (defs[i].kind === 'cattail') {
+      defs[i].draw = function (c, p) { swampDrawCattail(c, p.s, p.sp > 0); };
+      defs[i].poke = function (p) {
+        // Tupsusta pöllähtää untuvaa
+        p.sp = 2.5;
+        spawnSparkles(p.x, p.y - p.s * 1.8, 12, '#fff4e0');
+      };
+    } else if (defs[i].kind === 'frog') {
+      defs[i].draw = function (c, p) {
+        swampDrawStumpFrog(c, p.s, p.sp > 0 ? Math.sin(Math.min(1, p.sp / 0.9) * Math.PI) : 0, p.crown);
+      };
+      defs[i].poke = function (p) {
+        // Kurnutus; kolmannella tökkäyksellä sammakko saa pienen kruunun (yllätys)
+        p.sp = 0.9;
+        playNote(196, 0, 0.12, 'square', 0.12);
+        playNote(165, 0.12, 0.16, 'square', 0.12);
+        if (p.n === 3 && !p.crown) {
+          p.crown = true;
+          spawnSparkles(p.x, p.y - p.s * 1.7, 14, '#ffd24f');
+          playNote(784, 0.3, 0.15, 'triangle', 0.25);
+          playNote(1047, 0.45, 0.3, 'triangle', 0.25);
+        }
+      };
+    } else {
+      defs[i].draw = function (c, p) { swampDrawShroom(c, p.s); };
+      defs[i].poke = function (p) { spawnSparkles(p.x, p.y - p.s * 1.3, 10, '#e4b8ff'); };
+    }
+    swampPropSync(propAdd(defs[i]), 0);
+  }
+}
+
 function initSwamp() {
   var i;
   tasks = [
@@ -42,6 +138,8 @@ function initSwamp() {
   witch.dropT = 3.5;
   witch.warnT = 0;
   witch.wobble = 0;
+  witch.pokeT = 0;
+  swampPropsSetup();
   frogs = [];
   fogBands = [];
   for (i = 0; i < 6; i++) {
@@ -130,6 +228,16 @@ function handleSwampTap(px, py) {
     }
     return;
   }
+  // Noita kikattaa tökkäyksestä (pelkkä koriste); koristeet heilahtavat,
+  // ja napautus kävelyttää silti kuten ennen
+  if (Math.hypot(wx - witch.x, wy - witch.fy * viewH) < viewH * 0.1) {
+    witch.pokeT = 0.9;
+    playNote(392, 0, 0.08, 'square', 0.1);
+    playNote(494, 0.09, 0.08, 'square', 0.1);
+    playNote(392, 0.18, 0.08, 'square', 0.1);
+    spawnSparkles(witch.x, witch.fy * viewH - viewH * 0.06, 6, '#c9a0ff');
+  }
+  propsTap(wx, wy);
   setWalkTarget(px, py);
 }
 
@@ -162,6 +270,8 @@ function updateSwamp(dt) {
   }
   followCam(unicorn.x, dt);
   updateCheckpoints(unicorn.x, unicorn.y);
+  propsUpdate(dt);
+  if (witch.pokeT > 0) witch.pokeT -= dt;
 
   // Virvatulet
   for (i = 0; i < wisps.length; i++) {
@@ -305,13 +415,10 @@ function renderSwampNear(b, w, h) {
   b.moveTo(0, horizon + h * 0.01);
   for (x = 0; x <= w; x += 10) b.lineTo(x, horizon + h * 0.01 - Math.sin(x * 0.003) * h * 0.01);
   b.lineTo(w, h); b.lineTo(0, h); b.closePath(); b.fill();
-  b.fillStyle = 'rgba(70,140,120,0.5)';
+  // Lumpeenlehdet lähikerroksessa: reunaviiva ja sävytys
   for (i = 0; i < 14; i++) {
     x = (i * 457.3) % w;
-    b.beginPath();
-    if (b.ellipse) b.ellipse(x, horizon + h * 0.04 + (i % 3) * h * 0.012, h * 0.08, h * 0.012, 0, 0, Math.PI * 2);
-    else b.arc(x, horizon + h * 0.04, h * 0.03, 0, Math.PI * 2);
-    b.fill();
+    artBlob(b, x, horizon + h * 0.04 + (i % 3) * h * 0.012, h * 0.08, h * 0.012, '#4a8a70', { lineColor: '#20503a', alpha: 0.6 });
   }
   b.beginPath();
   b.moveTo(0, groundTop);
@@ -336,8 +443,9 @@ function renderSwampNear(b, w, h) {
   drawSwampGateFrame(b, swampGate.x, groundTop, h);
 }
 
+// Kuollut puu keskikerroksessa: usvan sävyttämä, ei reunaviivaa
 function drawDeadTree(b, x, baseY, s) {
-  b.strokeStyle = '#1a2620';
+  b.strokeStyle = artMix('#1a2620', '#3d5a4a', 0.3);
   b.lineCap = 'round';
   b.lineWidth = s * 0.12;
   b.beginPath(); b.moveTo(x, baseY); b.lineTo(x, baseY - s); b.stroke();
@@ -348,35 +456,32 @@ function drawDeadTree(b, x, baseY, s) {
 
 function drawSwampGateFrame(b, x, baseY, h) {
   var pw = h * 0.03, gh = h * 0.28, gw = h * 0.1;
-  b.fillStyle = '#4a3627';
-  b.fillRect(x - gw - pw / 2, baseY - gh, pw, gh);
-  b.fillRect(x + gw - pw / 2, baseY - gh, pw, gh);
-  b.fillRect(x - gw - pw, baseY - gh - pw, gw * 2 + pw * 2, pw);
+  artRoundRect(b, x - gw - pw / 2, baseY - gh, pw, gh, pw * 0.3, '#5a4030', { lineColor: '#241808' });
+  artRoundRect(b, x + gw - pw / 2, baseY - gh, pw, gh, pw * 0.3, '#5a4030', { lineColor: '#241808' });
+  artRoundRect(b, x - gw - pw, baseY - gh - pw, gw * 2 + pw * 2, pw, pw * 0.3, '#5a4030', { lineColor: '#241808' });
 }
 
 function drawWisp(c, w) {
   var x = wispX(w) - camX, y = wispY(w), r = viewH * 0.028;
   if (x < -r * 4 || x > viewW + r * 4) return;
-  var g = c.createRadialGradient(x, y, r * 0.2, x, y, r * 2.6);
-  g.addColorStop(0, 'rgba(200,255,180,0.7)');
-  g.addColorStop(1, 'rgba(200,255,180,0)');
-  c.fillStyle = g;
-  c.beginPath(); c.arc(x, y, r * 2.6, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#eafff0';
-  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#c8ffb0';
-  c.beginPath(); c.arc(x, y + r * 0.2, r * 0.6, 0, Math.PI * 2); c.fill();
+  artGlow(c, x, y, r * 2.6, '#c8ffb0', 0.7);
+  swampDrawWispBody(c, x, y, r);
   // Silmä katsoo suuntaan dir: siitä puolelta ei kannata lähestyä
   c.fillStyle = '#204030';
   c.beginPath(); c.arc(x + w.dir * r * 0.35, y - r * 0.15, r * 0.18, 0, Math.PI * 2); c.fill();
   // Katseen suunta kolmiona
-  c.fillStyle = 'rgba(200,255,180,0.45)';
   c.beginPath();
   c.moveTo(x + w.dir * r * 1.2, y - r * 0.5);
   c.lineTo(x + w.dir * r * 2.4, y);
   c.lineTo(x + w.dir * r * 1.2, y + r * 0.5);
   c.closePath();
-  c.fill();
+  artFillPath(c, '#c8ffb0', y - r * 0.5, y + r * 0.5, r, { line: false, alpha: 0.45 });
+}
+
+// Virvatulen runko: vaalea pallo laventelivarjolla ja vihreä sydän (myös HUD)
+function swampDrawWispBody(c, x, y, r) {
+  artCircle(c, x, y, r, '#eafff0', { shadeTo: '#c8d8e8', lineColor: '#5a9a6a', hi: 0.4 });
+  artCircle(c, x, y + r * 0.2, r * 0.55, '#c8ffb0', { line: false });
 }
 
 function drawWitch(c) {
@@ -384,37 +489,36 @@ function drawWitch(c) {
   var s = viewH * 0.045;
   if (x < -s * 6 || x > viewW + s * 6) return;
   var warn = witch.warnT > 0;
+  // Tökättynä noita kikattaa: keikkuu ja suu aukeaa
+  var poke = witch.pokeT > 0 ? Math.sin(Math.min(1, witch.pokeT / 0.9) * Math.PI) : 0;
   c.save();
   c.translate(x, y);
   c.scale(witch.dir, 1);
   if (warn) c.rotate(Math.sin(globalT * 30) * 0.08);
+  if (poke > 0) c.rotate(Math.sin(globalT * 18) * 0.12 * poke);
   // Luuta
-  c.strokeStyle = '#8a5a30';
-  c.lineWidth = s * 0.18;
-  c.lineCap = 'round';
-  c.beginPath(); c.moveTo(-s * 1.6, s * 0.9); c.lineTo(s * 1.1, s * 0.5); c.stroke();
-  c.fillStyle = '#c9a25a';
+  artLimb(c, -s * 1.6, s * 0.9, s * 1.1, s * 0.5, s * 0.18, '#8a5a30', '#4a2e14');
   c.beginPath();
   c.moveTo(-s * 1.5, s * 0.6); c.lineTo(-s * 2.4, s * 0.55); c.lineTo(-s * 2.5, s * 1.3); c.lineTo(-s * 1.6, s * 1.15);
-  c.closePath(); c.fill();
+  c.closePath();
+  artFillPath(c, '#c9a25a', s * 0.55, s * 1.3, s * 0.4, { lineColor: '#7a5a20' });
   // Kaapu
-  c.fillStyle = '#5a2d82';
   c.beginPath();
   c.moveTo(0, -s * 0.9);
   c.quadraticCurveTo(-s * 1.2, s * 0.2, -s * 0.9, s * 0.7);
   c.lineTo(s * 0.7, s * 0.7);
   c.quadraticCurveTo(s * 0.8, 0, 0, -s * 0.9);
-  c.closePath(); c.fill();
-  // Pää ja hattu
-  c.fillStyle = '#b8e0a0';
-  c.beginPath(); c.arc(0, -s * 1.1, s * 0.42, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#333';
-  c.beginPath(); c.arc(s * 0.15, -s * 1.15, s * 0.07, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#2e1a4a';
+  c.closePath();
+  artFillPath(c, '#6a3a98', -s * 0.9, s * 0.7, s * 0.9, { lineColor: '#2e1a4a' });
+  // Pää, silmä, suu ja hattu
+  artCircle(c, 0, -s * 1.1, s * 0.42, '#b8e0a0', { lineColor: '#4a7a3a' });
+  artEye(c, s * 0.15, -s * 1.15, s * 0.09, 0.3, false);
+  if (poke > 0) artBlob(c, s * 0.12, -s * 0.88, s * 0.1, s * 0.05 + poke * s * 0.08, '#3a1a4a', { line: false });
   c.beginPath();
   c.moveTo(-s * 0.7, -s * 1.35); c.lineTo(s * 0.7, -s * 1.35); c.lineTo(s * 0.1, -s * 2.6);
-  c.closePath(); c.fill();
-  c.fillRect(-s * 0.85, -s * 1.45, s * 1.7, s * 0.14);
+  c.closePath();
+  artFillPath(c, '#3a2460', -s * 2.6, -s * 1.35, s * 0.7, { lineColor: '#1a1030' });
+  artRoundRect(c, -s * 0.85, -s * 1.45, s * 1.7, s * 0.14, s * 0.05, '#3a2460', { lineColor: '#1a1030' });
   c.fillStyle = '#ffe27a';
   c.fillRect(-s * 0.3, -s * 1.6, s * 0.6, s * 0.14);
   c.restore();
@@ -427,17 +531,11 @@ function drawWitch(c) {
 function drawFrogProjectile(c, fr) {
   var x = fr.x - camX, y = fr.y, s = viewH * 0.028;
   if (x < -s * 3 || x > viewW + s * 3) return;
-  c.fillStyle = '#5ecf6a';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(x, y - s * 0.4, s, s * 0.7, 0, 0, Math.PI * 2);
-  else c.arc(x, y - s * 0.4, s * 0.8, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = '#fff';
-  c.beginPath(); c.arc(x - s * 0.35, y - s * 0.8, s * 0.25, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + s * 0.35, y - s * 0.8, s * 0.25, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#234';
-  c.beginPath(); c.arc(x - s * 0.3, y - s * 0.8, s * 0.1, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + s * 0.4, y - s * 0.8, s * 0.1, 0, Math.PI * 2); c.fill();
+  artLimb(c, x - s * 0.6, y - s * 0.3, x - s * 0.95, y - s * 0.05, s * 0.22, '#4aaa58', '#2a6a30');
+  artLimb(c, x + s * 0.6, y - s * 0.3, x + s * 0.95, y - s * 0.05, s * 0.22, '#4aaa58', '#2a6a30');
+  artBlob(c, x, y - s * 0.4, s, s * 0.7, '#5ecf6a', { lineColor: '#2a7a34', hi: 0.3 });
+  artEye(c, x - s * 0.35, y - s * 0.8, s * 0.25, 0.3, false);
+  artEye(c, x + s * 0.35, y - s * 0.8, s * 0.25, 0.3, false);
 }
 
 function drawSwampGateGlow(c) {
@@ -460,6 +558,7 @@ function drawSwampGateGlow(c) {
 function drawSwamp() {
   var i;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   drawSwampGateGlow(ctx);
@@ -487,12 +586,7 @@ function drawSwamp() {
   if (swampGate.open && !celebrating) drawEdgeArrow(ctx, swampGate.x);
   endPlayWorld();
   drawPickupHud(ctx, WISP_COUNT, function (i2) { return wisps[i2] && wisps[i2].collected; },
-    function (c, x, y, s) {
-      c.fillStyle = '#eafff0';
-      c.beginPath(); c.arc(x, y, s, 0, Math.PI * 2); c.fill();
-      c.fillStyle = '#c8ffb0';
-      c.beginPath(); c.arc(x, y + s * 0.2, s * 0.6, 0, Math.PI * 2); c.fill();
-    });
+    function (c, x, y, s) { swampDrawWispBody(c, x, y, s); });
   drawHearts(ctx);
   drawTaskOverlay(ctx);
 }
