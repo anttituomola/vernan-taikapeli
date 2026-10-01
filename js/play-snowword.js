@@ -17,6 +17,7 @@ function initSnowword() {
   princess.x = viewW * 0.5;
   princess.y = viewH * 0.86;
   princess.facing = 1;
+  swSetupProps();
   renderBackground();
   playNote(523, 0, 0.22, 'sine', 0.3);
   playNote(659, 0.12, 0.28, 'triangle', 0.3);
@@ -27,6 +28,27 @@ function respawnSnowword() {}
 function resizeSnowword() {
   princess.x = viewW * 0.5;
   princess.y = viewH * 0.86;
+  swSetupProps();
+}
+
+// Tökättävät koristeet (tehtävien välissä ja juhlinnan aikana): kota puhaltaa
+// savurenkaan ja joka kolmannella tökkäyksellä sydämen (yllätys), lumiukko ja
+// kuusi pudottavat lumitupsun, kivi heilahtaa.
+function swSetupProps() {
+  var h = viewH, w = worldW;
+  propsReset();
+  reinKotaProp(w * 0.78, groundTop + h * 0.02, h * 0.22, 3);
+  propAdd({
+    x: w * 0.18, y: groundTop - h * 0.02, r: h * 0.07, hy: h * 0.025, color: '#ffffff', note: 523, amp: 0.1,
+    draw: function (c) { drawNorthSnowman(c, 0, 0, h * 0.1); },
+    poke: function (p) { voySnowPuff(p.x + (Math.random() - 0.5) * h * 0.03, p.y - h * 0.065, h * 0.005, p.y + h * 0.015); }
+  });
+  voyPineProp(w * 0.32, groundTop, h * 0.15, '#1a3850');
+  propAdd({
+    x: w * 0.58, y: groundTop + h * 0.02, r: h * 0.055, hy: h * 0.008, color: '#dce8f4', note: 392, amp: 0.07,
+    draw: function (c) { drawNorthRock(c, 0, 0, h * 0.04); },
+    poke: function (p) { voySnowPuff(p.x, p.y - h * 0.016, h * 0.005, p.y + h * 0.004); }
+  });
 }
 
 function swStartRound() {
@@ -41,12 +63,15 @@ function swStartRound() {
 }
 
 function handleSnowwordTap(px, py) {
-  if (!running || celebrating) return;
-  if (taskActive()) handleTaskTap(px, py);
+  if (!running) return;
+  if (!celebrating && taskActive()) { handleTaskTap(px, py); return; }
+  // Ei tehtävää auki: koriste saa heilahtaa (yhden ruudun kenttä, camX = 0)
+  propsTap(px, py);
 }
 
 function updateSnowword(dt) {
   updateTasks(dt);
+  propsUpdate(dt);
   if (sw.waiting && sw.current && sw.current.opened) {
     sw.waiting = false;
     sw.done++;
@@ -82,11 +107,8 @@ function renderSnowwordMid(b, w, h) {
   drawNorthPine(b, w * 0.84, groundTop - h * 0.01, h * 0.18, '#245068');
 }
 function renderSnowwordNear(b, w, h) {
+  // Kota, lumiukko, kuusi ja kivi ovat tökättäviä koristeita (swSetupProps)
   renderNorthGround(b, w, h);
-  drawNorthKota(b, w * 0.78, groundTop + h * 0.02, h * 0.22);
-  drawNorthSnowman(b, w * 0.18, groundTop - h * 0.02, h * 0.1);
-  drawNorthPine(b, w * 0.32, groundTop, h * 0.15, '#1a3850');
-  drawNorthRock(b, w * 0.58, groundTop + h * 0.02, h * 0.04);
 }
 
 function drawSnowword() {
@@ -96,6 +118,7 @@ function drawSnowword() {
   for (i = 0; i < sw.done; i++) {
     drawStar(ctx, viewW * (0.18 + i * 0.12), viewH * 0.08, viewH * 0.018, 0, 0.8);
   }
+  propsDraw(ctx);
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, 0, false, globalT);
   drawParticlesLayer(ctx);
   endPlayWorld();
