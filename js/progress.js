@@ -208,9 +208,7 @@ function drawHearts(c) {
   var cx = viewW / 2;
   var y = viewH * 0.055;
   var i;
-  c.fillStyle = 'rgba(255,255,255,0.35)';
-  roundRect(c, cx - s * 4.6, y - s * 1.4, s * 9.2, s * 2.9, s);
-  c.fill();
+  drawHudPanel(c, cx - s * 4.6, y - s * 1.4, s * 9.2, s * 2.9, s);
   for (i = 0; i < HEART_MAX; i++) {
     var pulse = (i === hearts - 1 && hurtT > 1.0) ? 1 + Math.sin(globalT * 25) * 0.15 : 1;
     drawHeartShape(c, cx + (i - 1) * s * 2.8, y, s * pulse, i < hearts);

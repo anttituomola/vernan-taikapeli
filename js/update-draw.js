@@ -11,7 +11,22 @@ function update(dt) {
   artPopsUpdate(dt);
   updateFlyStars(dt);
   if (introT > 0) introT -= dt;
+  // Kosketusrengas (ratsastuskentät): kaikille yhteinen ajastus
+  if (tapRing) {
+    tapRing.t += dt;
+    if (tapRing.t > 0.5) tapRing = null;
+  }
   phaseNow().update(dt);
+}
+
+// Kosketusrengas: kaksi laajenevaa rengasta kävelykohteessa, haalenee
+function drawTapRing(c) {
+  var k = tapRing.t / 0.5, x = tapRing.x - camX, y = tapRing.y, r = viewH * 0.02;
+  c.lineWidth = Math.max(2, viewH * 0.005);
+  c.strokeStyle = 'rgba(255,255,255,' + (1 - k) + ')';
+  c.beginPath(); c.arc(x, y, r + k * r * 2.6, 0, Math.PI * 2); c.stroke();
+  c.strokeStyle = 'rgba(255,220,120,' + (0.8 * (1 - k)) + ')';
+  c.beginPath(); c.arc(x, y, r * 0.5 + k * r * 1.6, 0, Math.PI * 2); c.stroke();
 }
 
 // Kerätyt tähdet lentävät HUD-paikkaansa; saapuminen pomppauttaa paikkaa
@@ -301,18 +316,16 @@ function updateForest(dt) {
     }
   }
 
-  if (tapRing) {
-    tapRing.t += dt;
-    if (tapRing.t > 0.5) tapRing = null;
-  }
 }
 
 // ---------- Piirto ----------
 function draw() {
   phaseNow().draw();
   if (!puzzleBusy()) {
+    if (tapRing && phaseNow().control === 'ride') drawTapRing(ctx);
     drawForeground(ctx);
     drawAmbient(ctx);
+    drawMapSun(ctx);
   }
   drawStarGain(ctx);
   drawIntro(ctx);
@@ -335,16 +348,6 @@ function drawForest() {
   var c2x = ((globalT * 8 + viewW * 0.6) % (viewW + 300)) - 150;
   drawCloud(ctx, c1x, viewH * 0.08, viewH * 0.025, 0.9);
   drawCloud(ctx, c2x, viewH * 0.20, viewH * 0.020, 0.9);
-
-  // Kosketusrengas
-  if (tapRing) {
-    var tr = tapRing.t / 0.5;
-    ctx.strokeStyle = 'rgba(255,255,255,' + (1 - tr) + ')';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(tapRing.x - camX, tapRing.y, 10 + tr * 30, 0, Math.PI * 2);
-    ctx.stroke();
-  }
 
   // Taikaportit
   for (i = 0; i < gates.length; i++) drawGate(ctx, gates[i]);
@@ -838,15 +841,8 @@ function drawSpellOverlay(c) {
       c.fillStyle = glow;
       c.beginPath(); c.arc(x, op.y, r * 2, 0, Math.PI * 2); c.fill();
     }
-    var og = c.createRadialGradient(x - r * 0.3, op.y - r * 0.3, r * 0.1, x, op.y, r);
-    og.addColorStop(0, lit ? '#ffffff' : 'rgba(255,255,255,0.65)');
-    og.addColorStop(0.35, ORB_COLORS[i]);
-    og.addColorStop(1, ORB_COLORS[i]);
-    c.fillStyle = og;
-    c.beginPath(); c.arc(x, op.y, r, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = 'rgba(255,255,255,0.9)';
-    c.lineWidth = viewH * 0.006;
-    c.stroke();
+    artShadow(c, x, op.y + r * 1.15, r * 1.05, r * 0.28, 0.28);
+    artCircle(c, x, op.y, r, ORB_COLORS[i], { lineColor: '#ffffff', line: viewH * 0.006, hi: lit ? 0.7 : 0.4 });
   }
 }
 
@@ -875,9 +871,7 @@ function drawHUD() {
   var left = hudX();
   var i;
   // Tausta
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  roundRect(ctx, left, pad * 0.5, s * 2.4 * STAR_COUNT + pad, s * 3.4, s);
-  ctx.fill();
+  drawHudPanel(ctx, left, pad * 0.5, s * 2.4 * STAR_COUNT + pad, s * 3.4, s);
   // Tähdet (lentävä tähti täyttää paikan vasta saapuessaan, ja paikka pomppaa)
   for (i = 0; i < STAR_COUNT; i++) {
     var x = left + pad * 0.5 + s * 1.2 + i * s * 2.4;
@@ -894,9 +888,7 @@ function drawHUD() {
   // Puput
   var bx = left;
   var by = pad * 0.5 + s * 4.2;
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  roundRect(ctx, bx, by, s * 3.4 * BUNNY_COUNT + pad, s * 3.6, s);
-  ctx.fill();
+  drawHudPanel(ctx, bx, by, s * 3.4 * BUNNY_COUNT + pad, s * 3.6, s);
   for (i = 0; i < BUNNY_COUNT; i++) {
     var fx = bx + pad * 0.5 + s * 1.6 + i * s * 3.4;
     var fy = by + s * 2.3;
@@ -905,6 +897,15 @@ function drawHUD() {
     drawBunny(ctx, fx, fy, s * 1.5, 0, 0, true);
     ctx.restore();
   }
+}
+// HUD-paneeli: läpikuultava pohja ja hento vaalea reunaviiva (tarra)
+function drawHudPanel(c, x, y, w, h, r) {
+  roundRect(c, x, y, w, h, r);
+  c.fillStyle = 'rgba(255,255,255,0.45)';
+  c.fill();
+  c.strokeStyle = 'rgba(255,255,255,0.75)';
+  c.lineWidth = Math.max(1.2, r * 0.12);
+  c.stroke();
 }
 function starOutline(c, x, y, r) {
   c.beginPath();

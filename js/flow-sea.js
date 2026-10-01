@@ -269,7 +269,7 @@ function drawSea() {
 // Aurinko hymyilee ja räpäyttää napautuksesta (sama kaikilla kartoilla),
 // sateenkaari soi väri kerrallaan, meressä hyppii kala (joka seitsemäs
 // napautus nostaa valaan) ja pilvestä tulee pieni sadekuuro.
-var mapSun = { t0: -10, x: 0, y: 0, r: 0 };
+var mapSun = { t0: -10, x: 0, y: 0, r: 0, fromBg: false };
 var seaFx = { rainbow: -1, fish: [], whale: null, rain: null, taps: 0 };
 var SEA_RAINBOW_NOTES = [523, 587, 659, 698, 784, 880, 988];
 var SEA_CLOUDS = [[0.3, 0.2, 0.024], [0.78, 0.15, 0.03], [0.93, 0.27, 0.022]];
@@ -280,7 +280,19 @@ function seaRainbowGeom() { return { cx: viewW * 0.5, cy: viewH * 0.40, bw: view
 function mapSunTap(px, py, x, y, r) {
   if (Math.hypot(px - x, py - y) > r * 2.2) return false;
   mapSun.t0 = globalT;
+  mapSun.fromBg = false;
   mapSun.x = x; mapSun.y = y; mapSun.r = r;
+  playNote(1047, 0, 0.12, 'sine', 0.3);
+  playNote(1319, 0.1, 0.18, 'sine', 0.3);
+  return true;
+}
+// Kentän aurinko tai kuu (bgSun taustakerroksessa) hymyilee napautuksesta
+function bgSunPoke(px, py) {
+  if (!bgSun || mode !== 'play') return false;
+  var sx = bgSun.x - camX * bgSun.speed;
+  if (Math.hypot(px - sx, py - bgSun.y) > bgSun.r * 1.6) return false;
+  mapSun.t0 = globalT;
+  mapSun.fromBg = true;
   playNote(1047, 0, 0.12, 'sine', 0.3);
   playNote(1319, 0.1, 0.18, 'sine', 0.3);
   return true;
@@ -288,6 +300,10 @@ function mapSunTap(px, py, x, y, r) {
 function drawMapSun(c) {
   var k = (globalT - mapSun.t0) / 1.4, s = mapSun, i, a, fade;
   if (k < 0 || k > 1) return;
+  if (s.fromBg) {
+    if (!bgSun || mode !== 'play') return;
+    s = { x: bgSun.x - camX * bgSun.speed, y: bgSun.y, r: bgSun.r };
+  }
   fade = Math.sin(k * Math.PI);
   // Säteet pyörähtävät
   c.strokeStyle = 'rgba(255,230,120,' + (0.9 * fade) + ')';

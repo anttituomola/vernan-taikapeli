@@ -146,9 +146,7 @@ function updateConfetti(dt) {
 // Pieni keräilyrivi HUDiin: drawItem(c, x, y, s, filled)
 function drawPickupHud(c, count, collectedFn, drawItem) {
   var hs = viewH * 0.022, pad = hs * 1.4, left = hudX(), i;
-  c.fillStyle = 'rgba(255,255,255,0.4)';
-  roundRect(c, left, pad * 0.5, hs * 3.2 * count + pad, hs * 3.4, hs);
-  c.fill();
+  drawHudPanel(c, left, pad * 0.5, hs * 3.2 * count + pad, hs * 3.4, hs);
   for (i = 0; i < count; i++) {
     c.globalAlpha = collectedFn(i) ? 1 : 0.25;
     drawItem(c, left + pad * 0.5 + hs * 1.6 + i * hs * 3.2, pad * 0.5 + hs * 1.7, hs * 0.9);
