@@ -47,6 +47,7 @@ function initDucks() {
   princess.x = viewW * 0.1;
   princess.y = viewH * 0.43;
   princess.facing = 1;
+  ducksSetupProps();
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(659, 0.12, 0.2, 'triangle', 0.35);
@@ -58,6 +59,72 @@ function resizeDucks() {
   princess.x = viewW * 0.1;
   princess.y = viewH * 0.43;
   if (ducks.hook.state === 'rest') { ducks.hook.x = duckRestPos().x; ducks.hook.y = duckRestPos().y; }
+  ducksSetupProps();
+}
+
+// Tökättävät koristeet: sammakko lumpeella vasemmassa alakulmassa (joka kolmas
+// tökkäys hyppäyttää sen) ja kaislikko oikealla (viides tökkäys päästää
+// kultaisen sudenkorennon lentoon).
+function ducksSetupProps() {
+  var h = viewH, vw = viewW, pt = duckPondTop();
+  propsReset();
+  propAdd({
+    x: vw * 0.07, y: h * 0.9, r: h * 0.06, hy: h * 0.035, color: '#9fe07a', note: 330, amp: 0.1,
+    draw: function (c, p) {
+      var s = h * 0.028, jump = p.t >= 0 && p.n % 3 === 0 ? Math.sin(Math.min(1, p.t / 0.8) * Math.PI) * s * 2.5 : 0;
+      var blink = p.t >= 0 && p.t < 0.2;
+      artBlob(c, 0, 0, s * 1.6, s * 0.65, '#4fb356', { lineColor: '#2e7a3a', hi: 0.3 });
+      if (jump > 0) {
+        c.strokeStyle = 'rgba(255,255,255,0.7)';
+        c.lineWidth = Math.max(1.5, s * 0.1);
+        c.beginPath();
+        if (c.ellipse) c.ellipse(0, s * 0.3, s * 1.6 + jump, s * 0.45, 0, 0, Math.PI * 2);
+        c.stroke();
+      }
+      c.save();
+      c.translate(0, -jump);
+      artBlob(c, 0, -s * 0.5, s * 0.9, s * 0.6, '#7fd45a', { lineColor: '#3a8a3a', hi: 0.35 });
+      artCircle(c, -s * 0.4, -s * 1.0, s * 0.3, '#7fd45a', { lineColor: '#3a8a3a' });
+      artCircle(c, s * 0.4, -s * 1.0, s * 0.3, '#7fd45a', { lineColor: '#3a8a3a' });
+      artEye(c, -s * 0.4, -s * 1.0, s * 0.14, 0.2, blink);
+      artEye(c, s * 0.4, -s * 1.0, s * 0.14, 0.2, blink);
+      artBlush(c, -s * 0.7, -s * 0.55, s * 0.12);
+      artBlush(c, s * 0.7, -s * 0.55, s * 0.12);
+      c.strokeStyle = '#2e6a2a';
+      c.lineWidth = Math.max(1, s * 0.08);
+      c.beginPath(); c.arc(0, -s * 0.55, s * 0.35, 0.3, Math.PI - 0.3); c.stroke();
+      c.restore();
+    },
+    poke: function () {
+      playNote(220, 0, 0.12, 'square', 0.12);
+      playNote(175, 0.1, 0.16, 'square', 0.12);
+    }
+  });
+  propAdd({
+    x: vw * 0.92, y: pt + h * 0.02, r: h * 0.1, hy: h * 0.08, color: '#9fdc7f', note: 520, amp: 0.07,
+    draw: function (c, p) {
+      var i, dx, top, s = h, fly = p.t >= 0 && p.n % 5 === 0;
+      for (i = 0; i < 5; i++) {
+        dx = (i % 3) * s * 0.018 - s * 0.02;
+        top = -s * 0.14 - (i % 2) * s * 0.03;
+        artLimb(c, dx, 0, dx + s * 0.012, top, Math.max(2, s * 0.007), '#4fb356', '#2e7a3a');
+        if (i % 2 === 0) artBlob(c, dx + s * 0.012, top + s * 0.01, s * 0.008, s * 0.022, '#8a5a30', { lineColor: '#5a3a1e' });
+      }
+      if (fly) {
+        // Kultainen sudenkorento nousee kaislikosta
+        var k = Math.min(1, p.t / 1.4), fx = k * s * 0.08 + Math.sin(p.t * 9) * s * 0.01, fy = -s * 0.18 - k * s * 0.22;
+        c.globalAlpha = Math.max(0, 1 - k * 0.8);
+        artBlob(c, fx - s * 0.02, fy, s * 0.02, s * 0.006, '#ffd24f', { line: false, alpha: 0.7, rot: -0.3 + Math.sin(p.t * 40) * 0.4 });
+        artBlob(c, fx + s * 0.02, fy, s * 0.02, s * 0.006, '#ffd24f', { line: false, alpha: 0.7, rot: 0.3 - Math.sin(p.t * 40) * 0.4 });
+        artLimb(c, fx - s * 0.025, fy + s * 0.004, fx + s * 0.03, fy + s * 0.004, Math.max(1.5, s * 0.005), '#e8a000', '#a06a00');
+        artEye(c, fx + s * 0.03, fy + s * 0.002, s * 0.004, 0.5, false);
+        c.globalAlpha = 1;
+      }
+    },
+    poke: function (p) {
+      if (p.n % 5 === 0) { playNote(1568, 0, 0.1, 'sine', 0.2); playNote(2093, 0.08, 0.14, 'sine', 0.15); }
+    }
+  });
 }
 
 function duckPos(d) {
@@ -68,7 +135,8 @@ function handleDucksTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
   var h = ducks.hook;
   if (h.state !== 'rest') return;
-  if (py < duckPondTop()) return;
+  // Lammen ulkopuolella (kaislikko) ja aivan alareunassa (sammakko) vain koristeet reagoivat
+  if (py < duckPondTop() || py > viewH * 0.84) { propsTap(px, py); return; }
   h.tx = Math.min(Math.max(px, viewW * 0.06), viewW * 0.96);
   h.ty = Math.min(Math.max(py, duckPondTop() + viewH * 0.04), viewH * 0.82);
   h.state = 'drop';
@@ -167,6 +235,7 @@ function updateDucks(dt) {
     ducks.splashes[i].t += dt;
     if (ducks.splashes[i].t > 0.6) ducks.splashes.splice(i, 1);
   }
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -217,9 +286,12 @@ function renderDucksNear(b, w, h) {
   for (x = vw * 0.24; x < vw * 0.98; x += h * 0.09) b.fillRect(x, h * 0.02, h * 0.045, h * 0.055);
   b.fillStyle = '#ffb300';
   for (x = vw * 0.24 + h * 0.0225; x < vw * 0.98; x += h * 0.045) { b.beginPath(); b.arc(x, h * 0.075, h * 0.0225, 0, Math.PI); b.fill(); }
-  b.fillStyle = '#8a5a30';
-  roundRect(b, vw * 0.26, h * 0.145, vw * 0.7, h * 0.02, h * 0.006);
-  b.fill();
+  b.strokeStyle = '#c47a00';
+  b.lineWidth = Math.max(1.2, h * 0.003);
+  b.beginPath();
+  for (x = vw * 0.24 + h * 0.0225; x < vw * 0.98; x += h * 0.045) { b.moveTo(x - h * 0.0225, h * 0.075); b.arc(x, h * 0.075, h * 0.0225, Math.PI, 0, true); }
+  b.stroke();
+  artRoundRect(b, vw * 0.26, h * 0.145, vw * 0.7, h * 0.02, h * 0.006, '#a97a4a', { lineColor: '#5a3a1e', line: Math.max(1.2, h * 0.003) });
   for (i = 1; i <= DUCK_COUNT; i++) {
     var sp = duckShelfPos(i);
     b.fillStyle = 'rgba(255,255,255,0.55)';
@@ -237,29 +309,17 @@ function renderDucksNear(b, w, h) {
     for (x = -10; x <= w + 10; x += 12) { var wy = y + Math.sin(x / (h * 0.07) + y) * h * 0.004; if (x === -10) b.moveTo(x, wy); else b.lineTo(x, wy); }
     b.stroke();
   }
-  // Lumpeet ja kaislat reunoilla
-  for (i = 0; i < 6; i++) {
+  // Lumpeet reunoilla (kaislikko on tökättävä koriste, ks. ducksSetupProps)
+  for (i = 1; i < 6; i++) {
     x = vw * (0.05 + i * 0.185) + (i % 2) * vw * 0.03;
     y = h * (0.86 + (i % 3) * 0.035);
-    b.fillStyle = '#4fb356';
-    b.beginPath();
-    if (b.ellipse) b.ellipse(x, y, h * 0.035, h * 0.016, 0, 0, Math.PI * 2); else b.arc(x, y, h * 0.02, 0, Math.PI * 2);
-    b.fill();
-    if (i % 2) { b.fillStyle = '#ff7bac'; b.beginPath(); b.arc(x, y - h * 0.008, h * 0.009, 0, Math.PI * 2); b.fill(); }
-  }
-  b.strokeStyle = '#3f9a44';
-  b.lineWidth = Math.max(2, h * 0.006);
-  b.lineCap = 'round';
-  for (i = 0; i < 5; i++) {
-    x = vw * (0.9 + (i % 3) * 0.03);
-    b.beginPath(); b.moveTo(x, pt + h * 0.02); b.quadraticCurveTo(x + h * 0.02, pt - h * 0.06, x + h * 0.01, pt - h * 0.14 - (i % 2) * h * 0.03); b.stroke();
+    artBlob(b, x, y, h * 0.035, h * 0.016, '#4fb356', { lineColor: '#2e7a3a', hi: 0.25 });
+    if (i % 2) artCircle(b, x, y - h * 0.008, h * 0.009, '#ff7bac', { lineColor: '#c94f7e' });
   }
   // Laituri prinsessalle
-  b.fillStyle = '#a97a4a';
-  b.fillRect(0, pt - h * 0.02, vw * 0.2, h * 0.035);
-  b.fillStyle = '#8a5a30';
-  b.fillRect(vw * 0.04, pt + h * 0.015, h * 0.02, h * 0.1);
-  b.fillRect(vw * 0.16, pt + h * 0.015, h * 0.02, h * 0.1);
+  artRoundRect(b, vw * 0.04, pt + h * 0.01, h * 0.02, h * 0.1, h * 0.005, '#8a5a30', { lineColor: '#5a3a1e' });
+  artRoundRect(b, vw * 0.16, pt + h * 0.01, h * 0.02, h * 0.1, h * 0.005, '#8a5a30', { lineColor: '#5a3a1e' });
+  artRoundRect(b, -h * 0.02, pt - h * 0.02, vw * 0.2 + h * 0.02, h * 0.035, h * 0.008, '#a97a4a', { lineColor: '#5a3a1e' });
 }
 
 function drawRubberDuck(c, x, y, s, n, dir, dim) {
@@ -272,36 +332,19 @@ function drawRubberDuck(c, x, y, s, n, dir, dim) {
   c.beginPath();
   if (c.ellipse) c.ellipse(0, s * 0.5, s * 1.1, s * 0.22, 0, 0, Math.PI * 2); else c.arc(0, s * 0.5, s * 0.8, 0, Math.PI * 2);
   c.fill();
-  // Vartalo
-  var g = c.createRadialGradient(-s * 0.2, -s * 0.3, s * 0.1, 0, 0, s * 1.1);
-  g.addColorStop(0, '#fff3a0');
-  g.addColorStop(1, '#ffc832');
-  c.fillStyle = g;
-  c.beginPath();
-  if (c.ellipse) c.ellipse(0, 0, s * 0.95, s * 0.6, 0, 0, Math.PI * 2); else c.arc(0, 0, s * 0.8, 0, Math.PI * 2);
-  c.fill();
-  // Pyrstö
-  c.beginPath(); c.moveTo(-s * 0.8, -s * 0.1); c.lineTo(-s * 1.25, -s * 0.55); c.lineTo(-s * 0.6, -s * 0.45); c.closePath(); c.fill();
-  // Pää
-  c.beginPath(); c.arc(s * 0.55, -s * 0.65, s * 0.42, 0, Math.PI * 2); c.fill();
-  // Nokka
-  c.fillStyle = '#ff8f3a';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(s * 1.0, -s * 0.6, s * 0.26, s * 0.14, 0.1, 0, Math.PI * 2); else c.arc(s * 1.0, -s * 0.6, s * 0.18, 0, Math.PI * 2);
-  c.fill();
-  // Silmä
-  c.fillStyle = '#333';
-  c.beginPath(); c.arc(s * 0.68, -s * 0.75, s * 0.06, 0, Math.PI * 2); c.fill();
-  // Siipi
-  c.fillStyle = 'rgba(255,190,60,0.9)';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(-s * 0.25, 0.05 * s, s * 0.45, s * 0.25, -0.3, 0, Math.PI * 2); else c.arc(-s * 0.25, 0, s * 0.3, 0, Math.PI * 2);
-  c.fill();
+  // Pyrstö, vartalo, pää, nokka: kaksi sävyä ja reunaviiva
+  var lineC = '#c48a10', body = '#ffc832';
+  c.beginPath(); c.moveTo(-s * 0.8, -s * 0.1); c.lineTo(-s * 1.25, -s * 0.55); c.lineTo(-s * 0.6, -s * 0.45); c.closePath();
+  artFillPath(c, body, -s * 0.55, -s * 0.1, s * 0.3, { lineColor: lineC });
+  artBlob(c, 0, 0, s * 0.95, s * 0.6, body, { lineColor: lineC, hi: 0.4 });
+  artCircle(c, s * 0.55, -s * 0.65, s * 0.42, body, { lineColor: lineC, hi: 0.35 });
+  artBlob(c, s * 1.0, -s * 0.6, s * 0.26, s * 0.14, '#ff8f3a', { lineColor: '#c45a10', rot: 0.1 });
+  artEye(c, s * 0.66, -s * 0.76, s * 0.09, 0.3, false);
+  artBlob(c, -s * 0.25, s * 0.05, s * 0.45, s * 0.25, '#f5b028', { line: false, rot: -0.3, alpha: 0.9 });
   c.restore();
   // Numero valkoisessa pallossa (ei peilattu)
   c.globalAlpha = dim ? 0.6 : 1;
-  c.fillStyle = '#fff';
-  c.beginPath(); c.arc(x - dir * s * 0.1, y, s * 0.34, 0, Math.PI * 2); c.fill();
+  artCircle(c, x - dir * s * 0.1, y, s * 0.34, '#ffffff', { lineColor: '#c9b3e0', shadeTo: '#ece4f8' });
   c.fillStyle = '#5a3a8a';
   c.font = 'bold ' + Math.round(s * 0.5) + 'px ' + TASK_FONT;
   c.textAlign = 'center';
@@ -321,10 +364,9 @@ function drawFishingRod(c) {
   c.lineWidth = Math.max(1, viewH * 0.002);
   c.beginPath(); c.moveTo(tip.x, tip.y); c.quadraticCurveTo((tip.x + h.x) / 2, Math.min(tip.y, h.y) - viewH * 0.02, h.x, h.y - s * 0.6); c.stroke();
   // Koukku ja koho
-  c.fillStyle = '#ff5f5f';
-  c.beginPath(); c.arc(h.x, h.y - s * 0.9, s * 0.35, 0, Math.PI * 2); c.fill();
+  artCircle(c, h.x, h.y - s * 0.9, s * 0.35, '#ff5f5f', { lineColor: '#b03030' });
   c.fillStyle = '#fff';
-  c.beginPath(); c.arc(h.x, h.y - s * 1.0, s * 0.35, Math.PI, 0); c.fill();
+  c.beginPath(); c.arc(h.x, h.y - s * 0.95, s * 0.3, Math.PI, 0); c.fill();
   c.strokeStyle = '#d0d4e0';
   c.lineWidth = Math.max(2, s * 0.15);
   c.beginPath(); c.moveTo(h.x, h.y - s * 0.55); c.lineTo(h.x, h.y); c.arc(h.x + s * 0.2, h.y, s * 0.2, Math.PI, Math.PI * 2.3); c.stroke();
@@ -372,6 +414,7 @@ function drawDucks() {
     if (ctx.ellipse) ctx.ellipse(spl.x, spl.y, viewH * 0.02 + f * viewH * 0.07, viewH * 0.008 + f * viewH * 0.028, 0, 0, Math.PI * 2); else ctx.arc(spl.x, spl.y, viewH * 0.02 + f * viewH * 0.05, 0, Math.PI * 2);
     ctx.stroke();
   }
+  propsDraw(ctx);
   drawFishingRod(ctx);
   if (h.caught) drawRubberDuck(ctx, h.x, h.y + viewH * 0.02, viewH * 0.032, h.caught.n, 1, false);
   drawDucksBubble(ctx);

@@ -15,7 +15,8 @@ var MAG_ROUNDS = [
 var MAG_CUP_COLORS = ['#ff5f7e', '#5fa8ff', '#5fd36b', '#ffd23e'];
 var mag = {
   round: 0, state: 'show', t: 0, cups: [], starCup: 0, swapsLeft: 0,
-  swapA: -1, swapB: -1, picked: -1, taskDelay: 0, fw: [], fwT: 0, hopT: 0, wandT: 0
+  swapA: -1, swapB: -1, picked: -1, taskDelay: 0, fw: [], fwT: 0, hopT: 0, wandT: 0,
+  hatT: 0, scarfT: 0
 };
 
 function magSlotX(slot, n) {
@@ -45,10 +46,13 @@ function initMagician() {
   mag.fwT = 0;
   mag.hopT = 0;
   mag.wandT = 0;
+  mag.hatT = 0;
+  mag.scarfT = 0;
   magSetupRound();
   princess.x = viewW * 0.16;
   princess.y = viewH * 0.84;
   princess.facing = 1;
+  magSetupProps();
   renderBackground();
   playNote(392, 0, 0.3, 'triangle', 0.35);
   playNote(494, 0.15, 0.3, 'triangle', 0.35);
@@ -65,6 +69,48 @@ function resizeMagician() {
   for (i = 0; i < n; i++) mag.cups[i].x = magSlotX(mag.cups[i].slot, n);
   princess.x = viewW * 0.16;
   princess.y = viewH * 0.84;
+  magSetupProps();
+}
+
+// Tökättävät koristeet: taikuripupu (hattu pomppaa, viides tökkäys vetää
+// hatusta sateenkaarihuivin) ja taikajuliste lavan vasemmassa laidassa
+// (joka kolmas tökkäys kääntää julisteen, jolta kurkkaa pupu).
+function magSetupProps() {
+  var h = viewH, vw = viewW;
+  propsReset();
+  propAdd({
+    x: vw * 0.82, y: h * 0.7, r: h * 0.08, hy: h * 0.09, color: '#ffe27a', note: 988,
+    draw: function () {},
+    poke: function (p) {
+      mag.hopT = Math.max(mag.hopT, 0.5);
+      mag.hatT = 0.6;
+      if (p.n % 5 === 0) {
+        mag.scarfT = 1.6;
+        var i;
+        for (i = 0; i < 5; i++) playNote(523 * Math.pow(1.19, i), i * 0.1, 0.2, 'triangle', 0.25);
+      }
+    }
+  });
+  propAdd({
+    x: vw * 0.08, y: h * 0.7, r: h * 0.09, hy: h * 0.08, color: '#c9a0ff', note: 740, amp: 0.1,
+    draw: function (c, p) {
+      var s = h * 0.05, flip = p.t >= 0 && p.n % 3 === 0;
+      artLimb(c, -s * 0.55, 0, -s * 0.15, -s * 2.2, Math.max(2, s * 0.08), '#8a5a30', '#5a3a1e');
+      artLimb(c, s * 0.55, 0, s * 0.15, -s * 2.2, Math.max(2, s * 0.08), '#8a5a30', '#5a3a1e');
+      artRoundRect(c, -s * 0.8, -s * 2.3, s * 1.6, s * 1.5, s * 0.12, '#fff6e3', { lineColor: '#8a5cb8' });
+      if (flip) {
+        drawBunny(c, 0, -s * 1.45, s * 0.42, 0, globalT * 8, true);
+      } else {
+        drawStar(c, 0, -s * 1.8, s * 0.28, globalT, 0.4);
+        c.fillStyle = '#5a2a9a';
+        c.font = 'bold ' + Math.round(s * 0.6) + 'px ' + UI_FONT;
+        c.textAlign = 'center';
+        c.textBaseline = 'middle';
+        c.fillText('?', 0, -s * 1.2);
+        c.textBaseline = 'alphabetic';
+      }
+    }
+  });
 }
 
 function magCupY(cup) {
@@ -74,6 +120,8 @@ function magCupY(cup) {
 function handleMagicianTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
   var i, cup, dx, dy;
+  // Koristeet (taikuri, juliste) ovat kuppien ulkopuolella, joten ne tarkistetaan ensin
+  if (propsTap(px, py)) return;
   if (mag.state !== 'pick') return;
   for (i = 0; i < mag.cups.length; i++) {
     cup = mag.cups[i];
@@ -121,6 +169,9 @@ function updateMagician(dt) {
   var busy = puzzleBusy();
   if (mag.wandT > 0) mag.wandT -= dt;
   if (mag.hopT > 0) mag.hopT -= dt;
+  if (mag.hatT > 0) mag.hatT -= dt;
+  if (mag.scarfT > 0) mag.scarfT -= dt;
+  propsUpdate(dt);
   if (mag.taskDelay > 0 && !busy) {
     mag.taskDelay -= dt;
     if (mag.taskDelay <= 0) {
@@ -295,19 +346,13 @@ function renderMagicianNear(b, w, h) {
     b.fillStyle = g;
     b.beginPath(); b.arc(x, h * 0.985, h * 0.03, 0, Math.PI * 2); b.fill();
   }
-  // Pöytä
-  var tw = Math.min(vw * 0.82, h * 1.2);
-  b.fillStyle = '#5a3a8a';
-  roundRect(b, vw / 2 - tw / 2, ty - h * 0.02, tw, h * 0.09, h * 0.02);
-  b.fill();
-  b.fillStyle = '#8a5cb8';
-  roundRect(b, vw / 2 - tw / 2, ty - h * 0.02, tw, h * 0.035, h * 0.015);
-  b.fill();
-  b.fillStyle = '#ffd24f';
+  // Pöytä: jalat, liina ja kansi reunaviivoin
+  var tw = Math.min(vw * 0.82, h * 1.2), lw = Math.max(1.2, h * 0.003);
+  artRoundRect(b, vw / 2 - tw * 0.4, ty + h * 0.07, h * 0.03, Math.max(h * 0.01, h * 0.63 - ty), h * 0.006, '#3a2560', { lineColor: '#1e1238', line: lw });
+  artRoundRect(b, vw / 2 + tw * 0.4 - h * 0.03, ty + h * 0.07, h * 0.03, Math.max(h * 0.01, h * 0.63 - ty), h * 0.006, '#3a2560', { lineColor: '#1e1238', line: lw });
+  artRoundRect(b, vw / 2 - tw / 2, ty - h * 0.02, tw, h * 0.09, h * 0.02, '#5a3a8a', { lineColor: '#2e1a50', line: lw });
+  artRoundRect(b, vw / 2 - tw / 2, ty - h * 0.02, tw, h * 0.035, h * 0.015, '#8a5cb8', { lineColor: '#2e1a50', line: lw });
   for (x = vw / 2 - tw / 2 + h * 0.04; x < vw / 2 + tw / 2; x += h * 0.08) drawStar(b, x, ty + h * 0.05, h * 0.012, 0, 0);
-  b.fillStyle = '#3a2560';
-  b.fillRect(vw / 2 - tw * 0.4, ty + h * 0.07, h * 0.03, h * 0.63 - ty);
-  b.fillRect(vw / 2 + tw * 0.4 - h * 0.03, ty + h * 0.07, h * 0.03, h * 0.63 - ty);
 }
 
 function drawMagicCup(c, x, y, s, color, shake) {
@@ -317,19 +362,13 @@ function drawMagicCup(c, x, y, s, color, shake) {
   c.beginPath();
   if (c.ellipse) c.ellipse(0, s * 0.05, s * 0.95, s * 0.2, 0, 0, Math.PI * 2); else c.arc(0, 0, s * 0.6, 0, Math.PI * 2);
   c.fill();
-  var g = c.createLinearGradient(-s * 0.9, 0, s * 0.9, 0);
-  g.addColorStop(0, color);
-  g.addColorStop(0.45, '#ffffff');
-  g.addColorStop(0.55, color);
-  g.addColorStop(1, color);
-  c.fillStyle = color;
   c.beginPath();
   c.moveTo(-s * 0.9, 0);
   c.lineTo(-s * 0.65, -s * 1.7);
   c.lineTo(s * 0.65, -s * 1.7);
   c.lineTo(s * 0.9, 0);
   c.closePath();
-  c.fill();
+  artFillPath(c, color, -s * 1.7, s * 0.1, s * 0.8, { lineColor: artShade(color, -0.45) });
   c.fillStyle = 'rgba(255,255,255,0.35)';
   c.beginPath(); c.moveTo(-s * 0.55, -s * 0.1); c.lineTo(-s * 0.38, -s * 1.6); c.lineTo(-s * 0.2, -s * 1.6); c.lineTo(-s * 0.3, -s * 0.1); c.closePath(); c.fill();
   c.fillStyle = 'rgba(0,0,0,0.15)';
@@ -344,31 +383,42 @@ function drawMagicianBunny(c, x, y, s, t) {
   var hop = mag.hopT > 0 ? Math.abs(Math.sin(t * 10)) * s * 0.4 : 0;
   var wave = mag.wandT > 0 || mag.state === 'shuffle' ? Math.sin(t * 14) * 0.6 : Math.sin(t * 1.5) * 0.1;
   // Viitta
-  c.fillStyle = '#5a2a9a';
   c.beginPath();
   c.moveTo(x - s * 0.5, y - hop - s * 1.3);
   c.quadraticCurveTo(x - s * 1.3, y - hop - s * 0.3, x - s * 1.1, y - hop + s * 0.05);
   c.lineTo(x + s * 1.1, y - hop + s * 0.05);
   c.quadraticCurveTo(x + s * 1.3, y - hop - s * 0.3, x + s * 0.5, y - hop - s * 1.3);
-  c.closePath(); c.fill();
+  c.closePath();
+  artFillPath(c, '#5a2a9a', y - hop - s * 1.3, y - hop + s * 0.05, s, { lineColor: '#2e1250' });
   drawBunny(c, x, y, s, hop, t * 2, false);
   // Rusetti
-  c.fillStyle = '#ff5f7e';
-  c.beginPath(); c.moveTo(x, y - hop - s * 0.98); c.lineTo(x - s * 0.22, y - hop - s * 1.1); c.lineTo(x - s * 0.22, y - hop - s * 0.86); c.closePath(); c.fill();
-  c.beginPath(); c.moveTo(x, y - hop - s * 0.98); c.lineTo(x + s * 0.22, y - hop - s * 1.1); c.lineTo(x + s * 0.22, y - hop - s * 0.86); c.closePath(); c.fill();
-  // Silinteri korvien välissä
-  var hy = y - hop - s * 1.05 - s * 0.42;
-  c.fillStyle = '#1a1030';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(x, hy, s * 0.62, s * 0.14, 0, 0, Math.PI * 2); else c.arc(x, hy, s * 0.5, 0, Math.PI * 2);
-  c.fill();
-  c.fillRect(x - s * 0.4, hy - s * 0.75, s * 0.8, s * 0.75);
-  c.fillStyle = '#8a4dff';
-  c.fillRect(x - s * 0.4, hy - s * 0.25, s * 0.8, s * 0.14);
-  c.fillStyle = '#1a1030';
-  c.beginPath();
-  if (c.ellipse) c.ellipse(x, hy - s * 0.75, s * 0.4, s * 0.09, 0, 0, Math.PI * 2); else c.arc(x, hy - s * 0.75, s * 0.4, 0, Math.PI * 2);
-  c.fill();
+  c.beginPath(); c.moveTo(x, y - hop - s * 0.98); c.lineTo(x - s * 0.22, y - hop - s * 1.1); c.lineTo(x - s * 0.22, y - hop - s * 0.86); c.closePath();
+  artFillPath(c, '#ff5f7e', y - hop - s * 1.1, y - hop - s * 0.86, s * 0.2, { lineColor: '#b03050' });
+  c.beginPath(); c.moveTo(x, y - hop - s * 0.98); c.lineTo(x + s * 0.22, y - hop - s * 1.1); c.lineTo(x + s * 0.22, y - hop - s * 0.86); c.closePath();
+  artFillPath(c, '#ff5f7e', y - hop - s * 1.1, y - hop - s * 0.86, s * 0.2, { lineColor: '#b03050' });
+  // Silinteri korvien välissä: pomppaa tökkäyksestä, viides vetää sateenkaarihuivin
+  var hatUp = mag.hatT > 0 ? Math.sin(Math.min(1, (0.6 - mag.hatT) / 0.6) * Math.PI) * s * 0.5 : 0;
+  var hy = y - hop - s * 1.05 - s * 0.42 - hatUp;
+  if (mag.scarfT > 0) {
+    var k = 1 - mag.scarfT / 1.6, j, sx, sy, len = Math.min(1, k * 2.2) * s * 2.6;
+    c.lineCap = 'round';
+    c.lineWidth = Math.max(3, s * 0.16);
+    c.globalAlpha = Math.min(1, mag.scarfT * 2);
+    for (j = 0; j < maneColors.length; j++) {
+      c.strokeStyle = maneColors[j];
+      sx = x + Math.sin(k * 6 + j * 0.9) * s * 0.3;
+      sy = hy - s * 0.75 - len * (j + 1) / maneColors.length;
+      c.beginPath();
+      c.moveTo(x + Math.sin(k * 6 + j * 0.9 - 0.9) * s * 0.3, hy - s * 0.75 - len * j / maneColors.length);
+      c.lineTo(sx, sy);
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+  }
+  artBlob(c, x, hy, s * 0.62, s * 0.14, '#2a1a48', { lineColor: '#120a24' });
+  artRoundRect(c, x - s * 0.4, hy - s * 0.75, s * 0.8, s * 0.75, s * 0.06, '#2a1a48', { lineColor: '#120a24' });
+  artRoundRect(c, x - s * 0.4, hy - s * 0.25, s * 0.8, s * 0.14, s * 0.03, '#8a4dff', { line: false });
+  artBlob(c, x, hy - s * 0.75, s * 0.4, s * 0.09, '#2a1a48', { lineColor: '#120a24' });
   // Taikasauva kädessä
   c.save();
   c.translate(x + s * 0.7, y - hop - s * 0.6);
@@ -424,7 +474,8 @@ function drawMagician() {
     ctx.fillStyle = i < mag.round ? '#ffe27a' : 'rgba(255,255,255,0.3)';
     ctx.beginPath(); ctx.arc(rx, ry, viewH * 0.014, 0, Math.PI * 2); ctx.fill();
   }
-  // Taikuri ja prinsessa
+  // Koristeet, taikuri ja prinsessa
+  propsDraw(ctx);
   drawMagicianBunny(ctx, viewW * 0.82, viewH * 0.7, viewH * 0.075, globalT);
   drawPrincessFree(ctx, princess.x, princess.y, viewH / 520, 1, globalT * 8, mag.hopT > 0, globalT);
   // Finaali: kultatähti nousee hatusta
