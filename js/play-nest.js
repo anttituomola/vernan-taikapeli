@@ -37,13 +37,23 @@ var NEST_STATIONS = [
   }
 ];
 
+// Tökättävät koristeet asemittain (fx × viewW aseman sisällä), maan tasalla
+// pilarien välissä ja kaukana ritsasta: saniainen heilahtaa ja pudottaa
+// siemenen, kristalli kilahtaa ja hehkuu, munakivi keikkuu. Taustan arvotut
+// saniaiset ja munakivet väistävät näitä paikkoja.
+var NEST_PROPS = [
+  { st: 0, kind: 'egg', fx: 0.36 }, { st: 0, kind: 'fern', fx: 0.64 }, { st: 0, kind: 'crystal', fx: 0.93 },
+  { st: 1, kind: 'egg', fx: 0.33 }, { st: 1, kind: 'crystal', fx: 0.56 }, { st: 1, kind: 'fern', fx: 0.96 },
+  { st: 2, kind: 'crystal', fx: 0.34 }, { st: 2, kind: 'fern', fx: 0.60 }, { st: 2, kind: 'egg', fx: 0.95 }
+];
+
 var nest = {
   station: 0, walking: false, doneT: 0, finishT: 0, finished: false,
   dragons: [], rocks: [], stars: [], fruits: [], splats: [], hearts: [],
   aim: { active: false, sx: 0, sy: 0, dx: 0, dy: 0 },
   reload: 0, shots: 0, hintT: 0,
-  magpie: { state: 'wait', t: 2.5, x: 0, y: 0, carry: null, vx: 0, vy: 0 },
-  mother: { awake: false, t: 0 }
+  magpie: { state: 'wait', t: 2.5, x: 0, y: 0, carry: null, vx: 0, vy: 0, squawkT: 0 },
+  mother: { awake: false, t: 0, snortT: 0, heartT: 0 }
 };
 
 function nestS() { return viewH * 0.055; }
@@ -96,6 +106,121 @@ function nestBuild() {
   m = nestMotherPos();
   nest.rocks.push({ kind: 'rect', x0: m.x - viewW * 0.11, x1: m.x + viewW * 0.1, y0: m.y + viewH * 0.02, y1: m.y + viewH * 0.09 });
   nestPlaceDragons();
+  nestSetupProps();
+}
+
+// Tökättävät koristeet: maan koristeet asemittain, emo kallion laella (tyhjä
+// piirto, osuma-alue vartalolla) ja harakka (osuma-alue seuraa lintua lennossa)
+function nestSetupProps() {
+  var i, d, h = viewH, m = nestMotherPos(), kind;
+  propsReset();
+  for (i = 0; i < NEST_PROPS.length; i++) {
+    d = NEST_PROPS[i];
+    kind = d.kind;
+    propAdd({
+      x: nestStationX(d.st) + d.fx * viewW, y: groundTop + h * 0.012, r: h * 0.065, hy: h * 0.045,
+      kind: kind, seed: i, showT: 0,
+      s: h * (kind === 'fern' ? 0.065 : (kind === 'crystal' ? 0.04 : 0.028)),
+      color: kind === 'fern' ? '#a8e07a' : (kind === 'crystal' ? '#ffb080' : '#c9a0ff'),
+      note: kind === 'fern' ? 660 : (kind === 'crystal' ? 1319 + (i % 3) * 110 : 520),
+      amp: kind === 'fern' ? 0.22 : 0.1,
+      draw: nestDrawProp, poke: nestPokeProp, update: nestUpdateProp
+    });
+  }
+  propAdd({
+    x: m.x - h * 0.02, y: m.y + h * 0.03, r: h * 0.1, hy: h * 0.1, color: '#ff9ec6', note: 330, kind: 'mother',
+    draw: function () {}, poke: nestPokeMother
+  });
+  propAdd({
+    x: -1e6, y: 0, r: h * 0.06, hy: 0, color: '#f4f4ff', note: 1040, kind: 'magpie',
+    draw: function () {}, poke: nestPokeMagpie,
+    update: function (p) {
+      var mp = nest.magpie;
+      if (mp.state === 'wait') { p.x = -1e6; } else { p.x = mp.x; p.y = mp.y; }
+    }
+  });
+}
+// Onko kohta tökättävän koristeen vieressä (taustan arvotut koristeet väistävät)
+function nestPropNear(x) {
+  var i, d;
+  for (i = 0; i < NEST_PROPS.length; i++) {
+    d = NEST_PROPS[i];
+    if (Math.abs(nestStationX(d.st) + d.fx * viewW - x) < viewH * 0.09) return true;
+  }
+  return false;
+}
+function nestUpdateProp(p, dt) {
+  if (p.showT > 0) p.showT -= dt;
+}
+function nestDrawProp(c, p) {
+  var s = p.s, k;
+  if (p.kind === 'fern') {
+    drawNestFern(c, 0, 0, s, p.seed);
+    // Yllätys: viides tökkäys paljastaa pienen nukkuvan liskon saniaisen juurella
+    if (p.showT > 0) nestDrawLizard(c, s * 0.8, 0, s * 0.28, Math.min(1, p.showT * 2, (3.2 - p.showT) * 2));
+  } else if (p.kind === 'crystal') {
+    drawNestCrystal(c, 0, 0, s);
+    if (p.t >= 0) artGlow(c, 0, -s * 0.6, s * 2.4, '#ffd0a0', 0.5 * (1 - p.t / 1.4));
+    if (p.showT > 0) drawStar(c, 0, -s * 1.5, s * 0.35, globalT * 4, 0.8);
+  } else {
+    artBlob(c, 0, -s * 1.0, s * 0.75, s * 1.0, '#f4e6d0', { shadeTo: '#c9a98a', lineColor: '#9a7a5a', hi: 0.4 });
+    artBlob(c, -s * 0.2, -s * 1.35, s * 0.17, s * 0.14, '#c9a0ff', { line: false });
+    // Yllätys: kolmas tökkäys nostaa kivestä poikasen pään kurkistamaan
+    if (p.showT > 0) {
+      k = Math.min(1, p.showT * 3, (2.4 - p.showT) * 3);
+      drawDragonHead(c, 0, -s * 1.5 - k * s * 0.9, s * 0.55, '#7fe0c8');
+      artBlob(c, s * 0.45, -s * 2.0 - k * s * 1.1, s * 0.4, s * 0.18, '#f4e6d0', { rot: 0.5, lineColor: '#9a7a5a' });
+    }
+  }
+}
+// Pieni nukkuva lisko (k 0..1 = näkyvyys)
+function nestDrawLizard(c, x, y, s, k) {
+  c.save();
+  c.globalAlpha = Math.max(0, k);
+  artLimb(c, x + s * 1.2, y - s * 0.2, x + s * 2.4, y - s * 0.6, s * 0.3, '#8fd46a', '#3a7a3a');
+  artBlob(c, x + s * 0.6, y - s * 0.3, s * 0.9, s * 0.4, '#a8e07a', { lineColor: '#3a7a3a', hi: 0.3 });
+  artCircle(c, x - s * 0.2, y - s * 0.45, s * 0.45, '#a8e07a', { lineColor: '#3a7a3a', hi: 0.3 });
+  artEye(c, x - s * 0.3, y - s * 0.55, s * 0.12, 0, true);
+  c.restore();
+}
+function nestPokeProp(p) {
+  var i, q, s = p.s;
+  if (p.kind === 'fern') {
+    propDropBall(p.x + (Math.random() - 0.5) * s * 0.6, p.y - s * 0.9, Math.max(2, s * 0.09), '#8a6a3a', p.y + viewH * 0.004);
+    if (p.n % 5 === 0) { p.showT = 3.2; playNote(392, 0.1, 0.2, 'triangle', 0.2); playNote(330, 0.3, 0.3, 'triangle', 0.2); }
+  } else if (p.kind === 'crystal') {
+    if (p.n % 3 === 0) {
+      // Yllätys: lyhyt sävelmä ja kaikki kristallit tuikkivat
+      for (i = 0; i < props.length; i++) {
+        q = props[i];
+        if (q.kind === 'crystal') { q.showT = 1.6; spawnSparkles(q.x, q.y - q.s, 8, '#ffd0a0'); }
+      }
+      for (i = 0; i < 5; i++) playNote(1047 * Math.pow(1.19, i), 0.15 + i * 0.09, 0.25, 'sine', 0.2);
+    }
+  } else {
+    spawnSparkles(p.x, p.y - s * 1.4, 4, '#c9a0ff');
+    if (p.n % 3 === 0) { p.showT = 2.4; soundDragonHappy(p.seed); }
+  }
+}
+// Emo: tuhahtaa savurenkaan unissaankin; kolmas tökkäys puhaltaa sydänrenkaan
+function nestPokeMother(p) {
+  var mo = nest.mother, m = nestMotherPos(), nx = m.x - viewH * 0.12, ny = m.y - viewH * 0.1;
+  mo.snortT = 0.7;
+  if (p.n % 3 === 0) {
+    mo.heartT = 1.6;
+    playNote(523, 0, 0.2, 'triangle', 0.3);
+    playNote(659, 0.15, 0.3, 'triangle', 0.3);
+  } else {
+    artPop(nx, ny, viewH * 0.03, '#e8e0f0', 'ring');
+    spawnDust(nx, ny, 4, -1);
+    playNote(140, 0, 0.2, 'triangle', 0.3);
+  }
+}
+// Harakka: räkättää ja pudottaa pari höyhentä; lento jatkuu entisellään
+function nestPokeMagpie(p) {
+  nest.magpie.squawkT = 0.5;
+  spawnSparkles(p.x, p.y, 6, '#f4f4ff');
+  soundMagpie();
 }
 
 // Pesien paikat maailmassa (keinuva pesä liikkuu joka ruudulla)
@@ -132,8 +257,11 @@ function initNest() {
   nest.magpie.state = 'wait';
   nest.magpie.t = 2.5;
   nest.magpie.carry = null;
+  nest.magpie.squawkT = 0;
   nest.mother.awake = false;
   nest.mother.t = 0;
+  nest.mother.snortT = 0;
+  nest.mother.heartT = 0;
   princess.x = nestPrincessX(0);
   princess.y = groundTop + viewH * 0.03;
   princess.facing = 1;
@@ -259,6 +387,8 @@ function soundDragonHappy(n) {
 // ---------- Syöte ----------
 function handleNestTap(px, py) {
   if (!running || celebrating || puzzleBusy() || nest.walking) return;
+  // Koristeet ovat maan tasalla ja kallion laella kaukana ritsasta: tökkäys ei estä tähtäystä
+  propsTap(px + camX, py);
   nest.aim.active = true;
   nest.aim.sx = px;
   nest.aim.sy = py;
@@ -287,6 +417,10 @@ function updateNest(dt) {
   updateConfetti(dt);
   busy = puzzleBusy();
   nestPlaceDragons();
+  propsUpdate(dt);
+  if (nest.mother.snortT > 0) nest.mother.snortT -= dt;
+  if (nest.mother.heartT > 0) nest.mother.heartT -= dt;
+  if (nest.magpie.squawkT > 0) nest.magpie.squawkT -= dt;
   if (nest.reload > 0) nest.reload -= dt;
 
   // Tähtäys: sormi pohjassa vetää, nosto laukaisee
@@ -616,14 +750,16 @@ function renderNestNear(b, w, h) {
   }
   m = nestMotherPos();
   drawNestLedge(b, m.x - viewW * 0.11, m.x + viewW * 0.1, m.y + h * 0.02, h * 0.07);
-  // Saniaiset, kristallit ja munakivet
+  // Saniaiset, kristallit ja munakivet (tökättävien koristeiden kohdat jätetään tyhjiksi)
   for (i = 0; i < 26; i++) {
     x = (i * 211.3 + 40) % w;
+    if (nestPropNear(x)) continue;
     if (i % 3 === 0) drawNestCrystal(b, x, groundTop + h * 0.015, h * (0.03 + (i % 2) * 0.012));
     else drawNestFern(b, x, groundTop + h * 0.01, h * (0.05 + (i % 4) * 0.012), i);
   }
   for (i = 0; i < 8; i++) {
     x = (i * 631.7 + 300) % w;
+    if (nestPropNear(x)) continue;
     artBlob(b, x, groundTop - h * 0.01, h * 0.022, h * 0.03, '#f4e6d0', { shadeTo: '#c9a98a', lineColor: '#9a7a5a', hi: 0.4 });
     artBlob(b, x - h * 0.006, groundTop - h * 0.02, h * 0.005, h * 0.004, '#c9a0ff', { line: false });
   }
@@ -825,6 +961,8 @@ function drawNest() {
   var i, j, d, s = nestS(), f, pouch, v, pv, fr, st, sp, k, m, mp, a, hs;
   if (!beginPlayWorld()) return;
   var cx = camX;
+  // Tökättävät koristeet maan tasalla (ja niistä putoavat siemenet)
+  propsDraw(ctx);
 
   // Keinuvan pesän köynnös
   for (i = 0; i < nest.dragons.length; i++) {
@@ -867,13 +1005,20 @@ function drawNest() {
   // Emo kallion laella
   m = nestMotherPos();
   if (m.x - cx < viewW * 1.4) {
-    var mo = nest.mother, ms = s * 1.9, mt = mo.t;
+    var mo = nest.mother, ms = s * 1.9, mt = mo.t, snort = mo.snortT > 0 ? Math.sin(mo.snortT * 18) * 0.05 : 0;
     drawBabyDragon(ctx, m.x - cx, m.y + s * 0.5, ms, '#e08aa8', {
-      mouth: mo.awake ? 0.35 + Math.sin(mt * 4) * 0.15 : 0,
+      mouth: mo.awake ? 0.35 + Math.sin(mt * 4) * 0.15 : (mo.snortT > 0 ? 0.3 : 0),
       flap: mo.awake ? Math.sin(mt * 6) * 0.6 : -0.6,
       look: -0.3, blink: mo.awake ? (mt % 3.5) < 0.12 : false, sleep: !mo.awake,
-      squash: mo.awake ? Math.sin(mt * 8) * 0.06 * Math.max(0, 1.5 - mt) : Math.sin(globalT * 1.2) * 0.02
+      squash: (mo.awake ? Math.sin(mt * 8) * 0.06 * Math.max(0, 1.5 - mt) : Math.sin(globalT * 1.2) * 0.02) + snort
     });
+    // Yllätys: sydämenmuotoinen savurengas leijuu kuonosta vasemmalle
+    if (mo.heartT > 0) {
+      var hk = 1 - mo.heartT / 1.6;
+      ctx.globalAlpha = Math.min(1, mo.heartT * 2) * 0.85;
+      drawHeartShape(ctx, m.x - cx - ms * 1.2 - hk * ms * 1.8, m.y - ms * 0.9 + hk * ms * 0.9 + Math.sin(hk * 9) * ms * 0.1, ms * (0.15 + hk * 0.35), false);
+      ctx.globalAlpha = 1;
+    }
     if (!mo.awake) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.font = 'bold ' + Math.round(ms * 0.5) + 'px ' + UI_FONT;
@@ -967,7 +1112,7 @@ function drawNest() {
 
   // Harakka
   mp = nest.magpie;
-  if (mp.state !== 'wait') drawMagpie(ctx, mp.x - cx, mp.y, s * 0.55, Math.sin(globalT * 14), mp.state === 'steal' ? -1 : 1, mp.state === 'steal');
+  if (mp.state !== 'wait') drawMagpie(ctx, mp.x - cx, mp.y, s * 0.55, Math.sin(globalT * (mp.squawkT > 0 ? 40 : 14)), mp.state === 'steal' ? -1 : 1, mp.state === 'steal');
 
   // Läiskeet ja sydämet
   for (i = 0; i < nest.splats.length; i++) {
