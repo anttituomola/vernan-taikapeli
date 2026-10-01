@@ -55,7 +55,7 @@ var dune = {
   pts: [], secs: [], gems: [], obs: [], trail: [],
   p: { x: 0, y: 0, vy: 0, ground: true, ang: 0, cut: false, slowT: 0, buf: 0 },
   cam: 0, storm: 0, sec: 0, arrive: 0, state: 'rest', t: 0, jumped: false,
-  gemGot: 0, taskDelay: -1, won: false, restT: 0
+  gemGot: 0, taskDelay: -1, won: false, restT: 0, snortT: 0, palmPokes: 0
 };
 
 // ---------- Maasto ----------
@@ -272,8 +272,126 @@ function initDune() {
   dune.taskDelay = -1;
   dune.won = false;
   dune.trail = [];
+  dune.snortT = 0;
+  dune.palmPokes = 0;
   duneRestAt(viewW * 0.3);
+  duneSetupProps();
   renderBackground();
+}
+
+// Tökättävät koristeet keitailla (maailmakoordinaatit, kamera on dune.cam):
+// palmut pudottavat taatelin (joka kolmas tökkäys samaan palmuun tai joka viides
+// palmutökkäys pudottaa kookoksen, joka halkeaa ja kipinöi), pallokaktus
+// pudottaa kukan (joka kolmas tökkäys puhkeaa sateenkaarikukkaan) ja viimeisen
+// keitaan kameli tuhahtaa (joka kolmas tökkäys sylkäisee taatelin).
+// Napautus hyppää tai lähtee liikkeelle silti: tökkäys ei muuta pelivastetta.
+function duneSetupProps() {
+  var W = viewW, h = viewH, i, sec, y = h * DUNE_PLATEAU;
+  propsReset();
+  for (i = 0; i < dune.secs.length; i++) {
+    sec = dune.secs[i];
+    duneAddPalm(sec.oasis + W * 0.3, h * 0.24);
+    duneAddPalm(sec.oasis + W * 0.55, h * 0.3);
+    duneAddPalm(sec.oasis + W * 0.95, h * 0.22);
+    duneAddBarrel(sec.oasis + W * 1.03);
+    if (sec.last) {
+      duneAddPalm(sec.oasis + W * 1.1, h * 0.28);
+      propAdd({
+        x: sec.oasis + W * 0.86, y: y + h * 0.01, r: h * 0.1, hy: h * 0.12, color: '#e8b070', note: 196,
+        draw: function () {},
+        poke: function (p) {
+          dune.snortT = 0.7;
+          playNote(150, 0, 0.15, 'sawtooth', 0.12);
+          playNote(110, 0.1, 0.25, 'sawtooth', 0.1);
+          if (p.n % 3 === 0) propDropBall(p.x + h * 0.17, p.y - h * 0.2, h * 0.011, '#8a4a20', p.y - h * 0.02, W * 0.18);
+        }
+      });
+    }
+  }
+}
+function duneAddPalm(x, s) {
+  var h = viewH, W = viewW;
+  propAdd({
+    x: x, y: h * DUNE_PLATEAU + h * 0.01, r: s * 0.6, hy: s * 0.85, color: '#4fb050', note: 440, amp: 0.08,
+    draw: function (c) { drawPalm(c, 0, 0, s); },
+    poke: function (p) {
+      dune.palmPokes++;
+      if (p.n % 3 === 0 || dune.palmPokes % 5 === 0) duneDropCoconut(p.x + s * 0.1, p.y - s * 0.9, p.y - h * 0.02);
+      else propDropBall(p.x + s * 0.1 + (Math.random() - 0.5) * s * 0.3, p.y - s * 0.9, h * 0.011, '#8a4a20', p.y - h * 0.02, (Math.random() - 0.5) * W * 0.1);
+    }
+  });
+}
+// Kookos putoaa, pomppaa kerran ja halkeaa kahdeksi kuoreksi kipinöiden
+function duneDropCoconut(x, y, ground) {
+  var h = viewH;
+  propDrop({
+    x: x, y: y, vx: (Math.random() - 0.5) * viewW * 0.05, vy: 0, ground: ground, life: 2.4,
+    draw: function (c, d) {
+      if (d.bounced) {
+        artBlob(c, -h * 0.013, 0, h * 0.012, h * 0.009, '#fff6e0', { lineColor: '#6a4020' });
+        artBlob(c, h * 0.013, 0, h * 0.012, h * 0.009, '#fff6e0', { lineColor: '#6a4020' });
+      } else {
+        artCircle(c, 0, 0, h * 0.02, '#6a4020', { lineColor: '#3a2010', hi: 0.3 });
+      }
+    },
+    onLand: function (d) {
+      d.vy = 0; d.vx = 0; d.vr = 0; d.rot = 0;
+      spawnSparkles(d.x, d.y, 14, '#ffffff');
+      artPop(d.x, d.y, h * 0.06, '#fff6e0', 'burst');
+      playNote(220, 0, 0.08, 'square', 0.15);
+      playNote(1047, 0.08, 0.15, 'sine', 0.25);
+      playNote(1319, 0.18, 0.2, 'sine', 0.25);
+    }
+  });
+  playNote(330, 0, 0.1, 'triangle', 0.2);
+}
+function duneAddBarrel(x) {
+  var h = viewH;
+  propAdd({
+    x: x, y: h * DUNE_PLATEAU, r: h * 0.06, hy: h * 0.04, color: '#ff8ad8', note: 587, bloomT: 0,
+    update: function (p, dt) { if (p.bloomT > 0) p.bloomT -= dt; },
+    draw: function (c, p) {
+      var s = h * 0.045, i, k;
+      artBlob(c, 0, -s * 0.8, s, s * 0.85, '#5aa84a', { shadeTo: '#3a7a30', lineColor: '#2f6a2a', hi: 0.2 });
+      c.strokeStyle = 'rgba(40,90,30,0.6)';
+      c.lineWidth = Math.max(1, s * 0.05);
+      for (i = -1; i <= 1; i++) { c.beginPath(); c.moveTo(i * s * 0.45, -s * 0.05); c.quadraticCurveTo(i * s * 0.55, -s * 0.9, i * s * 0.3, -s * 1.6); c.stroke(); }
+      if (p.bloomT > 0) {
+        k = Math.min(1, (3 - p.bloomT) * 3);
+        for (i = 0; i < 6; i++) duneDrawFlower(c, Math.cos(i * 1.05 - 0.5) * s * 0.95 * k, -s * 0.8 - Math.sin(i * 1.05 - 0.5) * s * 0.75 * k, s * 0.2 * k, maneColors[i]);
+      }
+      duneDrawFlower(c, 0, -s * 1.7, s * 0.25, '#ff8ad8');
+    },
+    poke: function (p) {
+      var s = h * 0.045, i;
+      propDrop({
+        x: p.x + (Math.random() - 0.5) * s, y: p.y - s * 1.7, vx: (Math.random() - 0.5) * viewW * 0.08, vy: -h * 0.15, ground: p.y - h * 0.01,
+        draw: function (c) { duneDrawFlower(c, 0, 0, s * 0.22, '#ff8ad8'); }
+      });
+      if (p.n % 3 === 0) {
+        p.bloomT = 3;
+        for (i = 0; i < 5; i++) playNote(523 * Math.pow(1.19, i), i * 0.08, 0.2, 'triangle', 0.22);
+      }
+    }
+  });
+}
+function duneDrawFlower(c, x, y, r, color) {
+  var i, a;
+  c.fillStyle = color;
+  c.beginPath();
+  for (i = 0; i < 5; i++) { a = i * Math.PI * 2 / 5; c.moveTo(x, y); c.arc(x + Math.cos(a) * r * 0.6, y + Math.sin(a) * r * 0.6, r * 0.5, 0, Math.PI * 2); }
+  c.fill();
+  artCircle(c, x, y, r * 0.3, '#fff6a0', { line: false });
+}
+// Koristeet piirretään maailmakoordinaateissa: käännetty kamera perutaan ja
+// propsDraw siirtää itse camX:n verran, jotta ruudun ulkopuoliset karsiutuvat oikein
+function duneDrawProps(c) {
+  c.save();
+  c.translate(dune.cam, 0);
+  camX = dune.cam;
+  propsDraw(c);
+  camX = 0;
+  c.restore();
 }
 function duneRestAt(x) {
   var p = dune.p;
@@ -300,9 +418,12 @@ function resizeDune() {
   duneBuild();
   dune.sec = sec;
   duneRestAt(sec === 0 ? viewW * 0.3 : dune.secs[sec - 1].rest);
+  duneSetupProps();
 }
-function handleDuneTap() {
+function handleDuneTap(px, py) {
   if (puzzleBusy()) return;
+  // Koristeet (palmut, pallokaktus, kameli) maailmakoordinaateissa; napautus jatkuu alla normaalisti
+  if (px !== undefined) propsTap(px + dune.cam, py);
   // Keitaalta liikkeelle napautuksella, ajossa napautus hyppää
   if (dune.state === 'rest') {
     if (dune.taskDelay <= 0 && dune.restT > 0.4) duneGo();
@@ -394,6 +515,8 @@ function updateDune(dt) {
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
+  propsUpdate(dt);
+  if (dune.snortT > 0) dune.snortT -= dt;
   busy = puzzleBusy();
   if (dune.taskDelay > 0 && !busy) {
     dune.taskDelay -= dt;
@@ -534,13 +657,7 @@ function drawDuneGround(c) {
 function drawDuneOasis(c, sec, final) {
   var h = viewH, y = viewH * DUNE_PLATEAU, x = sec.oasis;
   if (x > dune.cam + viewW * 1.5 || sec.end < dune.cam - viewW * 0.5) return;
-  // Palmut (lampi piirretään maan päälle: duneDrawPond)
-  drawPalm(c, x + viewW * 0.3, y + h * 0.01, h * 0.24);
-  drawPalm(c, x + viewW * 0.55, y + h * 0.01, h * 0.3);
-  drawPalm(c, x + viewW * 0.95, y + h * 0.01, h * 0.22);
-  if (final) {
-    drawPalm(c, x + viewW * 1.1, y + h * 0.01, h * 0.28);
-  }
+  // Palmut ovat tökättäviä koristeita (duneSetupProps); lampi piirretään maan päälle (duneDrawPond)
   // Lippu kertoo keitaan: sininen viiri
   c.strokeStyle = '#8a5a30';
   c.lineWidth = Math.max(2, h * 0.006);
@@ -558,7 +675,9 @@ function duneDrawPond(c, sec, final) {
 }
 
 function duneDrawCamel(c, x, y, s) {
-  var bob = Math.sin(globalT * 2) * s * 3;
+  // Tuhahdus (tökkäys): pää tärähtää ja sieraimista pöllähtää
+  var sn = dune.snortT > 0 ? dune.snortT : 0, shake = sn > 0 ? Math.sin(sn * 40) * s * 3 : 0;
+  var bob = Math.sin(globalT * 2) * s * 3 + shake;
   artShadow(c, x, y + s * 2, s * 60, s * 10);
   c.lineCap = 'round';
   artLimb(c, x - s * 30, y - s * 30, x - s * 32, y, s * 9, '#d9a060', '#8a5a30');
@@ -567,7 +686,11 @@ function duneDrawCamel(c, x, y, s) {
   artBlob(c, x - s * 5, y - s * 62, s * 20, s * 16, '#e8b070', { lineColor: '#8a5a30' });
   artLimb(c, x + s * 38, y - s * 48, x + s * 52, y - s * 78 + bob, s * 11, '#e8b070', '#8a5a30');
   artBlob(c, x + s * 60, y - s * 82 + bob, s * 15, s * 9, '#e8b070', { lineColor: '#8a5a30' });
-  artEye(c, x + s * 62, y - s * 86 + bob, s * 3.5, 1, false);
+  artEye(c, x + s * 62, y - s * 86 + bob, s * 3.5, 1, sn > 0.3);
+  if (sn > 0) {
+    c.fillStyle = 'rgba(255,240,200,' + Math.min(0.8, sn) + ')';
+    c.beginPath(); c.arc(x + s * 78 + (0.7 - sn) * s * 20, y - s * 80 + bob, s * (3 + (0.7 - sn) * 6), 0, Math.PI * 2); c.fill();
+  }
 }
 
 function duneDrawCactus(c, x, y, s, hit) {
@@ -694,6 +817,7 @@ function drawDune() {
   c.save();
   c.translate(-dune.cam, 0);
   for (i = 0; i < dune.secs.length; i++) drawDuneOasis(c, dune.secs[i], dune.secs[i].last);
+  duneDrawProps(c);
   drawDuneGround(c);
   for (i = 0; i < dune.secs.length; i++) duneDrawPond(c, dune.secs[i], dune.secs[i].last);
   duneDrawAllObs(c, dune.obs, true);
