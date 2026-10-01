@@ -77,9 +77,77 @@ function initMoth() {
   mth.baseY = viewH * 0.2;
   mth.y = mth.baseY;
   mothStand();
+  mothSetupProps();
   renderBackground();
   playNote(196, 0, 0.5, 'triangle', 0.25);
   playNote(233, 0.3, 0.6, 'triangle', 0.22);
+}
+
+// Tökättävät koristeet ruudun laidoilla, kaukana pelisienistä: saniainen
+// vasemmalla (kastepisarat), hohtosieni oikealla (hehku ja itiöt) ja nukkuva
+// etana vasemman jättisienen hatulla (herää; joka kolmas tökkäys saa kuoren
+// hohtamaan sateenkaaren väreissä).
+function mothSetupProps() {
+  var W = viewW, h = viewH, gy = groundTop + h * 0.05;
+  propsReset();
+  propAdd({
+    x: W * 0.06, y: gy, r: h * 0.06, hy: h * 0.05, color: '#8ff0b0', note: 520, amp: 0.2,
+    draw: function (c) {
+      var s = h * 0.035, k;
+      for (k = -1; k <= 1; k++) artBlob(c, k * s * 0.9, -s * 1.1, s * 0.45, s * 1.3, k ? '#3a8a6a' : '#4aa07a', { rot: k * 0.5, lineColor: '#1e5a44' });
+    },
+    poke: function (p) {
+      propDropBall(p.x - h * 0.02, p.y - h * 0.08, h * 0.007, '#bff8ff', p.y, -h * 0.03);
+      propDropBall(p.x + h * 0.02, p.y - h * 0.1, h * 0.007, '#bff8ff', p.y, h * 0.03);
+    }
+  });
+  propAdd({
+    x: W * 0.94, y: gy, r: h * 0.06, hy: h * 0.05, color: '#b98aff', note: 740,
+    draw: function (c, p) {
+      var s = h * 0.03, k = p.t >= 0 ? Math.max(0, 1 - p.t / 1.4) : 0;
+      artRoundRect(c, -s * 0.3, -s * 1.6, s * 0.6, s * 1.6, s * 0.2, '#f0e8ff', { lineColor: '#8a7ab8' });
+      artRoundRect(c, -s * 1.2, -s * 1.0, s * 0.45, s * 1.0, s * 0.15, '#f0e8ff', { lineColor: '#8a7ab8' });
+      artGlow(c, 0, -s * 1.7, s * 2.4 * (1 + k), '#b98aff', 0.35 + k * 0.45);
+      c.beginPath(); c.arc(0, -s * 1.6, s * 1.1, Math.PI, 0); c.closePath();
+      artFillPath(c, '#b98aff', -s * 2.7, -s * 1.6, s, { lineColor: '#5a3ab8' });
+      c.beginPath(); c.arc(-s * 1.0, -s * 1.0, s * 0.7, Math.PI, 0); c.closePath();
+      artFillPath(c, '#5fd4c8', -s * 1.7, -s * 1.0, s * 0.7, { lineColor: '#2a8a8a' });
+    },
+    poke: function (p) {
+      var k;
+      for (k = 0; k < 3; k++) propDropBall(p.x + (k - 1) * h * 0.015, p.y - h * 0.08, h * 0.006, '#d8c8ff', p.y, (k - 1) * h * 0.08);
+    }
+  });
+  propAdd({
+    x: W * 0.07, y: h * 0.255, r: h * 0.05, hy: h * 0.02, color: '#c9a0ff', note: 880, amp: 0.1, awakeT: 0, rainbowT: 0,
+    update: function (p, dt) { if (p.awakeT > 0) p.awakeT -= dt; if (p.rainbowT > 0) p.rainbowT -= dt; },
+    draw: function (c, p) { mothDrawSnail(c, 0, 0, h * 0.028, p.awakeT > 0, p.rainbowT > 0); },
+    poke: function (p) {
+      var i;
+      p.awakeT = 2.5;
+      if (p.n % 3 === 0) {
+        p.rainbowT = 3;
+        for (i = 0; i < 6; i++) playNote(523 * Math.pow(1.19, i), 0.1 + i * 0.09, 0.2, 'triangle', 0.22);
+      }
+    }
+  });
+}
+// Etana: origo jalkojen kohdalla, pää oikealle; nukkuessa silmät ovat alhaalla kiinni
+function mothDrawSnail(c, x, y, s, awake, rainbow) {
+  var i, n = maneColors.length, ey = awake ? 1.0 : 0.6;
+  artBlob(c, x + s * 0.2, y - s * 0.22, s * 1.1, s * 0.25, '#b8e08a', { lineColor: '#5a7a3a' });
+  if (rainbow) {
+    for (i = n - 1; i >= 0; i--) artCircle(c, x - s * 0.2, y - s * 0.7, s * 0.65 * (i + 1) / n, maneColors[(i + Math.floor(globalT * 6)) % n], i === n - 1 ? { lineColor: '#6a4a9a' } : { line: false });
+  } else {
+    artCircle(c, x - s * 0.2, y - s * 0.7, s * 0.65, '#c9a0ff', { lineColor: '#6a4a9a', hi: 0.3 });
+    c.strokeStyle = '#6a4a9a';
+    c.lineWidth = Math.max(1, s * 0.08);
+    c.beginPath(); c.arc(x - s * 0.2, y - s * 0.7, s * 0.35, 0, Math.PI * 1.5); c.stroke();
+  }
+  artLimb(c, x + s * 0.9, y - s * 0.4, x + s * 1.0, y - s * ey, s * 0.1, '#b8e08a', '#5a7a3a');
+  artLimb(c, x + s * 1.15, y - s * 0.4, x + s * 1.3, y - s * ey, s * 0.1, '#b8e08a', '#5a7a3a');
+  artEye(c, x + s * 1.0, y - s * (ey + 0.05), s * 0.09, 0.5, !awake);
+  artEye(c, x + s * 1.3, y - s * (ey + 0.05), s * 0.09, 0.5, !awake);
 }
 // Prinsessa seisoo keskisienellä (parven aikana)
 function mothStand() {
@@ -102,13 +170,18 @@ function respawnMoth() {
 function resizeMoth() {
   camX = 0;
   if (!mth.bouncing) mothStand();
+  mothSetupProps();
 }
 
 function handleMothTap(px, py) {
+  var i;
   mth.lastX = px;
   mth.lastY = py;
   mth.lastT = globalT;
   mth.trail = [];
+  // Koristeen tökkäys vain, kun kosketuksen lähellä ei ole koita; sipaisu ja ohjaus jatkuvat normaalisti
+  for (i = 0; i < mth.kois.length; i++) if (Math.hypot(px - mth.kois[i].x, py - mth.kois[i].y) < viewH * 0.12) return;
+  propsTap(px, py);
 }
 
 function mothStartSwarm() {
@@ -139,6 +212,7 @@ function updateMoth(dt) {
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
+  propsUpdate(dt);
   busy = puzzleBusy();
   if (mth.hurtT > 0) mth.hurtT -= dt;
   if (mth.netBroken > 0) mth.netBroken -= dt;
@@ -475,6 +549,7 @@ function drawMothBoss(c) {
 function drawMoth() {
   var c = ctx, h = viewH, i, a, p, sh = mothShrooms(), ps = viewH / 620;
   if (!beginPlayWorld()) return;
+  propsDraw(c);
   // Palanneet valot tulikärpäsinä
   for (i = 0; i < mth.lights.length; i++) {
     var L = mth.lights[i], k = easeOutCubic(Math.min(1, L.t / 1.4));
