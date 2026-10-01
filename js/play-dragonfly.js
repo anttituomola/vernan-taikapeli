@@ -33,12 +33,16 @@ var FLY_PILLARS = [
 var FLY_CLOUDS = [0.30, 0.64, 0.88];
 var FLY_BERRIES = [{ fx: 0.21, fy: 0.40 }, { fx: 0.43, fy: 0.30 }, { fx: 0.60, fy: 0.42 }, { fx: 0.78, fy: 0.58 }, { fx: 0.93, fy: 0.30 }];
 var FLY_DRAGON = '#7fe0c8';
+// Tökättävät koristeet: nukkuvat lepakot katossa tippukivien ja porttien
+// välissä (fx × worldW). Niitä kohti on turvallista lentää (lento pysähtyy
+// yläreunaan), toisin kuin laavan kiviä tai pilareita.
+var FLY_BATS = [0.08, 0.40, 0.62, 0.90];
 
 var fly = {
   torches: [], gates: [], pillars: [], clouds: [], berries: [],
   flames: FLY_FLAMES, flameT: 0, bursts: [], steam: [],
   brazier: { fx: 0.955, x: 0, y: 0, lit: false, t: 0 },
-  bumpT: 0, lavaT: 0, finishT: 0, flap: 0
+  bumpT: 0, lavaT: 0, finishT: 0, flap: 0, holdG: -1
 };
 
 function flyS() { return viewH * 0.07; }
@@ -67,6 +71,64 @@ function flyBuild() {
   for (i = 0; i < FLY_BERRIES.length; i++) fly.berries.push({ x: FLY_BERRIES[i].fx * worldW, y: FLY_BERRIES[i].fy * viewH, collected: false, phase: i * 1.3 });
   fly.brazier.x = fly.brazier.fx * worldW;
   fly.brazier.y = viewH * 0.50;
+  flySetupProps();
+}
+
+// Lepakot: origo katossa (riippuvat pää alaspäin), osuma-alue vartalolla.
+// Tökkäys avaa silmät ja räpyttää siipiä; kolmas tökkäys irrottaa otteen
+// voltin ajaksi ja herättää muutkin lepakot räpyttelemään.
+function flySetupProps() {
+  var i, h = viewH;
+  propsReset();
+  for (i = 0; i < FLY_BATS.length; i++) {
+    propAdd({
+      x: FLY_BATS[i] * worldW, y: h * 0.045, r: h * 0.065, hy: -h * 0.055, amp: 0.1,
+      s: h * (0.028 + (i % 2) * 0.005), showT: 0, loopT: 0, color: '#c9a0ff', note: 1760 + i * 120,
+      draw: flyDrawBat, poke: flyPokeBat, update: flyUpdateBat
+    });
+  }
+}
+function flyUpdateBat(p, dt) {
+  if (p.showT > 0) p.showT -= dt;
+  if (p.loopT > 0) p.loopT -= dt;
+}
+function flyDrawBat(c, p) {
+  var s = p.s, awake = p.t >= 0 || p.showT > 0 || p.loopT > 0, dark = '#2a1a3a', body = '#5a3a7a', k;
+  var f = awake ? Math.sin(globalT * 24) : 0;
+  if (p.loopT > 0) {
+    // Voltti: pieni ympyrä katon alla, sitten takaisin roikkumaan
+    k = 1 - p.loopT / 1.2;
+    c.translate(Math.sin(k * Math.PI * 2) * s * 2.2, (1 - Math.cos(k * Math.PI * 2)) * s * 1.6);
+    c.rotate(k * Math.PI * 2);
+  }
+  // Jalat kattoon
+  artLimb(c, -s * 0.15, 0, -s * 0.1, s * 0.4, s * 0.1, '#4a2a5a', dark);
+  artLimb(c, s * 0.15, 0, s * 0.1, s * 0.4, s * 0.1, '#4a2a5a', dark);
+  // Siivet levällään hereillä, nukkuessa kääritty vartalon ympärille
+  if (awake) {
+    c.beginPath(); c.moveTo(-s * 0.3, s * 0.7); c.lineTo(-s * 1.5, s * 0.5 + f * s * 0.5); c.lineTo(-s * 1.0, s * 1.4); c.closePath();
+    artFillPath(c, '#6a4a8a', 0, s * 1.6, s, { lineColor: dark });
+    c.beginPath(); c.moveTo(s * 0.3, s * 0.7); c.lineTo(s * 1.5, s * 0.5 + f * s * 0.5); c.lineTo(s * 1.0, s * 1.4); c.closePath();
+    artFillPath(c, '#6a4a8a', 0, s * 1.6, s, { lineColor: dark });
+  }
+  artBlob(c, 0, s * 0.95, awake ? s * 0.5 : s * 0.62, s * 0.7, body, { lineColor: dark, hi: 0.2 });
+  if (!awake) artBlob(c, 0, s * 1.05, s * 0.4, s * 0.45, '#6a4a8a', { line: false });
+  // Pää alimpana, korvat alaspäin
+  artCircle(c, 0, s * 1.55, s * 0.42, body, { lineColor: dark, hi: 0.2 });
+  artLimb(c, -s * 0.25, s * 1.8, -s * 0.35, s * 2.2, s * 0.14, body, dark);
+  artLimb(c, s * 0.25, s * 1.8, s * 0.35, s * 2.2, s * 0.14, body, dark);
+  artEye(c, -s * 0.16, s * 1.55, s * 0.11, 0.2, !awake);
+  artEye(c, s * 0.16, s * 1.55, s * 0.11, 0.2, !awake);
+}
+function flyPokeBat(p) {
+  var i, q;
+  playNote(2400, 0, 0.05, 'square', 0.06);
+  playNote(2800, 0.07, 0.05, 'square', 0.05);
+  if (p.n % 3 === 0) {
+    p.loopT = 1.2;
+    for (i = 0; i < props.length; i++) { q = props[i]; if (q !== p) q.showT = 1.5; }
+    for (i = 0; i < 4; i++) playNote(1568 * Math.pow(1.19, i), 0.1 + i * 0.08, 0.12, 'triangle', 0.15);
+  }
 }
 
 function initDragonfly() {
@@ -83,6 +145,7 @@ function initDragonfly() {
   fly.brazier.t = 0;
   fly.bumpT = 0;
   fly.finishT = 0;
+  fly.holdG = -1;
   princess.x = viewW * 0.12;
   princess.y = viewH * 0.42;
   princess.vx = 0;
@@ -208,6 +271,13 @@ function updateDragonfly(dt) {
   busy = puzzleBusy();
   if (fly.bumpT > 0) fly.bumpT -= dt;
   fly.lavaT += dt;
+  // Kentällä ei ole omaa tap-koukkua (lento alkaa pidosta): tuore pito tökkää
+  // koristeita, ja lento sormea kohti jatkuu entisellään
+  if (holding && holdStartG !== fly.holdG) {
+    fly.holdG = holdStartG;
+    if (!busy && !celebrating) propsTap(holdWorldX, holdSY);
+  }
+  propsUpdate(dt);
 
   // Lento: sormea kohti; irti päästettynä lohikäärme liitää ja vajoaa hitaasti
   if (!celebrating && holding && !busy) {
@@ -625,6 +695,7 @@ function drawDragonfly() {
     if (x < 0) x += viewW + 40;
     artBlob(c, x, lavaY + viewH * 0.03 - k * viewH * 0.02, viewH * 0.012 * (1 - k * 0.5), viewH * 0.008, '#ffe27a', { line: false, alpha: 1 - k });
   }
+  propsDraw(c);
   for (i = 0; i < tasks.length; i++) drawTaskArch(c, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawSkyLantern(c, checkpoints[i]);
   for (i = 0; i < fly.torches.length; i++) drawFlyTorch(c, fly.torches[i]);
