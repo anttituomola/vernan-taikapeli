@@ -33,7 +33,7 @@ var SCALE_MAGPIE_WARN = 1.4;        // huuto ja varjo ennen syöksyä
 var scale = {
   round: 0, gems: [], left: [], drag: null, back: [],
   angle: 0, stableT: 0, doneT: 0, treasures: 0, taskDelay: 0, finishT: 0,
-  vaari: { nodT: 0, blinkT: 0 }, hintT: 0, over: false, gold: [], order: 0,
+  vaari: { nodT: 0, blinkT: 0, glintT: 0 }, hintT: 0, over: false, gold: [], order: 0,
   magpie: { state: 'off', t: 0, x: 0, y: 0, gem: null }
 };
 
@@ -92,10 +92,12 @@ function initScale() {
   scale.finishT = 0;
   scale.hintT = 0;
   scale.vaari.nodT = 0;
+  scale.vaari.glintT = 0;
   scaleLoadRound();
   princess.x = viewW * 0.16;
   princess.y = groundTop + viewH * 0.03;
   princess.facing = 1;
+  scaleSetupProps();
   renderBackground();
   playNote(523, 0, 0.2, 'triangle', 0.35);
   playNote(659, 0.12, 0.2, 'triangle', 0.35);
@@ -153,6 +155,60 @@ function resizeScale() {
   scalePlaceFloor();
   princess.x = viewW * 0.16;
   princess.y = groundTop + viewH * 0.03;
+  scaleSetupProps();
+}
+
+// Tökättävät koristeet: Vaari (tyhjä piirto, osuma-alue vartalolla; nyökkää
+// ja hymisee, kolmas tökkäys aivastuttaa: lasit välähtävät ja aarrekasasta
+// pomppaa kolikoita) sekä oikean laidan kaksi kultakasaa (kolikot kilisevät;
+// ison kasan viides tökkäys pompauttaa pienen kruunun). Kasat piirretään
+// joka ruudulla, joten ne on jätetty pois taustasta.
+function scaleSetupProps() {
+  var h = viewH, vw = viewW;
+  propsReset();
+  propAdd({
+    x: vw * 0.08, y: groundTop - h * 0.03, r: h * 0.11, hy: h * 0.1, color: '#ffe27a', note: 262,
+    draw: function () {}, poke: scalePokeVaari
+  });
+  propAdd({
+    x: vw * 0.94, y: groundTop + h * 0.02, r: h * 0.09, hy: h * 0.07, amp: 0.06, s: h * 0.13, big: true, color: '#ffe27a', note: 1568,
+    draw: scaleDrawGold, poke: scalePokeGold
+  });
+  propAdd({
+    x: vw * 0.86, y: groundTop + h * 0.1, r: h * 0.07, hy: h * 0.05, amp: 0.06, s: h * 0.09, big: false, color: '#ffe27a', note: 1760,
+    draw: scaleDrawGold, poke: scalePokeGold
+  });
+}
+function scaleDrawGold(c, p) {
+  drawGoldPile(c, 0, 0, p.s);
+}
+function scalePokeGold(p) {
+  var i, s = p.s;
+  for (i = 0; i < 2; i++) propDropBall(p.x + (Math.random() - 0.5) * s * 0.8, p.y - s * 0.7, s * 0.1, '#ffe27a', p.y + viewH * 0.01);
+  if (p.big && p.n % 5 === 0) {
+    // Yllätys: kasasta pomppaa pieni kruunu
+    propDrop({
+      x: p.x, y: p.y - s * 0.8, vx: -viewW * 0.05, vy: -viewH * 0.45, ground: p.y + viewH * 0.01, life: 3.0,
+      draw: function (c) { drawTreasure(c, 'crown', 0, 0, s * 0.22); }
+    });
+    playNote(1047, 0, 0.15, 'triangle', 0.3);
+    playNote(1319, 0.12, 0.15, 'triangle', 0.3);
+    playNote(1568, 0.24, 0.35, 'triangle', 0.35);
+  }
+}
+function scalePokeVaari(p) {
+  var s = viewH * 0.09, x = viewW * 0.08, y = groundTop - viewH * 0.03, i;
+  scale.vaari.nodT = Math.max(scale.vaari.nodT, 0.7);
+  playNote(196, 0, 0.18, 'triangle', 0.25);
+  playNote(165, 0.15, 0.25, 'triangle', 0.22);
+  if (p.n % 3 === 0) {
+    // Yllätys: aivastus — lasit välähtävät ja aarrekasasta pomppaa kolikoita
+    scale.vaari.glintT = 0.8;
+    spawnDust(x + s * 1.2, y - s * 1.5, 6, 1);
+    for (i = 0; i < 3; i++) propDropBall(viewW * 0.06 + (i - 1) * s * 0.3, groundTop - viewH * 0.08, s * 0.1, '#ffe27a', groundTop + viewH * 0.02, (i - 1) * viewW * 0.05);
+    playNote(880, 0.05, 0.08, 'square', 0.12);
+    playNote(330, 0.15, 0.3, 'sawtooth', 0.12);
+  }
 }
 
 // ---------- Syöte ----------
@@ -176,7 +232,10 @@ function handleScaleTap(px, py) {
     if (mp.state === 'dive' && Math.hypot(px - mp.x, py - mp.y) < viewH * 0.08) {
       mp.state = 'leave'; mp.t = 0; mp.gem = null;
       playNote(1400, 0, 0.08, 'square', 0.1);
+      return;
     }
+    // Ei kiveä eikä harakkaa: tökättävät koristeet (Vaari, kultakasat)
+    propsTap(px, py);
     return;
   }
   scale.drag = best;
@@ -217,6 +276,8 @@ function updateScale(dt) {
   scale.vaari.blinkT -= dt;
   if (scale.vaari.blinkT < -0.15) scale.vaari.blinkT = 2.5 + Math.random() * 3;
   if (scale.vaari.nodT > 0) scale.vaari.nodT -= dt;
+  if (scale.vaari.glintT > 0) scale.vaari.glintT -= dt;
+  propsUpdate(dt);
   if (scale.taskDelay > 0 && !busy) {
     scale.taskDelay -= dt;
     if (scale.taskDelay <= 0) {
@@ -399,10 +460,8 @@ function renderScaleNear(b, w, h) {
   b.fillRect(0, groundTop, w, h - groundTop);
   b.fillStyle = 'rgba(255,220,180,0.15)';
   b.fillRect(0, groundTop + h * 0.015, w, Math.max(0, groundBottom - groundTop - h * 0.02));
-  // Kultakasat sivuilla ja Vaarin aarrekasa vasemmalla
+  // Vaarin aarrekasa vasemmalla (oikean laidan kasat ovat tökättäviä koristeita)
   drawGoldPile(b, vw * 0.06, groundTop + h * 0.02, h * 0.16);
-  drawGoldPile(b, vw * 0.94, groundTop + h * 0.02, h * 0.13);
-  drawGoldPile(b, vw * 0.86, groundTop + h * 0.1, h * 0.09);
   // Vaa'an jalusta
   var p = scalePivot();
   artRoundRect(b, p.x - s * 0.7, p.y, s * 1.4, groundTop - p.y + h * 0.02, s * 0.4, '#d9a441', { shadeTo: '#8a5a10', lineColor: '#5a3a08', hi: 0.25 });
@@ -506,6 +565,7 @@ function drawVaari(c) {
   c.strokeStyle = '#7a5a10';
   c.lineWidth = Math.max(1.5, s * 0.05);
   c.beginPath(); c.arc(x + s * 0.8, y - s * 1.95, s * 0.28, 0, Math.PI * 2); c.arc(x + s * 0.32, y - s * 1.9, s * 0.28, 0, Math.PI * 2); c.stroke();
+  if (scale.vaari.glintT > 0) drawStar(c, x + s * 0.95, y - s * 2.12, s * 0.2, globalT * 6, 0.9);
   // Aarteet kasassa Vaarin edessä
   var i;
   for (i = 0; i < scale.treasures; i++) {
@@ -516,6 +576,7 @@ function drawVaari(c) {
 function drawScale() {
   var i, g, c = ctx, s = scaleS(), panL = scalePanPos(-1), panR = scalePanPos(1), pos;
   if (!beginPlayWorld()) return;
+  propsDraw(c);
   drawVaari(c);
   drawPrincessFree(c, princess.x, princess.y, viewH / 560, 1, 0, false, globalT);
   drawScaleBeam(c);
