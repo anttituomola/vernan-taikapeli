@@ -1200,6 +1200,12 @@ avautuu 3. tai 5. tökkäyksellä tai harvoin itsestään):
   lepakko tekee silmukan; Munapesän Minttu puhaltaa sydämiä; Aarrevaa'an vaari
   aivastaa ja kultakasasta pomppaa kruunu; Tulivuoren jätin laavakiven takaa
   kurkkaa lohikäärmeenpoikanen.
+- **Hohtometsä, Aurinkodyynit ja Kellopaja**: Sienipompun sienen takaa nousee
+  nukkuva tonttu; Tulikärpässiepon pöllön viereen ilmestyy pöllönpoikanen;
+  Varjoperhosen etanan kuori välkkyy sateenkaarena; Dyynilaskun palmusta putoaa
+  halkeava kookos, tynnyrikaktus kukkii sateenkaaren ja kameli sylkäisee taatelin;
+  Kamelikaravaanin teltasta kurkkaa pupu ja kissa haukottelee; Rataspajan
+  seinärattaan viides tökkäys avaa käkikellon oven.
 
 ## Tekniikka
 
