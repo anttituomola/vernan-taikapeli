@@ -1282,6 +1282,37 @@ var WORLDS = [
         respawn: function () { respawnDuo(); }
       }
     ]
+  },
+  {
+    // Kellopaja: mantereen viides paikka, tonttujen mekaaninen paja vuoren
+    // rinteellä. Verbi: rattaat. Usvahuoneet: Vesikouru ja vartija Kellokoneisto
+    // (finaleKind siirtyy vartijalle, kun se tehdään).
+    id: 14, name: 'Kellopaja', region: 'land', band: 'clock',
+    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'gear', deco: ['gear'] },
+    map: [
+      '#########',
+      '#B.....R#',
+      '#######.#',
+      '#?......#',
+      '#.#######',
+      '#......?#',
+      '#########'
+    ],
+    levels: [
+      {
+        kind: 'gear', room: 'R', name: 'Rataspaja', color: '#e8b84a', script: 'play-gear',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#6a4a3a', ambient: 'sparkle', fg: null,
+        init: function () { initGear(); },
+        update: function (dt) { updateGear(dt); },
+        draw: function () { drawGear(); },
+        tap: function (x, y) { handleGearTap(x, y); },
+        resize: function () { resizeGear(); },
+        renderBg: function (b, w, h) { renderGearBg(b, w, h); },
+        light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.4 },
+        respawn: function () { respawnGear(); }
+      }
+    ]
   }
 ];
 
