@@ -1165,6 +1165,42 @@ peliin. Työkalut:
 - **Metsä**: liikkuvat pilvet heilahtavat ja satavat kipinöitä; joka kolmas napautus
   loihtii pilven alle pienen sateenkaaren.
 
+Kentittäin (1.–2.10.2026; jokaisessa 2–4 tökättävää koristetta ja yllätys, joka
+avautuu 3. tai 5. tökkäyksellä tai harvoin itsestään):
+
+- **Linnasaari**: Puutarhan sieni saa kasvot; Jääpolun lumiukko aivastaa hattunsa
+  lentoon; Helmilammen lumpeenlehden alta kurkkaa nukkuva kala; Kuutamotaivaan
+  pilvitupsu sataa tähtiä; Kristalliluolan kideryhmä sytyttää kaikki kiteet
+  sateenkaariaaltona; Noidan suon kantosammakko saa kruunun; Sateenkaarisillan
+  tähtilyhty lähettää tähdenlennon; finaalissa kuun napautus sytyttää piilotähden.
+- **Karkkisaari**: palmusta tippuu kookos, tikkaripuut pyörähtävät, Karkkikellon
+  keksipuu, Arvoitusten tornin kynttelikkö ja kirjahyllyt.
+- **Kuutamosaari**: Merenpohjan simpukka avaa kultahelmen ja kaislikon viides tökkäys
+  tuo hohtavan valaan; Kuutamometsän latvasta kurkkaa pöllö; Pilvipolun pilvi sataa
+  värisateen; Tähtisumun kiteet piirtävät kruunutähdistön; Tähtisanan kuusi lähettää
+  tähdenlennon; Kuun vartijan kuunaama iskee silmää ja menhirit hohtavat.
+- **Taikakynän saari**: liidut piirtävät paperille hymiön; Sadesuojan pilvi sataa
+  konfettia; Pupusillan porkkanamaa antaa kultaporkkanan; Omenavarojen viides omena
+  on kultainen; Sotkumörkö kikattaa ja näyttää sydämen.
+- **Hoivasaari**: marjapensaan kultamarja, kahvilan kello, Uniajan lamppu,
+  Unikellon kuut, Taikakeittiön pata ja pullot.
+- **Vuorisaari**: kaivosvaunusta putoaa kultainen jalokivi ja nukkuva lepakko
+  herää; majakan lokki pudottaa sulan; kosken puista putoaa omena ja teltasta
+  kurkkaa pupu; Kotkalennon mökin ikkunaan ilmestyy pupu, vuorikauris määkii ja
+  kivikasasta kurkkaa murmeli; Tuulenhuipun lumiukko saa kruunun ja iglusta
+  kurkkaa pupu.
+- **Kirjainsaari**: numerokyltit näyttävät V-kirjaimen, polun kirjoista kurkkaa
+  kirjatoukka, Sanapajan kello sataa kirjaimia, puutarhan kirjapino.
+- **Tivolisaari**: sirkuksen rumpu ja valot, nuoran pylväät, kuumailmapallon
+  pallokimppu, Jäätelökojun kyltti kasvattaa lisäpallon ja kellosta kurkkaa
+  käkipupu, Ankkaonginnan sammakko hyppää ja kaislikosta nousee kultainen
+  sudenkorento, taikurin hatusta nousee sateenkaarihuivi ja juliste kääntyy.
+- **Lohikäärmelaakso**: Pesäkallion saniaisen alta löytyy lisko, kiteet soivat
+  yhdessä, emolohikäärme puhaltaa sydämen muotoisen savurenkaan; Tulilennon
+  lepakko tekee silmukan; Munapesän Minttu puhaltaa sydämiä; Aarrevaa'an vaari
+  aivastaa ja kultakasasta pomppaa kruunu; Tulivuoren jätin laavakiven takaa
+  kurkkaa lohikäärmeenpoikanen.
+
 ## Tekniikka
 
 Canvas 2D, ei riippuvuuksia. Tausta esirenderöidään kerroksiksi (isot maailmat
