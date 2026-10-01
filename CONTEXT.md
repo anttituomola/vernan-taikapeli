@@ -85,6 +85,19 @@ yhden; liekit palautuvat ajan kanssa ja tulimarja täyttää ne. Tulinappi on
 hyppynapin paikalla.
 _Vältä_: ammus, mana, energia
 
+**Rattaat**:
+Kellopajan verbi: ratas raahataan tappiin, ja se pyörii heti, jos se
+koskettaa pyörivää ratasta (vastakkaiseen suuntaan). Kolme toisiaan
+koskettavaa ratasta **jumittuu**. **Soittorasia** on ketjun kohde.
+_Vältä_: hammaspyörä (liian tekninen), vaihde
+
+**Yhteispeli**:
+Yhteispolun tapa pelata: lapsi ja aikuinen ohjelmoivat kumpikin oman pupunsa
+samalla tabletilla (vasen puoli pinkki, oikea sininen), ja ohjelmat ajetaan
+yhtä aikaa. **Laatta** pitää samanvärisen **portin** auki niin kauan kuin
+pupu seisoo sen päällä.
+_Vältä_: kaksinpeli (ei kilpailla), moninpeli
+
 **Purjehdus**:
 Lyhyt siirtymäkohtaus saaristosta Kaukamaalle ja takaisin: vene avomerellä,
 manner nousee usvasta. Napautus ohittaa.

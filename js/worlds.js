@@ -1210,6 +1210,8 @@ var WORLDS = [
       '#........L#',
       '#########.#',
       '#V........#',
+      '#.#########',
+      '#........Y#',
       '###########'
     ],
     levels: [
@@ -1264,6 +1266,64 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderMoleBg(b, w, h); },
         light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.3, tint: ['rgba(80,100,120,0.08)', 'rgba(255,220,160,0.05)'], vignette: 0.35 },
         respawn: function () { respawnMole(); }
+      },
+      {
+        // Bonushuone vartijan jälkeen: yhteispeli lapselle ja aikuiselle
+        kind: 'duo', room: 'Y', name: 'Yhteispolku', color: '#5fa8ff', script: 'play-duo',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#8fd0ff', ambient: 'sparkle', fg: null,
+        init: function () { initDuo(); },
+        update: function (dt) { updateDuo(dt); },
+        draw: function () { drawDuo(); },
+        tap: function (x, y) { handleDuoTap(x, y); },
+        resize: function () { resizeDuo(); },
+        renderBg: function (b, w, h) { renderDuoBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(120,200,255,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnDuo(); }
+      }
+    ]
+  },
+  {
+    // Kellopaja: mantereen viides paikka, tonttujen mekaaninen paja vuoren
+    // rinteellä. Verbi: rattaat. Usvahuoneet: Vesikouru ja vartija Kellokoneisto
+    // (finaleKind siirtyy vartijalle, kun se tehdään).
+    id: 14, name: 'Kellopaja', region: 'land', band: 'clock',
+    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'chute', deco: ['gear', 'chute'] },
+    map: [
+      '#########',
+      '#B.....R#',
+      '#######.#',
+      '#K......#',
+      '#.#######',
+      '#......?#',
+      '#########'
+    ],
+    levels: [
+      {
+        kind: 'gear', room: 'R', name: 'Rataspaja', color: '#e8b84a', script: 'play-gear',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#6a4a3a', ambient: 'sparkle', fg: null,
+        init: function () { initGear(); },
+        update: function (dt) { updateGear(dt); },
+        draw: function () { drawGear(); },
+        tap: function (x, y) { handleGearTap(x, y); },
+        resize: function () { resizeGear(); },
+        renderBg: function (b, w, h) { renderGearBg(b, w, h); },
+        light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.4 },
+        respawn: function () { respawnGear(); }
+      },
+      {
+        kind: 'chute', room: 'K', name: 'Vesikouru', color: '#4fb8f0', script: 'play-chute',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#8fd0ff', ambient: 'sparkle', fg: null,
+        init: function () { initChute(); },
+        update: function (dt) { updateChute(dt); },
+        draw: function () { drawChute(); },
+        tap: function (x, y) { handleChuteTap(x, y); },
+        resize: function () { resizeChute(); },
+        renderBg: function (b, w, h) { renderChuteBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(120,200,255,0.05)'], vignette: 0.25 },
+        respawn: function () { respawnChute(); }
       }
     ]
   }

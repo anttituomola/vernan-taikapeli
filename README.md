@@ -61,7 +61,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-giant.js` — Lohikäärmelaakson vartija Tulivuoren jätti (ritsa + tulihengitys, kolme kovenevaa kierrosta)
 - `js/play-bounce.js`, `js/play-catch.js`, `js/play-moth.js` — Kaukamaa, Hohtometsä (maailma 11): Sienipomppu (pomppu), Tulikärpässieppo (sipaisu) ja vartija Varjoperhonen (sipaisu + pomppu)
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
-- `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus) ja vartija Myyräkuningas
+- `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
+- `js/play-gear.js`, `play-chute.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi) ja Vesikouru (kourupalojen kääntö, vesi myllyihin), sokkelon maasto `HUB_TILE_DECOR.clock`
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -714,6 +715,70 @@ usvahuoneen 30.9.2026 (palaute: pupun ohjelmointiin isompia ja haastavampia rato
   leveyshaulla (pupun paikka × peilien parillisuus). Osuma sytyttää kruunuun
   kiteen; kolmas palauttaa värit, ja Myyräkuningas ilahtuu. Kuninkaaseen voi
   napauttaa. Tehtävät osumien välissä: lasku, vähennys.
+- **Yhteispolku** (bonushuone vartijan jälkeen, 1.10.2026) — **yhteispeli**
+  lapselle ja aikuiselle samalla tabletilla. Kaksi pupua samalla niityllä:
+  vasemman puolen pelaaja ohjelmoi pinkin pupun ja oikean puolen pelaaja
+  sinisen (kummallakin omat nuolet, ⏸ ja kahden rivin ohjelma), ja keskellä
+  oleva ▶ ajaa molemmat ohjelmat yhtä aikaa askel kerrallaan. Niittyä halkoo
+  pensasaita, jonka **portti** on auki vain, kun toinen pupu seisoo
+  samanvärisellä **laatalla** (katkoviiva yhdistää laatan porttiinsa): toisen
+  on odotettava laatalla, kun toinen kulkee portista. Pensas, reuna, suljettu
+  portti tai toinen pupu (samaan ruutuun tai ristiin) pysäyttää pupun (!).
+  Kierros onnistuu, kun molemmat ovat omassa kolossaan (värilippu) ja
+  porkkanat on kerätty. Neljä arvottua, kovenevaa kierrosta: 6×5, yksi aita ja
+  laatta, sininen kolo lähtöpuolella (rivi 8); 7×5, laatta aidan kummallakin
+  puolella ja molemmat kolot takana (rivi 10); 8×5, kaksi aitaa ja kaksi
+  porttia (rivi 12); 8×5, kaksi aitaa ja neljä laattaa (rivi 14). Jokainen
+  rata ratkaistaan yhteisellä leveyshaulla (molempien pupujen paikat), ja
+  ratkaisussa jonkun on aina odotettava. Ensimmäisellä kierroksella käsi
+  näyttää ⏸:n sille pelaajalle, joka odottaa. Ensimmäisellä ajolla onnistunut
+  kierros antaa kultaisen porkkanan. Ei sydämiä. Tehtävä toisen kierroksen
+  jälkeen: parit (5 paria, kahdestaan).
+
+### Kaukamaa: Kellopaja (maailma 14)
+
+Mantereen viides paikka, tonttujen mekaaninen paja lounaisrannalla. Aukeaa,
+kun Porkkanakummun vartija Myyräkuningas on läpäisty. Jatkaa loogisten
+pulmien linjaa (palaute 1.10.2026: Loitsupolku ja Kamelikaravaani olivat
+"liki täydellinen ylätaso vaikeudelle"). Uusi verbi: **rattaat**. Sokkelossa
+on yksi usvahuone vartijalle Kellokoneistolle. Kunnes vartija on tehty,
+`finaleKind` on viimeisin kenttä (`'chute'`).
+
+- **Rataspaja** — tonttu veivaa moottoriratasta pajan seinällä. Raahaa
+  rattaita laatikosta tappitaulun tappeihin: ratas, joka koskettaa pyörivää
+  ratasta, alkaa heti pyöriä vastakkaiseen suuntaan, ja kun ketju yltää
+  **soittorasiaan** (värillinen ratas, jonka kannessa on tähti), rasia hehkuu
+  ja soi. Tapit ovat kolmiohilassa, joten ratas voi koskettaa kuutta
+  naapuria: jos kolme ratasta koskettaa toisiaan kolmiossa, koneisto
+  **jumittuu** (rattaat tärisevät punaisina eikä mikään pyöri). Toisesta
+  kierroksesta alkaen rasian ympärillä on suuntanuoli: rasian on pyörittävä
+  siihen suuntaan, ja suunta riippuu ketjun pituudesta (joka toinen ratas
+  pyörii vastapäivään). Väärään suuntaan pyörivä rasia narisee ja nuoli
+  punertuu. Suorin reitti antaa aina väärän suunnan ainakin yhdelle rasialle,
+  joten ketjuun on tehtävä mutka. Rattaita on vain ratkaisun verran ja 1–2
+  ylimääräistä, ja rikkinäisiin tappeihin (×) ei voi laittaa ratasta. Ratasta
+  voi siirtää tai viedä takaisin laatikkoon. Neljä arvottua, kovenevaa
+  kierrosta: 6×3 ja yksi rasia ilman suuntaa; 7×4 ja suunta; 7×4 ja kaksi
+  rasiaa; 8×5 ja kolme rasiaa. Ratkaisu rakennetaan ensin puuna, jossa mikään
+  ratas ei koske kahta muuta, joten kierros ratkeaa aina. Ensimmäisellä
+  kierroksella käsi vie rattaan moottorin viereen. Kierros ilman yhtään jumia
+  antaa kultaisen rattaan. Tonttuun voi napauttaa. Ei sydämiä. Tehtävät:
+  kello, kuviosarja.
+- **Vesikouru** — Kuunsäteen sukulainen vedellä. Napautus kääntää kourupalaa
+  neljänneskierroksen myötäpäivään, ja vesi virtaa lähdesuulta pala palalta
+  pitkin yhteen sopivia paloja. Kun vesi yltää myllyyn (vesiratas tappitaulun
+  reunalla), ratas pyörii. Jos kourussa on avoin pää (pala ei jatku, osoittaa
+  kiveen tai reunan yli muualle kuin myllyyn), vesi roiskuu siitä yli. Kierros
+  onnistuu, kun kaikki myllyt pyörivät eikä vettä vuoda mihinkään. Palat:
+  suora, kulma ja jakopala (T); ruuvatut palat eivät käänny (ne ovat valmiiksi
+  oikein), kivet tukkivat. Neljä arvottua, kovenevaa kierrosta: 5×4 ja yksi
+  mylly; 6×4, hämäyspalat ja pidempi reitti; 6×5, kaksi myllyä ja jakopala;
+  7×5 ja kolme myllyä. Kolmannesta kierroksesta alkaen pajan kello käy (90 /
+  100 s): ajan loppuessa pato sulkeutuu ja kierros arvotaan uudestaan.
+  Ratkaisu rakennetaan ensin (puu lähteestä myllyihin), joten kierros ratkeaa
+  aina. Kierros, joka ratkeaa enintään kolmella ylimääräisellä käännöllä,
+  antaa kultaisen pisaran. Ensimmäisellä kierroksella käsi napauttaa lähteen
+  vieressä olevaa palaa. Ei sydämiä. Tehtävät: lasku, pisteet.
 
 ### Linnan sisustus
 
@@ -1027,6 +1092,9 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Kamelikaravaani: kierrokset `CARAVAN_ROUNDS` (kamelit: ratkaisun säkkimäärä `n` tai valmiiksi raskas `pre`, kyltin rajat `lo`/`hi`, suurin säkki `vmax`, hämäyssäkit `extra`, myrskyn saapumisaika `time`), säkkejä selässä enintään `CARAVAN_MAX_LOAD`; arvonta `caravanGenerate`
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
 - Loitsupolku: kierrokset `BLOOP_ROUNDS` (ruudukko, pupurivi `main`, ★-rivi `spell`, loitsuja pääohjelmassa `stars`, odotukset `waits`, myyrät reitillä `moles` ja vieressä `decoys`, porkkanat, reitin pituus `len`, pensaat, valmis loitsu `given`), askeleen kesto `BLOOP_STEP_T`, myyrien tahti `bloopMoleUpAt`; arvonta `bloopTryGenerate`, tarkistus `bloopSimulate`. Reitti 8 / 11 / 11 / 14 askelta, lyhin reitti keskimäärin 8,6 / 9,3 / 9,2 askelta
+- Yhteispolku: kierrokset `DUO_ROUNDS` (ruudukko, aitojen määrä `walls`, laatat aidoittain `plates` ('n' lähtöpuoli, 'f' takana), sinisen kolon alue `homeB`, porkkanat, rivin pituus `slots`, ratkaisun askeleet `len`, pensaat), askeleen kesto `DUO_STEP_T`; säännöt `duoStep`, ratkaisija `duoSolve` (yhteinen leveyshaku), arvonta `duoTryGenerate`. Arvonta vie 8×5-kierroksilla n. 30–90 ms
+- Rataspaja: kierrokset `GEAR_ROUNDS` (hila `cols`×`rows`, soittorasiat `targets`, ketjun pituus rasiaa kohti `len`, suuntavaatimus `dir`, ansa `trick` = suorin reitti väärään suuntaan, ylimääräiset rattaat `spare`, rikkinäiset tapit `broken`), moottorin nopeus `GEAR_SPEED`, voiton odotus `GEAR_WIN_T`; arvonta `gearTryGenerate`, verkon suunnat ja jumi `gearEvalNet`
+- Vesikouru: kierrokset `CHUTE_ROUNDS` (ruudukko, myllyt `mills`, reitin pituus myllyä kohti `len`, hämäyspalat `decoys`, kivet `rocks`, ruuvatut reittipalat `fixed`, aikaraja `time`), täyttymisnopeus `CHUTE_FILL`, voiton odotus `CHUTE_WIN_T`, kultaisen pisaran väljyys `CHUTE_PAR`; arvonta `chuteTryGenerate`, virtaus ja vuodot `chuteEvalFlow`
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)

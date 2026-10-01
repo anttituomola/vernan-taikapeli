@@ -431,6 +431,8 @@ function handleHomeTap(px, py) {
       return;
     }
   }
+  // Holvin ovi ja sisus tavaroiden alla
+  if (bankDoorTap(px, py)) return;
   // Pupun napautus: hyppy ja vikinä
   for (i = 0; i < homeBunnies.length; i++) {
     var b = homeBunnies[i], bx = b.fx * viewW, by = b.fy * viewH;
