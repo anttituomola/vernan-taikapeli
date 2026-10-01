@@ -53,6 +53,7 @@ function initAurora() {
   unicorn.moving = false;
   checkpoint.x = unicorn.x;
   checkpoint.y = unicorn.y;
+  aurSetupProps();
   renderBackground();
   playNote(523, 0, 0.22, 'sine', 0.32);
   playNote(784, 0.14, 0.3, 'triangle', 0.3);
@@ -83,6 +84,50 @@ function resizeAurora(ratio) {
     aurWind[i].y = groundTop + (groundBottom - groundTop) * aurWind[i].fy;
   }
   aurGate.x = aurGate.fx * worldW;
+  aurSetupProps();
+}
+
+// Tökättävät koristeet: lähikuuset pudottavat lumitupsun; kivet heilahtavat ja
+// joka kolmannella tökkäyksellä kiven takaa pyrähtää riekko (yllätys).
+function aurSetupProps() {
+  var i, h = viewH, w = worldW;
+  propsReset();
+  for (i = 0; i < 5; i++) voyPineProp(w * (0.1 + i * 0.18), groundTop, h * 0.16, '#1a3850');
+  aurRockProp(w * 0.34, groundTop + h * 0.02, h * 0.045);
+  aurRockProp(w * 0.68, groundTop + h * 0.015, h * 0.038);
+}
+
+function aurRockProp(x, y, s) {
+  propAdd({
+    x: x, y: y, r: s * 1.4, hy: s * 0.2, color: '#dce8f4', note: 392, amp: 0.07,
+    draw: function (c) { drawNorthRock(c, 0, 0, s); },
+    poke: function (p) {
+      if (p.n % 3 === 0) aurBirdFly(p.x, p.y - s * 0.3);
+      else voySnowPuff(p.x + (Math.random() - 0.5) * s, p.y - s * 0.4, s * 0.12, p.y + s * 0.1);
+    }
+  });
+}
+
+// Riekko pyrähtää lentoon kiven takaa, laskeutuu ja haihtuu
+function aurBirdFly(x, y) {
+  var s = viewH * 0.022, snow = { shadeTo: '#e3d8f5', lineColor: '#b8c8d8' }, dir = Math.random() < 0.5 ? -1 : 1;
+  playNote(988, 0, 0.07, 'triangle', 0.18);
+  playNote(1175, 0.08, 0.07, 'triangle', 0.18);
+  playNote(988, 0.16, 0.1, 'triangle', 0.18);
+  propDrop({
+    x: x, y: y, dir: dir, vx: dir * viewW * 0.1, vy: -viewH * 0.5, vr: 0, ground: y + s * 1.2, life: 2.0,
+    draw: function (c, d) {
+      var fl = Math.sin(d.t * 26) * 0.6;
+      c.scale(d.dir, 1);
+      artBlob(c, -s * 0.5, -s * 0.1, s * 0.75, s * 0.28, '#ffffff', { rot: -0.5 - fl, shadeTo: snow.shadeTo, lineColor: snow.lineColor });
+      artBlob(c, 0, 0, s * 0.8, s * 0.6, '#ffffff', { shadeTo: snow.shadeTo, lineColor: snow.lineColor, hi: 0.4 });
+      artBlob(c, -s * 0.9, -s * 0.1, s * 0.25, s * 0.12, '#2a2a2a', { line: false });
+      artCircle(c, s * 0.7, -s * 0.5, s * 0.36, '#ffffff', snow);
+      artBlob(c, s * 0.72, -s * 0.78, s * 0.2, s * 0.07, '#e8323c', { line: false });
+      artEye(c, s * 0.8, -s * 0.52, s * 0.08, 0.3, false);
+      artBlob(c, s * 1.08, -s * 0.44, s * 0.12, s * 0.07, '#2a2a2a', { line: false });
+    }
+  });
 }
 
 function aurCollect(g) {
@@ -102,12 +147,15 @@ function handleAuroraTap(px, py) {
     dx = wx - g.ax; dy = py - g.ay;
     if (dx * dx + dy * dy < viewH * 0.07 * viewH * 0.07) { aurCollect(g); return; }
   }
+  // Ei osunut valoon: koriste saa heilahtaa, ja ratsastus jatkuu kohti napautusta kuten ennen
+  propsTap(wx, py);
   setWalkTarget(px, py);
 }
 
 function updateAurora(dt) {
   var i, g, dx, dy, busy, wh;
   updateTasks(dt);
+  propsUpdate(dt);
   busy = puzzleBusy();
   northRideUnicorn(dt, busy);
   updateCheckpoints(unicorn.x, unicorn.y);
@@ -160,14 +208,8 @@ function renderAuroraMid(b, w, h) {
   }
 }
 function renderAuroraNear(b, w, h) {
-  var i, x;
+  // Lähikuuset ja kivet ovat tökättäviä koristeita (aurSetupProps)
   renderNorthGround(b, w, h);
-  for (i = 0; i < 5; i++) {
-    x = w * (0.1 + i * 0.18);
-    drawNorthPine(b, x, groundTop, h * 0.16, '#1a3850');
-  }
-  drawNorthRock(b, w * 0.34, groundTop + h * 0.02, h * 0.045);
-  drawNorthRock(b, w * 0.68, groundTop + h * 0.015, h * 0.038);
 }
 
 function drawAuroraGust(c, x, y, t, dir) {
@@ -219,6 +261,7 @@ function drawAurora() {
   drawAuroraFollow(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
+  propsDraw(ctx);
   for (i = 0; i < aurLights.length; i++) {
     g = aurLights[i];
     if (g.collected) continue;
@@ -231,8 +274,11 @@ function drawAurora() {
       ctx.fillStyle = gl;
       ctx.beginPath(); ctx.arc(g.ax - camX, g.ay, viewH * 0.08, 0, Math.PI * 2); ctx.fill();
     }
-    ctx.fillStyle = lit ? ('rgba(184,255,224,' + (0.45 + 0.55 * glowA) + ')') : 'rgba(180,210,230,0.35)';
-    ctx.beginPath(); ctx.arc(g.ax - camX, g.ay + Math.sin(g.phase) * 3, viewH * 0.018, 0, Math.PI * 2); ctx.fill();
+    // Valopallo tarrakirja-ilmeessä: kaksi sävyä, reunaviiva ja kiilto; sammuneena haalea
+    ctx.globalAlpha = lit ? 0.45 + 0.55 * glowA : 0.4;
+    if (lit) artCircle(ctx, g.ax - camX, g.ay + Math.sin(g.phase) * 3, viewH * 0.018, '#b8ffe0', { shadeTo: '#4ad0a0', lineColor: '#2a9a70', hi: 0.5 });
+    else artCircle(ctx, g.ax - camX, g.ay + Math.sin(g.phase) * 3, viewH * 0.018, '#b4d2e6', { shadeTo: '#7a9ab4', lineColor: '#5a7a94', hi: 0.3 });
+    ctx.globalAlpha = 1;
   }
   for (i = 0; i < aurWind.length; i++) {
     drawAuroraGust(ctx, aurWind[i].x - camX, aurWind[i].y, globalT, aurWind[i].dir);
@@ -246,7 +292,7 @@ function drawAurora() {
   if (aurGate.open && !celebrating) drawEdgeArrow(ctx, aurGate.x);
   endPlayWorld();
   drawPickupHud(ctx, AUR_COUNT, function (k) { return aurLights[k] && aurLights[k].collected; },
-    function (c, x, y, sz) { c.fillStyle = '#7cffc4'; c.beginPath(); c.arc(x, y, sz * 0.45, 0, Math.PI * 2); c.fill(); });
+    function (c, x, y, sz) { artCircle(c, x, y, sz * 0.45, '#7cffc4', { hi: 0.4 }); });
   drawHearts(ctx);
   drawTaskOverlay(ctx);
 }
