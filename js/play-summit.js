@@ -293,7 +293,7 @@ function renderSummitMid(b, w, h) {
   });
   for (i = 0; i < 12; i++) {
     x = w * (0.04 + i * 0.08);
-    drawPine(b, x, groundTop + h * 0.02, h * (0.08 + (i % 3) * 0.03), i % 2 ? '#4a7a68' : '#5a8a78');
+    drawPine(b, x, groundTop + h * 0.02, h * (0.08 + (i % 3) * 0.03), i % 2 ? '#4a7a68' : '#5a8a78', true);   // kaukainen rivi: ei reunaviivaa
   }
 }
 function renderSummitNear(b, w, h) {
