@@ -186,6 +186,7 @@ function seaExitPos() {
 function showLand(opts) {
   var i, pl, p, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'fireBtn', 'penBtn', 'karttaBtn', 'seaBtn'];
   opts = opts || {};
+  if (mode !== 'land' && !opts.sail) fadeStart();
   mode = 'land';
   running = false;
   holding = false;

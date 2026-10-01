@@ -146,6 +146,7 @@ function beginPlay(kind) {
 
 function showHub() {
   var pos;
+  if (mode !== 'hub') fadeStart();
   mode = 'hub';
   running = false;
   holding = false;

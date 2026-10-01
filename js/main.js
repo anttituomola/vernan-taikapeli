@@ -2,6 +2,17 @@
 
 // Silmukka, syöte, käynnistys
 // ---------- Silmukka ----------
+// Näkymän vaihtuessa (kenttä -> sokkelo, sokkelo -> kartta) ruutu häivähtää
+// vaaleasta esiin, ettei hyppäys ole töksähtävä. Kentän alussa alkukortti hoitaa saman.
+var FADE_DUR = 0.45;
+var fadeT = 0;
+function fadeStart() { fadeT = FADE_DUR; }
+function drawFade(dt) {
+  if (fadeT <= 0) return;
+  fadeT -= dt;
+  ctx.fillStyle = 'rgba(255,246,232,' + Math.max(0, fadeT / FADE_DUR) + ')';
+  ctx.fillRect(0, 0, viewW, viewH);
+}
 function loop(ts) {
   if (!lastTime) lastTime = ts;
   var dt = Math.min((ts - lastTime) / 1000, 0.05);
@@ -25,6 +36,7 @@ function loop(ts) {
     update(dt);
     draw();
   }
+  if (mode !== 'play') drawFade(dt);
   requestAnimationFrame(loop);
 }
 
