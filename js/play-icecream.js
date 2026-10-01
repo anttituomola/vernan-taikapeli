@@ -84,6 +84,55 @@ function resizeIcecream() {
   iceSetupProps();
 }
 
+// Tökättävät koristeet: iso jäätelökyltti katoksen päässä, seinäkello ja
+// kukkaruukku tiskin reunalla. Yllätykset: kyltin joka kolmas tökkäys
+// kasvattaa tötteröön ylimääräisen pallon, kellon viides päästää käkipupun kurkkaamaan.
+function iceSetupProps() {
+  var h = viewH, vw = viewW;
+  propsReset();
+  propAdd({
+    x: vw * 0.53 + h * 0.08, y: h * 0.18, r: h * 0.09, hy: h * 0.065, color: '#ff9fd0', note: 880,
+    draw: function (c, p) {
+      var extra = p.t >= 0 && p.n % 3 === 0;
+      artRoundRect(c, -h * 0.08, -h * 0.13, h * 0.16, h * 0.13, h * 0.02, '#ffd24f', { lineColor: '#d98a00', line: Math.max(1.5, h * 0.004) });
+      c.strokeStyle = '#ff7bac';
+      c.lineWidth = Math.max(1.5, h * 0.005);
+      roundRect(c, -h * 0.07, -h * 0.12, h * 0.14, h * 0.11, h * 0.015);
+      c.stroke();
+      if (extra) artGlow(c, 0, -h * 0.12, h * 0.06, '#ffe27a', 0.5);
+      drawIceCone(c, 0, -h * 0.04, h * 0.035, extra ? [0, 2, 3, 4] : [0, 2, 3], 'cherry', 1);
+    }
+  });
+  propAdd({
+    x: vw * 0.26, y: h * 0.40, r: h * 0.05, hy: h * 0.045, color: '#7fd4ff', note: 1175,
+    draw: function (c, p) {
+      var s = h * 0.04, spin = p.t >= 0 ? p.t * 10 : 0, a, k;
+      if (p.t >= 0 && p.n % 5 === 0) {
+        k = Math.sin(Math.min(1, p.t / 1.4) * Math.PI);
+        drawBunny(c, 0, -s * 1.6 - k * s * 0.9, s * 0.45, 0, globalT * 8, true);
+      }
+      artCircle(c, 0, -s, s, '#ffffff', { lineColor: '#9aa6c0', shadeTo: '#e3d8f5', hi: 0.3 });
+      c.strokeStyle = '#5a4a6e';
+      c.lineWidth = Math.max(1.5, s * 0.1);
+      c.lineCap = 'round';
+      a = globalT * 0.2 + spin;
+      c.beginPath(); c.moveTo(0, -s); c.lineTo(Math.cos(a) * s * 0.55, -s + Math.sin(a) * s * 0.55); c.stroke();
+      a = globalT * 0.02 - 1.2 + spin * 0.5;
+      c.beginPath(); c.moveTo(0, -s); c.lineTo(Math.cos(a) * s * 0.4, -s + Math.sin(a) * s * 0.4); c.stroke();
+      artCircle(c, 0, -s, s * 0.08, '#ff5f7e', { line: false });
+    }
+  });
+  propAdd({
+    x: vw * 0.95, y: h * 0.6, r: h * 0.05, hy: h * 0.05, color: '#ff7bac', note: 740,
+    draw: function (c) {
+      var s = h * 0.03;
+      artRoundRect(c, -s * 0.7, -s * 0.9, s * 1.4, s * 0.9, s * 0.15, '#d9804a', { lineColor: '#8a4a28' });
+      artLimb(c, 0, -s * 0.9, 0, -s * 2.0, Math.max(1.5, s * 0.14), '#5fb356', '#2e7a3a');
+      drawFlower(c, 0, -s * 2.1, s * 0.4, '#ff7bac');
+    }
+  });
+}
+
 function iceOrderDone() {
   var cp = iceConePos();
   ice.served++;

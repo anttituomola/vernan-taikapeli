@@ -71,6 +71,7 @@ function levelBegin(p) {
   flyStars = [];
   hudBump = [];
   artFxReset();
+  propsReset();
   holding = false;
   camX = 0;
   gates = [];
