@@ -190,11 +190,16 @@ function drawHeartShape(c, x, y, s, filled) {
   c.bezierCurveTo(x - s * 1.1, y - s * 0.1, x - s * 0.4, y - s * 0.9, x, y - s * 0.25);
   c.bezierCurveTo(x + s * 0.4, y - s * 0.9, x + s * 1.1, y - s * 0.1, x, y + s * 0.55);
   c.closePath();
-  c.fillStyle = filled ? '#ff4f7e' : 'rgba(255,255,255,0.35)';
-  c.fill();
-  c.strokeStyle = '#fff';
-  c.lineWidth = Math.max(1.5, s * 0.14);
-  c.stroke();
+  if (filled) {
+    artFillPath(c, '#ff4f7e', y - s * 0.9, y + s * 0.55, s, { lineColor: '#ffffff', line: Math.max(1.5, s * 0.14) });
+    artHighlight(c, x - s * 0.38, y - s * 0.38, s * 0.22, s * 0.13, 0.55);
+  } else {
+    c.fillStyle = 'rgba(255,255,255,0.35)';
+    c.fill();
+    c.strokeStyle = '#fff';
+    c.lineWidth = Math.max(1.5, s * 0.14);
+    c.stroke();
+  }
 }
 
 function drawHearts(c) {
@@ -224,26 +229,29 @@ function drawLantern(c, cp, baseY) {
   var s = viewH * 0.05;
   if (x < -s * 3 || x > viewW + s * 3) return;
   var top = baseY - s * 2.6;
-  c.fillStyle = '#5a4a6e';
-  c.fillRect(x - s * 0.08, top, s * 0.16, s * 2.6);
-  c.fillRect(x - s * 0.45, baseY - s * 0.14, s * 0.9, s * 0.14);
+  var lw = Math.max(1.2, s * 0.06);
+  var post = '#6e5a8a', lineC = '#3e3050', frame = '#8a7aa8';
+  artShadow(c, x, baseY, s * 0.8, s * 0.2, 0.14);
+  if (cp.lit) artGlow(c, x, top, s * 1.8, '#ffd86a', 0.55 + Math.sin(globalT * 5) * 0.08);
+  // Tolppa ja jalusta
+  artRoundRect(c, x - s * 0.09, top, s * 0.18, s * 2.6, s * 0.06, post, { lineColor: lineC, line: lw });
+  artRoundRect(c, x - s * 0.45, baseY - s * 0.16, s * 0.9, s * 0.16, s * 0.06, post, { lineColor: lineC, line: lw });
+  // Lyhdyn katto, runko ja lasi
+  artRoundRect(c, x - s * 0.2, top - s * 0.8, s * 0.4, s * 0.26, s * 0.08, frame, { lineColor: lineC, line: lw });
+  artRoundRect(c, x - s * 0.36, top - s * 0.58, s * 0.72, s * 0.84, s * 0.12, frame, { lineColor: lineC, line: lw });
+  artRoundRect(c, x - s * 0.24, top - s * 0.44, s * 0.48, s * 0.58, s * 0.08, cp.lit ? '#ffe27a' : '#4a4060', { lineColor: lineC, line: lw });
   if (cp.lit) {
-    var g = c.createRadialGradient(x, top, s * 0.1, x, top, s * 1.6);
-    g.addColorStop(0, 'rgba(255,230,140,0.75)');
-    g.addColorStop(1, 'rgba(255,230,140,0)');
-    c.fillStyle = g;
-    c.beginPath(); c.arc(x, top, s * 1.6, 0, Math.PI * 2); c.fill();
-  }
-  c.fillStyle = '#7a6a8e';
-  roundRect(c, x - s * 0.34, top - s * 0.55, s * 0.68, s * 0.8, s * 0.12);
-  c.fill();
-  c.fillStyle = cp.lit ? '#ffe27a' : '#3a3346';
-  roundRect(c, x - s * 0.22, top - s * 0.42, s * 0.44, s * 0.55, s * 0.08);
-  c.fill();
-  if (cp.lit) {
-    c.fillStyle = '#fff6c8';
+    // Liekki lepattaa
+    var fl = Math.sin(globalT * 7) * s * 0.03;
+    c.fillStyle = '#ff9d3a';
     c.beginPath();
-    c.arc(x, top - s * 0.12 + Math.sin(globalT * 6) * s * 0.03, s * 0.1, 0, Math.PI * 2);
+    c.moveTo(x, top - s * 0.36 + fl);
+    c.quadraticCurveTo(x + s * 0.14, top - s * 0.08, x, top + s * 0.03);
+    c.quadraticCurveTo(x - s * 0.14, top - s * 0.08, x, top - s * 0.36 + fl);
     c.fill();
+    c.fillStyle = '#fff6c8';
+    c.beginPath(); c.arc(x, top - s * 0.08, s * 0.08, 0, Math.PI * 2); c.fill();
+  } else {
+    artHighlight(c, x - s * 0.1, top - s * 0.25, s * 0.07, s * 0.14, 0.25);
   }
 }

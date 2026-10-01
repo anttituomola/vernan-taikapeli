@@ -372,10 +372,8 @@ function drawIntro(c) {
     var ang = globalT * 1.5 + i * Math.PI / 4;
     drawStar(c, cx + Math.cos(ang) * s * 1.5, cy + Math.sin(ang) * s * 1.5, s * 0.12, ang, 0);
   }
-  c.fillStyle = '#ffe27a';
-  c.beginPath(); c.arc(cx, cy, s, 0, Math.PI * 2); c.fill();
-  c.fillStyle = room ? room.color : '#8a5cb8';
-  c.beginPath(); c.arc(cx, cy, s * 0.82, 0, Math.PI * 2); c.fill();
+  artCircle(c, cx, cy, s, '#ffe27a', { lineColor: '#c8901e' });
+  artCircle(c, cx, cy, s * 0.82, room ? room.color : '#8a5cb8', { line: false });
   c.fillStyle = 'rgba(255,255,255,0.3)';
   c.beginPath(); c.arc(cx - s * 0.3, cy - s * 0.35, s * 0.28, 0, Math.PI * 2); c.fill();
   if (room) drawHubRoomIcon(c, room.kind, cx, cy + s * 0.1, s * 2.6);

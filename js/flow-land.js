@@ -22,6 +22,111 @@ var land = {
 };
 var landBgCanvas = document.createElement('canvas');
 var landBgKey = '';
+// Pienet yllätykset: tulivuori puhahtaa, joessa hyppii kala, lohikäärme karjuu
+var landFx = { vol: -1, fish: [], roar: -1 };
+
+function landVolcanoTop() { return { x: viewW * 0.78, y: viewH * 0.30 + viewH * 0.04 - viewH * 0.17 }; }
+// Joen näytepisteet (sama polku kuin renderLandBg:n bezier)
+function landRiverPoints() {
+  var w = viewW, h = viewH, pts = [], i, t, u;
+  var segs = [
+    [w * 0.70, h * 0.33, w * 0.62, h * 0.45, w * 0.40, h * 0.40, w * 0.36, h * 0.56],
+    [w * 0.36, h * 0.56, w * 0.32, h * 0.72, w * 0.25, h * 0.7, w * 0.17, h * 0.66]
+  ];
+  var k, b;
+  for (k = 0; k < segs.length; k++) {
+    b = segs[k];
+    for (i = 0; i <= 10; i++) {
+      t = i / 10; u = 1 - t;
+      pts.push({
+        x: u * u * u * b[0] + 3 * u * u * t * b[2] + 3 * u * t * t * b[4] + t * t * t * b[6],
+        y: u * u * u * b[1] + 3 * u * u * t * b[3] + 3 * u * t * t * b[5] + t * t * t * b[7]
+      });
+    }
+  }
+  return pts;
+}
+function landDragonPos() {
+  if (land.dragonT > 0) return null;
+  var t = -land.dragonT / 9;
+  return { x: viewW * (1.1 - t * 1.25), y: viewH * (0.12 + Math.sin(t * Math.PI * 2) * 0.04) };
+}
+function landFxTap(px, py) {
+  var h = viewH, v = landVolcanoTop(), d = landDragonPos(), pts, i, best = null, bd = h * 0.04, dist;
+  if (mapSunTap(px, py, viewW * 0.86, h * 0.10, h * 0.045)) return true;
+  if (d && Math.hypot(px - d.x, py - d.y) < h * 0.07) {
+    landFx.roar = 0;
+    playNote(98, 0, 0.5, 'sawtooth', 0.18);
+    playNote(73, 0.2, 0.6, 'sawtooth', 0.15);
+    return true;
+  }
+  if (Math.hypot(px - v.x, py - v.y) < h * 0.08) {
+    landFx.vol = 0;
+    playNote(55, 0, 0.7, 'sawtooth', 0.14);
+    playNote(220, 0.1, 0.12, 'square', 0.1);
+    playNote(330, 0.25, 0.12, 'square', 0.1);
+    return true;
+  }
+  pts = landRiverPoints();
+  for (i = 0; i < pts.length; i++) {
+    dist = Math.hypot(px - pts[i].x, py - pts[i].y);
+    if (dist < bd) { bd = dist; best = pts[i]; }
+  }
+  if (best) {
+    if (landFx.fish.length > 3) landFx.fish.shift();
+    landFx.fish.push({ x: best.x, y: best.y, t: 0, dir: Math.random() < 0.5 ? -1 : 1 });
+    playNote(880, 0, 0.08, 'sine', 0.2);
+    playNote(1175, 0.06, 0.1, 'sine', 0.15);
+    return true;
+  }
+  return false;
+}
+function landFxUpdate(dt) {
+  var i;
+  if (landFx.vol >= 0) { landFx.vol += dt; if (landFx.vol > 1.8) landFx.vol = -1; }
+  if (landFx.roar >= 0) { landFx.roar += dt; if (landFx.roar > 0.8) landFx.roar = -1; }
+  for (i = landFx.fish.length - 1; i >= 0; i--) {
+    landFx.fish[i].t += dt;
+    if (landFx.fish[i].t > 1.0) landFx.fish.splice(i, 1);
+  }
+}
+function drawLandFx(c) {
+  var h = viewH, i, k, v, d, a;
+  for (i = 0; i < landFx.fish.length; i++) {
+    drawMapFishJump(c, landFx.fish[i].x, landFx.fish[i].y, landFx.fish[i].t, landFx.fish[i].dir, '#7fd4ff');
+  }
+  if (landFx.vol >= 0) {
+    v = landVolcanoTop();
+    k = landFx.vol / 1.8;
+    // Savurenkaat nousevat ja laajenevat
+    for (i = 0; i < 3; i++) {
+      a = k * 1.6 - i * 0.25;
+      if (a < 0 || a > 1) continue;
+      c.strokeStyle = 'rgba(240,230,245,' + (0.8 * (1 - a)) + ')';
+      c.lineWidth = Math.max(2, h * 0.008 * (1 - a * 0.5));
+      c.beginPath();
+      if (c.ellipse) c.ellipse(v.x + Math.sin(a * 3 + i) * h * 0.01, v.y - h * 0.02 - a * h * 0.14, h * (0.012 + a * 0.05), h * (0.006 + a * 0.02), 0, 0, Math.PI * 2);
+      c.stroke();
+    }
+    // Laavakipinät lentävät kaaressa
+    for (i = 0; i < 4; i++) {
+      a = Math.min(1, k * 1.4);
+      var vx = v.x + (i - 1.5) * h * 0.05 * a, vy = v.y - Math.sin(a * Math.PI) * h * (0.08 + i * 0.015) + a * a * h * 0.05;
+      if (a < 1) artCircle(c, vx, vy, h * 0.007, '#ffb04a', { lineColor: '#c84a1a' });
+    }
+    // Suu hehkuu
+    artGlow(c, v.x, v.y, h * 0.06, '#ff8a4a', 0.5 * (1 - k));
+  }
+  if (landFx.roar >= 0) {
+    d = landDragonPos();
+    if (d) {
+      k = landFx.roar / 0.8;
+      var s = h * 0.028, fx = d.x - s * 1.6 - k * s * 1.5;
+      artGlow(c, fx, d.y, s * 1.4 * (1 - k * 0.5), '#ffa040', 0.5 * (1 - k));
+      artBlob(c, fx, d.y, s * (0.6 + k * 0.6), s * (0.4 + k * 0.3), '#ff9d3a', { lineColor: '#d05a1a', alpha: 1 - k, hi: 0.4 });
+    }
+  }
+}
 
 // ---------- Alue ja paikat ----------
 function worldRegion(w) {
@@ -191,12 +296,14 @@ function handleLandTap(px, py) {
     dx = px - p.x; dy = py - p.y;
     if (dx * dx + dy * dy <= p.r * p.r * 1.9) { landToastShow(p.x, p.y - p.r * 1.4); return; }
   }
+  landFxTap(px, py);
 }
 
 // ---------- Päivitys ----------
 function updateLand(dt) {
   var s, dx, dy, dist, sp;
   globalT += dt;
+  landFxUpdate(dt);
   if (land.toast.t > 0) land.toast.t -= dt;
   land.dragonT -= dt;
   if (land.dragonT < -9) land.dragonT = 7 + Math.random() * 6;
@@ -237,9 +344,13 @@ function drawLand() {
   if (land.state === 'sail') { drawLandSail(); return; }
   renderLandBg();
   ctx.clearRect(0, 0, viewW, viewH);
-  ctx.drawImage(landBgCanvas, 0, 0, landBgCanvas.width, landBgCanvas.height, 0, 0, viewW, viewH);
+  // Tulivuoren jyrinä täräyttää karttaa hetken
+  var rumble = landFx.vol >= 0 && landFx.vol < 0.5 ? Math.sin(globalT * 70) * viewH * 0.004 * (1 - landFx.vol * 2) : 0;
+  ctx.drawImage(landBgCanvas, 0, 0, landBgCanvas.width, landBgCanvas.height, rumble, -Math.abs(rumble), viewW, viewH);
   drawLandSkyDragon(ctx);
   drawLandSeaWaves(ctx);
+  drawLandFx(ctx);
+  drawMapSun(ctx);
 
   var i, p, pl, nx = landNextPlace(), left, h = landHarbor();
   // Satama ja vene länsirannalla

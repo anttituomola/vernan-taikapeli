@@ -345,9 +345,13 @@ function handleHubTap(px, py) {
     }
   }
   var cell = hubPixelCell(px, py, lay);
-  if (!cell || !hubWalkable(hubAt(cell.c, cell.r))) return;
+  if (!cell) { hubFxTapOutside(px, py); return; }
+  if (!hubWalkable(hubAt(cell.c, cell.r))) { hubFxPlant(px, py, lay); return; }
   if (cell.c === hubPawn.c && cell.r === hubPawn.r && hubPawn.path.length === 0) {
-    hubArrive(hubAt(cell.c, cell.r));
+    var here = hubAt(cell.c, cell.r);
+    // Tavallisessa polkuruudussa nappulan napautus hypähdyttää yksisarvisen
+    if (!hubRooms()[here] && here !== 'B' && here !== 'G' && !hubIsFog(here)) { hubFxHop(); return; }
+    hubArrive(here);
     return;
   }
   hubPawn.path = hubRoute(hubPawn.c, hubPawn.r, cell.c, cell.r);
@@ -355,6 +359,7 @@ function handleHubTap(px, py) {
 
 function updateHub(dt) {
   globalT += dt;
+  hubFxUpdate(dt);
   if (hubToast.t > 0) hubToast.t -= dt;
   var lay = hubLayout();
   if (hubPawn.path.length > 0) {
@@ -395,6 +400,77 @@ function updateHub(dt) {
 // Samoin sokkelon maaston koristeet vyöhykkeelle: HUB_TILE_DECOR[band].
 var HUB_ICONS = {};
 var HUB_TILE_DECOR = {};
+
+// Pienet yllätykset sokkelossa: laudan ulkopuolelle ei-kulkukelpoiseen ruutuun
+// napautus istuttaa kukan, mökin ikkunasta kurkkaa pupu, nappula hyppää ja
+// hirnahtaa omasta ruudustaan napautettuna, aurinko hymyilee.
+var hubFx = { flowers: [], cottage: -1, hop: -1 };
+var HUB_FLOWER_COLS = ['#ff7bac', '#ffd24f', '#b78bff', '#ff9d5c', '#7fd4ff'];
+
+function hubCottagePos(lay) {
+  var st = hubFind('B');
+  return { x: lay.ox + (st.c + 1.5) * lay.cell, y: lay.oy + (st.r - 0.5) * lay.cell + lay.cell * 0.42, s: lay.cell * 0.85 };
+}
+function hubFxTapOutside(px, py) {
+  if (mapSunTap(px, py, viewW * 0.9, viewH * 0.1, viewH * 0.06)) return true;
+  return false;
+}
+function hubFxPlant(px, py, lay) {
+  var ct;
+  if (hubWorld === 1) {
+    ct = hubCottagePos(lay);
+    if (Math.hypot(px - ct.x, py - (ct.y - ct.s * 0.4)) < ct.s * 0.5) {
+      if (hubFx.cottage < 0) { hubFx.cottage = 0; soundBunny(); }
+      return;
+    }
+  }
+  if (hubFx.flowers.length > 16) hubFx.flowers.shift();
+  hubFx.flowers.push({ x: px, y: py, t: 0, c: HUB_FLOWER_COLS[hubFx.flowers.length % HUB_FLOWER_COLS.length] });
+  playNote(784 + (hubFx.flowers.length % 5) * 60, 0, 0.1, 'sine', 0.22);
+  playNote(1175, 0.07, 0.12, 'sine', 0.15);
+}
+function hubFxHop() {
+  if (hubFx.hop >= 0) return;
+  hubFx.hop = 0;
+  playNote(660, 0, 0.1, 'triangle', 0.3);
+  playNote(880, 0.09, 0.14, 'triangle', 0.3);
+  playNote(1047, 0.18, 0.18, 'triangle', 0.25);
+}
+function hubFxUpdate(dt) {
+  var i;
+  if (hubFx.cottage >= 0) { hubFx.cottage += dt; if (hubFx.cottage > 1.8) hubFx.cottage = -1; }
+  if (hubFx.hop >= 0) { hubFx.hop += dt; if (hubFx.hop > 0.45) hubFx.hop = -1; }
+  for (i = 0; i < hubFx.flowers.length; i++) hubFx.flowers[i].t += dt;
+}
+function hubFxHopOffset(lay) {
+  if (hubFx.hop < 0) return 0;
+  return Math.sin(Math.min(1, hubFx.hop / 0.45) * Math.PI) * lay.cell * 0.3;
+}
+function drawHubFx(c, lay) {
+  var i, f, k, ct, win, s;
+  for (i = 0; i < hubFx.flowers.length; i++) {
+    f = hubFx.flowers[i];
+    k = easeOutBack(Math.min(1, f.t / 0.4));
+    drawFlower(c, f.x, f.y, lay.cell * 0.09 * k, f.c);
+    if (f.t < 0.5) {
+      c.strokeStyle = 'rgba(255,255,255,' + (1 - f.t / 0.5) + ')';
+      c.lineWidth = 2;
+      c.beginPath(); c.arc(f.x, f.y, lay.cell * (0.1 + f.t * 0.6), 0, Math.PI * 2); c.stroke();
+    }
+  }
+  if (hubFx.cottage >= 0 && hubWorld === 1) {
+    ct = hubCottagePos(lay);
+    s = ct.s;
+    k = hubFx.cottage < 0.5 ? easeOutBack(hubFx.cottage / 0.5) : (hubFx.cottage > 1.3 ? Math.max(0, 1 - (hubFx.cottage - 1.3) / 0.5) : 1);
+    // Pupu kurkkaa ikkunasta: leikataan ikkunan kokoon
+    win = { x: ct.x + s * 0.12, y: ct.y - s * 0.34, w: s * 0.12, h: s * 0.12 };
+    c.save();
+    c.beginPath(); c.rect(win.x, win.y - s * 0.02, win.w, win.h + s * 0.02); c.clip();
+    drawBunny(c, win.x + win.w / 2, win.y + win.h + s * 0.02 - k * s * 0.13, s * 0.075, 0, globalT * 6, true);
+    c.restore();
+  }
+}
+
 
 function drawHubRoomIcon(c, kind, x, y, s) {
   var i, a;
@@ -931,15 +1007,13 @@ function drawHub() {
   }
   ctx.globalAlpha = 1;
 
+  drawHubFx(ctx, lay);
+  drawMapSun(ctx);
+
   // Prinsessa ratsastaa yksisarvisella
   var moving = hubPawn.path.length > 0;
   var us = lay.cell / 150;
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  ctx.beginPath();
-  if (ctx.ellipse) ctx.ellipse(hubPawn.x, hubPawn.y + lay.cell * 0.4, lay.cell * 0.34, lay.cell * 0.08, 0, 0, Math.PI * 2);
-  else ctx.arc(hubPawn.x, hubPawn.y + lay.cell * 0.4, lay.cell * 0.2, 0, Math.PI * 2);
-  ctx.fill();
-  drawUnicorn(ctx, hubPawn.x, hubPawn.y + lay.cell * 0.4, us, hubPawn.facing, hubPawn.walkPhase, moving, globalT);
+  drawUnicorn(ctx, hubPawn.x, hubPawn.y + lay.cell * 0.4 - hubFxHopOffset(lay), us, hubPawn.facing, hubPawn.walkPhase, moving, globalT);
   drawStarBalance(ctx, viewH * 0.135, viewH * 0.065);
 
   if (hubOffer) drawHubOffer(ctx, lay);
@@ -1338,10 +1412,8 @@ function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
   }
   c.fillStyle = 'rgba(0,0,0,0.2)';
   c.beginPath(); c.arc(x + s * 0.03, y + s * 0.06, rad, 0, Math.PI * 2); c.fill();
-  c.fillStyle = isCleared ? '#d9cfe6' : '#ffe27a';
-  c.beginPath(); c.arc(x, y, rad, 0, Math.PI * 2); c.fill();
-  c.fillStyle = isCleared ? '#c5b8d0' : room.color;
-  c.beginPath(); c.arc(x, y, rad * 0.8, 0, Math.PI * 2); c.fill();
+  artCircle(c, x, y, rad, isCleared ? '#d9cfe6' : '#ffe27a', { lineColor: isCleared ? '#a898b8' : '#c8901e' });
+  artCircle(c, x, y, rad * 0.8, isCleared ? '#c5b8d0' : room.color, { line: false });
   c.fillStyle = 'rgba(255,255,255,0.35)';
   c.beginPath(); c.arc(x - rad * 0.3, y - rad * 0.38, rad * 0.26, 0, Math.PI * 2); c.fill();
   if (isCleared) c.globalAlpha = 0.5;
@@ -1486,6 +1558,7 @@ function hubEnterIsland(w) {
   var pos, lay, cpos;
   hubWorld = w;
   hubBgKey = '';
+  hubFx.flowers = [];
   hubPlaying = null;
   hubApproach = null;
   lastIsland = w;
@@ -1516,24 +1589,23 @@ function drawHarbor(c, x, y, s) {
 }
 
 function drawBoat(c, x, y, s) {
-  c.fillStyle = '#8a5a30';
+  // Runko kahdella sävyllä ja reunaviivalla
   c.beginPath();
   c.moveTo(x - s * 0.5, y);
   c.quadraticCurveTo(x, y + s * 0.45, x + s * 0.5, y);
   c.lineTo(x + s * 0.42, y - s * 0.12);
   c.lineTo(x - s * 0.42, y - s * 0.12);
   c.closePath();
-  c.fill();
-  c.strokeStyle = '#5a3a1e';
-  c.lineWidth = Math.max(1.5, s * 0.05);
-  c.beginPath(); c.moveTo(x, y - s * 0.12); c.lineTo(x, y - s * 0.75); c.stroke();
-  c.fillStyle = '#ff7bac';
+  artFillPath(c, '#a9743f', y - s * 0.12, y + s * 0.4, s * 0.25, { lineColor: '#5a3a1e' });
+  // Masto ja purje
+  artLimb(c, x, y - s * 0.12, x, y - s * 0.75, Math.max(1.5, s * 0.05), '#8a5a30', '#5a3a1e');
   c.beginPath();
   c.moveTo(x + s * 0.03, y - s * 0.72);
   c.lineTo(x + s * 0.42, y - s * 0.3);
   c.lineTo(x + s * 0.03, y - s * 0.2);
   c.closePath();
-  c.fill();
+  artFillPath(c, '#ff7bac', y - s * 0.72, y - s * 0.2, s * 0.2, { lineColor: '#c94f7e' });
+  // Vesiväre rungon juurella
   c.fillStyle = 'rgba(120,200,240,0.5)';
   c.beginPath();
   if (c.ellipse) c.ellipse(x, y + s * 0.08, s * 0.7, s * 0.1, 0, 0, Math.PI * 2);

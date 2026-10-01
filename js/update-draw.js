@@ -489,9 +489,12 @@ function drawGate(c, gate) {
   if (gx < -gw * 3 || gx > viewW + gw * 3) return;
   var baseY = groundTop + viewH * 0.02;
   var pw = viewH * 0.035;
-  var i;
+  var lw = Math.max(1.2, pw * 0.1);
+  var pillar = '#dcc3ee', cap = '#efe4fb', lineC = '#8a62b8';
+  var i, px, a, jx, jy, lit;
 
-  // Hohtava "verho" suljetussa portissa
+  artShadow(c, gx, baseY + pw * 0.2, gw * 1.35, pw * 0.5, 0.14);
+  // Hohtava "verho" suljetussa portissa, kimalteita nousemassa
   if (!gate.opened) {
     var shimmer = 0.30 + Math.sin(globalT * 2.5) * 0.10;
     var cg = c.createLinearGradient(0, baseY - gh, 0, baseY);
@@ -499,41 +502,36 @@ function drawGate(c, gate) {
     cg.addColorStop(1, 'rgba(255,180,240,' + (shimmer * 0.6) + ')');
     c.fillStyle = cg;
     c.fillRect(gx - gw + pw / 2, baseY - gh, (gw - pw / 2) * 2, gh);
+    c.fillStyle = 'rgba(255,255,255,0.75)';
+    for (i = 0; i < 5; i++) {
+      c.beginPath();
+      c.arc(gx + Math.sin(globalT * 1.1 + i * 2.3) * gw * 0.62, baseY - ((globalT * 0.1 + i * 0.2) % 1) * gh, pw * 0.08, 0, Math.PI * 2);
+      c.fill();
+    }
   }
-
-  // Pilarit
+  // Pilarit: kaksi sävyä, reunaviiva, kapiteelit
   for (i = -1; i <= 1; i += 2) {
-    var px = gx + i * gw;
-    var pg = c.createLinearGradient(px - pw / 2, 0, px + pw / 2, 0);
-    pg.addColorStop(0, '#cba3ee');
-    pg.addColorStop(0.5, '#f0e0fb');
-    pg.addColorStop(1, '#a97fd0');
-    c.fillStyle = pg;
-    c.fillRect(px - pw / 2, baseY - gh, pw, gh);
-    c.fillStyle = '#e8d5f2';
-    c.fillRect(px - pw * 0.8, baseY - gh - pw * 0.6, pw * 1.6, pw * 0.6);
-    c.fillRect(px - pw * 0.8, baseY - pw * 0.4, pw * 1.6, pw * 0.4);
+    px = gx + i * gw;
+    artRoundRect(c, px - pw / 2, baseY - gh, pw, gh, pw * 0.18, pillar, { lineColor: lineC, line: lw });
+    artRoundRect(c, px - pw * 0.8, baseY - gh - pw * 0.6, pw * 1.6, pw * 0.65, pw * 0.15, cap, { lineColor: lineC, line: lw });
+    artRoundRect(c, px - pw * 0.8, baseY - pw * 0.4, pw * 1.6, pw * 0.5, pw * 0.12, cap, { lineColor: lineC, line: lw });
   }
-
-  // Kaari
-  c.strokeStyle = '#e8d5f2';
+  // Kaari: reunaviiva ja vaalea sisus
+  c.lineCap = 'butt';
+  c.strokeStyle = lineC;
+  c.lineWidth = pw * 0.8 + lw * 2;
+  c.beginPath(); c.arc(gx, baseY - gh, gw, Math.PI, 0); c.stroke();
+  c.strokeStyle = cap;
   c.lineWidth = pw * 0.8;
-  c.beginPath();
-  c.arc(gx, baseY - gh, gw, Math.PI, 0);
-  c.stroke();
-
+  c.beginPath(); c.arc(gx, baseY - gh, gw, Math.PI, 0); c.stroke();
   // Kaaren jalokivet loitsuväreissä
   for (i = 0; i < gate.orbs; i++) {
-    var a = Math.PI + Math.PI * (i + 1) / (gate.orbs + 1);
-    var jx = gx + Math.cos(a) * gw;
-    var jy = baseY - gh + Math.sin(a) * gw;
-    var lit = gate.opened || (activeGate === gate && spellActive() && gate.litOrb === i);
-    c.fillStyle = ORB_COLORS[i];
-    c.globalAlpha = lit ? 1 : 0.75;
-    c.beginPath();
-    c.arc(jx, jy, pw * (lit ? 0.55 : 0.4), 0, Math.PI * 2);
-    c.fill();
-    c.globalAlpha = 1;
+    a = Math.PI + Math.PI * (i + 1) / (gate.orbs + 1);
+    jx = gx + Math.cos(a) * gw;
+    jy = baseY - gh + Math.sin(a) * gw;
+    lit = gate.opened || (activeGate === gate && spellActive() && gate.litOrb === i);
+    if (lit) artGlow(c, jx, jy, pw * 1.1, ORB_COLORS[i], 0.5);
+    artCircle(c, jx, jy, pw * (lit ? 0.55 : 0.42), ORB_COLORS[i], { lineColor: artShade(ORB_COLORS[i], -0.45), hi: 0.45, alpha: lit ? 1 : 0.85 });
   }
 }
 
@@ -610,9 +608,15 @@ function drawTaskArch(c, task) {
   if (gx < -gw * 3 || gx > viewW + gw * 3) return;
   var baseY = groundTop + viewH * 0.02;
   var pw = viewH * 0.035;
+  var lw = Math.max(1.2, pw * 0.1);
   var style = taskArchStyle(task.type);
   var veil = style.veil;
   var pillar = style.pillar;
+  var lineC = artShade(pillar, -0.5);
+  var cap = '#fff6d8';
+  var i, px, topY = baseY - gh - gw;
+
+  artShadow(c, gx, baseY + pw * 0.2, gw * 1.35, pw * 0.5, 0.14);
   if (!task.opened) {
     var shimmer = 0.32 + Math.sin(globalT * 2.5) * 0.10;
     var cg = c.createLinearGradient(0, baseY - gh, 0, baseY);
@@ -620,20 +624,30 @@ function drawTaskArch(c, task) {
     cg.addColorStop(1, 'rgba(' + veil + ',' + (shimmer * 0.45) + ')');
     c.fillStyle = cg;
     c.fillRect(gx - gw + pw / 2, baseY - gh, (gw - pw / 2) * 2, gh);
+    // Kimalteita verhossa
+    c.fillStyle = 'rgba(255,255,255,0.75)';
+    for (i = 0; i < 5; i++) {
+      c.beginPath();
+      c.arc(gx + Math.sin(globalT * 1.1 + i * 2.3) * gw * 0.62, baseY - ((globalT * 0.1 + i * 0.2) % 1) * gh, pw * 0.08, 0, Math.PI * 2);
+      c.fill();
+    }
   }
-  var i;
   for (i = -1; i <= 1; i += 2) {
-    var px = gx + i * gw;
-    c.fillStyle = pillar;
-    c.fillRect(px - pw / 2, baseY - gh, pw, gh);
-    c.fillStyle = '#fff6d8';
-    c.fillRect(px - pw * 0.8, baseY - gh - pw * 0.5, pw * 1.6, pw * 0.5);
+    px = gx + i * gw;
+    artRoundRect(c, px - pw / 2, baseY - gh, pw, gh, pw * 0.18, pillar, { lineColor: lineC, line: lw });
+    artRoundRect(c, px - pw * 0.8, baseY - gh - pw * 0.5, pw * 1.6, pw * 0.55, pw * 0.15, cap, { lineColor: lineC, line: lw });
+    artRoundRect(c, px - pw * 0.8, baseY - pw * 0.4, pw * 1.6, pw * 0.5, pw * 0.12, cap, { lineColor: lineC, line: lw });
   }
-  c.strokeStyle = '#fff6d8';
+  c.lineCap = 'butt';
+  c.strokeStyle = lineC;
+  c.lineWidth = pw * 0.8 + lw * 2;
+  c.beginPath(); c.arc(gx, baseY - gh, gw, Math.PI, 0); c.stroke();
+  c.strokeStyle = cap;
   c.lineWidth = pw * 0.8;
-  c.beginPath();
-  c.arc(gx, baseY - gh, gw, Math.PI, 0);
-  c.stroke();
+  c.beginPath(); c.arc(gx, baseY - gh, gw, Math.PI, 0); c.stroke();
+  // Lakikivi tehtävän värissä: hehkuu, kunnes tehtävä on ratkaistu
+  if (!task.opened) artGlow(c, gx, topY, pw * 1.3, pillar, 0.35 + Math.sin(globalT * 3) * 0.15);
+  artCircle(c, gx, topY, pw * 0.45, pillar, { lineColor: lineC, hi: 0.45 });
 }
 
 function drawTaskOverlay(c) {
@@ -656,23 +670,21 @@ function drawStormCloud(c, cl) {
   var s = viewH * 0.035;
   if (x < -s * 6 || x > viewW + s * 6) return;
   var warn = cl.warnT > 0;
-  c.fillStyle = warn ? '#5d6472' : '#7d8593';
-  cloudShape(c, x, y, s);
-  c.fillStyle = 'rgba(255,255,255,0.25)';
-  cloudShape(c, x - s * 0.4, y - s * 0.5, s * 0.55);
+  var col = warn ? '#5d6472' : '#7d8593';
+  artUnion(c, cloudPath, x, y, s, y - s * 1.4, y + s * 1.1, col, { lineColor: '#3a3f4c', shadeTo: artShade(col, -0.3) });
+  artHighlight(c, x - s * 0.5, y - s * 0.7, s * 0.6, s * 0.3, 0.22);
   // Silmät: vihainen ilme
-  c.fillStyle = '#2f3540';
-  c.beginPath(); c.arc(x - s * 0.5, y + s * 0.15, s * 0.14, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + s * 0.5, y + s * 0.15, s * 0.14, 0, Math.PI * 2); c.fill();
+  artEye(c, x - s * 0.5, y + s * 0.15, s * 0.2, 0, false);
+  artEye(c, x + s * 0.5, y + s * 0.15, s * 0.2, 0, false);
   c.strokeStyle = '#2f3540';
-  c.lineWidth = s * 0.12;
+  c.lineWidth = s * 0.14;
+  c.lineCap = 'round';
   c.beginPath();
-  c.moveTo(x - s * 0.85, y - s * 0.25); c.lineTo(x - s * 0.25, y - s * 0.05);
-  c.moveTo(x + s * 0.85, y - s * 0.25); c.lineTo(x + s * 0.25, y - s * 0.05);
+  c.moveTo(x - s * 0.85, y - s * 0.3); c.lineTo(x - s * 0.25, y - s * 0.05);
+  c.moveTo(x + s * 0.85, y - s * 0.3); c.lineTo(x + s * 0.25, y - s * 0.05);
   c.stroke();
   // Varoitussalama ennen pisaraa
   if (warn && Math.sin(globalT * 25) > -0.2) {
-    c.fillStyle = '#ffe94f';
     c.beginPath();
     c.moveTo(x, y + s * 1.1);
     c.lineTo(x - s * 0.35, y + s * 1.9);
@@ -682,7 +694,7 @@ function drawStormCloud(c, cl) {
     c.lineTo(x + s * 0.05, y + s * 1.7);
     c.lineTo(x + s * 0.35, y + s * 1.1);
     c.closePath();
-    c.fill();
+    artFillPath(c, '#ffe94f', y + s * 1.1, y + s * 2.6, s * 0.5, { lineColor: '#d9a000' });
   }
 }
 
@@ -690,15 +702,14 @@ function drawDrop(c, dr) {
   var x = dr.x - camX;
   if (x < -20 || x > viewW + 20) return;
   var s = viewH * 0.014;
-  c.fillStyle = '#5aa9ff';
   c.beginPath();
   c.moveTo(x, dr.y - s * 1.6);
   c.quadraticCurveTo(x + s, dr.y - s * 0.3, x + s * 0.8, dr.y + s * 0.3);
   c.arc(x, dr.y + s * 0.3, s * 0.8, 0, Math.PI);
   c.quadraticCurveTo(x - s, dr.y - s * 0.3, x, dr.y - s * 1.6);
-  c.fill();
-  c.fillStyle = '#ffe94f';
-  c.beginPath(); c.arc(x, dr.y, s * 0.35, 0, Math.PI * 2); c.fill();
+  c.closePath();
+  artFillPath(c, '#5aa9ff', dr.y - s * 1.6, dr.y + s * 1.1, s, { lineColor: '#2a6fc0' });
+  artCircle(c, x, dr.y, s * 0.35, '#ffe94f', { line: false });
 }
 
 function drawTroll(c) {
@@ -707,64 +718,39 @@ function drawTroll(c) {
   if (x < -s * 4 || x > viewW + s * 4) return;
   var y = groundTop + viewH * 0.06;
   var hop = Math.abs(Math.sin(troll.bounceT)) * s * 0.35;
+  var body = '#7fa862', belly = '#c6dba9', line = '#3d5c33';
+  artShadow(c, x, y + s * 0.15, s * 1.3, s * 0.3, 0.18 * (1 - hop / s));
   c.save();
   c.translate(x, y - hop);
   c.scale(troll.dir, 1);
   // Jalat
-  c.fillStyle = '#5e8c4a';
-  c.beginPath(); c.arc(-s * 0.45, 0, s * 0.28, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(s * 0.45, 0, s * 0.28, 0, Math.PI * 2); c.fill();
-  // Vartalo
-  var bg2 = c.createRadialGradient(0, -s * 0.9, s * 0.2, 0, -s * 0.9, s * 1.3);
-  bg2.addColorStop(0, '#8fb56f');
-  bg2.addColorStop(1, '#6a9552');
-  c.fillStyle = bg2;
-  c.beginPath();
-  c.ellipse ? c.ellipse(0, -s * 0.9, s * 0.95, s * 1.05, 0, 0, Math.PI * 2)
-            : c.arc(0, -s * 0.9, s, 0, Math.PI * 2);
-  c.fill();
-  // Maha
-  c.fillStyle = '#c6dba9';
-  c.beginPath();
-  c.ellipse ? c.ellipse(0, -s * 0.65, s * 0.5, s * 0.6, 0, 0, Math.PI * 2)
-            : c.arc(0, -s * 0.65, s * 0.5, 0, Math.PI * 2);
-  c.fill();
-  // Kädet
-  c.strokeStyle = '#6a9552';
-  c.lineWidth = s * 0.35;
-  c.lineCap = 'round';
-  c.beginPath();
-  c.moveTo(-s * 0.8, -s * 1.1);
-  c.lineTo(-s * 1.25, -s * 0.45 + Math.sin(troll.bounceT) * s * 0.2);
-  c.moveTo(s * 0.8, -s * 1.1);
-  c.lineTo(s * 1.25, -s * 0.45 - Math.sin(troll.bounceT) * s * 0.2);
-  c.stroke();
-  // Korvat, tukka
-  c.fillStyle = '#6a9552';
-  c.beginPath(); c.arc(-s * 0.85, -s * 1.75, s * 0.2, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(s * 0.85, -s * 1.75, s * 0.2, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#4c7440';
+  artCircle(c, -s * 0.45, 0, s * 0.28, '#5e8c4a', { lineColor: line });
+  artCircle(c, s * 0.45, 0, s * 0.28, '#5e8c4a', { lineColor: line });
+  // Kädet vartalon takana
+  artLimb(c, -s * 0.8, -s * 1.1, -s * 1.25, -s * 0.45 + Math.sin(troll.bounceT) * s * 0.2, s * 0.35, body, line);
+  artLimb(c, s * 0.8, -s * 1.1, s * 1.25, -s * 0.45 - Math.sin(troll.bounceT) * s * 0.2, s * 0.35, body, line);
+  // Vartalo ja maha
+  artBlob(c, 0, -s * 0.9, s * 0.95, s * 1.05, body, { lineColor: line, hi: 0.25 });
+  artBlob(c, 0, -s * 0.65, s * 0.5, s * 0.6, belly, { line: false });
+  // Korvat ja tukka
+  artCircle(c, -s * 0.85, -s * 1.75, s * 0.2, body, { lineColor: line });
+  artCircle(c, s * 0.85, -s * 1.75, s * 0.2, body, { lineColor: line });
+  c.strokeStyle = line;
   c.lineWidth = s * 0.1;
+  c.lineCap = 'round';
   c.beginPath();
   c.moveTo(-s * 0.2, -s * 2.15); c.lineTo(-s * 0.3, -s * 2.5);
   c.moveTo(0, -s * 2.2); c.lineTo(0, -s * 2.6);
   c.moveTo(s * 0.2, -s * 2.15); c.lineTo(s * 0.3, -s * 2.5);
   c.stroke();
-  // Nenä
-  c.fillStyle = '#a4c583';
-  c.beginPath(); c.arc(s * 0.45, -s * 1.55, s * 0.28, 0, Math.PI * 2); c.fill();
-  // Silmät ja kulmakarvat
-  c.fillStyle = '#ffffff';
-  c.beginPath(); c.arc(s * 0.15, -s * 1.75, s * 0.2, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#333';
-  c.beginPath(); c.arc(s * 0.22, -s * 1.73, s * 0.09, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#3d5c33';
+  // Nenä, silmä (räpäyttää), kulmakarva ja suu
+  artCircle(c, s * 0.45, -s * 1.55, s * 0.28, '#a4c583', { lineColor: line });
+  artEye(c, s * 0.15, -s * 1.75, s * 0.2, 0.4, ((globalT + 0.7) % 3.3) < 0.14);
+  c.strokeStyle = line;
   c.lineWidth = s * 0.12;
   c.beginPath();
   c.moveTo(-s * 0.05, -s * 2.0); c.lineTo(s * 0.35, -s * 1.93);
   c.stroke();
-  // Suu
-  c.strokeStyle = '#3d5c33';
   c.lineWidth = s * 0.1;
   c.beginPath();
   c.arc(s * 0.3, -s * 1.2, s * 0.22, Math.PI * 1.1, Math.PI * 1.9);

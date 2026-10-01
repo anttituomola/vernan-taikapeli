@@ -152,6 +152,22 @@ function artBlush(c, x, y, r) {
   c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
 }
 
+// Ääriviiva ympyräryhmälle (pilvi, pensas, pöly): sama muoto piirretään ensin
+// tummana hieman suurempana ja sitten päälle liukuvärillä. Tarvitaan, koska
+// yhdistetyn polun stroke piirtäisi myös sisäiset kaaret. pathFn(c, x, y, s)
+// rakentaa polun (ilman täyttöä).
+function artUnion(c, pathFn, x, y, s, y0, y1, color, opts) {
+  opts = opts || {};
+  var lw = typeof opts.line === 'number' ? opts.line : Math.max(ART.lineMin, s * ART.lineW);
+  if (opts.line !== false) {
+    c.fillStyle = opts.lineColor || artShade(color, -ART.lineDark);
+    pathFn(c, x, y, s + lw);
+    c.fill();
+  }
+  pathFn(c, x, y, s);
+  artFillPath(c, color, y0, y1, s, { line: false, flat: opts.flat, shadeTo: opts.shadeTo, alpha: opts.alpha });
+}
+
 // ---------- Liike: pehmennykset ----------
 function easeOutCubic(t) { t = Math.min(1, Math.max(0, t)); return 1 - Math.pow(1 - t, 3); }
 function easeInOutSine(t) { t = Math.min(1, Math.max(0, t)); return -(Math.cos(Math.PI * t) - 1) / 2; }

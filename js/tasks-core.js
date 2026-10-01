@@ -270,11 +270,10 @@ function drawTaskOrbs(c, t, shake, op, contentFn) {
       c.fillStyle = glow;
       c.beginPath(); c.arc(x, y, r * 2, 0, Math.PI * 2); c.fill();
     }
-    c.fillStyle = '#fff';
-    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = TASK_BF_COLORS[i % TASK_BF_COLORS.length];
-    c.lineWidth = viewH * 0.008;
-    c.stroke();
+    artShadow(c, x, y + r * 1.15, r * 1.05, r * 0.28, 0.28);
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2);
+    artFillPath(c, '#ffffff', y - r, y + r, r, { shadeTo: '#ece4f8', lineColor: TASK_BF_COLORS[i % TASK_BF_COLORS.length], line: viewH * 0.008 });
+    artHighlight(c, x - r * 0.4, y - r * 0.45, r * 0.26, r * 0.15, 0.5);
     if (contentFn) contentFn(c, t, i, x, y, r);
     else drawButterfly(c, x, y, r * 0.42, globalT + i, TASK_BF_COLORS[i % TASK_BF_COLORS.length]);
   }

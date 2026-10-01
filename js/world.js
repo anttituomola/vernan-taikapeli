@@ -474,12 +474,15 @@ function drawGardenLantern(b, x, y, s) {
   artHighlight(b, x - s * 0.08, y + s * 0.05, s * 0.12, s * 0.16, 0.4);
 }
 
-function cloudShape(b, x, y, s) {
+function cloudPath(b, x, y, s) {
   b.beginPath();
   b.arc(x, y, s * 1.2, 0, Math.PI * 2);
   b.arc(x + s * 1.4, y + s * 0.2, s * 0.9, 0, Math.PI * 2);
   b.arc(x - s * 1.4, y + s * 0.25, s * 0.85, 0, Math.PI * 2);
   b.arc(x + s * 0.5, y - s * 0.6, s * 0.8, 0, Math.PI * 2);
+}
+function cloudShape(b, x, y, s) {
+  cloudPath(b, x, y, s);
   b.fill();
 }
 // Pilvi kevyellä reunaviivalla

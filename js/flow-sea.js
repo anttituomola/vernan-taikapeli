@@ -136,6 +136,7 @@ function handleSeaTap(px, py) {
       dy = py - p.y;
       if (dx * dx + dy * dy <= p.r * p.r * 1.8) { seaToastShow(p); return; }
     }
+    seaFxTap(px, py);
     return;
   }
   if (!islandUnlocked(idx)) {
@@ -154,6 +155,7 @@ function handleSeaTap(px, py) {
 
 function updateSea(dt) {
   globalT += dt;
+  seaFxUpdate(dt);
   if (seaToast.t > 0) seaToast.t -= dt;
   if (seaReveal) {
     seaReveal.t += dt;
@@ -211,6 +213,8 @@ function drawSea() {
   ctx.drawImage(seaBgCanvas, 0, 0, seaBgCanvas.width, seaBgCanvas.height, 0, 0, viewW, viewH);
   drawSeaWaves(ctx);
   drawSeaRainbow(ctx);
+  drawSeaRainbowTouch(ctx);
+  drawMapSun(ctx);
 
   var i, p, isl, nx = seaNextIsland(), left;
   for (i = 0; i < ISLANDS.length; i++) {
@@ -239,6 +243,7 @@ function drawSea() {
   }
 
   drawSeaExit(ctx);
+  drawSeaFx(ctx);
 
   // Vene ja ratsastajat
   var bob = Math.sin(globalT * 2.5) * viewH * 0.005;
@@ -258,6 +263,183 @@ function drawSea() {
     drawHubLock(ctx, tx + tw / 2, ty + th * 0.55, th * 0.7);
     ctx.globalAlpha = 1;
   }
+}
+
+// ---------- Pienet yllätykset kartoilla ----------
+// Aurinko hymyilee ja räpäyttää napautuksesta (sama kaikilla kartoilla),
+// sateenkaari soi väri kerrallaan, meressä hyppii kala (joka seitsemäs
+// napautus nostaa valaan) ja pilvestä tulee pieni sadekuuro.
+var mapSun = { t0: -10, x: 0, y: 0, r: 0 };
+var seaFx = { rainbow: -1, fish: [], whale: null, rain: null, taps: 0 };
+var SEA_RAINBOW_NOTES = [523, 587, 659, 698, 784, 880, 988];
+var SEA_CLOUDS = [[0.3, 0.2, 0.024], [0.78, 0.15, 0.03], [0.93, 0.27, 0.022]];
+
+function seaSunPos() { return { x: viewW * 0.12, y: viewH * 0.17, r: viewH * 0.05 }; }
+function seaRainbowGeom() { return { cx: viewW * 0.5, cy: viewH * 0.40, bw: viewH * 0.021, R0: viewH * 0.27 }; }
+
+function mapSunTap(px, py, x, y, r) {
+  if (Math.hypot(px - x, py - y) > r * 2.2) return false;
+  mapSun.t0 = globalT;
+  mapSun.x = x; mapSun.y = y; mapSun.r = r;
+  playNote(1047, 0, 0.12, 'sine', 0.3);
+  playNote(1319, 0.1, 0.18, 'sine', 0.3);
+  return true;
+}
+function drawMapSun(c) {
+  var k = (globalT - mapSun.t0) / 1.4, s = mapSun, i, a, fade;
+  if (k < 0 || k > 1) return;
+  fade = Math.sin(k * Math.PI);
+  // Säteet pyörähtävät
+  c.strokeStyle = 'rgba(255,230,120,' + (0.9 * fade) + ')';
+  c.lineWidth = Math.max(2, s.r * 0.12);
+  c.lineCap = 'round';
+  for (i = 0; i < 8; i++) {
+    a = i * Math.PI / 4 + k * 1.2;
+    c.beginPath();
+    c.moveTo(s.x + Math.cos(a) * s.r * 1.3, s.y + Math.sin(a) * s.r * 1.3);
+    c.lineTo(s.x + Math.cos(a) * s.r * (1.7 + k * 0.8), s.y + Math.sin(a) * s.r * (1.7 + k * 0.8));
+    c.stroke();
+  }
+  // Kasvot häivähtävät esiin: toinen silmä räpäyttää
+  c.globalAlpha = Math.min(1, fade * 1.6);
+  artEye(c, s.x - s.r * 0.3, s.y - s.r * 0.1, s.r * 0.12, 0, false);
+  artEye(c, s.x + s.r * 0.3, s.y - s.r * 0.1, s.r * 0.12, 0, k > 0.3 && k < 0.5);
+  artBlush(c, s.x - s.r * 0.5, s.y + s.r * 0.15, s.r * 0.12);
+  artBlush(c, s.x + s.r * 0.5, s.y + s.r * 0.15, s.r * 0.12);
+  c.strokeStyle = '#c8901e';
+  c.lineWidth = Math.max(1.5, s.r * 0.08);
+  c.beginPath(); c.arc(s.x, s.y + s.r * 0.1, s.r * 0.35, 0.2, Math.PI - 0.2); c.stroke();
+  c.globalAlpha = 1;
+}
+
+function seaFxTap(px, py) {
+  var s = seaSunPos(), g = seaRainbowGeom(), i, d, cx, cy, horizon = viewH * 0.36;
+  if (mapSunTap(px, py, s.x, s.y, s.r)) return true;
+  // Sateenkaari: etäisyys keskipisteestä osuu kaistoille
+  d = Math.hypot(px - g.cx, py - g.cy);
+  if (py < g.cy && d > g.R0 - g.bw * 7.5 && d < g.R0 + g.bw) {
+    if (seaFx.rainbow < 0) {
+      seaFx.rainbow = 0;
+      for (i = 0; i < SEA_RAINBOW_NOTES.length; i++) playNote(SEA_RAINBOW_NOTES[i], i * 0.14, 0.3, 'triangle', 0.3);
+    }
+    return true;
+  }
+  for (i = 0; i < SEA_CLOUDS.length; i++) {
+    cx = viewW * SEA_CLOUDS[i][0];
+    cy = viewH * SEA_CLOUDS[i][1];
+    if (Math.hypot(px - cx, py - cy) < viewH * SEA_CLOUDS[i][2] * 3) {
+      seaFx.rain = { x: cx, y: cy + viewH * SEA_CLOUDS[i][2] * 1.2, t: 0 };
+      playNote(392, 0, 0.1, 'sine', 0.2);
+      playNote(330, 0.1, 0.12, 'sine', 0.2);
+      return true;
+    }
+  }
+  if (py > horizon + viewH * 0.03) {
+    seaFx.taps++;
+    if (seaFx.taps % 7 === 0 && !seaFx.whale) {
+      seaFx.whale = { x: px, y: py, t: 0 };
+      playNote(110, 0, 0.6, 'sine', 0.35);
+      playNote(165, 0.3, 0.6, 'sine', 0.25);
+    } else {
+      if (seaFx.fish.length > 4) seaFx.fish.shift();
+      seaFx.fish.push({ x: px, y: py, t: 0, dir: Math.random() < 0.5 ? -1 : 1, c: Math.floor(Math.random() * 3) });
+      playNote(880, 0, 0.08, 'sine', 0.2);
+      playNote(1175, 0.06, 0.1, 'sine', 0.15);
+    }
+    return true;
+  }
+  return false;
+}
+function seaFxUpdate(dt) {
+  var i;
+  if (seaFx.rainbow >= 0) { seaFx.rainbow += dt; if (seaFx.rainbow > 1.6) seaFx.rainbow = -1; }
+  if (seaFx.rain) { seaFx.rain.t += dt; if (seaFx.rain.t > 1.4) seaFx.rain = null; }
+  if (seaFx.whale) { seaFx.whale.t += dt; if (seaFx.whale.t > 3.2) seaFx.whale = null; }
+  for (i = seaFx.fish.length - 1; i >= 0; i--) {
+    seaFx.fish[i].t += dt;
+    if (seaFx.fish[i].t > 1.0) seaFx.fish.splice(i, 1);
+  }
+}
+// Pieni kala (myös Kaukamaan joessa)
+function drawMapFish(c, x, y, s, dir, color, tilt) {
+  c.save();
+  c.translate(x, y);
+  c.scale(dir, 1);
+  c.rotate(tilt);
+  c.beginPath(); c.moveTo(-s * 0.7, 0); c.lineTo(-s * 1.5, -s * 0.55); c.lineTo(-s * 1.5, s * 0.55); c.closePath();
+  artFillPath(c, color, -s * 0.55, s * 0.55, s * 0.4, { lineColor: artShade(color, -0.45) });
+  artBlob(c, 0, 0, s, s * 0.55, color, { lineColor: artShade(color, -0.45), hi: 0.35 });
+  artEye(c, s * 0.45, -s * 0.1, s * 0.14, 0.3, false);
+  c.restore();
+}
+// Kalan hyppy kaaressa pisteestä (x, y) suuntaan dir; k 0..1
+function drawMapFishJump(c, x, y, k, dir, color) {
+  var h = viewH, fx = x + dir * k * h * 0.12, fy = y - Math.sin(k * Math.PI) * h * 0.1;
+  if (k < 0.12 || k > 0.88) {
+    c.fillStyle = 'rgba(255,255,255,0.7)';
+    c.beginPath();
+    c.arc(k < 0.5 ? x : x + dir * h * 0.12, y, h * 0.015 * (k < 0.5 ? k / 0.12 : (1 - k) / 0.12), 0, Math.PI * 2);
+    c.fill();
+  }
+  drawMapFish(c, fx, fy, h * 0.016, dir, color, -(k - 0.5) * 2.2);
+}
+function drawSeaFx(c) {
+  var i, f, k, fx, fy, w, h = viewH, cols = ['#ff9d5c', '#7fd4ff', '#ffd24f'];
+  for (i = 0; i < seaFx.fish.length; i++) {
+    f = seaFx.fish[i];
+    drawMapFishJump(c, f.x, f.y, f.t / 1.0, f.dir, cols[f.c]);
+  }
+  if (seaFx.whale) {
+    w = seaFx.whale;
+    k = w.t / 3.2;
+    var rise = Math.sin(Math.min(1, k * 1.25) * Math.PI);
+    var wy = w.y + h * 0.05 - rise * h * 0.06, ws = h * 0.07;
+    c.save();
+    c.beginPath(); c.rect(0, 0, viewW, w.y + h * 0.012); c.clip();   // pinnan alapuoli jää veteen
+    artBlob(c, w.x, wy, ws * 1.6, ws * 0.7, '#5a7aa8', { lineColor: '#2f4a70', shadeTo: '#3f5c88', hi: 0.25 });
+    artBlob(c, w.x + ws * 1.7, wy - ws * 0.15, ws * 0.5, ws * 0.3, '#5a7aa8', { lineColor: '#2f4a70', rot: -0.4 });
+    artEye(c, w.x - ws * 0.9, wy - ws * 0.15, ws * 0.1, -0.3, false);
+    c.restore();
+    if (rise > 0.9) {
+      c.strokeStyle = 'rgba(255,255,255,0.8)';
+      c.lineWidth = Math.max(2, h * 0.005);
+      c.lineCap = 'round';
+      for (i = -1; i <= 1; i++) {
+        c.beginPath();
+        c.moveTo(w.x - ws * 0.3, wy - ws * 0.6);
+        c.quadraticCurveTo(w.x - ws * 0.3 + i * ws * 0.4, wy - ws * 1.4, w.x - ws * 0.3 + i * ws * 0.7, wy - ws * 1.1);
+        c.stroke();
+      }
+    }
+    c.strokeStyle = 'rgba(255,255,255,0.6)';
+    c.lineWidth = Math.max(1.5, h * 0.004);
+    c.beginPath();
+    if (c.ellipse) c.ellipse(w.x + ws * 0.3, w.y + h * 0.012, ws * 2.2 * (0.6 + rise * 0.4), ws * 0.25, 0, 0, Math.PI * 2);
+    c.stroke();
+  }
+  if (seaFx.rain) {
+    var r = seaFx.rain;
+    c.fillStyle = 'rgba(120,190,255,0.85)';
+    for (i = 0; i < 6; i++) {
+      k = r.t * 1.2 + i * 0.17;
+      if (k > 1.2) continue;
+      fx = r.x + (i - 2.5) * h * 0.012;
+      fy = r.y + (k % 1) * h * 0.1;
+      c.beginPath(); c.arc(fx, fy, h * 0.004, 0, Math.PI * 2); c.fill();
+    }
+  }
+}
+function drawSeaRainbowTouch(c) {
+  if (seaFx.rainbow < 0) return;
+  var g = seaRainbowGeom(), i, a, r, k = seaFx.rainbow / 1.6, n = RAINBOW_COLORS.length;
+  for (i = 0; i < n; i++) {
+    r = g.R0 - i * g.bw - g.bw / 2;
+    a = Math.PI + Math.min(1, Math.max(0, k * 1.3 - i * 0.07)) * Math.PI;
+    if (a <= Math.PI) continue;
+    c.globalAlpha = 1 - k;
+    drawStar(c, g.cx + Math.cos(a) * r, g.cy + Math.sin(a) * r, g.bw * 0.9, globalT * 4 + i, 0.8);
+  }
+  c.globalAlpha = 1;
 }
 
 function drawSeaWaves(c) {
@@ -328,14 +510,13 @@ function drawRevealSparkles(c) {
 }
 
 function drawHull(c, x, y, s) {
-  c.fillStyle = '#8a5a30';
   c.beginPath();
   c.moveTo(x - s * 0.5, y);
   c.quadraticCurveTo(x, y + s * 0.45, x + s * 0.5, y);
   c.lineTo(x + s * 0.42, y - s * 0.12);
   c.lineTo(x - s * 0.42, y - s * 0.12);
   c.closePath();
-  c.fill();
+  artFillPath(c, '#a9743f', y - s * 0.12, y + s * 0.4, s * 0.25, { lineColor: '#5a3a1e' });
 }
 
 function drawBoatWithRider(c, x, y, s, facing, moving) {
@@ -382,12 +563,24 @@ function drawIsland(b, isl, foggy) {
   b.fillStyle = foggy ? 'rgba(200,220,235,0.35)' : 'rgba(190,240,255,0.6)';
   islandBlob(b, p.x, p.y, p.r * 1.3);
   b.fill();
+  // Tarrakirja-ääriviiva: sama muoto tummana hieman suurempana alle
+  b.fillStyle = foggy ? '#95a4b8' : '#c8a35e';
+  islandBlob(b, p.x, p.y, p.r * 1.05);
+  b.fill();
   b.fillStyle = foggy ? '#b9c6d6' : '#f2dfa6';
   islandBlob(b, p.x, p.y, p.r);
+  b.fill();
+  b.fillStyle = foggy ? '#8f9fb3' : '#4f9a40';
+  islandBlob(b, p.x, p.y - p.r * 0.12, p.r * 0.8);
   b.fill();
   b.fillStyle = foggy ? '#a7b6c8' : '#7fcf68';
   islandBlob(b, p.x, p.y - p.r * 0.12, p.r * 0.76);
   b.fill();
+  if (!foggy) {
+    b.fillStyle = 'rgba(255,255,255,0.22)';
+    islandBlob(b, p.x - p.r * 0.1, p.y - p.r * 0.3, p.r * 0.36);
+    b.fill();
+  }
   if (foggy) {
     b.fillStyle = 'rgba(240,246,255,0.55)';
     for (i = 0; i < 5; i++) {
