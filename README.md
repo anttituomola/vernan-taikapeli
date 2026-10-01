@@ -1215,7 +1215,7 @@ avautuu 3. tai 5. tökkäyksellä tai harvoin itsestään):
 Lauta- ja pulmakentissä (Pupupolku, Loitsupolku, Kuunsäde, Värisäde, Aarrevarpu,
 Hiekkapyörre, Myyräkuningas, Vesikouru, Yhteispolku) ei ole erillisiä koristeita:
 kaikki ruudulla näkyvä on pelielementti, joka reagoi jo napautukseen tai raahaukseen.
-Niissä tunnelmahiukkaset ja taustan aurinko tai kuu reagoivat silti.
+Niissä tunnelmahiukkaset (perhoset, hiekka, pöly, kimallus) reagoivat silti.
 
 ## Tekniikka
 
