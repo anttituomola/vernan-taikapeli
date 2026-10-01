@@ -16,6 +16,10 @@ var cstarDefs = [
   { fx: 0.735, fy: 0.42 }, { fx: 0.90, fy: 0.30 }
 ];
 var PUFF_STAND = 0.7, PUFF_BACK = 2.5;
+var CLOUDS_RAINBOW = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'];
+var cloudsDecoDefs = [{ fx: 0.13, fy: 0.58 }, { fx: 0.46, fy: 0.62 }, { fx: 0.80, fy: 0.58 }]; // tökättävät koristepilvet
+var cloudsTapG = -1;       // viimeksi käsitellyn painalluksen aloitusaika (kentällä ei omaa tap-koukkua)
+var cloudsRainbow = null;  // yllätys: koristepilvi sataa sateenkaaren (5. tökkäys)
 
 function layoutClouds() {
   var g = groundTop, i, seg;
@@ -39,6 +43,7 @@ function layoutClouds() {
   ];
   for (i = 0; i < cloudPuffs.length; i++) platforms.push(cloudPuffs[i]);
   rainbowGate.x = rainbowGate.fx * worldW;
+  cloudsProps();
 }
 
 function initClouds() {
@@ -52,10 +57,12 @@ function initClouds() {
     cloudStars.push({ ax: cstarDefs[i].fx * worldW, ay: groundTop - cstarDefs[i].fy * viewH, collected: false, phase: Math.random() * Math.PI * 2 });
   }
   stormlets = [
-    { zA: 0.21, zB: 0.37, x: 0.29 * worldW, dir: 1, t: 0 },
-    { zA: 0.63, zB: 0.80, x: 0.72 * worldW, dir: -1, t: 1 }
+    { zA: 0.21, zB: 0.37, x: 0.29 * worldW, dir: 1, t: 0, pokeT: 0 },
+    { zA: 0.63, zB: 0.80, x: 0.72 * worldW, dir: -1, t: 1, pokeT: 0 }
   ];
   rainbowGate.open = false;
+  cloudsTapG = -1;
+  cloudsRainbow = null;
   resetPrincess(viewW * 0.08, groundTop);
   checkpoint.x = princess.x;
   checkpoint.y = groundTop;
@@ -113,10 +120,33 @@ function cloudsFell() {
   if (hearts <= heartsBefore && hearts > 0) respawnCloudsPitEdge();
 }
 
+// Tökkäys (pelkkä koriste, juoksu jatkuu sormen mukana): myrskypallo tärisee
+// ja salama välähtää, muuten koristeet heilahtavat
+function cloudsPoke(wx, wy) {
+  var i, sm;
+  for (i = 0; i < stormlets.length; i++) {
+    sm = stormlets[i];
+    if (Math.hypot(wx - sm.x, wy - (groundTop - viewH * 0.035)) < viewH * 0.07) {
+      sm.pokeT = 0.8;
+      playNote(110, 0, 0.3, 'sawtooth', 0.12);
+      playNote(1200, 0.05, 0.05, 'square', 0.06);
+      spawnSparkles(sm.x, groundTop - viewH * 0.05, 6, '#fff6a0');
+      return;
+    }
+  }
+  propsTap(wx, wy);
+}
+
 function updateClouds(dt) {
   var i, pw = viewH * 0.045;
   updateTasks(dt);
   var busy = puzzleBusy();
+
+  // Uusi painallus: kentällä ei ole omaa tap-koukkua, joten tökkäys luetaan pidon alusta
+  if (holding && holdStartG !== cloudsTapG) {
+    cloudsTapG = holdStartG;
+    if (!celebrating && !busy) cloudsPoke(holdSX + camX, holdSY);
+  }
 
   platformerStep(dt, {
     runSp: viewW * 0.22,
@@ -171,6 +201,7 @@ function updateClouds(dt) {
   for (i = 0; i < stormlets.length; i++) {
     var sm = stormlets[i];
     sm.t += dt;
+    if (sm.pokeT > 0) sm.pokeT -= dt;
     if (!busy && !celebrating) {
       sm.x += sm.dir * viewW * 0.07 * dt;
       if (sm.x < sm.zA * worldW) { sm.x = sm.zA * worldW; sm.dir = 1; }
@@ -188,6 +219,11 @@ function updateClouds(dt) {
     startCelebration();
   }
 
+  if (cloudsRainbow) {
+    cloudsRainbow.t += dt;
+    if (cloudsRainbow.t > 2.6) cloudsRainbow = null;
+  }
+  propsUpdate(dt);
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -232,61 +268,156 @@ function renderCloudsNear(b, w, h) {
   for (i = 0; i < cloudGround.length; i++) {
     seg = cloudGround[i];
     drawCloudBank(b, seg[0] * w, groundTop, (seg[1] - seg[0]) * w, h);
+    // Pieniä tupsuja penkan päällä (lähitason elämää)
+    drawPuff(b, seg[0] * w + (seg[1] - seg[0]) * w * 0.3, groundTop - h * 0.012, h * 0.05, h * 0.02, 1, false);
+    drawPuff(b, seg[0] * w + (seg[1] - seg[0]) * w * 0.72, groundTop - h * 0.01, h * 0.04, h * 0.016, 1, false);
   }
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'ledge' && !platforms[i].fade) drawPuff(b, platforms[i].x, platforms[i].y, platforms[i].w, h * 0.06, 1, false);
   }
-  drawRainbowGateFrame(b, rainbowGate.x, groundTop, h);
+  // Sateenkaariportti piirretään tökättävänä koristeena joka ruudulla (cloudsProps)
 }
 
-function drawCloudBank(b, x, y, w, h) {
-  var i, n = Math.max(2, Math.round(w / (h * 0.09)));
-  var g = b.createLinearGradient(0, y - h * 0.03, 0, h);
-  g.addColorStop(0, '#ffffff');
-  g.addColorStop(0.3, '#eef2ff');
-  g.addColorStop(1, '#b9c4ee');
-  b.fillStyle = g;
-  b.fillRect(x, y + h * 0.02, w, h - y);
+// Pilvipenkka: reunaviiva laventelinsävyisenä hieman suurempana saman muodon alla
+function cloudsBankPath(b, x, y, w, h, n, grow) {
+  var i, cx, r;
+  b.beginPath();
+  b.rect(x - grow, y + h * 0.02, w + grow * 2, h - y);
   for (i = 0; i <= n; i++) {
-    b.beginPath(); b.arc(x + (i / n) * w, y + h * 0.02, h * (0.04 + (i % 2) * 0.015), 0, Math.PI * 2); b.fill();
+    cx = x + (i / n) * w;
+    r = h * (0.04 + (i % 2) * 0.015) + grow;
+    b.moveTo(cx + r, y + h * 0.02);
+    b.arc(cx, y + h * 0.02, r, 0, Math.PI * 2);
   }
 }
-
-function drawPuff(b, x, y, w, hh, alpha, bouncy) {
-  b.globalAlpha = alpha;
-  b.fillStyle = bouncy ? '#ffb3d9' : '#ffffff';
-  b.beginPath();
-  b.arc(x + w * 0.25, y + hh * 0.3, hh * 0.55, 0, Math.PI * 2);
-  b.arc(x + w * 0.5, y + hh * 0.15, hh * 0.65, 0, Math.PI * 2);
-  b.arc(x + w * 0.75, y + hh * 0.3, hh * 0.55, 0, Math.PI * 2);
+function drawCloudBank(b, x, y, w, h) {
+  var n = Math.max(2, Math.round(w / (h * 0.09))), lw = Math.max(1.5, h * 0.004);
+  b.fillStyle = '#9aa4d8';
+  cloudsBankPath(b, x, y, w, h, n, lw);
   b.fill();
-  b.fillStyle = bouncy ? 'rgba(255,255,255,0.6)' : 'rgba(200,215,255,0.5)';
-  b.fillRect(x + w * 0.1, y + hh * 0.55, w * 0.8, hh * 0.25);
+  var g = b.createLinearGradient(0, y - h * 0.03, 0, h);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.3, '#e3d8f5');
+  g.addColorStop(1, '#b9c4ee');
+  b.fillStyle = g;
+  cloudsBankPath(b, x, y, w, h, n, 0);
+  b.fill();
+}
+
+// Pilvitupsu (taso): kolme kuplaa reunaviivalla, vaalea ylä ja laventeli ala
+function cloudsPuffPath(b, x, y, w, hh, grow) {
+  b.beginPath();
+  b.arc(x + w * 0.25, y + hh * 0.3, hh * 0.55 + grow, 0, Math.PI * 2);
+  b.arc(x + w * 0.5, y + hh * 0.15, hh * 0.65 + grow, 0, Math.PI * 2);
+  b.arc(x + w * 0.75, y + hh * 0.3, hh * 0.55 + grow, 0, Math.PI * 2);
+}
+function drawPuff(b, x, y, w, hh, alpha, bouncy) {
+  var col = bouncy ? '#ffb3d9' : '#ffffff', line = bouncy ? '#c0609a' : '#9aa4d8', lw = Math.max(ART.lineMin, hh * 0.08);
+  b.globalAlpha = alpha;
+  artRoundRect(b, x + w * 0.1, y + hh * 0.55, w * 0.8, hh * 0.25, hh * 0.1, bouncy ? '#ff8ec4' : '#cfd6f5', { lineColor: line, line: lw });
+  b.fillStyle = line;
+  cloudsPuffPath(b, x, y, w, hh, lw);
+  b.fill();
+  cloudsPuffPath(b, x, y, w, hh, 0);
+  artFillPath(b, col, y - hh * 0.5, y + hh * 0.85, hh, { line: false, shadeTo: bouncy ? '#f08ab8' : '#e3d8f5' });
+  artHighlight(b, x + w * 0.42, y - hh * 0.22, w * 0.12, hh * 0.1, 0.5);
   b.globalAlpha = 1;
 }
 
+// Sateenkaariportti: tumma reunakaari, kuusi värinauhaa ja pilvitupsut jalkoina
 function drawRainbowGateFrame(b, x, baseY, h) {
-  var cols = ['#ff5f7e', '#ffb84f', '#ffe94f', '#6fd66f', '#5fa8ff', '#b678ff'], i;
-  b.lineWidth = h * 0.014;
-  for (i = 0; i < cols.length; i++) {
-    b.strokeStyle = cols[i];
+  var i, bw = h * 0.014;
+  b.lineCap = 'butt';
+  b.strokeStyle = '#6a4a8a';
+  b.lineWidth = bw * 6 + Math.max(2, h * 0.005);
+  b.beginPath(); b.arc(x, baseY, h * 0.2 - bw * 2.5, Math.PI, 0); b.stroke();
+  b.lineWidth = bw;
+  for (i = 0; i < CLOUDS_RAINBOW.length; i++) {
+    b.strokeStyle = CLOUDS_RAINBOW[i];
     b.beginPath(); b.arc(x, baseY, h * (0.2 - i * 0.014), Math.PI, 0); b.stroke();
+  }
+  drawPuff(b, x - h * 0.23, baseY - h * 0.03, h * 0.09, h * 0.03, 1, false);
+  drawPuff(b, x + h * 0.11, baseY - h * 0.03, h * 0.09, h * 0.03, 1, false);
+}
+
+// Tökättävät koristeet: kolme koristepilveä taivaalla ja sateenkaariportti.
+// Kutsutaan myös resize-koukusta (layoutClouds).
+function cloudsProps() {
+  var i, h = viewH;
+  propsReset();
+  for (i = 0; i < cloudsDecoDefs.length; i++) {
+    propAdd({
+      x: cloudsDecoDefs[i].fx * worldW, y: groundTop - cloudsDecoDefs[i].fy * h, w: h * 0.16, hh: h * 0.05,
+      r: h * 0.07, hy: 0, amp: 0.1, color: '#ffffff', note: 620 + i * 60,
+      draw: function (c, p) { drawPuff(c, -p.w / 2, -p.hh * 0.4, p.w, p.hh, 1, false); },
+      poke: cloudsDecoPoke
+    });
+  }
+  propAdd({
+    x: rainbowGate.x, y: groundTop, r: h * 0.12, hy: h * 0.1, amp: 0.03, color: '#ffe94f', note: 784,
+    draw: function (c) { drawRainbowGateFrame(c, 0, 0, h); },
+    poke: function (p) {
+      var k;
+      for (k = 0; k < 6; k++) {
+        spawnSparkles(p.x + (k - 2.5) * h * 0.05, p.y - h * 0.16, 2, CLOUDS_RAINBOW[k]);
+        playNote(523 * Math.pow(2, k / 6), 0.05 * k, 0.15, 'sine', 0.12);
+      }
+    }
+  });
+}
+
+// Koristepilvi pöllähtää: pieni tupsu putoaa; joka viides tökkäys sataa sateenkaaren (yllätys)
+function cloudsDecoPoke(p) {
+  var k, h = viewH;
+  propDrop({
+    x: p.x + (Math.random() - 0.5) * p.w * 0.5, y: p.y, vx: (Math.random() - 0.5) * viewW * 0.05, vy: -h * 0.05, ground: groundTop - h * 0.01, life: 1.6,
+    draw: function (c) { drawPuff(c, -h * 0.02, -h * 0.01, h * 0.04, h * 0.014, c.globalAlpha, false); }
+  });
+  if (p.n % 5 === 0 && !cloudsRainbow) {
+    cloudsRainbow = { x: p.x, y: p.y, t: 0 };
+    for (k = 0; k < 6; k++) propDropBall(p.x + (k - 2.5) * p.w * 0.15, p.y + p.hh * 0.6, h * 0.007, CLOUDS_RAINBOW[k], groundTop - h * 0.005, (k - 2.5) * viewW * 0.01);
+    playNote(784, 0, 0.2, 'triangle', 0.25);
+    playNote(988, 0.15, 0.2, 'triangle', 0.25);
+    playNote(1175, 0.3, 0.4, 'triangle', 0.25);
   }
 }
 
+function cloudsDrawRainbow(c) {
+  var r = cloudsRainbow;
+  if (!r) return;
+  var x = r.x - camX, i, h = viewH, a = Math.sin(Math.min(1, r.t / 2.6) * Math.PI);
+  if (x < -h * 0.2 || x > viewW + h * 0.2) return;
+  c.globalAlpha = Math.max(0, a);
+  c.lineWidth = h * 0.009;
+  c.lineCap = 'butt';
+  for (i = 0; i < CLOUDS_RAINBOW.length; i++) {
+    c.strokeStyle = CLOUDS_RAINBOW[i];
+    c.beginPath(); c.arc(x, r.y, h * (0.12 - i * 0.009), Math.PI, 0); c.stroke();
+  }
+  c.globalAlpha = 1;
+}
+
+// Myrskypallo: tumma pilvi reunaviivalla, salama, silmät ja vihaiset kulmat.
+// Tökättynä tärisee ja salama välähtää (pelkkä koriste, osuma-alue ei muutu).
 function drawStormlet(c, sm) {
   var x = sm.x - camX, y = groundTop - viewH * 0.035, r = viewH * 0.035;
   if (x < -r * 3 || x > viewW + r * 3) return;
-  c.fillStyle = '#5a5a7a';
-  cloudShape(c, x, y, r * 0.5);
-  c.fillStyle = '#ffe94f';
-  c.beginPath(); c.moveTo(x - r * 0.1, y + r * 0.2); c.lineTo(x + r * 0.15, y + r * 0.2); c.lineTo(x, y + r * 0.7); c.closePath(); c.fill();
-  c.fillStyle = '#fff';
-  c.beginPath(); c.arc(x - r * 0.25, y - r * 0.15, r * 0.14, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + r * 0.25, y - r * 0.15, r * 0.14, 0, Math.PI * 2); c.fill();
-  c.fillStyle = '#222';
-  c.beginPath(); c.arc(x - r * 0.25 + sm.dir * r * 0.05, y - r * 0.15, r * 0.06, 0, Math.PI * 2); c.fill();
-  c.beginPath(); c.arc(x + r * 0.25 + sm.dir * r * 0.05, y - r * 0.15, r * 0.06, 0, Math.PI * 2); c.fill();
+  var poke = sm.pokeT > 0 ? Math.sin(Math.min(1, sm.pokeT / 0.8) * Math.PI) : 0;
+  x += Math.sin(globalT * 40) * poke * r * 0.12;
+  artShadow(c, x, groundTop, r * 1.3, r * 0.25, 0.14);
+  artUnion(c, cloudPath, x, y, r * 0.5, y - r, y + r * 0.6, '#6a6a8e', { lineColor: '#3a3a56', shadeTo: '#4a4a6a' });
+  if (poke > 0) artGlow(c, x, y + r * 0.45, r * 0.9, '#fff6a0', poke * 0.7);
+  c.beginPath(); c.moveTo(x - r * 0.1, y + r * 0.2); c.lineTo(x + r * 0.15, y + r * 0.2); c.lineTo(x, y + r * 0.7); c.closePath();
+  artFillPath(c, poke > 0.3 ? '#ffffff' : '#ffe94f', y + r * 0.2, y + r * 0.7, r * 0.3, { lineColor: '#b08a10' });
+  artEye(c, x - r * 0.25, y - r * 0.15, r * 0.14, sm.dir * 0.5, false);
+  artEye(c, x + r * 0.25, y - r * 0.15, r * 0.14, sm.dir * 0.5, false);
+  c.strokeStyle = '#3a3a56';
+  c.lineWidth = Math.max(1.2, r * 0.06);
+  c.lineCap = 'round';
+  c.beginPath();
+  c.moveTo(x - r * 0.42, y - r * 0.42); c.lineTo(x - r * 0.12, y - r * 0.3);
+  c.moveTo(x + r * 0.42, y - r * 0.42); c.lineTo(x + r * 0.12, y - r * 0.3);
+  c.stroke();
 }
 
 function drawRainbowGateGlow(c) {
@@ -305,6 +436,8 @@ function drawRainbowGateGlow(c) {
 function drawClouds() {
   var i, pf;
   if (!beginPlayWorld()) return;
+  propsDraw(ctx);
+  cloudsDrawRainbow(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   for (i = 0; i < platforms.length; i++) {
     if (platforms[i].kind === 'bounce') {
