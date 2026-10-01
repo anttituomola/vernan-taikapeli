@@ -103,6 +103,12 @@ Lyhyt siirtymäkohtaus saaristosta Kaukamaalle ja takaisin: vene avomerellä,
 manner nousee usvasta. Napautus ohittaa.
 _Vältä_: välianimaatio, cutscene
 
+**Tökkäys**:
+Napautus koristeeseen tai otukseen, joka ei kuulu peliin: se heilahtaa, kipinöi
+ja soi (`props.js`), mutta mikään ei muutu pelissä. Toistuva tökkäys (3. tai 5.)
+voi paljastaa pienen **yllätyksen**.
+_Vältä_: klikkaus, osuma (osuma on vihollisen kosketus)
+
 ### Pelin käsitteet
 
 **Tehtävä**:
