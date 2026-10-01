@@ -103,7 +103,76 @@ function initCatch() {
   ctch.slots = [];
   ctch.flies = [];
   ctch.moths = [];
+  catchSetupProps();
   renderBackground();
+}
+
+// Tökättävät koristeet: kolme niityn hohtosientä (tökkäys hehkuttaa ja
+// puhaltaa itiöitä) ja pöllö vasemman puun rungolla (räpäyttää ja huhuilee;
+// joka kolmas tökkäys kutsuu pöllönpoikasen viereen). Sipaisu jatkuu normaalisti.
+function catchSetupProps() {
+  var vw = viewW, h = viewH;
+  propsReset();
+  catchAddShroom(vw * (0.04 + 1 * 0.085), h * 0.035, '#ff8ad8');
+  catchAddShroom(vw * (0.04 + 8 * 0.085), h * 0.045, '#5fd4c8');
+  catchAddShroom(vw * (0.04 + 10 * 0.085), h * 0.035, '#b98aff');
+  propAdd({
+    x: vw * 0.09, y: h * 0.42, r: h * 0.06, hy: h * 0.05, color: '#ffe27a', note: 262, amp: 0.1, owletT: 0, hootT: 0,
+    update: function (p, dt) { if (p.owletT > 0) p.owletT -= dt; if (p.hootT > 0) p.hootT -= dt; },
+    draw: function (c, p) {
+      catchDrawOwl(c, 0, 0, h * 0.035, p.hootT > 0, p.hootT > 0 || (globalT % 4) < 0.15);
+      if (p.owletT > 0) catchDrawOwl(c, h * 0.05, 0, h * 0.02 * Math.min(1, p.owletT * 3, (2.6 - p.owletT) * 4), false, (globalT % 2.2) < 0.15);
+    },
+    poke: function (p) {
+      p.hootT = 0.6;
+      playNote(392, 0, 0.18, 'triangle', 0.22);
+      playNote(330, 0.2, 0.3, 'triangle', 0.22);
+      if (p.n % 3 === 0) {
+        p.owletT = 2.6;
+        playNote(784, 0.5, 0.1, 'sine', 0.2);
+        playNote(988, 0.62, 0.14, 'sine', 0.2);
+      }
+    }
+  });
+}
+function catchAddShroom(x, ms, col) {
+  var h = viewH;
+  propAdd({
+    x: x, y: groundTop + h * 0.03, r: h * 0.055, hy: ms * 1.2, color: col, note: 660,
+    draw: function (c, p) {
+      var k = p.t >= 0 ? Math.max(0, 1 - p.t / 1.4) : 0;
+      c.fillStyle = '#e8e0ff';
+      c.fillRect(-ms * 0.2, -ms, ms * 0.4, ms);
+      artGlow(c, 0, -ms, ms * 2.2 * (1 + k * 0.8), col, 0.4 + k * 0.45);
+      c.beginPath(); c.arc(0, -ms, ms * 0.8, Math.PI, 0); c.closePath();
+      artFillPath(c, col, -ms * 1.8, -ms, ms, { line: false });
+    },
+    poke: function (p) {
+      var k;
+      for (k = 0; k < 3; k++) propDropBall(p.x + (k - 1) * ms * 0.5, p.y - ms * 1.6, h * 0.006, col, p.y + h * 0.01, (k - 1) * h * 0.08);
+    }
+  });
+}
+// Pöllö: origo jalkojen kohdalla; hoot avaa nokan, blink sulkee silmät
+function catchDrawOwl(c, x, y, s, hoot, blink) {
+  artBlob(c, x, y - s * 1.1, s * 0.8, s * 1.1, '#8a6a4a', { shadeTo: '#5a4030', lineColor: '#3a2a1a' });
+  artBlob(c, x, y - s * 0.8, s * 0.45, s * 0.6, '#d9b890', { line: false });
+  artCircle(c, x - s * 0.32, y - s * 1.6, s * 0.3, '#fff6d0', { lineColor: '#3a2a1a' });
+  artCircle(c, x + s * 0.32, y - s * 1.6, s * 0.3, '#fff6d0', { lineColor: '#3a2a1a' });
+  artEye(c, x - s * 0.32, y - s * 1.6, s * 0.14, 0, blink);
+  artEye(c, x + s * 0.32, y - s * 1.6, s * 0.14, 0, blink);
+  c.fillStyle = '#ffb84f';
+  c.beginPath(); c.moveTo(x - s * 0.1, y - s * 1.4); c.lineTo(x + s * 0.1, y - s * 1.4); c.lineTo(x, y - s * (hoot ? 1.1 : 1.25)); c.closePath(); c.fill();
+  c.fillStyle = '#5a4030';
+  c.beginPath(); c.moveTo(x - s * 0.7, y - s * 2.0); c.lineTo(x - s * 0.3, y - s * 2.3); c.lineTo(x - s * 0.2, y - s * 1.9); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(x + s * 0.7, y - s * 2.0); c.lineTo(x + s * 0.3, y - s * 2.3); c.lineTo(x + s * 0.2, y - s * 1.9); c.closePath(); c.fill();
+}
+// Koristeen tökkäys vain, jos kosketuksen lähellä ei ole tulikärpästä eikä koita
+function catchPokeAt(px, py) {
+  var i, h = viewH;
+  for (i = 0; i < ctch.flies.length; i++) if (Math.hypot(px - ctch.flies[i].x, py - ctch.flies[i].y) < h * 0.1) return;
+  for (i = 0; i < ctch.moths.length; i++) if (Math.hypot(px - ctch.moths[i].x, py - ctch.moths[i].y) < h * 0.12) return;
+  propsTap(px, py);
 }
 function respawnCatch() {
   // Sydämet loppu: kierros alkaa alusta tyhjällä purkilla
@@ -111,13 +180,14 @@ function respawnCatch() {
   ctch.flying = [];
   catchStartRound();
 }
-function resizeCatch() { camX = 0; }
+function resizeCatch() { camX = 0; catchSetupProps(); }
 
 function handleCatchTap(px, py) {
   ctch.lastX = px;
   ctch.lastY = py;
   ctch.lastT = globalT;
   ctch.trail = [];
+  catchPokeAt(px, py);
 }
 
 // ---------- Nappaus ----------
@@ -165,6 +235,7 @@ function updateCatch(dt) {
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
+  propsUpdate(dt);
   busy = puzzleBusy();
   if (ctch.jarShake > 0) ctch.jarShake -= dt;
   if (ctch.netBroken > 0) ctch.netBroken -= dt;
@@ -342,6 +413,8 @@ function renderCatchBg(b, w, h) {
   for (i = 0; i < 12; i++) {
     x = vw * (0.04 + i * 0.085);
     if (Math.abs(x - vw * 0.5) < h * 0.2) continue;
+    // Sienet 1, 8 ja 10 ovat tökättäviä koristeita (catchSetupProps)
+    if (i === 1 || i === 8 || i === 10) continue;
     var ms = h * (0.025 + (i % 3) * 0.01), col = ['#5fd4c8', '#ff8ad8', '#b98aff'][i % 3];
     b.fillStyle = '#e8e0ff';
     b.fillRect(x - ms * 0.2, groundTop + h * 0.03 - ms, ms * 0.4, ms);
@@ -420,6 +493,7 @@ function drawCatchJar(c) {
 function drawCatch() {
   var c = ctx, h = viewH, i, f, a, p;
   if (!beginPlayWorld()) return;
+  propsDraw(c);
   drawCatchJar(c);
   for (i = 0; i < ctch.flies.length; i++) {
     f = ctch.flies[i];
