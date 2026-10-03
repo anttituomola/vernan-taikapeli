@@ -1286,17 +1286,23 @@ var WORLDS = [
   },
   {
     // Kellopaja: mantereen viides paikka, tonttujen mekaaninen paja vuoren
-    // rinteellä. Verbi: rattaat. Usvahuoneet: Vesikouru ja vartija Kellokoneisto
+    // rinteellä. Verbi: rattaat. Usvahuone: vartija Kellokoneisto
     // (finaleKind siirtyy vartijalle, kun se tehdään).
     id: 14, name: 'Kellopaja', region: 'land', band: 'clock',
-    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'chute', deco: ['gear', 'chute'] },
+    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'cuckoo', deco: ['gear', 'chute', 'tune', 'belt', 'cuckoo'] },
     map: [
       '#########',
       '#B.....R#',
       '#######.#',
       '#K......#',
       '#.#######',
-      '#......?#',
+      '#......O#',
+      '#######.#',
+      '#H......#',
+      '#.#######',
+      '#......C#',
+      '#######.#',
+      '#?......#',
       '#########'
     ],
     levels: [
@@ -1325,6 +1331,45 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderChuteBg(b, w, h); },
         light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,200,0.05)', 'rgba(120,200,255,0.05)'], vignette: 0.25 },
         respawn: function () { respawnChute(); }
+      },
+      {
+        kind: 'tune', room: 'O', name: 'Soittorasia', color: '#c86ad8', script: 'play-tune',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#5a3a5a', ambient: 'sparkle', fg: null,
+        init: function () { initTune(); },
+        update: function (dt) { updateTune(dt); },
+        draw: function () { drawTune(); },
+        tap: function (x, y) { handleTuneTap(x, y); },
+        resize: function () { resizeTune(); },
+        renderBg: function (b, w, h) { renderTuneBg(b, w, h); },
+        light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.35 },
+        respawn: function () { respawnTune(); }
+      },
+      {
+        kind: 'belt', room: 'H', name: 'Lelutehdas', color: '#ff7a5a', script: 'play-belt',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 5500,
+        bgColor: '#7a5a4a', ambient: 'sparkle', fg: null,
+        init: function () { initBelt(); },
+        update: function (dt) { updateBelt(dt); },
+        draw: function () { drawBelt(); },
+        tap: function (x, y) { handleBeltTap(x, y); },
+        resize: function () { resizeBelt(); },
+        renderBg: function (b, w, h) { renderBeltBg(b, w, h); },
+        light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.35 },
+        respawn: function () { respawnBelt(); }
+      },
+      {
+        kind: 'cuckoo', room: 'C', name: 'Käkikello', color: '#7ac86a', script: 'play-cuckoo',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#6a7a4a', ambient: 'sparkle', fg: null,
+        init: function () { initCuckoo(); },
+        update: function (dt) { updateCuckoo(dt); },
+        draw: function () { drawCuckoo(); },
+        tap: function (x, y) { handleCuckooTap(x, y); },
+        resize: function () { resizeCuckoo(); },
+        renderBg: function (b, w, h) { renderCuckooBg(b, w, h); },
+        light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.35 },
+        respawn: function () { respawnCuckoo(); }
       }
     ]
   }
