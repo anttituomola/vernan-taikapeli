@@ -31,8 +31,8 @@
 var BELT_ROUNDS = [
   { topo: 2, kind: 'color', sign: 'icon', need: 3, speed: 0.9, gap: 3.2 },
   { topo: 3, kind: 'shape', sign: 'icon', need: 3, speed: 1.1, gap: 2.5 },
-  { topo: 3, kind: 'dice', sign: 'dots', need: 3, speed: 1.1, gap: 2.4 },
-  { topo: 3, kind: 'dice', sign: 'num', need: 4, speed: 1.35, gap: 1.9, swapAt: 6 }
+  { topo: 3, kind: 'dice', sign: 'dots', need: 3, speed: 1.1, gap: 2.2 },
+  { topo: 3, kind: 'dice', sign: 'num', need: 4, speed: 1.35, gap: 1.6, swapAt: 6 }
 ];
 // Hihnaverkot: segmentin pituus logiikkayksiköissä; sw = segmentti päättyy
 // vaihteeseen, slot = laatikkopaikkaan. sws[i] = [ylös, alas] -segmentit.

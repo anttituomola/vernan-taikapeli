@@ -63,7 +63,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-bounce.js`, `js/play-catch.js`, `js/play-moth.js` — Kaukamaa, Hohtometsä (maailma 11): Sienipomppu (pomppu), Tulikärpässieppo (sipaisu) ja vartija Varjoperhonen (sipaisu + pomppu)
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
-- `js/play-gear.js`, `play-chute.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi) ja Vesikouru (kourupalojen kääntö, vesi myllyihin), sokkelon maasto `HUB_TILE_DECOR.clock`
+- `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut) ja Käkikello (viisarit kellonaikaan), sokkelon maasto `HUB_TILE_DECOR.clock`
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -743,7 +743,7 @@ kun Porkkanakummun vartija Myyräkuningas on läpäisty. Jatkaa loogisten
 pulmien linjaa (palaute 1.10.2026: Loitsupolku ja Kamelikaravaani olivat
 "liki täydellinen ylätaso vaikeudelle"). Uusi verbi: **rattaat**. Sokkelossa
 on yksi usvahuone vartijalle Kellokoneistolle. Kunnes vartija on tehty,
-`finaleKind` on viimeisin kenttä (`'chute'`).
+`finaleKind` on viimeisin kenttä (`'cuckoo'`).
 
 - **Rataspaja** — tonttu veivaa moottoriratasta pajan seinällä. Raahaa
   rattaita laatikosta tappitaulun tappeihin: ratas, joka koskettaa pyörivää
@@ -780,6 +780,38 @@ on yksi usvahuone vartijalle Kellokoneistolle. Kunnes vartija on tehty,
   aina. Kierros, joka ratkeaa enintään kolmella ylimääräisellä käännöllä,
   antaa kultaisen pisaran. Ensimmäisellä kierroksella käsi napauttaa lähteen
   vieressä olevaa palaa. Ei sydämiä. Tehtävät: lasku, pisteet.
+- **Soittorasia** — tonttu soittaa kellopeleillä melodian (5 säveltä C D E G
+  A, joka rivillä oma väri ja kello), ja lapsi raahaa nastoja laatikosta
+  soittorasian rullaan (sarake = askel, rivi = sävel). Rullan nastaa voi
+  siirtää tai raahata pois; napautus kelloon soittaa sävelen, napautus
+  tonttuun soittaa melodian uudestaan. ▶-vipu pyörittää rullaa. Väärä soitto
+  kuluttaa jousen vedon (3 / kierros) ja näyttää väärät nastat; vetojen
+  loppuessa tonttu arpoo uuden melodian. Neljä arvottua kierrosta: 4 säveltä
+  nuottinauha näkyvissä; 6 säveltä, nauha vain soiton ajan; 7–8 askelta
+  tauolla ja soinnulla, 3 kuuntelua; 8–10 askelta A A B -rakenteella, 2
+  kuuntelua. Kierros ilman väärää soittoa antaa kultaisen nuotin. Tökättävät:
+  tanssija (5. tökkäys: tonttu soittaa Ukko Nooan), metronomi, rumpu. Ei
+  sydämiä. Tehtävät: muisti, lasku.
+- **Lelutehdas** — liukuhihna tuo leluja; seuraava näkyy ensin luukun
+  ikkunassa. Napautus kääntää vaihteen läpän, ja lelu menee valittua haaraa
+  laatikkoon, jonka kyltissä on kuva. Väärä laatikko: lelu pomppaa ulos ja
+  sydän menee; sydämien loppuessa kierros alkaa alusta. Kierrokset: väri (1
+  vaihde, 2 laatikkoa); muoto hämäysväreillä (2 vaihdetta, 3 laatikkoa);
+  noppapalikat pistekuvan mukaan; noppapalikat numerokyltin mukaan nopeammin,
+  ja kesken kierroksen tonttu vaihtaa kahden laatikon paikat. Kierros ilman
+  sydänmenetystä antaa kultaisen lelun. Tökättävät: lelurobotti (5. tökkäys:
+  marssii hyllyllä), vieterirasia, nalle. Tehtävät: lukumäärä, varjo.
+- **Käkikello** — viisarit raahataan kortin aikaan: minuuttiviisari (pitkä,
+  sininen) vie tuntiviisaria mukanaan kuten oikea kello, tuntiviisari (lyhyt,
+  punainen) napsahtaa tasatuntiin. Vetorengas tarkistaa: oikein → käki kukkuu
+  tunnin verran, väärin → käki tuhahtaa, väärä viisari heilahtaa ja yksi
+  kolmesta kellopainosta putoaa; painojen loputtua kierros arvotaan uudestaan.
+  Kierrokset (3 korttia): tasatunnit kuvakellolla; puolet; "kuuntele käkeä"
+  (N kukkuuta → N:00) ja +1 tunti; vartit ja +2 tuntia. 3.–4. kierroksella
+  painot laskeutuvat ketjussa (aikaraja 80 / 70 s). Kierros ilman pudonnutta
+  painoa antaa kultaisen käen. Tökättävät: herätyskello, käpykori, kukkaruukku,
+  käen luukku (5. tökkäys: poikanen tulee mukaan). Ei sydämiä. Tehtävät:
+  lasku, kuviosarja.
 
 ### Linnan sisustus
 
@@ -1096,6 +1128,9 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Yhteispolku: kierrokset `DUO_ROUNDS` (ruudukko, aitojen määrä `walls`, laatat aidoittain `plates` ('n' lähtöpuoli, 'f' takana), sinisen kolon alue `homeB`, porkkanat, rivin pituus `slots`, ratkaisun askeleet `len`, pensaat), askeleen kesto `DUO_STEP_T`; säännöt `duoStep`, ratkaisija `duoSolve` (yhteinen leveyshaku), arvonta `duoTryGenerate`. Arvonta vie 8×5-kierroksilla n. 30–90 ms
 - Rataspaja: kierrokset `GEAR_ROUNDS` (hila `cols`×`rows`, soittorasiat `targets`, ketjun pituus rasiaa kohti `len`, suuntavaatimus `dir`, ansa `trick` = suorin reitti väärään suuntaan, ylimääräiset rattaat `spare`, rikkinäiset tapit `broken`), moottorin nopeus `GEAR_SPEED`, voiton odotus `GEAR_WIN_T`; arvonta `gearTryGenerate`, verkon suunnat ja jumi `gearEvalNet`
 - Vesikouru: kierrokset `CHUTE_ROUNDS` (ruudukko, myllyt `mills`, reitin pituus myllyä kohti `len`, hämäyspalat `decoys`, kivet `rocks`, ruuvatut reittipalat `fixed`, aikaraja `time`), täyttymisnopeus `CHUTE_FILL`, voiton odotus `CHUTE_WIN_T`, kultaisen pisaran väljyys `CHUTE_PAR`; arvonta `chuteTryGenerate`, virtaus ja vuodot `chuteEvalFlow`
+- Soittorasia: kierrokset `TUNE_ROUNDS` (askeleet, nauhan näkyvyys, kuuntelukerrat, tauko/sointu, A A B), jousen vedot `TUNE_PULLS`, tahdit `TUNE_STEP` / `TUNE_ROLL_STEP`; arvonta ja tarkistus `tuneValidate` / `tuneCheck`
+- Lelutehdas: kierrokset `BELT_ROUNDS` (verkko `topo`, lajittelu `kind`, kyltti `sign`, leluja laatikkoon `need`, hihnan nopeus `speed`, lelujen väli `gap`, laatikoiden vaihto `swapAt`), hihnaverkot `BELT_TOPOS`; liikelogiikka `beltStep` / `beltFlip` / `beltRoute`. Botti (reaktio 0,45 s, 5 % virheitä) uusii kierroksen 1–3 %:ssa ennen gap-kiristystä (2,4 → 2,2 ja 1,9 → 1,6 s)
+- Käkikello: kierrokset `CUCKOO_ROUNDS` (korttityypit, minuuttiaskel, aikaraja), kortit `CUCKOO_CARDS`, painot `CUCKOO_WEIGHTS`, kukahdusten väli `CUCKOO_GAP`
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
