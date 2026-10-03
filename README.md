@@ -63,7 +63,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-bounce.js`, `js/play-catch.js`, `js/play-moth.js` — Kaukamaa, Hohtometsä (maailma 11): Sienipomppu (pomppu), Tulikärpässieppo (sipaisu) ja vartija Varjoperhonen (sipaisu + pomppu)
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
-- `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut) ja Käkikello (viisarit kellonaikaan), sokkelon maasto `HUB_TILE_DECOR.clock`
+- `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js`, `play-clockwork.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut), Käkikello (viisarit kellonaikaan) ja vartija Kellokoneisto (vesi, rattaat ja viisarit yhdessä koneessa), sokkelon maasto `HUB_TILE_DECOR.clock`
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -741,9 +741,10 @@ usvahuoneen 30.9.2026 (palaute: pupun ohjelmointiin isompia ja haastavampia rato
 Mantereen viides paikka, tonttujen mekaaninen paja lounaisrannalla. Aukeaa,
 kun Porkkanakummun vartija Myyräkuningas on läpäisty. Jatkaa loogisten
 pulmien linjaa (palaute 1.10.2026: Loitsupolku ja Kamelikaravaani olivat
-"liki täydellinen ylätaso vaikeudelle"). Uusi verbi: **rattaat**. Sokkelossa
-on yksi usvahuone vartijalle Kellokoneistolle. Kunnes vartija on tehty,
-`finaleKind` on viimeisin kenttä (`'cuckoo'`).
+"liki täydellinen ylätaso vaikeudelle"). Uusi verbi: **rattaat**. Vartija on
+Kellokoneisto (`finaleKind: 'clockwork'`, huone V). Kellopaja on mantereen
+viimeinen paikka: sen läpäisyn jälkeen kartalla ei ole seuraavaa paikkaa
+(`landNextPlace` palauttaa `null`, nuoli ja hehku jäävät pois).
 
 - **Rataspaja** — tonttu veivaa moottoriratasta pajan seinällä. Raahaa
   rattaita laatikosta tappitaulun tappeihin: ratas, joka koskettaa pyörivää
@@ -812,6 +813,36 @@ on yksi usvahuone vartijalle Kellokoneistolle. Kunnes vartija on tehty,
   painoa antaa kultaisen käen. Tökättävät: herätyskello, käpykori, kukkaruukku,
   käen luukku (5. tökkäys: poikanen tulee mukaan). Ei sydämiä. Tehtävät:
   lasku, kuviosarja.
+- **Kellokoneisto** ♥ — vartija. Pajan tornikello on pysähtynyt, kun
+  Myrskynoidan myrsky tukki koneiston. Yksi kone samalla ruudulla: **vesi →
+  rattaat → viisarit**, ja jokaisessa kierroksessa kolme vaihetta. (1) Vesi:
+  napautus kääntää kourupalaa kuten Vesikourussa; kun vesi yltää
+  vesirattaaseen eikä vuoda, ratas pyörii ja vetää hihnalla moottoriratasta.
+  (2) Rattaat: raahaa rattaat tappeihin moottorirattaasta kellorattaaseen
+  (kolmiohila ja jumi kuten Rataspajassa). Kellon on käytävä myötäpäivään:
+  väärällä ketjun pituudella viisarit pyörivät taaksepäin, nuoli punertuu ja
+  koneisto ravistaa. (3) Viisarit: koneisto käy, ja tornin kyltissä on aika
+  (tunti punaisella, minuutit sinisellä). Jarruvivun (tai kellotaulun tai
+  kyltin) napautus juuri kortin ajassa pysäyttää viisarit, ja tornikello lyö
+  tunnit lyöntilaskurin kanssa. Liian aikainen napautus tai ohi ehtinyt kello
+  vie sydämen (ohi ehtinyt kello kelautuu taaksepäin uuteen yritykseen);
+  sydänten loppuessa palataan saman kierroksen viisarivaiheen alkuun (vesi ja
+  rattaat säilyvät). Viisarit tikittävät vartein (tunnilla matalampi ääni),
+  mikä auttaa ennakoimaan. Kierrokset: vesi 4×3 / 5×3 / 5×4 ja enemmän
+  hämäyspaloja; rattaita 3 / 5 / 7 (ruuvattuja valmiita 1 / 1 / 2, ylimääräisiä
+  1 / 1 / 2), 2.–3. kierroksella suorin reitti pyörittää kelloa väärään
+  suuntaan; viisarit 3,0 / 2,6 / 2,2 s tunnissa, 2 / 3 / 3 lyöntiä, tasat /
+  puolet / vartit. Aave-viisarit näyttävät kohdan 1. kierroksella aina, 2.
+  kierroksella ensimmäisessä kortissa ja ohilyönnin jälkeen, 3. kierroksella
+  ei koskaan. 2.–3. kierroksen vesivaiheessa Myrskynoidan myrskypilvi
+  lennähtää kourupalan ylle (varjo ja latautuva salama näkyvät 1,6 s) ja
+  kääntää sen, ellei pilveä napauteta pois. Ensimmäisellä kierroksella käsi
+  näyttää jokaisen vaiheen (palan kääntö, rattaan raahaus, vivun painallus
+  oikealla hetkellä). Lopuksi tornikello lyö pitkään ja rattaat kultautuvat.
+  Kierros ilman sydänmenetystä antaa kultaisen rattaan. Tökättävät: tornin
+  kello (5. tökkäys: Käkikellon käki kurkistaa kellotapulista ja kukkuu),
+  kyyhky räystäällä, koristeratas tornin juurella; tonttu hyppää. Tehtävät:
+  kello, lasku.
 
 ### Linnan sisustus
 
@@ -1131,6 +1162,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Soittorasia: kierrokset `TUNE_ROUNDS` (askeleet, nauhan näkyvyys, kuuntelukerrat, tauko/sointu, A A B), jousen vedot `TUNE_PULLS`, tahdit `TUNE_STEP` / `TUNE_ROLL_STEP`; arvonta ja tarkistus `tuneValidate` / `tuneCheck`
 - Lelutehdas: kierrokset `BELT_ROUNDS` (verkko `topo`, lajittelu `kind`, kyltti `sign`, leluja laatikkoon `need`, hihnan nopeus `speed`, lelujen väli `gap`, laatikoiden vaihto `swapAt`), hihnaverkot `BELT_TOPOS`; liikelogiikka `beltStep` / `beltFlip` / `beltRoute`. Botti (reaktio 0,45 s, 5 % virheitä) uusii kierroksen 1–3 %:ssa ennen gap-kiristystä (2,4 → 2,2 ja 1,9 → 1,6 s)
 - Käkikello: kierrokset `CUCKOO_ROUNDS` (korttityypit, minuuttiaskel, aikaraja), kortit `CUCKOO_CARDS`, painot `CUCKOO_WEIGHTS`, kukahdusten väli `CUCKOO_GAP`
+- Kellokoneisto: kierrokset `CWORK_ROUNDS` (vesi: ruudukko `cols`×`rows`, reitin pituus `len`, hämäyspalat `decoys`, kivet `rocks`, alkuasennon vähimmäiskäännöt `par`, myrskypilvet `cloud`; rattaat: tappitaulun sarakkeet `gcols` (rivejä `CWORK_GROWS`), kellorattaan rivit `trows`, ketjun pituus `glen` (parillinen = myötäpäivään), ruuvatut `bolted`, ylimääräiset `spare`, rikkinäiset `broken`, ansa `trick`; viisarit: lyönnit `hits`, sekuntia tunnissa `sph`, minuuttiaskel `step`, aave-viisarit `ghost`), ajoitusikkuna `CWORK_EARLY` / `CWORK_LATE` (tuomio `cworkJudge`), lähtö ennen kortin aikaa `CWORK_LEAD`, lyöntien väli `CWORK_GAP`, vaiheiden voiton odotus `CWORK_WATER_WIN` / `CWORK_GEAR_WIN`; arvonnat `cworkTryWater` / `cworkTryGears` (indusoitu polku `cworkGearPath`), virtaus `cworkEvalFlow`, verkko `cworkEvalNet`; asettelu suunnittelukoordinaateista `cworkLayout` (4:3-alue keskitetään). Mitoitus 3.10.2026 reaktioviivebotilla (näkee viisarien osuvan aikaan ja napauttaa rt × 0,75–1,35 myöhemmin): ikkuna 0,87 s eli −0,3…+0,57 s (17 / 20 / 24 min taululla); rt 0,3 s ei menetä sydämiä; rt 0,45 s menettää ka 0,5 / 0,6 / 0,7 sydäntä kierroksessa (32–47 % kierroksista ≥1) ja viisarivaihe alkaa alusta 2–3 %:ssa kierroksista; ennakoiva botti (σ 0,25 s) ka 0,3–0,4 sydäntä kierroksessa. Koko kenttä botilla n. 2 min (lapsella pidempi), rt 0,45 s menettää koko kentässä 0–9 sydäntä
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
@@ -1240,7 +1272,8 @@ avautuu 3. tai 5. tökkäyksellä tai harvoin itsestään):
   Varjoperhosen etanan kuori välkkyy sateenkaarena; Dyynilaskun palmusta putoaa
   halkeava kookos, tynnyrikaktus kukkii sateenkaaren ja kameli sylkäisee taatelin;
   Kamelikaravaanin teltasta kurkkaa pupu ja kissa haukottelee; Rataspajan
-  seinärattaan viides tökkäys avaa käkikellon oven.
+  seinärattaan viides tökkäys avaa käkikellon oven; Kellokoneiston tornikellon
+  viides tökkäys tuo käen kurkistamaan kellotapulista.
 - **Revontulimaa**: Horisontin jäälautan takaa kurkkaa hylje; Revontulipolun kiven
   takaa pyrähtää riekko; Porolaakson poron kuono hehkuu punaisena ja lumiukko
   aivastaa; Kelkkamäen kelkkaan ilmestyy kulkunen, joka soittaa Jingle Bellsin

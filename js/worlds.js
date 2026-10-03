@@ -1286,10 +1286,10 @@ var WORLDS = [
   },
   {
     // Kellopaja: mantereen viides paikka, tonttujen mekaaninen paja vuoren
-    // rinteellä. Verbi: rattaat. Usvahuone: vartija Kellokoneisto
-    // (finaleKind siirtyy vartijalle, kun se tehdään).
+    // rinteellä. Verbi: rattaat. Vartija Kellokoneisto yhdistää veden,
+    // rattaat ja viisarit yhdeksi koneeksi.
     id: 14, name: 'Kellopaja', region: 'land', band: 'clock',
-    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'cuckoo', deco: ['gear', 'chute', 'tune', 'belt', 'cuckoo'] },
+    place: { fx: 0.27, fy: 0.80, size: 0.75, finaleKind: 'clockwork', deco: ['gear', 'chute', 'tune', 'belt', 'cuckoo', 'clockwork'] },
     map: [
       '#########',
       '#B.....R#',
@@ -1302,7 +1302,7 @@ var WORLDS = [
       '#.#######',
       '#......C#',
       '#######.#',
-      '#?......#',
+      '#V......#',
       '#########'
     ],
     levels: [
@@ -1370,6 +1370,19 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderCuckooBg(b, w, h); },
         light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.35 },
         respawn: function () { respawnCuckoo(); }
+      },
+      {
+        kind: 'clockwork', room: 'V', name: 'Kellokoneisto', color: '#ff9a3a', script: 'play-clockwork',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: true, celebrateMs: 6500,
+        bgColor: '#5e4a5a', ambient: 'sparkle', fg: null,
+        init: function () { initClockwork(); },
+        update: function (dt) { updateClockwork(dt); },
+        draw: function () { drawClockwork(); },
+        tap: function (x, y) { handleClockworkTap(x, y); },
+        resize: function () { resizeClockwork(); },
+        renderBg: function (b, w, h) { renderClockworkBg(b, w, h); },
+        light: { rays: true, raysColor: '#ffe8b0', raysAlpha: 0.3, tint: ['rgba(255,210,150,0.06)', 'rgba(120,80,40,0.05)'], vignette: 0.35 },
+        respawn: function () { respawnClockwork(); }
       }
     ]
   }
