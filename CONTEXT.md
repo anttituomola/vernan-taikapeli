@@ -130,7 +130,7 @@ _Vältä_: kolikko, piste
 
 **Linna**:
 Vernan koti, jonka huoneita sisustetaan tähdillä: sali, tornihuone, keittiö,
-pankkiholvi ja puutarha. Linnalla on oma karttanäkymä, **linnakartta**, jonne pääsee
+pankkiholvi, puutarha ja kanatarha. Linnalla on oma karttanäkymä, **linnakartta**, jonne pääsee
 saaristokartan ja Kaukamaan kartan linnanapista.
 _Vältä_: koti yksinään, huoneisto (Linnasaaren linna on eri asia: finaalin paikka)
 
@@ -144,6 +144,14 @@ Linnan ulkohuone keittiön vieressä, jonne istutetaan kasveja ja jossa ne
 kasvavat **kastelulla** (kastelukannu raahataan kasvin kohdalle). Kypsästä
 kasvista saadaan **satoa**, jonka pupu syö.
 _Vältä_: piha yksinään, kasvimaa, Puutarha-kenttä (ensimmäisen saaren kenttä on eri asia)
+
+**Kanatarha**:
+Linnan ulkohuone puutarhan vieressä, jossa hoidetaan kanoja: **ruokinta**
+(jyväsäkki kaukalolle) ja **vesi** (vesikannu kuppiin). Hoidetut kanat
+**munivat** pesään kerran päivässä; muna kerätään **koriin**, ja korista muna
+viedään **hautomoon**, josta seuraavana päivänä kuoriutuu **tipu**. Tipu kasvaa
+kanaksi kolmessa päivässä. Kanat ovat eläimiä, eivät tavaroita.
+_Vältä_: kanala (= kanatalo tarhan sisällä), maatila, munat valuuttana
 
 ### Hahmot
 

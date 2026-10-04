@@ -1,12 +1,12 @@
 'use strict';
 
 // Linnan sisustus: maaliton huoneisto, jossa kentistä kerätyillä tähdillä ostetaan
-// huonekaluja ja raahataan ne paikoilleen. Viisi huonetta (sali, tornihuone,
-// keittiö, pankkiholvi ja puutarha), joiden välillä kuljetaan ovista. Kauppa on sivutettu
+// huonekaluja ja raahataan ne paikoilleen. Kuusi huonetta (sali, tornihuone,
+// keittiö, pankkiholvi, puutarha ja kanatarha), joiden välillä kuljetaan ovista. Kauppa on sivutettu
 // (nuolet alareunassa). Puput reagoivat tavaroihin (peti, porkkanat, pallo, nalle,
 // kakku, trampoliini, säästöpossu, pankkitiski). Avataan linnakartalta
-// (flow-castle.js); holvin talletus ja korko ovat flow-bank.js:ssä ja puutarhan
-// kasvit ja kastelu flow-yard.js:ssä.
+// (flow-castle.js); holvin talletus ja korko ovat flow-bank.js:ssä, puutarhan
+// kasvit ja kastelu flow-yard.js:ssä ja kanatarhan kanat flow-coop.js:ssä.
 
 var HOME_ITEMS = [
   { id: 'rug', price: 2, kind: 'floor' },
@@ -67,14 +67,27 @@ var HOME_ITEMS = [
   { id: 'magicflower', price: 5, kind: 'floor' },
   { id: 'beehive', price: 4, kind: 'floor' },
   { id: 'birdbath', price: 4, kind: 'floor' },
-  { id: 'swing', price: 5, kind: 'floor', tall: 1.4 }
+  { id: 'swing', price: 5, kind: 'floor', tall: 1.4 },
+  // Kanatarha (piirto ja napautus flow-coop.js). bird = eläin kanatarhaan
+  // (coopBirds, ei homeItems): niitä voi ostaa useita, kunnes tarha on täynnä.
+  { id: 'hen', price: 3, kind: 'floor', bird: 1 },
+  { id: 'rooster', price: 4, kind: 'floor', bird: 1 },
+  { id: 'chick', price: 2, kind: 'floor', bird: 1 },
+  { id: 'haybale', price: 2, kind: 'floor' },
+  { id: 'flowerbed', price: 2, kind: 'floor' },
+  { id: 'lantern', price: 2, kind: 'floor', tall: 1.2 },
+  { id: 'dustbath', price: 3, kind: 'floor' },
+  { id: 'scarecrow', price: 3, kind: 'floor', tall: 1.4 },
+  { id: 'coopswing', price: 3, kind: 'floor', tall: 1.3 },
+  { id: 'weathervane', price: 4, kind: 'floor', tall: 1.7 }
 ];
 // Huoneet: 0 = sali (ovet oikealla torniin, vasemmalla keittiöön ja keskellä
 // holviin), 1 = tornihuone (ovi vasemmalla saliin), 2 = keittiö (ovi oikealla
 // saliin, vasemmalla puutarhaan), 3 = pankkiholvi (ovi vasemmalla saliin),
-// 4 = puutarha (portti oikealla keittiöön). Huoneisiin mennään myös suoraan
+// 4 = puutarha (portti oikealla keittiöön, vasemmalla kanatarhaan),
+// 5 = kanatarha (portti oikealla puutarhaan). Huoneisiin mennään myös suoraan
 // linnakartalta (flow-castle.js).
-var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }, { id: 'kitchen' }, { id: 'vault' }, { id: 'yard' }];
+var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }, { id: 'kitchen' }, { id: 'vault' }, { id: 'yard' }, { id: 'coop' }];
 var HOME_SHOP_PAGE = 10;
 // Maalit: purkki raahataan seinälle (wall-liuku) tai lattialle (floor-liuku). Ilmaisia.
 var HOME_PAINTS = [
@@ -87,7 +100,7 @@ var HOME_PAINTS = [
   { id: 'wood', pot: '#a9743f', wall: ['#f7ead2', '#e6cfa8'], floor: ['#c98b4a', '#8a5a30'] }
 ];
 var HOME_BOWS = ['#ff7bac', '#5fa8ff', '#ffd24f'];
-function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 }, 2: { wall: 4, floor: 6 }, 3: { wall: 4, floor: 5 }, 4: { wall: 6, floor: 4 } }; }
+function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 }, 2: { wall: 4, floor: 6 }, 3: { wall: 4, floor: 5 }, 4: { wall: 6, floor: 4 }, 5: { wall: 6, floor: 4 } }; }
 // Onko #rrggbb-väri vaalea (tapettikuvion sävyn valintaan)
 function homeColorIsLight(hex) {
   var n = parseInt(hex.slice(1), 16);
@@ -139,7 +152,8 @@ function homeItemSize() {
 }
 // Ovet: { x, y, w, h, to, side } — salissa oikealla torniin, vasemmalla
 // keittiöön ja keskellä holviin; tornissa ja holvissa vasemmalla saliin,
-// keittiössä oikealla saliin ja vasemmalla puutarhaan; puutarhassa oikealla keittiöön
+// keittiössä oikealla saliin ja vasemmalla puutarhaan; puutarhassa oikealla
+// keittiöön ja vasemmalla kanatarhaan; kanatarhassa oikealla puutarhaan
 function homeDoorsOf(roomIdx) {
   var room = homeRoom(), h = viewH;
   var right = { x: room.x1 - h * 0.13, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3, side: 1 };
@@ -148,7 +162,8 @@ function homeDoorsOf(roomIdx) {
   if (roomIdx === 0) { right.to = 1; left.to = 2; mid.to = 3; return [right, left, mid]; }
   if (roomIdx === 1 || roomIdx === 3) { left.to = 0; return [left]; }
   if (roomIdx === 2) { right.to = 0; left.to = YARD_ROOM; return [right, left]; }
-  right.to = 2;
+  if (roomIdx === YARD_ROOM) { right.to = 2; left.to = COOP_ROOM; return [right, left]; }
+  right.to = YARD_ROOM;
   return [right];
 }
 function homeDoors() {
@@ -197,6 +212,7 @@ function showHome(roomIdx) {
   if (homeRoomIdx === BANK_ROOM) bankOnEnter();
   else bankAccrue();
   if (homeRoomIdx === YARD_ROOM) yardOnEnter();
+  if (homeRoomIdx === COOP_ROOM) coopOnEnter();
   playNote(523, 0, 0.15, 'triangle', 0.3);
   playNote(659, 0.1, 0.2, 'triangle', 0.3);
 }
@@ -219,7 +235,8 @@ function homeGoRoom(idx) {
   if (idx === BANK_ROOM) bankOnEnter();
   else bankHold = null;
   if (idx === YARD_ROOM) yardOnEnter();
-  else if (from === YARD_ROOM) homeShopPage = 0;
+  else if (idx === COOP_ROOM) coopOnEnter();
+  else if (from === YARD_ROOM || from === COOP_ROOM) homeShopPage = 0;
   playNote(392, 0, 0.1, 'triangle', 0.25);
   playNote(523, 0.1, 0.15, 'triangle', 0.25);
 }
@@ -283,6 +300,8 @@ function homeShopPick(cell, px, py) {
     playNote(660, 0, 0.06, 'sine', 0.2);
     return;
   }
+  // Kanat, kukko ja tipu (flow-coop.js)
+  if (coopShopPick(def, px, py)) return;
   it = homeStored(def.id);
   if (it) {
     it.fx = px / viewW;
@@ -377,6 +396,7 @@ function homeBowTo(bowIdx, px, py) {
 }
 
 function homeBuy(def, it) {
+  if (coopBuy(def, it)) return;
   if (homeItemRoom(it) === -1) {
     // Varastosta takaisin: ei veloitusta
     it.room = homeRoomIdx;
@@ -419,6 +439,8 @@ function handleHomeTap(px, py) {
   if (bankTap(px, py)) return;
   // Puutarhan aurinko ja rikkaruohot
   if (yardTap(px, py)) return;
+  // Kanatarhan munat, työkalut, linnut, kori ja hautomo
+  if (coopTap(px, py)) return;
   // Päällimmäinen tavara sormen alla (viimeksi lisätty on päällimmäinen)
   for (i = homeItems.length - 1; i >= 0; i--) {
     if (homeItemRoom(homeItems[i]) !== homeRoomIdx) continue;
@@ -471,6 +493,7 @@ function homeDragOnDoor() {
 function homeMove(px, py) {
   if (!homeDrag) return;
   if (Math.abs(px - homeDrag.sx) + Math.abs(py - homeDrag.sy) > 12) homeDrag.moved = true;
+  if (homeDrag.coop) { coopDragMove(px, py); return; }
   if (homeDrag.paint !== undefined || homeDrag.bow !== undefined) {
     homeDrag.gx = px;
     homeDrag.gy = py;
@@ -494,6 +517,7 @@ function homeMove(px, py) {
 function homeUp() {
   bankRelease();
   if (!homeDrag) return;
+  if (homeDrag.coop) { coopDrop(); return; }
   var it = homeDrag.item;
   var moved = homeDrag.moved;
   var inShop = homeGhostInShop(), onDoor = homeDragOnDoor(), def = homeDrag.def;
@@ -626,7 +650,7 @@ function homeItemTap(it) {
     it.phase = 1;
     playNote(880, 0, 0.1, 'sine', 0.2);
     playNote(1175, 0.08, 0.12, 'sine', 0.2);
-  } else if (!bankItemTap(it) && !yardItemTap(it)) {
+  } else if (!bankItemTap(it) && !yardItemTap(it) && !coopItemTap(it)) {
     playNote(660, 0, 0.08, 'triangle', 0.2);
   }
   spawnSparkles(x, y - s * 0.5, 6, '#ffe27a');
@@ -650,6 +674,7 @@ function updateHome(dt) {
     if (it.bounceT > 0) it.bounceT = Math.max(0, it.bounceT - dt * 2);
     updateBankItem(it, dt);
     updateYardItem(it, dt);
+    updateCoopItem(it, dt);
     if (it.roll) {
       var nx = it.fx * viewW + it.roll * dt;
       nx = Math.min(Math.max(nx, room.x0 + homeItemSize() * 0.5), room.x1 - homeItemSize() * 0.5);
@@ -742,6 +767,7 @@ function updateHome(dt) {
   }
   updateBank(dt);
   updateYard(dt);
+  updateCoop(dt);
   updateParticles(dt);
 }
 
@@ -754,6 +780,7 @@ function drawHome() {
   ctx.drawImage(homeBgCanvas, 0, 0, homeBgCanvas.width, homeBgCanvas.height, 0, 0, viewW, viewH);
   if (homeRoomIdx === BANK_ROOM) drawBankVault(ctx);
   drawYardGround(ctx);
+  drawCoopGround(ctx);
 
   // Seinätavarat, sitten lattiatavarat ja puput y-järjestyksessä (vain tämä huone)
   var order = [];
@@ -764,12 +791,14 @@ function drawHome() {
     else order.push({ y: it.fy * viewH, item: it });
   }
   for (i = 0; i < homeBunnies.length; i++) order.push({ y: homeBunnies[i].fy * viewH, bunny: homeBunnies[i] });
+  coopDrawOrder(order);
   order.sort(function (a, b) { return a.y - b.y; });
   for (i = 0; i < order.length; i++) {
     if (order[i].item) drawHomeItem(ctx, order[i].item, order[i].item.fx * viewW, order[i].item.fy * viewH, homeItemSize());
-    else drawHomeBunny(ctx, order[i].bunny);
+    else if (order[i].bunny) drawHomeBunny(ctx, order[i].bunny);
+    else drawCoopBird(ctx, order[i].coopBird);
   }
-  if (homeDrag && !homeDrag.ghost) {
+  if (homeDrag && !homeDrag.ghost && homeDrag.item) {
     var r = homeItemRect(homeDrag.item);
     ctx.strokeStyle = 'rgba(255,255,255,0.8)';
     ctx.lineWidth = Math.max(2, viewH * 0.005);
@@ -794,6 +823,7 @@ function drawHome() {
     if (!otherHas && homeRoomIdx === 0) drawHintArrow(ctx, dr.x + dr.w / 2, dr.y - viewH * 0.06);
   }
   drawYardAbove(ctx);
+  drawCoopAbove(ctx);
   for (i = 0; i < homeNotes.length; i++) drawNote(ctx, homeNotes[i]);
   drawParticlesLayerAbs(ctx);
   drawHomeShop(ctx);
@@ -954,7 +984,7 @@ function drawHomeShop(c) {
       c.globalAlpha = 1;
       continue;
     }
-    var stored = !!homeStored(def.id), owned = !!homeHas(def.id) && !stored, afford = starCoins >= def.price;
+    var stored = !!homeStored(def.id), owned = (!!homeHas(def.id) && !stored) || coopShopOwned(def.id), afford = starCoins >= def.price;
     var lifting = !!(homeDrag && homeDrag.ghost && homeDrag.def === def);
     var shake = homeShake.id === def.id && homeShake.t > 0 ? Math.sin(globalT * 50) * viewH * 0.006 : 0;
     c.fillStyle = owned ? 'rgba(200,190,220,0.35)' : (stored ? '#fff0f7' : (afford ? '#ffffff' : 'rgba(255,255,255,0.55)'));
@@ -1674,8 +1704,8 @@ function drawHomeItem(c, it, x, y, s) {
     }
     c.fillStyle = 'rgba(255,255,255,0.5)';
     c.fillRect(x - s * 0.36, y - s * 0.96, s * 0.06, s * 0.9);
-  } else if (!drawBankItem(c, it, x, y, s)) {
-    drawYardItem(c, it, x, y, s);
+  } else if (!drawBankItem(c, it, x, y, s) && !drawYardItem(c, it, x, y, s)) {
+    drawCoopItem(c, it, x, y, s);
   }
 }
 
@@ -1694,6 +1724,11 @@ function renderHomeBg() {
   b.fillRect(0, 0, w, h);
   if (homeRoomIdx === YARD_ROOM) {
     renderYardBg(b, room, h, wallP, floorP);
+    renderHomeDoors(b, h);
+    return;
+  }
+  if (homeRoomIdx === COOP_ROOM) {
+    renderCoopBg(b, room, h, wallP, floorP);
     renderHomeDoors(b, h);
     return;
   }
@@ -1890,7 +1925,7 @@ function renderHomeDoors(b, h) {
 }
 
 // Huoneen kyltti (ovien yllä ja linnakartalla): portaat = torni, sydän = sali,
-// kattila = keittiö, tähti = holvi, kukka = puutarha. (x, y) keskikohta, sh kyltin korkeus.
+// kattila = keittiö, tähti = holvi, kukka = puutarha, tipu = kanatarha. (x, y) keskikohta, sh kyltin korkeus.
 function homeRoomSign(b, idx, x, y, sh) {
   var i, sw = sh * 1.9;
   b.fillStyle = '#fff6d8';
@@ -1903,6 +1938,8 @@ function homeRoomSign(b, idx, x, y, sh) {
     drawCauldron(b, x, y + sh * 0.26, sh * 0.32, '#ff9f3a', false, 0, false);
   } else if (idx === BANK_ROOM) {
     drawStar(b, x, y, sh * 0.34, 0, 0);
+  } else if (idx === COOP_ROOM) {
+    coopSign(b, x, y, sh);
   } else if (idx === YARD_ROOM) {
     b.fillStyle = '#4fb356';
     b.fillRect(x - sh * 0.03, y, sh * 0.06, sh * 0.35);

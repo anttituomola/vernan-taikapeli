@@ -291,6 +291,9 @@ window.VT = {
   bank: function () { return { stars: bankStars, t: bankT, unseen: bankUnseen, frac: bankDayFrac(), vault: bankVault(), celeb: bankCeleb }; },
   // Kelaa korkokelloa taaksepäin (tunteina) ja laske korko
   bankSkip: function (hours) { if (bankT) bankT -= hours * 3600 * 1000; return bankAccrue(); },
+  coop: function () { return { birds: coopBirds, nests: coopNests, basket: coopBasket, inc: coopInc, fed: coopFed, wat: coopWat, grain: coopGrain, water: coopWater, layer: coopLayer, day: coopDay(), spots: coopSpots(), tool: coopTool }; },
+  // Kelaa kanatarhan kelloa n päivää eteenpäin (päiväleimat taaksepäin)
+  coopSkip: function (days) { coopShiftDays(days); },
   yard: function () { return { weeds: yardWeeds, treats: yardTreats, drops: yardDrops, sun: yardSunPos(), day: yardDay() }; },
   pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, mode: penMode, bottles: penBottles, frame: penFrame }; },
   penStart: penStart,

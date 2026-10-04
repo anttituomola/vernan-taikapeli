@@ -37,6 +37,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/flow-castle.js` — linnakartta (linnan oma karttanäkymä, huoneiden pienoiskuvat)
 - `js/flow-bank.js` — pankkiholvi (talletus, nosto, korko, pankin huonekalut)
 - `js/flow-yard.js` — linnan puutarha (kasvit, kastelu, sato, rikkaruohot, puutarhan tavarat)
+- `js/flow-coop.js` — linnan kanatarha (kanat, ruokinta, vesi, munat, hautomo, tiput, kanatarhan tavarat)
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)
 - `js/play-garden.js` … `play-sky.js` — vaiheet 2–5
@@ -852,10 +853,11 @@ ylhäällä. **Linnakartta:** saaristokartan ja Kaukamaan kartan vasemmassa
 reunassa (tähtisaldon alla) on vaaleanpunainen linnanappi, joka avaa linnan
 oman karttanäkymän. Siinä linna on leikattu auki ja jokainen huone näkyy
 pienoiskuvana maaleineen ja tavaroineen: tornihuone ylhäällä, keittiö ja sali
-maan tasalla, pankkiholvi maan alla ja puutarha pihalla linnan vasemmalla
-puolella. Huoneen napautus vie suoraan huoneeseen;
+maan tasalla, pankkiholvi maan alla, puutarha pihalla linnan vasemmalla
+puolella ja kanatarha pihalla linnan oikealla puolella (prinsessa
+yksisarvisella ja puput pilven päällä sen yllä). Huoneen napautus vie suoraan huoneeseen;
 huoneen kotinappi palaa linnakartalle ja linnakartan venenappi sille kartalle,
-jolta tultiin. Huoneistossa on neljä sisähuonetta ja puutarha: **sali** (sydäntapetti, ikkuna),
+jolta tultiin. Huoneistossa on neljä sisähuonetta, puutarha ja kanatarha: **sali** (sydäntapetti, ikkuna),
 **tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia), **keittiö**
 (kaakeliseinä, verhoikkuna yrttiruukulla, astiakisko, ruutulattia) ja
 **pankkiholvi** (kultaiset seinälevyt, lyhdyt, kivilaatat). Salista oikea ovi
@@ -912,6 +914,40 @@ Puutarhatavarat: lapio (kaivaa, multaa lentää), kottikärryt (vierivät, pupu
 istuu kyytiin), puutarhatonttu (lakki heiluu), linnunpönttö (lintu kurkistaa ja
 visertää), mehiläispesä (mehiläiset lentävät laajemmalle), lintujen allas
 (roiskuu) ja keinu (heiluu, pupu keinuu).
+**Kanatarha:** linnan kuudes huone (`js/flow-coop.js`, `COOP_ROOM = 5`) on
+puutarhan vasemman portin (tipu-kyltti) takana; kanatarhan portti (kukka-kyltti)
+vie takaisin puutarhaan. Aitaus on seinämaalin ja hiekkapiha lattiamaalin
+väriä. Tarhassa on kanatalo kolmine pesälaatikkoineen, orsi, ruokakaukalo,
+vesikuppi, munakori, hautomo, jyväsäkki ja vesikannu. Ensikäynnillä tarhaan
+tulee kaksi kanaa (valkoinen ja ruskea). **Hoito** (päivärytmi kuten
+puutarhassa, paikallinen kalenteripäivä): jyväsäkki raahataan niin, että sen
+suu on kaukalon yllä (säkki kallistuu, jyvät valuvat, ~0,6 s), ja kanat
+juoksevat syömään; vesikannu samoin vesikupin ylle. Tekemätön työkalu hehkuu ja
+keinahtelee, ja yhden kanan yllä vuorottelee jyvä- tai vesikupla. Kun molemmat
+on tehty, kanat menevät vuorotellen pesään (ensimmäinen ~3–5 s kuluttua) ja
+munivat kotkottaen; kukin kana munii kerran päivässä. Jos hoidettiin, mutta
+lähdettiin ennen kuin kaikki munivat, munat odottavat pesissä seuraavana
+päivänä. Hoitamattomuudesta ei seuraa mitään pahaa (ei munia). **Munat:** pesän
+muna napautetaan, ja se lentää koriin (kori enintään 12). Korin napautus
+maalaa valkoisen munan kirjavaksi. Korista muna raahataan **hautomoon**, ja
+seuraavana päivänä muna keikkuu (nuoli osoittaa): napautus kuoriuttaa tipun.
+Tipu seuraa lähintä kanaa, piipittää ja kasvaa kolmessa päivässä kanaksi
+(väri paljastuu). **Kultamuna** (1/12 munista) napautettuna antaa yhden
+tähden. Kanoja, kukkoa ja tipuja on enintään 8 (hautomon muna lasketaan).
+**Linnut:** napautettu kana kotkottaa, räpyttää ja pyrähtää sivuun (tipu
+piipittää ja hypähtää). Lintu nostetaan sormella: sylissä nousee sydämiä.
+Laskettuna orrelle se istuu orrella, pesään (kana) se istuu pesässä (ja munii,
+jos se on hoidettu eikä ole vielä munut), pupun viereen se halaa (sydämiä), ja
+muualle se pyrähtää maahan. **Kukko** kiekuu päivän ensimmäisellä käynnillä;
+**salaisuus:** viisi nopeaa tökkäystä kukkoon soittaa laulun, ja kerran
+päivässä pesään ilmestyy kultamuna. Kanatarhan kauppa aukeaa sivulta, jolla
+ovat kana (3), kukko (4, yksi) ja tipu (2); ne ostetaan raahaamalla kuten
+tavarat, mutta vain kanatarhassa. Kanatarhan tavarat: olkipaali (kana tai
+kukko kiipeää päälle, kukko kiekuu sieltä), kukkapenkki (perhonen lentää),
+lyhty (syttyy), hiekkakylpy (kanat kieriskelevät), variksenpelätin (kädet
+heiluvat, kanat pyrähtävät leikisti kauemmas), kanakeinu (kana keinuu) ja
+tuuliviiri (kukkoviiri pyörii). Testaus: `VT.coop()` näyttää tilan ja
+`VT.coopSkip(n)` kelaa kanatarhan kelloa n päivää eteenpäin.
 Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa)
 **raahaamalla**: tartu korttiin, vedä tavara huoneen puolelle ja päästä irti
 haluamaasi kohtaan, niin tähdet veloitetaan. Kaupan päälle palautettu tavara
