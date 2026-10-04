@@ -968,7 +968,7 @@ function handleTrainTap(px, py) {
 
 // ---------- Päivitys ----------
 function updateTrain(dt) {
-  var busy, i, p, W = viewW, h = viewH;
+  var busy, i, p, sp, W = viewW, h = viewH;
   updateTasks(dt);
   updateParticles(dt);
   updateConfetti(dt);
@@ -1007,6 +1007,12 @@ function updateTrain(dt) {
     if (train.endT > 2.2 && !train.won) { train.won = true; startCelebration(); }
   }
   train.cam = train.x - W * TRAIN_LEAD;
+  // Kyydissä istuvat seuraavat junaa vasta sen liikuttua: muuten he (ja
+  // kuplat) jäisivät ruudun verran jälkeen ja tärisisivät vaunuun nähden.
+  for (i = 0; i < train.pax.length; i++) {
+    p = train.pax[i];
+    if (p.state === 'ride') { sp = trainSeatPos(p.seat); p.x = sp.x; p.y = sp.y; }
+  }
 }
 function trainUpdateStand(dt) {
   var i, busyPax = false, st;
