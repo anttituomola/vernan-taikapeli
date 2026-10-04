@@ -65,6 +65,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
 - `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js`, `play-clockwork.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut), Käkikello (viisarit kellonaikaan) ja vartija Kellokoneisto (vesi, rattaat ja viisarit yhdessä koneessa), sokkelon maasto `HUB_TILE_DECOR.clock`
+- `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät) ja vartija Postireitti (ohjelmointi), sokkelon maasto `HUB_TILE_DECOR.farm`
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -844,6 +845,45 @@ viimeinen paikka: sen läpäisyn jälkeen kartalla ei ole seuraavaa paikkaa
   kello (5. tökkäys: Käkikellon käki kurkistaa kellotapulista ja kukkuu),
   kyyhky räystäällä, koristeratas tornin juurella; tonttu hyppää. Tehtävät:
   kello, lasku.
+
+### Kaukamaa: Maalaiskylä (maailma 15)
+
+Mantereen kuudes paikka, tuulimyllyjen ja peltojen kylä kartan koillisosassa.
+Aukeaa Kellopajan vartijan Kellokoneiston jälkeen. Rytmi palautteen mukaan
+(4.10.2026: Soittorasia oli "täydellinen vaikeustasoltaan", mutta raskas):
+kolme pitkää ja helpohkoa kenttää ilman sydämiä, aikarajaa ja rangaistuksia,
+ja vartijana vaikeampi pulma.
+
+- **Junamatka** — juna kulkee itsestään 8 aseman läpi vaihtuvissa
+  maisemissa (pellot, tuulimyllyt, joki, tunneli, niitty, omenatarha, kylä,
+  ilta). Eläinmatkustajien kuplissa on määränpääaseman kuva; napautus
+  asemaan pysäyttää junan (ohitetulle voi peruuttaa). Ohi ajettu matkustaja
+  jää seuraavalla pysähdyksellä ja kävelee iloisena takaisin. Veturin
+  napautus viheltää, ja savupilvi nappaa korkeat tähdet. Kaksi opastinta =
+  tehtävät (lukumäärä, anna). Kultainen veturi, jos kaikki matkat osuivat.
+  Kesto botilla n. 3,5 min. Yllätys: 5. vihellys tuo kuumailmapallon.
+- **Kalastusretki** — veneessä järvellä: napautus veteen heittää kohon,
+  koho sukeltaa tärpissä (ikkuna 1,5 s) ja napautus nostaa saaliin. Kalat
+  näkyvät varjoina, joista näkee lajin. Kalakirjaan 6 tavallista lajia +
+  4 bonusta (saapas, arkku, kuukala yöllä, sateenkaarikala). Laiturin
+  kyläläinen tilaa kaloja, kissa saa loput. Päivä vaihtuu yöksi. Tehtävä:
+  lasku. Kesto botilla 2,5–4 min. Kultainen kirja tallentuu avaimeen
+  `vt_fishing_v1`. Yllätys: kiven 5. tökkäys nostaa ystävällisen järvihirviön.
+- **Ilmapalloretki** — tuuli vie palloa, sormi nostaa ja laskee sitä
+  pehmeästi (jousi + vaimennus). Ei törmäyksiä. Kerätään tähtiä,
+  pilvilampaita, perhosia, ilmapalloja, omenoita ja kukkia; kyläläisten
+  toiveet täytetään pudottamalla korista (napautus kyläläiseen), ja
+  maaystävät hyppäävät koriin niityllä. Kaksi unista tuulipilveä =
+  tehtävät. Kultainen pallo: kaikki kuusi pilvilammasta. Yllätys: auringon 5.
+  tökkäys tuo sateenkaaren ja lentävän pupun.
+- **Postireitti** (vartija) — Pupupolun käyttöliittymä kylän kaduilla:
+  postipupu vie kirjeet taloihin (numero tai asukkaan kuva); kirje lentää
+  postilaatikkoon, kun pupu hyppää oikean oven eteen. Neljä arvottua
+  kierrosta: 6×5 kahdella kirjeellä; 7×5 silta + vipu ja pakolliset
+  toistonapit; 7×6 kirjeet järjestyksessä; 8×6 järjestys + silta. Ei
+  sydämiä; kultainen postimerkki ensimmäisellä ajolla onnistuneesta.
+  Tehtävät: maksu, sanatehtävä. Yllätys: kukon 5. tökkäys saa asukkaat
+  laulamaan ikkunoista.
 
 ### Linnan sisustus
 
