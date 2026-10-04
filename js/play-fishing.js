@@ -135,8 +135,11 @@ function fishingAllEver() {
 // ---------- Alustus ----------
 function initFishing() {
   var i;
-  tasks = [makeTask(-5, 'math')];
+  // Välitehtävät vaikeampia (palaute 4.10.2026): lasku ja kalojen myynti kolikoilla
+  tasks = [makeTask(-5, 'math'), makeTask(-5, 'pay')];
   tasks[0].x = -1e6;
+  tasks[1].x = -1e6;
+  fishing.taskIdx = 0;
   camX = 0;
   fishingLoad();
   fishing.st = 'idle';
@@ -486,7 +489,8 @@ function fishingStickerDone(d) {
   }
   if (FISHING_SPECIES[sp].bonus) return;
   fishing.newCool = 2;
-  if (n === 3 && !tasks[0].opened) fishing.taskDelay = 0.9;
+  if (n === 2 && !tasks[0].opened) { fishing.taskIdx = 0; fishing.taskDelay = 0.9; }
+  if (n === 4 && !tasks[1].opened) { fishing.taskIdx = 1; fishing.taskDelay = 0.9; }
   if (n >= FISHING_GOAL && fishing.winT < 0) {
     fishing.winT = 0;
     fishing.wonT = 0;
@@ -606,10 +610,10 @@ function updateFishing(dt) {
   // Tehtävä odottaa, kunnes tarra on kirjassa eikä kala ole juuri koukussa
   if (fishing.taskDelay > 0 && !fishing.fly.length && fishingCalm()) {
     fishing.taskDelay -= dt;
-    if (fishing.taskDelay <= 0 && !tasks[0].opened) {
+    if (fishing.taskDelay <= 0 && !tasks[fishing.taskIdx].opened) {
       fishingRelease();
       if (fishing.st !== 'won') fishing.st = 'idle';
-      taskStart(tasks[0]);
+      taskStart(tasks[fishing.taskIdx]);
       return;
     }
   }

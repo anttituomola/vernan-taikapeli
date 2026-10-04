@@ -197,7 +197,7 @@ function hotairAddSource(u0, kind) {
 // ---------- Alustus ----------
 function initHotair() {
   var i;
-  tasks = [makeTask(-5, 'dots'), makeTask(-5, 'jigsaw')];
+  tasks = [makeTask(-5, 'matrix'), makeTask(-5, 'jigsaw', { pieces: 6 })];  // välitehtävät vaikeampia (palaute 4.10.2026)
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   camX = 0;
   hotairBuild();

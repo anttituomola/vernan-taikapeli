@@ -860,21 +860,21 @@ ja vartijana vaikeampi pulma.
   asemaan pysäyttää junan (ohitetulle voi peruuttaa). Ohi ajettu matkustaja
   jää seuraavalla pysähdyksellä ja kävelee iloisena takaisin. Veturin
   napautus viheltää, ja savupilvi nappaa korkeat tähdet. Kaksi opastinta =
-  tehtävät (lukumäärä, anna). Kultainen veturi, jos kaikki matkat osuivat.
+  tehtävät (reitti, maksu; vaikeutettu palautteen 4.10.2026 mukaan). Kultainen veturi, jos kaikki matkat osuivat.
   Kesto botilla n. 3,5 min. Yllätys: 5. vihellys tuo kuumailmapallon.
 - **Kalastusretki** — veneessä järvellä: napautus veteen heittää kohon,
   koho sukeltaa tärpissä (ikkuna 1,5 s) ja napautus nostaa saaliin. Kalat
   näkyvät varjoina, joista näkee lajin. Kalakirjaan 6 tavallista lajia +
   4 bonusta (saapas, arkku, kuukala yöllä, sateenkaarikala). Laiturin
-  kyläläinen tilaa kaloja, kissa saa loput. Päivä vaihtuu yöksi. Tehtävä:
-  lasku. Kesto botilla 2,5–4 min. Kultainen kirja tallentuu avaimeen
+  kyläläinen tilaa kaloja, kissa saa loput. Päivä vaihtuu yöksi. Tehtävät
+  2. ja 4. lajin jälkeen: lasku, maksu. Kesto botilla 2,5–4 min. Kultainen kirja tallentuu avaimeen
   `vt_fishing_v1`. Yllätys: kiven 5. tökkäys nostaa ystävällisen järvihirviön.
 - **Ilmapalloretki** — tuuli vie palloa, sormi nostaa ja laskee sitä
   pehmeästi (jousi + vaimennus). Ei törmäyksiä. Kerätään tähtiä,
   pilvilampaita, perhosia, ilmapalloja, omenoita ja kukkia; kyläläisten
   toiveet täytetään pudottamalla korista (napautus kyläläiseen), ja
   maaystävät hyppäävät koriin niityllä. Kaksi unista tuulipilveä =
-  tehtävät. Kultainen pallo: kaikki kuusi pilvilammasta. Yllätys: auringon 5.
+  tehtävät (matriisi, 6 palan palapeli). Kultainen pallo: kaikki kuusi pilvilammasta. Yllätys: auringon 5.
   tökkäys tuo sateenkaaren ja lentävän pupun.
 - **Postireitti** (vartija) — Pupupolun käyttöliittymä kylän kaduilla:
   postipupu vie kirjeet taloihin (numero tai asukkaan kuva); kirje lentää

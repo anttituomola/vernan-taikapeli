@@ -185,7 +185,7 @@ function trainLayout() {
 // ---------- Alustus ----------
 function initTrain() {
   var i, p;
-  tasks = [makeTask(-5, 'count'), makeTask(-5, 'give')];
+  tasks = [makeTask(-5, 'route'), makeTask(-5, 'pay')];  // välitehtävät vaikeampia (palaute 4.10.2026)
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   camX = 0;
   train.plan = trainMakePlan();
