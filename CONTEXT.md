@@ -91,6 +91,12 @@ koskettaa pyörivää ratasta (vastakkaiseen suuntaan). Kolme toisiaan
 koskettavaa ratasta **jumittuu**. **Soittorasia** on ketjun kohde.
 _Vältä_: hammaspyörä (liian tekninen), vaihde
 
+**Rautatievaihde**:
+Junamatkan valinta: rata haarautuu kahdeksi raiteeksi, ja vaihdevivun
+napautus kääntää vaihteen haaralle, jonka kyltissä on matkustajan aseman kuva.
+Lyhyesti **vaihde** vain Junamatkan yhteydessä.
+_Vältä_: risteys, haara yksinään
+
 **Yhteispeli**:
 Yhteispolun tapa pelata: lapsi ja aikuinen ohjelmoivat kumpikin oman pupunsa
 samalla tabletilla (vasen puoli pinkki, oikea sininen), ja ohjelmat ajetaan
