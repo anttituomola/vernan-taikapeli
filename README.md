@@ -854,14 +854,33 @@ Aukeaa Kellopajan vartijan Kellokoneiston jälkeen. Rytmi palautteen mukaan
 kolme pitkää ja helpohkoa kenttää ilman sydämiä, aikarajaa ja rangaistuksia,
 ja vartijana vaikeampi pulma.
 
-- **Junamatka** — juna kulkee itsestään 8 aseman läpi vaihtuvissa
-  maisemissa (pellot, tuulimyllyt, joki, tunneli, niitty, omenatarha, kylä,
-  ilta). Eläinmatkustajien kuplissa on määränpääaseman kuva; napautus
-  asemaan pysäyttää junan (ohitetulle voi peruuttaa). Ohi ajettu matkustaja
-  jää seuraavalla pysähdyksellä ja kävelee iloisena takaisin. Veturin
-  napautus viheltää, ja savupilvi nappaa korkeat tähdet. Kaksi opastinta =
-  tehtävät (reitti, maksu; vaikeutettu palautteen 4.10.2026 mukaan). Kultainen veturi, jos kaikki matkat osuivat.
-  Kesto botilla n. 3,5 min. Yllätys: 5. vihellys tuo kuumailmapallon.
+- **Junamatka** — juna kulkee itsestään vaihtuvissa maisemissa (pellot,
+  joki, niitty, tuulimyllyt, tunneli, omenatarha, kylä, ilta), ja rata
+  haarautuu kuudesti **vaihteeseen** (palaute 4.10.2026: pelkkä odottelu oli
+  "hiukan tylsää"). Yläraide nousee nurmipenkalle, alaraide jatkuu suoraan;
+  kummallakin haaralla on oma kuva-asemansa. Ennen vaihdetta on vaihdekyltti
+  (kaksi nuolikylttiä haarojen asemien kuvin) ja vaihdevipu: vivun napautus
+  kääntää vaihteen heti (kolahdus, kipinät, kieli liukuu, valittu nuoli
+  hehkuu ja raiteelle syttyvät nuolet), nuolikyltin napautus valitsee sen
+  haaran. Vaihdetta voi kääntää, kunnes veturi ehtii vaihteelle; juna
+  hiljentää kyltin kohdalla. Eläinmatkustajien kuplissa on määränpääaseman
+  kuva, ja määränpää arvotaan kyytiin noustessa niin, ettei samaan
+  vaihteeseen koskaan haluta kumpaankin haaraan. Napautus asemaan pysäyttää
+  junan (ohitetulle voi peruuttaa). Väärä haara: matkustaja huiskuttaa ja
+  odottaa seuraavaa samankuvaista asemaa (se taataan myöhempään, vielä
+  näkymättömään vaihteeseen); ohi ajettu asema: matkustaja jää seuraavalla
+  pysähdyksellä ja kävelee iloisena takaisin. Pääteasemalla kaikki jäävät
+  pois. Vihjekäsi näyttää ensimmäisen vaihteen vivun (ja väärän haaran
+  jälkeen seuraavat). Veturin napautus viheltää, ja savupilvi nappaa korkeat
+  tähdet; matalat tähdet haaroilla kerää vain kuljettu raide. Kaksi opastinta
+  = tehtävät (reitti, maksu; vaikeutettu palautteen 4.10.2026 mukaan).
+  Kultainen veturi, jos kaikki matkat osuivat. Tökättävät: vaihdetupa
+  (vaihdemiespupu tulee heiluttamaan lippua, joka 3. tökkäys ripustaa
+  katolle viirin), rautatieläisen kissa (joka 3.: hyppää perhosen perään),
+  ratapihan semafori (siipi ylös/alas, 5.: laulava lintu) ja vanhat
+  peltokoristeet. Kesto botilla 3–3,5 min (16:10 ja 4:3), toiminto (vaihde,
+  asema tai tähtivihellys) keskimäärin 10 s välein. Yllätys: 5. vihellys
+  tuo kuumailmapallon.
 - **Kalastusretki** — veneessä järvellä: napautus veteen heittää kohon,
   koho sukeltaa tärpissä (ikkuna 1,5 s) ja napautus nostaa saaliin. Kalat
   näkyvät varjoina, joista näkee lajin. Kalakirjaan 6 tavallista lajia +
