@@ -1385,6 +1385,78 @@ var WORLDS = [
         respawn: function () { respawnClockwork(); }
       }
     ]
+  },
+  {
+    // Maalaiskylä: mantereen kuudes paikka, tuulimyllyjen ja peltojen kylä.
+    // Rytmi (palaute 4.10.2026): kolme pitkää ja helpohkoa kenttää (ei sydämiä,
+    // ei aikarajaa) ja vartijana vaikeampi Postireitti (ohjelmointi).
+    id: 15, name: 'Maalaiskylä', region: 'land', band: 'farm',
+    place: { fx: 0.80, fy: 0.33, size: 0.8, finaleKind: 'post', deco: ['train', 'fishing', 'hotair', 'post'] },
+    map: [
+      '#########',
+      '#B.....J#',
+      '#######.#',
+      '#K......#',
+      '#.#######',
+      '#......I#',
+      '#######.#',
+      '#V......#',
+      '#########'
+    ],
+    levels: [
+      {
+        kind: 'train', room: 'J', name: 'Junamatka', color: '#e85a4a', script: 'play-train',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#bfe6ff', ambient: 'butterflies', fg: null,
+        init: function () { initTrain(); },
+        update: function (dt) { updateTrain(dt); },
+        draw: function () { drawTrain(); },
+        tap: function (x, y) { handleTrainTap(x, y); },
+        resize: function () { resizeTrain(); },
+        renderBg: function (b, w, h) { renderTrainBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,190,0.06)', 'rgba(150,220,120,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnTrain(); }
+      },
+      {
+        kind: 'fishing', room: 'K', name: 'Kalastusretki', color: '#3aa0d8', script: 'play-fishing',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#a8dcff', ambient: 'sparkle', fg: null,
+        init: function () { initFishing(); },
+        update: function (dt) { updateFishing(dt); },
+        draw: function () { drawFishing(); },
+        tap: function (x, y) { handleFishingTap(x, y); },
+        resize: function () { resizeFishing(); },
+        renderBg: function (b, w, h) { renderFishingBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,190,0.06)', 'rgba(150,220,120,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnFishing(); }
+      },
+      {
+        kind: 'hotair', room: 'I', name: 'Ilmapalloretki', color: '#ff9fb8', script: 'play-hotair',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#cfeaff', ambient: 'butterflies', fg: null,
+        init: function () { initHotair(); },
+        update: function (dt) { updateHotair(dt); },
+        draw: function () { drawHotair(); },
+        tap: function (x, y) { handleHotairTap(x, y); },
+        resize: function () { resizeHotair(); },
+        renderBg: function (b, w, h) { renderHotairBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,190,0.06)', 'rgba(150,220,120,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnHotair(); }
+      },
+      {
+        kind: 'post', room: 'V', name: 'Postireitti', color: '#e8c04a', script: 'play-post',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6500,
+        bgColor: '#c8eab0', ambient: 'butterflies', fg: null,
+        init: function () { initPost(); },
+        update: function (dt) { updatePost(dt); },
+        draw: function () { drawPost(); },
+        tap: function (x, y) { handlePostTap(x, y); },
+        resize: function () { resizePost(); },
+        renderBg: function (b, w, h) { renderPostBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,190,0.06)', 'rgba(150,220,120,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnPost(); }
+      }
+    ]
   }
 ];
 

@@ -1109,7 +1109,8 @@ var HUB_TILE_COLORS = {
   glow: ['#2e5a6a', '#285262'],
   desert: ['#f2cf8a', '#ebc47c'],
   carrot: ['#9fdc7f', '#93d272'],
-  clock: ['#d9b48a', '#cfa87c']
+  clock: ['#d9b48a', '#cfa87c'],
+  farm: ['#b9e08a', '#addb7c']
 };
 
 function drawMushroomTile(b, x, baseY, s) {
