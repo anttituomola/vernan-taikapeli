@@ -1401,6 +1401,8 @@ var WORLDS = [
       '#......I#',
       '#######.#',
       '#V......#',
+      '#.#######',
+      '#......H#',
       '#########'
     ],
     levels: [
@@ -1455,6 +1457,20 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderPostBg(b, w, h); },
         light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,190,0.06)', 'rgba(150,220,120,0.04)'], vignette: 0.22 },
         respawn: function () { respawnPost(); }
+      },
+      {
+        // Bonushuone vartijan jälkeen (kuten Yhteispolku): läpäisemätön huone ei estä mitään
+        kind: 'hideseek', room: 'H', name: 'Kanojen piilosleikki', color: '#ffb84f', script: 'play-hideseek',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#bfe6ff', ambient: 'butterflies', fg: null,
+        init: function () { initHideseek(); },
+        update: function (dt) { updateHideseek(dt); },
+        draw: function () { drawHideseek(); },
+        tap: function (x, y) { handleHideseekTap(x, y); },
+        resize: function () { resizeHideseek(); },
+        renderBg: function (b, w, h) { renderHideseekBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,190,0.06)', 'rgba(150,220,120,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnHideseek(); }
       }
     ]
   }
