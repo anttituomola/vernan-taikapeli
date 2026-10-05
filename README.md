@@ -65,7 +65,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
 - `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js`, `play-clockwork.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut), Käkikello (viisarit kellonaikaan) ja vartija Kellokoneisto (vesi, rattaat ja viisarit yhdessä koneessa), sokkelon maasto `HUB_TILE_DECOR.clock`
-- `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät) ja vartija Postireitti (ohjelmointi), sokkelon maasto `HUB_TILE_DECOR.farm`
+- `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js`, `play-hideseek.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät), vartija Postireitti (ohjelmointi) ja bonushuone Kanojen piilosleikki (tökättävä kylä), sokkelon maasto `HUB_TILE_DECOR.farm`
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -903,6 +903,45 @@ ja vartijana vaikeampi pulma.
   sydämiä; kultainen postimerkki ensimmäisellä ajolla onnistuneesta.
   Tehtävät: maksu, sanatehtävä. Yllätys: kukon 5. tökkäys saa asukkaat
   laulamaan ikkunoista.
+- **Kanojen piilosleikki** (bonushuone H vartijan jälkeen, 5.10.2026) —
+  palautteen "erityisplussa" jatkuvista tökättävistä härpättimistä: linnan
+  kanat ovat karanneet kylään piiloon, ja lähes kaikki kylässä on piilopaikka,
+  joka reagoi napautukseen hassusti. Kylä on 3,2 ruudun levyinen (vähintään
+  5 × ruudun korkeus), ja sitä vieritetään raahaamalla; lyhyt liikkumaton
+  kosketus on napautus (päätetään sormen noustessa, kynnys 3 % ruudun
+  korkeudesta, yli 1,5 s pito ei napauta), raahaus ei koskaan napauta, ja
+  heitto jatkaa liukua. 33 piilopaikkaa: kanalan luukku (tipu kurkkaa),
+  talojen ikkunat (mummo, vaari tai kissa kurkkaa ja heiluttaa; joka 3.:
+  pulla, pipo tai kerä lentää), ovet (koira, possu, lammas), savupiiput
+  (savupallot), ladon luukku (heinää, lintu), kaivo (kaiku huhuu; 5.:
+  kultainen sammakko), ämpäri (sammakko loikkaa; 5.: kultainen), laatikko
+  (kissa), postilaatikko (kirje), kukkaruukut (kukka kasvaa, 4.:
+  terälehtisade), kottikärryt, pyykkinaru (pyykit lepattavat, sukka lentää),
+  pensaat (lintu pyrähtää), heinäpaalit (hiiri kurkkaa), tynnyrit (omena
+  pomppaa; 4.: kolme, joista yksi kultainen), traktori (tööt ja savu), lehmä
+  (ammuu, sydämet), kurpitsa (bong; 5.: kasvaa), omenapuu (omena; 4.: pöllö),
+  mehiläispesä (mehiläiset), auringonkukka (pyörähtää), halkopino (halko
+  vierii) ja koirankoppi (haukku; joka 3.: luu). Lisäksi tökättävät mylly,
+  lammas aidalla, variksenpelätin, kissa, kukkamättäät ja kanalan kukko
+  (5.: kaikki piilossa olevat kotkottavat). Väärä arvaus ei rankaise.
+  **Vihje:** piilossa oleva kana kotkottaa välillä: paikka nytkähtää ja siitä
+  leijuu sulka; ääni on kovempi lähellä ruutua, ja ruudun ulkopuolinen
+  kotkotus näkyy sulkana ja nuolena ruudun reunassa. Pitkään ilman löytöä
+  vihjeet tihenevät. HUD:n kanakorissa löydetyt kanat värissään ja puuttuvat
+  varjoina, kultakanan paikka ja kierrokset munina. Kolme arvottua
+  kierrosta: 5 kanaa (vihje 3,5–5,5 s välein, vihjekäsi näyttää napautuksen
+  tai raahauksen suunnan); 6 kanaa, joista 2 naamioitunutta (näkyvissä
+  heinäpaalin päällä, pyykkinarulla, halkopinossa tai pensaasta pilkistäen;
+  napautus suoraan kanaan tai paikkaan); 7 kanaa, 1 naamioitunut ja 2 ovelaa,
+  jotka löydettäessä juoksevat kerran näkyvästi uuteen piiloon (kamera
+  seuraa). Joka kierroksella vapaaehtoinen **kultakana** kultapiilossa
+  (kaivo, puun latva, savupiippu, ladon luukku), joka vain kilisee harvoin;
+  löytymätön lehahtaa kierroksen lopussa pois. Tehtävät 1. ja 2. kierroksen
+  jälkeen: peilikuva, maksu. Loppujuhla: kanat kulkevat jonossa linnan
+  kanalaan kylän laidalla. Jos kultakana löytyi, linnan kanatarhaan muuttaa
+  kultainen kana (`coopAddGoldHen`). Kesto botilla: vihjettä seuraava
+  2,5–3 min, puolet vihjeistä huomaava n. 5 min (+ tehtävät); satunnaisesti
+  napauttava tarvitsee n. 18 napautusta kanaa kohden.
 
 ### Linnan sisustus
 
@@ -999,7 +1038,13 @@ Laskettuna orrelle se istuu orrella, pesään (kana) se istuu pesässä (ja muni
 jos se on hoidettu eikä ole vielä munut), pupun viereen se halaa (sydämiä), ja
 muualle se pyrähtää maahan. **Kukko** kiekuu päivän ensimmäisellä käynnillä;
 **salaisuus:** viisi nopeaa tökkäystä kukkoon soittaa laulun, ja kerran
-päivässä pesään ilmestyy kultamuna. Kanatarhan kauppa aukeaa sivulta, jolla
+päivässä pesään ilmestyy kultamuna. **Kultakana:** kun Maalaiskylän
+Kanojen piilosleikissä löytyy kultakana, kanatarhaan muuttaa kerran
+kultainen kana (`coopAddGoldHen`, väri `COOP_GOLD_C`; kaupan kanoille ja
+tipuille tätä väriä ei arvota). Jos tarha on täynnä tai kultakana asuu jo
+siellä, pesään ilmestyy sen sijaan kultamuna (kerran päivässä). Tallennus:
+`coop.gh` (kultakana annettu) ja `coop.ge` (kultamunan päivä); vanhoista
+tallennuksista kentät puuttuvat. Kanatarhan kauppa aukeaa sivulta, jolla
 ovat kana (3), kukko (4, yksi) ja tipu (2); ne ostetaan raahaamalla kuten
 tavarat, mutta vain kanatarhassa. Kanatarhan tavarat: olkipaali (kana tai
 kukko kiipeää päälle, kukko kiekuu sieltä), kukkapenkki (perhonen lentää),

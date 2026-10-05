@@ -35,8 +35,11 @@ var COOP_COLORS = [
   { body: '#ffffff', shade: '#ded3ec', line: '#8a7a9a', wing: '#f1ebf7' },
   { body: '#d0844a', shade: '#a65a28', line: '#6a3818', wing: '#b86a34' },
   { body: '#4a4556', shade: '#2c2836', line: '#16131c', wing: '#605a70' },
-  { body: '#f1e8d8', shade: '#cfc0a6', line: '#7a6a50', wing: '#e2d6c0', dots: '#5a4a3a' }
+  { body: '#f1e8d8', shade: '#cfc0a6', line: '#7a6a50', wing: '#e2d6c0', dots: '#5a4a3a' },
+  // Kultakana (Kanojen piilosleikin palkinto): vain coopAddGoldHen antaa tämän värin
+  { body: '#ffd84a', shade: '#e8a820', line: '#9a6a10', wing: '#ffe98a', gold: true }
 ];
+var COOP_GOLD_C = 4;         // kultakanan väri-indeksi; arvotut värit ovat 0..COOP_GOLD_C-1
 var COOP_EGG_PAINT = ['#fff6e8', '#ff7bac', '#5fa8ff', '#ffd24f', '#6fd66f', '#c9a0ff'];
 
 // Tallennettava tila
@@ -50,6 +53,8 @@ var coopWat = -1;            // päivä, jona vesikuppi täytettiin
 var coopCrow = -1;           // päivä, jona kukko kiekui
 var coopGold = -1;           // päivä, jona kukon laulu antoi kultamunan
 var coopInit = false;        // aloituskanat annettu
+var coopGoldHen = false;     // Kanojen piilosleikin kultakana on muuttanut tarhaan
+var coopGoldEggDay = -1;     // päivä, jona piilosleikki antoi kultamunan täyteen tarhaan
 
 // Ajonaikainen tila
 var coopGrain = 0;           // kaukalon jyvät 0..1 (näkyvä taso)
@@ -104,7 +109,7 @@ function coopSaveData() {
     b = coopBirds[i];
     birds.push({ k: b.k, c: b.c, fx: Math.round(b.fx * 1000) / 1000, fy: Math.round(b.fy * 1000) / 1000, born: b.born, laid: b.laid });
   }
-  return { b: birds, n: coopNests, k: coopBasket, i: coopInc, ip: coopIncP, f: coopFed, w: coopWat, r: coopCrow, g: coopGold, s: coopInit };
+  return { b: birds, n: coopNests, k: coopBasket, i: coopInc, ip: coopIncP, f: coopFed, w: coopWat, r: coopCrow, g: coopGold, s: coopInit, gh: coopGoldHen ? 1 : 0, ge: coopGoldEggDay };
 }
 // Vanha tallennus (d puuttuu) = tyhjä kanatarha; aloituskanat tulevat ensikäynnillä
 function coopLoadData(d) {
@@ -116,6 +121,8 @@ function coopLoadData(d) {
   coopIncP = 0;
   coopFed = coopWat = coopCrow = coopGold = -1;
   coopInit = false;
+  coopGoldHen = false;
+  coopGoldEggDay = -1;
   coopLayer = null;
   coopGrain = coopWater = 0;
   coopFly = [];
@@ -141,6 +148,8 @@ function coopLoadData(d) {
   coopCrow = d.r === undefined ? -1 : (d.r | 0);
   coopGold = d.g === undefined ? -1 : (d.g | 0);
   coopInit = !!d.s;
+  coopGoldHen = !!d.gh;
+  coopGoldEggDay = d.ge === undefined ? -1 : (d.ge | 0);
 }
 
 // Kelaa kanatarhan kelloa: kaikki päiväleimat n päivää taaksepäin (testaus: VT.coopSkip)
@@ -150,6 +159,7 @@ function coopShiftDays(n) {
   if (coopWat >= 0) coopWat -= n;
   if (coopCrow >= 0) coopCrow -= n;
   if (coopGold >= 0) coopGold -= n;
+  if (coopGoldEggDay >= 0) coopGoldEggDay -= n;
   if (coopInc >= 0) coopInc -= n;
   for (i = 0; i < coopBirds.length; i++) {
     b = coopBirds[i];
@@ -173,9 +183,30 @@ function coopNewBird(k, c, fx, fy, born, laid) {
 // Uudelle kanalle väri, jota tarhassa ei vielä ole (muuten satunnainen)
 function coopFreshColor() {
   var used = [0, 0, 0, 0], i;
-  for (i = 0; i < coopBirds.length; i++) if (coopBirds[i].k !== 'rooster') used[coopBirds[i].c]++;
+  for (i = 0; i < coopBirds.length; i++) if (coopBirds[i].k !== 'rooster' && coopBirds[i].c < COOP_GOLD_C) used[coopBirds[i].c]++;
   for (i = 0; i < used.length; i++) if (!used[i]) return i;
-  return randInt(COOP_COLORS.length);
+  return randInt(COOP_GOLD_C);
+}
+
+// Kanojen piilosleikin kultakana muuttaa tarhaan kerran. Jos tarha on täynnä
+// (tai kultakana asuu jo täällä), pesään ilmestyy sen sijaan kultamuna,
+// enintään kerran päivässä. Palauttaa 'hen', 'egg' tai '' (ei mitään).
+function coopAddGoldHen() {
+  var d = coopDay(), k, best = 0, b;
+  if (!coopGoldHen && coopCount() < COOP_MAX) {
+    coopGoldHen = true;
+    b = coopNewBird('hen', COOP_GOLD_C, 0.5, 0.86);
+    b.flapT = 1.5;
+    coopBirds.push(b);
+    saveProgress();
+    return 'hen';
+  }
+  if (coopGoldEggDay === d) return '';
+  coopGoldEggDay = d;
+  for (k = 0; k < 3; k++) if (coopNests[k].length < coopNests[best].length) best = k;
+  coopNests[best].push({ g: 1 });
+  saveProgress();
+  return 'egg';
 }
 
 // ---------- Paikat ----------
@@ -525,7 +556,7 @@ function coopIncTap() {
 }
 
 function coopHatch() {
-  var sp = coopSpots(), b = coopNewBird('chick', randInt(COOP_COLORS.length), sp.inc.x / viewW + 0.04, (sp.inc.y + viewH * 0.01) / viewH, coopDay());
+  var sp = coopSpots(), b = coopNewBird('chick', randInt(COOP_GOLD_C), sp.inc.x / viewW + 0.04, (sp.inc.y + viewH * 0.01) / viewH, coopDay());
   coopGroundClamp(b);
   b.flapT = 0.6;
   b.z = viewH * 0.06;
@@ -748,7 +779,7 @@ function coopBuy(def, it) {
   var b;
   if (!coopIsBird(def.id)) return false;
   starCoins -= def.price;
-  b = coopNewBird(def.id, def.id === 'hen' ? coopFreshColor() : randInt(COOP_COLORS.length), it.fx, it.fy, def.id === 'chick' ? coopDay() : undefined);
+  b = coopNewBird(def.id, def.id === 'hen' ? coopFreshColor() : randInt(COOP_GOLD_C), it.fx, it.fy, def.id === 'chick' ? coopDay() : undefined);
   coopGroundClamp(b);
   b.flapT = 1;
   coopBirds.push(b);
@@ -1062,6 +1093,8 @@ function drawCoopBirdShape(c, k, col, x, y, s, dir, o) {
   } else {
     artBlob(c, -s * 0.6, -s * 0.95 + lift, s * 0.18, s * 0.32, C.body, { rot: -0.55, lineColor: C.line, shadeTo: C.shade });
   }
+  // Kultakanan hehku vartalon takana
+  if (C.gold) artGlow(c, 0, -s * 0.75 + lift, s * (1.05 + Math.sin(globalT * 3) * 0.08), '#fff2a0', 0.45);
   // Vartalo
   artBlob(c, 0, -s * 0.68 + lift, s * 0.6, s * 0.45, C.body, { lineColor: C.line, shadeTo: C.shade, hi: 0.35 });
   if (C.dots) {
