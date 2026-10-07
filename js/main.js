@@ -69,8 +69,27 @@ function inJumpZone(px, py) {
   var vmin = Math.min(viewW, viewH) / 100;
   return px < vmin * 27 && py > viewH - vmin * 27;
 }
+// Moninkosketus (multiTouch-kentät, esim. yhteispeli): jokainen sormi välitetään
+// kentälle omalla tunnisteellaan; hiiren tunniste on -1
+var multiMouse = false;
+function multiTouchOn() { return mode === 'play' && !!phaseNow().multiTouch; }
+function multiRoute(e, hook) {
+  var i, t, fn = phaseNow()[hook];
+  if (!fn) return;
+  if (e.changedTouches) {
+    for (i = 0; i < e.changedTouches.length; i++) {
+      t = e.changedTouches[i];
+      fn(t.identifier, t.clientX, t.clientY);
+    }
+  } else fn(-1, e.clientX, e.clientY);
+}
 function pointerDown(e) {
   e.preventDefault();
+  if (multiTouchOn() && !taskActive()) {
+    if (!e.changedTouches) multiMouse = true;
+    multiRoute(e, 'touchDown');
+    return;
+  }
   var newTouch = e.changedTouches && e.changedTouches.length > 0 ? e.changedTouches[0] : null;
   if (e.touches && e.touches.length > 1 && holdTouchId !== null) {
     // Toinen sormi, kun ohjaussormi on yhä ruudulla: juostessa hyppy mihin tahansa
@@ -121,6 +140,10 @@ function pointerDown(e) {
 }
 function pointerMove(e) {
   if (e.touches) e.preventDefault();
+  if (multiTouchOn() && !dragPiece) {
+    if (e.changedTouches || multiMouse) multiRoute(e, 'touchMove');
+    return;
+  }
   var p = eventPos(e, holdTouchId);
   if (mode === 'home') {
     lastPX = p.x; lastPY = p.y;
@@ -140,6 +163,10 @@ function pointerMove(e) {
   else holdWorldX = p.x + camX;
 }
 function pointerUp(e) {
+  if (multiTouchOn() && (e && e.changedTouches || multiMouse)) {
+    multiMouse = false;
+    multiRoute(e, 'touchUp');
+  }
   if (e && e.touches && e.touches.length > 0) {
     // Ruudulle jäi sormia: vain ohjaussormen nosto lasketaan
     if (!touchById(e.changedTouches, holdTouchId)) return;

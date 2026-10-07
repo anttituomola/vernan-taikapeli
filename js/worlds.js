@@ -1403,6 +1403,8 @@ var WORLDS = [
       '#V......#',
       '#.#######',
       '#......H#',
+      '#.#######',
+      '#......P#',
       '#########'
     ],
     levels: [
@@ -1471,6 +1473,23 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderHideseekBg(b, w, h); },
         light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.4, tint: ['rgba(255,240,190,0.06)', 'rgba(150,220,120,0.04)'], vignette: 0.22 },
         respawn: function () { respawnHideseek(); }
+      },
+      {
+        // Bonushuone: reaaliaikainen yhteispeli, kumpikin ohjaa omaa pupuaan
+        // omalla puoliskollaan (kaksi sormea yhtä aikaa, multiTouch)
+        kind: 'twin', room: 'P', name: 'Pupuparin piha', color: '#ff7bac', script: 'play-twin',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#a6de7c', ambient: 'butterflies', fg: null, multiTouch: true,
+        init: function () { initTwin(); },
+        update: function (dt) { updateTwin(dt); },
+        draw: function () { drawTwin(); },
+        touchDown: function (id, x, y) { twinTouchDown(id, x, y); },
+        touchMove: function (id, x, y) { twinTouchMove(id, x, y); },
+        touchUp: function (id) { twinTouchUp(id); },
+        resize: function () { resizeTwin(); },
+        renderBg: function (b, w, h) { renderTwinBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4c8', raysAlpha: 0.35, tint: ['rgba(255,240,190,0.05)', 'rgba(150,220,120,0.04)'], vignette: 0.2 },
+        respawn: function () { respawnTwin(); }
       }
     ]
   }
@@ -1509,6 +1528,10 @@ var WORLD_INFO = {};    // id -> { name, region, band }
       if (lv.celebrateMs) p.celebrateMs = lv.celebrateMs;
       if (lv.hidden) p.hidden = true;
       if (lv.sparkLife !== undefined) p.sparkLife = lv.sparkLife;
+      if (lv.multiTouch) {
+        p.multiTouch = true;
+        p.touchDown = lv.touchDown; p.touchMove = lv.touchMove; p.touchUp = lv.touchUp;
+      }
       PHASES[lv.kind] = p;
       if (lv.room) {
         rooms[lv.room] = { kind: lv.kind, name: lv.name, color: lv.color };

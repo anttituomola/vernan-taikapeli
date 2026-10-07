@@ -98,10 +98,12 @@ Lyhyesti **vaihde** vain Junamatkan yhteydessä.
 _Vältä_: risteys, haara yksinään
 
 **Yhteispeli**:
-Yhteispolun tapa pelata: lapsi ja aikuinen ohjelmoivat kumpikin oman pupunsa
-samalla tabletilla (vasen puoli pinkki, oikea sininen), ja ohjelmat ajetaan
-yhtä aikaa. **Laatta** pitää samanvärisen **portin** auki niin kauan kuin
-pupu seisoo sen päällä.
+Lapsi ja aikuinen pelaavat samalla tabletilla kumpikin omaa pupuaan (vasen
+puoli pinkki, oikea sininen). Yhteispolulla ohjelmat ajetaan yhtä aikaa;
+Pupuparin pihalla molemmat ohjaavat reaaliajassa omalla puolellaan.
+**Laatta** pitää samanvärisen **portin** auki niin kauan kuin pupu seisoo
+sen päällä. Pupuparin pihalla lisäksi **luukku** (avaimen ojennus aidan yli)
+ja **STOP-laatta**, joka pysäyttää toisen puolen traktorin.
 _Vältä_: kaksinpeli (ei kilpailla), moninpeli
 
 **Purjehdus**:

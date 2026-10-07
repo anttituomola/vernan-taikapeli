@@ -65,7 +65,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-dune.js`, `play-dowse.js`, `play-caravan.js`, `play-whirl.js` — Kaukamaa, Aurinkodyynit (maailma 12): Dyynilasku (liuku), Aarrevarpu (etsintä), Kamelikaravaani (laskut raahaamalla) ja vartija Hiekkapyörre
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
 - `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js`, `play-clockwork.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut), Käkikello (viisarit kellonaikaan) ja vartija Kellokoneisto (vesi, rattaat ja viisarit yhdessä koneessa), sokkelon maasto `HUB_TILE_DECOR.clock`
-- `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js`, `play-hideseek.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät), vartija Postireitti (ohjelmointi) ja bonushuone Kanojen piilosleikki (tökättävä kylä), sokkelon maasto `HUB_TILE_DECOR.farm`
+- `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js`, `play-hideseek.js`, `play-twin.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät), vartija Postireitti (ohjelmointi) sekä bonushuoneet Kanojen piilosleikki (tökättävä kylä) ja Pupuparin piha (reaaliaikainen yhteispeli kahdelle), sokkelon maasto `HUB_TILE_DECOR.farm`
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -83,6 +83,10 @@ vartijahuone `finaleKind`, koristeet), `map` ja `levels`.
 värit `HUB_TILE_COLORS`). Huoneen kuvake rekisteröidään kentän omassa
 tiedostossa `HUB_ICONS[kind] = function (c, x, y, s)` ja maaston koristeet
 `HUB_TILE_DECOR[band]`, joten flow-hub.js:ää ei tarvitse muokata.
+**Moninkosketus:** kenttä, jolla on rekisterissä `multiTouch: true` ja koukut
+`touchDown(id, x, y)` / `touchMove(id, x, y)` / `touchUp(id)`, saa jokaisen sormen
+erikseen omalla tunnisteellaan (hiiri = -1), ja `main.js` ohittaa silloin
+tavallisen yhden sormen ohjauksen (tehtävät toimivat kuten ennenkin).
 Silmukka, syöte ja koko kulkevat `PHASES`-koukkujen kautta, joten muuta
 koodia ei tarvitse muokata.
 
@@ -942,6 +946,27 @@ ja vartijana vaikeampi pulma.
   kultainen kana (`coopAddGoldHen`). Kesto botilla: vihjettä seuraava
   2,5–3 min, puolet vihjeistä huomaava n. 5 min (+ tehtävät); satunnaisesti
   napauttava tarvitsee n. 18 napautusta kanaa kohden.
+- **Pupuparin piha** (bonushuone P, 7.10.2026) — **reaaliaikainen yhteispeli**
+  lapselle ja aikuiselle samalla tabletilla (vrt. Yhteispolku, jossa
+  ohjelmoidaan vuorotellen). Lauta-aita jakaa pihan kahtia: vasen puoli on
+  pinkin pupun, oikea sinisen. Kumpikin napauttaa tai raahaa omalla
+  puolellaan, ja oma pupu hyppii sinne lyhintä reittiä; kaksi sormea toimii
+  yhtä aikaa. Kumpikaan ei pääse yksin kotiin: **portti** aukeaa, kun toinen
+  pupu seisoo samanvärisellä **laatalla** aidan toisella puolella
+  (katkoviiva yhdistää ne); **avain** ojennetaan aidan **luukusta**, kun
+  molemmat seisovat luukulla, ja se avaa lukitun portin pysyvästi;
+  **traktori** heinäkärryineen ajaa peltotietä, jonka yli pääsee vain, kun
+  toinen pupu seisoo punaisella **STOP-laatalla** (traktori ei myöskään
+  liiku, kun pupu on tiellä). Pupu ei koskaan rankaise: suljetun esteen
+  eteen se jää odottamaan, ja ajatuskupla näyttää syyn (laatan väri, avain
+  tai STOP-merkki). Viisi käsin tehtyä kierrosta (laatat; kaksi porttiketjua;
+  avain + luukku; traktorit molemmin puolin; kaikki yhdessä), jotka
+  peilataan arvalla pystysuunnassa ja puolten välillä. Kun kukaan ei koske
+  ruutuun 9 s (1. kierroksella heti alussa), ratkaisija näyttää kädellä
+  seuraavan siirron; kultainen porkkana kierroksesta ilman vihjettä.
+  Tehtävä 2. kierroksen jälkeen: parit (6). Tökättävät: mylly,
+  variksenpelätin, lammas aidalla, heinäpaali, kissa, kukat, traktori ja
+  aidan tolpan kukko (molemmat puput vilkuttavat).
 
 ### Linnan sisustus
 
@@ -1297,6 +1322,7 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Pupupolku: kierrokset `BCODE_ROUNDS` (ruudukko, porkkanat, kolo, avain+portti, toistonapit `mult`, rivin pituus `slots`, lyhimmän reitin pituus `len`, pensaat), askeleen kesto `BCODE_STEP_T`, suurin toisto `BCODE_MAX_RUN`; ratkaisija `bcodeSolve` (leveyshaku), arvonta `bcodeGenerate`. Keskimäärin reitti 5,7 / 9,1 / 11,7 / 13,9 askelta ja 5,7 / 9,1 / 6,4 / 7,5 käskyä
 - Loitsupolku: kierrokset `BLOOP_ROUNDS` (ruudukko, pupurivi `main`, ★-rivi `spell`, loitsuja pääohjelmassa `stars`, odotukset `waits`, myyrät reitillä `moles` ja vieressä `decoys`, porkkanat, reitin pituus `len`, pensaat, valmis loitsu `given`), askeleen kesto `BLOOP_STEP_T`, myyrien tahti `bloopMoleUpAt`; arvonta `bloopTryGenerate`, tarkistus `bloopSimulate`. Reitti 8 / 11 / 11 / 14 askelta, lyhin reitti keskimäärin 8,6 / 9,3 / 9,2 askelta
 - Yhteispolku: kierrokset `DUO_ROUNDS` (ruudukko, aitojen määrä `walls`, laatat aidoittain `plates` ('n' lähtöpuoli, 'f' takana), sinisen kolon alue `homeB`, porkkanat, rivin pituus `slots`, ratkaisun askeleet `len`, pensaat), askeleen kesto `DUO_STEP_T`; säännöt `duoStep`, ratkaisija `duoSolve` (yhteinen leveyshaku), arvonta `duoTryGenerate`. Arvonta vie 8×5-kierroksilla n. 30–90 ms
+- Pupuparin piha: kierrokset `TWIN_ROUNDS` (puolet `L` ja `R` merkkijonoina, merkit tiedoston alussa), pupun nopeus `TWIN_SPEED`, traktorin nopeus ja pituus `TWIN_TRACTOR_SPEED`/`TWIN_TRACTOR_LEN`, vihjeen viive `TWIN_HINT_IDLE`; ratkaisija `twinSolve` (leveyshaku siirroilla: siirto = pupu kävelee mihin tahansa nyt saavutettavaan ruutuun) ratkaisee jokaisen kierroksen alle 0,1 s:ssa
 - Rataspaja: kierrokset `GEAR_ROUNDS` (hila `cols`×`rows`, soittorasiat `targets`, ketjun pituus rasiaa kohti `len`, suuntavaatimus `dir`, ansa `trick` = suorin reitti väärään suuntaan, ylimääräiset rattaat `spare`, rikkinäiset tapit `broken`), moottorin nopeus `GEAR_SPEED`, voiton odotus `GEAR_WIN_T`; arvonta `gearTryGenerate`, verkon suunnat ja jumi `gearEvalNet`
 - Vesikouru: kierrokset `CHUTE_ROUNDS` (ruudukko, myllyt `mills`, reitin pituus myllyä kohti `len`, hämäyspalat `decoys`, kivet `rocks`, ruuvatut reittipalat `fixed`, aikaraja `time`), täyttymisnopeus `CHUTE_FILL`, voiton odotus `CHUTE_WIN_T`, kultaisen pisaran väljyys `CHUTE_PAR`; arvonta `chuteTryGenerate`, virtaus ja vuodot `chuteEvalFlow`
 - Soittorasia: kierrokset `TUNE_ROUNDS` (askeleet, nauhan näkyvyys, kuuntelukerrat, tauko/sointu, A A B), jousen vedot `TUNE_PULLS`, tahdit `TUNE_STEP` / `TUNE_ROLL_STEP`; arvonta ja tarkistus `tuneValidate` / `tuneCheck`
