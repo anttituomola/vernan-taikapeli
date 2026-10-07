@@ -182,6 +182,8 @@ function handleTaskTap(px, py) {
   var tt = TASK_TYPES[t.type];
   if (!tt) return;
   if (tt.drag) {
+    // Raahaustyypillä voi olla myös napautettava osa (esim. vihjelamppu): tap palauttaa true
+    if (tt.tap && tt.tap(t, px, py)) return;
     taskDragStart(t, px, py);
     return;
   }

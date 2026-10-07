@@ -194,6 +194,11 @@ function taskDrop(px, py) {
   var t = dragPiece.task, p = dragPiece.piece;
   dragPiece = null;
   p.dragging = false;
+  if (TASK_TYPES[t.type] && TASK_TYPES[t.type].drop) {
+    // Tyypin oma pudotuslogiikka (esim. kirjainpalikat, tasks-write.js)
+    TASK_TYPES[t.type].drop(t, p);
+    return;
+  }
   if (t.type === 'sort') {
     // Korit ottavat useita paloja: oma pudotuslogiikka (tasks-more.js)
     sortDrop(t, p);

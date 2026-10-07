@@ -1572,7 +1572,7 @@ function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient', 'props',
     'flow-hub', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-yard', 'flow-coop', 'flow-castle',
-    'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north',
+    'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north', 'tasks-write',
     'platformer', 'pen-core'
   ];
   var seen = {}, wi, li, s;

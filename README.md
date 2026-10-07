@@ -56,6 +56,14 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/tasks-fair.js` — Tivolisaaren tehtävät: mitä kello on, maksa rahoilla, palapeli, ohjelmoi reitti
 - `js/play-circus.js`, `play-wire.js`, `play-balloon.js`, `play-icecream.js`, `play-ducks.js`, `play-magician.js` — maailma 8; Trapetsi käyttää `play-circus.js`-moottoria (tila `hard`)
 - `js/tasks-north.js` — Revontulimaan lukutehtävät: loppusointu, loppukirjain, puuttuva tavu
+- `js/tasks-write.js` — kirjoittamisen tehtävät (7.10.2026, ei vielä kentissä): `spell` (kuva → kirjoita sana) ja
+  `answer` (lyhyt tavutettu kysymys `WRITE_QUESTIONS` → vastaus kirjaimina). Kirjainpalikat raahataan tavuittain
+  ryhmiteltyihin paikkoihin, ja palikan napautus kirjoittaa sen seuraavaan tyhjään paikkaan; väärä kirjain pomppaa
+  takaisin. Hämäyskirjaimet ovat mieluiten samannäköisiä (A/Ä, O/Ö, M/N). Taikalamppu latautuu 14 s:ssa tai
+  kahdesta väärästä kirjaimesta ja lennättää kaksi seuraavaa kirjainta paikalleen (ei koskaan viimeistä).
+  Optiot: `minLen`/`maxLen` (kirjaimia, oletus spell 3–6, answer 2–7) ja `decoys` (oletus 3), esim.
+  `makeTask(0.5, 'answer', { maxLen: 9 })`. Raahaustyyppi voi nyt rekisteröidä myös `tap`- (palauttaa true, jos
+  napautus käytettiin) ja `drop`-koukun. `tools/test.js`:n `RESERVED_TYPES` sallii tyypit, joita ei vielä käytetä.
 - `js/play-voyage.js`, `play-aurora.js`, `play-reindeer.js`, `play-sled.js`, `play-snowword.js`, `play-foxguard.js` — maailma 9
 - `js/play-nest.js` — Kaukamaa, Lohikäärmelaakso (maailma 10): Pesäkallio (ritsa), lohikäärmeenpoikasten piirto
 - `js/play-dragonfly.js` — Lohikäärmelaakso: Tulilento (lento lohikäärmeellä + tulihengitys, tulinappi `fireBtn` / `usesFire`)

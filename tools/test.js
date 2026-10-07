@@ -239,7 +239,10 @@ if (TASK_TYPES) {
       check(typeof entry.draw === 'function', t + '.draw is a function');
     }
   }
+  // Valmiit tyypit, joita ei vielä ole sijoitettu kenttiin (tulevia kenttiä varten)
+  const RESERVED_TYPES = new Set(['spell', 'answer']);
   for (const t of Object.keys(TASK_TYPES)) {
+    if (RESERVED_TYPES.has(t) && !usedTypes.has(t)) continue;
     check(usedTypes.has(t), 'registry entry ' + t + ' is used by a level');
   }
 
