@@ -316,7 +316,7 @@ function trainLayout() {
 // ---------- Alustus ----------
 function initTrain() {
   var i, s;
-  tasks = [makeTask(-5, 'route'), makeTask(-5, 'pay')];  // välitehtävät vaikeampia (palaute 4.10.2026)
+  tasks = [makeTask(-5, 'route'), makeTask(-5, 'answer')];  // välitehtävät vaikeampia (palaute 4.10.2026); kirjoitus 8.10.
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   camX = 0;
   train.icons = trainMakeIcons();

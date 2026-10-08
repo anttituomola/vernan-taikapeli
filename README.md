@@ -56,7 +56,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/tasks-fair.js` — Tivolisaaren tehtävät: mitä kello on, maksa rahoilla, palapeli, ohjelmoi reitti
 - `js/play-circus.js`, `play-wire.js`, `play-balloon.js`, `play-icecream.js`, `play-ducks.js`, `play-magician.js` — maailma 8; Trapetsi käyttää `play-circus.js`-moottoria (tila `hard`)
 - `js/tasks-north.js` — Revontulimaan lukutehtävät: loppusointu, loppukirjain, puuttuva tavu
-- `js/tasks-write.js` — kirjoittamisen tehtävät (7.10.2026, ei vielä kentissä): `spell` (kuva → kirjoita sana) ja
+- `js/tasks-write.js` — kirjoittamisen tehtävät (7.10.2026; Maalaiskylän välitehtävinä 8.10.): `spell` (kuva → kirjoita sana) ja
   `answer` (lyhyt tavutettu kysymys `WRITE_QUESTIONS` → vastaus kirjaimina). Kirjainpalikat raahataan tavuittain
   ryhmiteltyihin paikkoihin, ja palikan napautus kirjoittaa sen seuraavaan tyhjään paikkaan; väärä kirjain pomppaa
   takaisin. Hämäyskirjaimet ovat mieluiten samannäköisiä (A/Ä, O/Ö, M/N). Taikalamppu latautuu 14 s:ssa tai
@@ -885,7 +885,7 @@ ja vartijana vaikeampi pulma.
   pois. Vihjekäsi näyttää ensimmäisen vaihteen vivun (ja väärän haaran
   jälkeen seuraavat). Veturin napautus viheltää, ja savupilvi nappaa korkeat
   tähdet; matalat tähdet haaroilla kerää vain kuljettu raide. Kaksi opastinta
-  = tehtävät (reitti, maksu; vaikeutettu palautteen 4.10.2026 mukaan).
+  = tehtävät (reitti, kysymykseen vastaus kirjaimin; vaikeutettu palautteen 4.10.2026 mukaan).
   Kultainen veturi, jos kaikki matkat osuivat. Tökättävät: vaihdetupa
   (vaihdemiespupu tulee heiluttamaan lippua, joka 3. tökkäys ripustaa
   katolle viirin), rautatieläisen kissa (joka 3.: hyppää perhosen perään),
@@ -898,7 +898,7 @@ ja vartijana vaikeampi pulma.
   näkyvät varjoina, joista näkee lajin. Kalakirjaan 6 tavallista lajia +
   4 bonusta (saapas, arkku, kuukala yöllä, sateenkaarikala). Laiturin
   kyläläinen tilaa kaloja, kissa saa loput. Päivä vaihtuu yöksi. Tehtävät
-  2. ja 4. lajin jälkeen: lasku, maksu. Kesto botilla 2,5–4 min. Kultainen kirja tallentuu avaimeen
+  2. ja 4. lajin jälkeen: lasku, kirjoita sana kuvasta. Kesto botilla 2,5–4 min. Kultainen kirja tallentuu avaimeen
   `vt_fishing_v1`. Yllätys: kiven 5. tökkäys nostaa ystävällisen järvihirviön.
 - **Ilmapalloretki** — tuuli vie palloa, sormi nostaa ja laskee sitä
   pehmeästi (jousi + vaimennus). Ei törmäyksiä. Kerätään tähtiä,
@@ -913,7 +913,7 @@ ja vartijana vaikeampi pulma.
   kierrosta: 6×5 kahdella kirjeellä; 7×5 silta + vipu ja pakolliset
   toistonapit; 7×6 kirjeet järjestyksessä; 8×6 järjestys + silta. Ei
   sydämiä; kultainen postimerkki ensimmäisellä ajolla onnistuneesta.
-  Tehtävät: maksu, sanatehtävä. Yllätys: kukon 5. tökkäys saa asukkaat
+  Tehtävät: maksu, kysymykseen vastaus kirjaimin (4–9 kirjainta). Yllätys: kukon 5. tökkäys saa asukkaat
   laulamaan ikkunoista.
 - **Kanojen piilosleikki** (bonushuone H vartijan jälkeen, 5.10.2026) —
   palautteen "erityisplussa" jatkuvista tökättävistä härpättimistä: linnan
@@ -949,7 +949,7 @@ ja vartijana vaikeampi pulma.
   seuraa). Joka kierroksella vapaaehtoinen **kultakana** kultapiilossa
   (kaivo, puun latva, savupiippu, ladon luukku), joka vain kilisee harvoin;
   löytymätön lehahtaa kierroksen lopussa pois. Tehtävät 1. ja 2. kierroksen
-  jälkeen: peilikuva, maksu. Loppujuhla: kanat kulkevat jonossa linnan
+  jälkeen: peilikuva, kirjoita sana kuvasta (4–7 kirjainta). Loppujuhla: kanat kulkevat jonossa linnan
   kanalaan kylän laidalla. Jos kultakana löytyi, linnan kanatarhaan muuttaa
   kultainen kana (`coopAddGoldHen`). Kesto botilla: vihjettä seuraava
   2,5–3 min, puolet vihjeistä huomaava n. 5 min (+ tehtävät); satunnaisesti

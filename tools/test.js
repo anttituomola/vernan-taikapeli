@@ -240,7 +240,7 @@ if (TASK_TYPES) {
     }
   }
   // Valmiit tyypit, joita ei vielä ole sijoitettu kenttiin (tulevia kenttiä varten)
-  const RESERVED_TYPES = new Set(['spell', 'answer']);
+  const RESERVED_TYPES = new Set([]);
   for (const t of Object.keys(TASK_TYPES)) {
     if (RESERVED_TYPES.has(t) && !usedTypes.has(t)) continue;
     check(usedTypes.has(t), 'registry entry ' + t + ' is used by a level');

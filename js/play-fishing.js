@@ -136,7 +136,7 @@ function fishingAllEver() {
 function initFishing() {
   var i;
   // Välitehtävät vaikeampia (palaute 4.10.2026): lasku ja kalojen myynti kolikoilla
-  tasks = [makeTask(-5, 'math'), makeTask(-5, 'pay')];
+  tasks = [makeTask(-5, 'math'), makeTask(-5, 'spell')];
   tasks[0].x = -1e6;
   tasks[1].x = -1e6;
   fishing.taskIdx = 0;

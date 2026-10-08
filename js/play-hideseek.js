@@ -191,7 +191,7 @@ function hideseekVol(x, base) {
 
 // ---------- Alustus ----------
 function initHideseek() {
-  tasks = [makeTask(-5, 'mirror'), makeTask(-5, 'pay')];
+  tasks = [makeTask(-5, 'mirror'), makeTask(-5, 'spell', { minLen: 4, maxLen: 7 })];
   for (var i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   camX = 0;
   hideseek.round = 0;

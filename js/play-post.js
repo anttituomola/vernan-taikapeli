@@ -294,7 +294,7 @@ function postAllDone() { return postTop() < 0; }
 // ---------- Alustus ----------
 function initPost() {
   var i;
-  tasks = [makeTask(-5, 'pay'), makeTask(-5, 'wordpick', { maxSyl: 3 })];
+  tasks = [makeTask(-5, 'pay'), makeTask(-5, 'answer', { minLen: 4, maxLen: 9 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = -1e6;
   camX = 0;
   post.round = 0;
