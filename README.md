@@ -38,6 +38,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/flow-bank.js` — pankkiholvi (talletus, nosto, korko, pankin huonekalut)
 - `js/flow-yard.js` — linnan puutarha (kasvit, kastelu, sato, rikkaruohot, puutarhan tavarat)
 - `js/flow-coop.js` — linnan kanatarha (kanat, ruokinta, vesi, munat, hautomo, tiput, kanatarhan tavarat)
+- `js/flow-stable.js` — linnan ponitalli (ponit, heinä, vesi, harjaus, ruusukkeet, karsina, varsat, tallin tavarat)
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)
 - `js/play-garden.js` … `play-sky.js` — vaiheet 2–5
@@ -985,8 +986,9 @@ reunassa (tähtisaldon alla) on vaaleanpunainen linnanappi, joka avaa linnan
 oman karttanäkymän. Siinä linna on leikattu auki ja jokainen huone näkyy
 pienoiskuvana maaleineen ja tavaroineen: tornihuone ylhäällä, keittiö ja sali
 maan tasalla, pankkiholvi maan alla, puutarha pihalla linnan vasemmalla
-puolella ja kanatarha pihalla linnan oikealla puolella (prinsessa
-yksisarvisella ja puput pilven päällä sen yllä). Huoneen napautus vie suoraan huoneeseen;
+puolella, kanatarha pihalla linnan oikealla puolella (prinsessa
+yksisarvisella ja puput pilven päällä sen yllä) ja ponitalli kukkulalla
+puutarhan yllä. Huoneen napautus vie suoraan huoneeseen;
 huoneen kotinappi palaa linnakartalle ja linnakartan venenappi sille kartalle,
 jolta tultiin. Huoneistossa on neljä sisähuonetta, puutarha ja kanatarha: **sali** (sydäntapetti, ikkuna),
 **tornihuone** (tähtitaivas, pyöreä kuuikkuna, kivilattia), **keittiö**
@@ -1085,6 +1087,42 @@ lyhty (syttyy), hiekkakylpy (kanat kieriskelevät), variksenpelätin (kädet
 heiluvat, kanat pyrähtävät leikisti kauemmas), kanakeinu (kana keinuu) ja
 tuuliviiri (kukkoviiri pyörii). Testaus: `VT.coop()` näyttää tilan ja
 `VT.coopSkip(n)` kelaa kanatarhan kelloa n päivää eteenpäin.
+**Ponitalli:** linnan seitsemäs huone (`js/flow-stable.js`, `STABLE_ROOM = 6`)
+on kanatarhan toisen portin (hevosenkenkä-kyltti, kukkaportin vasemmalla
+puolella) takana; tallin portti (tipu-kyltti) vie takaisin kanatarhaan.
+Laitumen aita on seinämaalin ja laidun lattiamaalin väriä. Vasemmalla on
+punainen talli: karsina olkipesineen (kuu ja tähti yllä), heinäseimi ja
+ruusuketaulu (12 paikkaa). Pihalla on vesikaukalo, porkkanalaatikko,
+heinäkori, vesisanko ja harja. Ensikäynnillä talliin tulee valkoinen poni
+vaaleanpunaisella harjalla. **Hoito** (paikallinen kalenteripäivä):
+heinäkori raahataan seimen ylle ja vesisanko kaukalon ylle (kallistus ja
+kaato kuten kanatarhassa). Ponit tulevat joka aamu laitumelta mutaisina
+(5 läiskää, varsalla 2): harja raahataan ponin kyljelle ja sitä hangataan
+edestakaisin, jolloin läiskät katoavat yksi kerrallaan ja puhdas poni kiiltää
+ja hirnuu. Tekemätön työkalu hehkuu, ja ponin yllä vuorottelee heinä-, vesi-
+tai harjakupla. Kun poni on ruokittu, juotettu ja harjattu, se laukkaa
+iloisen kierroksen (esteen yli, jos tallissa on este) ja saa **ruusukkeen**
+fanfaarin kera; ruusuke lentää taululle. **Kultainen ruusuke** (1/8) antaa
+lisäksi tähden. Kukin poni saa yhden ruusukkeen päivässä. **Varsa:** taulun
+ruusuke raahataan karsinan olkipesään (taulun napautus soittaa fanfaarin), ja
+seuraavana päivänä pesässä nukkuu varsa (nuoli osoittaa): napautus herättää
+sen. Kultaisesta ruusukkeesta syntyy **yksisarvisvarsa** (sarvi ja
+sateenkaariharja). Varsa seuraa poneja ja kasvaa kolmessa päivässä poniksi.
+Poneja ja varsoja on enintään 6 (karsinan varsa lasketaan); täydessä tallissa
+karsinaan viety ruusuke lähettää vanhimman tavallisen ponin vilkuttaen kylään
+(yksisarviset ja varsat jäävät). **Ponit:** napautettu poni hirnuu ja
+heilauttaa päätään; viisi nopeaa tökkäystä samaan poniin (salaisuus) nostaa sen
+takajaloilleen, ja kerran päivässä taululle lentää kultaruusuke. Porkkana
+raahataan laatikosta ponin suulle (rouskutus ja sydämiä). Ponin voi nostaa
+sormella (sydämiä); pupun viereen laskettuna pupu hyppää selkään ja ratsastaa
+kierroksen. Kaupan rusetti raahataan ponin harjaan. Tallin kauppa aukeaa
+sivulta, jolla ovat poni (5) ja varsa (4). Tallin tavarat: este (napautus
+nostaa puomia, ponit hyppäävät yli), satulapukki (satulan väri vaihtuu; sama
+satula ratsastavalla ponilla), keinuhevonen (keinuu), tallikissa (herää ja
+naukuu), tallikello (ponit ravaavat kellon luo) ja pokaali (fanfaari; laatassa
+ruusukkeiden kokonaismäärä). Tallennus progress.js:n `stable`-kentässä.
+Testaus: `VT.stable()` näyttää tilan ja `VT.stableSkip(n)` kelaa tallin
+kelloa n päivää eteenpäin.
 Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa)
 **raahaamalla**: tartu korttiin, vedä tavara huoneen puolelle ja päästä irti
 haluamaasi kohtaan, niin tähdet veloitetaan. Kaupan päälle palautettu tavara

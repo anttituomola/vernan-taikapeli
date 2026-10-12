@@ -3,8 +3,9 @@
 // Linnakartta: Vernan kodin oma karttanäkymä. Linna on leikattu auki, ja
 // jokainen huone näkyy pienoiskuvana tavaroineen: tornihuone ylhäällä,
 // keittiö ja sali maan tasalla, pankkiholvi maan alla, puutarha linnan
-// pihalla keittiön vieressä ja kanatarha pihalla linnan oikealla puolella
-// (prinsessa ja puput sen yllä pilven päällä). Huoneen napautus vie
+// pihalla keittiön vieressä, kanatarha pihalla linnan oikealla puolella
+// (prinsessa ja puput sen yllä pilven päällä) ja ponitalli kukkulalla
+// puutarhan yllä. Huoneen napautus vie
 // suoraan huoneeseen (showHome). Linnakartalle päästään saaristokartan ja
 // Kaukamaan kartan linnanapista (castleBtn), ja vene-nappi palauttaa sille
 // kartalle, jolta tultiin.
@@ -53,6 +54,8 @@ function castleLayout() {
   var cx0 = salX + pw + h * 0.06;
   var cw = Math.max(h * 0.12, Math.min(pw * 1.05, viewW - cx0 - h * 0.03));
   var ch = cw * (rr.bottom - rr.wallTop) / (rr.x1 - rr.x0);
+  // Ponitalli kukkulalla puutarhan yllä, hieman pienempänä
+  var sw = gw * 0.9, sh = gh * 0.9, sy = Math.max(h * 0.1, groundY + h * 0.02 - gh - h * 0.06 - sh);
   return {
     groundY: groundY, pw: pw, ph: ph,
     rooms: [
@@ -61,7 +64,8 @@ function castleLayout() {
       { idx: 2, x: salX - gap - pw, y: floorTop, w: pw, h: ph },
       { idx: 3, x: salX - pw * 0.08, y: groundY + h * 0.05, w: pw * 1.16, h: ph * 0.98 },
       { idx: 4, x: gx1 - gw, y: groundY + h * 0.02 - gh, w: gw, h: gh },
-      { idx: 5, x: cx0, y: groundY + h * 0.02 - ch, w: cw, h: ch }
+      { idx: 5, x: cx0, y: groundY + h * 0.02 - ch, w: cw, h: ch },
+      { idx: 6, x: gx1 - gw - h * 0.01, y: sy, w: sw, h: sh }
     ]
   };
 }
@@ -107,6 +111,14 @@ function renderCastleBg() {
   b.fillStyle = '#a8dc8c';
   b.beginPath(); b.arc(w * 0.1, gy + h * 0.1, h * 0.3, Math.PI, 0); b.fill();
   b.beginPath(); b.arc(w * 0.92, gy + h * 0.12, h * 0.34, Math.PI, 0); b.fill();
+  // Tallin kukkula ja polku sen laelle
+  var st = lay.rooms[6], hr = (gy + h * 0.1) - (st.y + st.h - h * 0.01), hx = st.x + st.w * 0.5;
+  b.fillStyle = '#b8e29c';
+  b.beginPath(); b.arc(hx, gy + h * 0.1, hr, Math.PI, 0); b.fill();
+  b.strokeStyle = '#e8cf9a';
+  b.lineWidth = h * 0.014;
+  b.lineCap = 'round';
+  b.beginPath(); b.moveTo(hx + st.w * 0.25, st.y + st.h); b.quadraticCurveTo(hx + st.w * 0.6, st.y + st.h + h * 0.08, hx + st.w * 0.2, gy - h * 0.02); b.stroke();
   // Maa ja maanalainen kerros
   var earth = b.createLinearGradient(0, gy, 0, h);
   earth.addColorStop(0, '#b98a5a');
@@ -161,7 +173,7 @@ function renderCastleBg() {
   // Huoneiden aukot (tumma reuna)
   for (i = 0; i < lay.rooms.length; i++) {
     r = lay.rooms[i];
-    if (r.idx === YARD_ROOM || r.idx === COOP_ROOM) continue;
+    if (r.idx === YARD_ROOM || r.idx === COOP_ROOM || r.idx === STABLE_ROOM) continue;
     b.fillStyle = 'rgba(60,30,90,0.35)';
     roundRect(b, r.x - h * 0.008, r.y - h * 0.008, r.w + h * 0.016, r.h + h * 0.016, h * 0.022);
     b.fill();
@@ -181,6 +193,8 @@ function drawCastleRoomThumb(c, idx, x, y, w, hh) {
     yardThumbBg(c, x, y, w, hh, fyRel, wallP);
   } else if (idx === COOP_ROOM) {
     coopThumbBg(c, x, y, w, hh, wallP, floorP);
+  } else if (idx === STABLE_ROOM) {
+    stabThumbBg(c, x, y, w, hh, wallP, floorP);
   } else {
     var wg = c.createLinearGradient(0, y, 0, y + hh * fyRel);
     wg.addColorStop(0, wallP.wall[0]);
@@ -228,6 +242,7 @@ function drawCastleRoomThumb(c, idx, x, y, w, hh) {
     drawHomeItem(c, order[i], p.x, p.y, homeItemSize() * sc);
   }
   if (idx === COOP_ROOM) coopThumbFront(c, x, y, w);
+  if (idx === STABLE_ROOM) stabThumbFront(c, x, y, w);
   c.restore();
 }
 

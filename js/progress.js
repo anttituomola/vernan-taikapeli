@@ -14,7 +14,7 @@ var starGain = { n: 0, until: 0 };  // juhlassa näytettävä "+n"
 
 function saveProgress() {
   try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland, stars: starCoins, home: homeItems, decor: homeDecor, bows: homeBows, bank: { stars: bankStars, t: bankT, unseen: bankUnseen, closed: bankClosed }, coop: coopSaveData() }));
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland, stars: starCoins, home: homeItems, decor: homeDecor, bows: homeBows, bank: { stars: bankStars, t: bankT, unseen: bankUnseen, closed: bankClosed }, coop: coopSaveData(), stable: stabSaveData() }));
   } catch (e) { /* yksityinen tila tms: pelataan ilman tallennusta */ }
 }
 
@@ -49,6 +49,7 @@ function loadProgress() {
     }
     // Kanatarha (vanha tallennus ilman sitä: tyhjä, aloituskanat ensikäynnillä)
     coopLoadData(d && d.coop);
+    stabLoadData(d && d.stable);
   } catch (e) { /* rikkinäinen tallennus: aloitetaan alusta */ }
 }
 
@@ -66,6 +67,7 @@ function resetProgress() {
   bankUnseen = 0;
   bankClosed = false;
   coopLoadData(null);
+  stabLoadData(null);
   saveProgress();
 }
 
