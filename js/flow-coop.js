@@ -26,7 +26,7 @@
 // mutta ne eivät ole homeItems-tavaroita vaan coopBirds-eläimiä.
 
 var COOP_ROOM = 5;
-var COOP_MAX = 8;            // kanoja + tipuja + hautomon muna enintään
+var COOP_MAX = 12;           // kanoja + tipuja + hautomon muna enintään
 var COOP_GROW_DAYS = 3;      // tipu kasvaa kanaksi näin monessa päivässä
 var COOP_POUR = 0.6;         // s kaatoa yhteen täyttöön
 var COOP_GOLD_CHANCE = 1 / 12;
@@ -71,6 +71,7 @@ var coopBits = [];           // jyvät ja vesipisarat { x, y, vx, vy, age, floor
 var coopIncShake = 0;
 var coopBasketBounce = 0;
 var coopBubbleT = 0;
+var coopFullT = 0;           // "Tarha on täynnä" -kuplan aika hautomon yllä
 
 function coopDay() {
   return yardDay();
@@ -555,6 +556,15 @@ function coopIncTap() {
   }
 }
 
+// Tarha täynnä: kupla hautomon ylle ja linnut räpyttelevät
+function coopFullNote() {
+  var i;
+  coopFullT = 2.5;
+  for (i = 0; i < coopBirds.length; i++) coopBirds[i].flapT = 0.5 + Math.random() * 0.4;
+  coopCheep(0);
+  coopCheep(0.15);
+}
+
 function coopHatch() {
   var sp = coopSpots(), b = coopNewBird('chick', randInt(COOP_GOLD_C), sp.inc.x / viewW + 0.04, (sp.inc.y + viewH * 0.01) / viewH, coopDay());
   coopGroundClamp(b);
@@ -631,7 +641,10 @@ function coopDrop() {
       return;
     }
     // Ei käy (hautomo varattu tai tarha täynnä): muna palaa koriin
-    if (dx * dx + dy * dy < viewH * viewH * 0.016) coopIncShake = 0.6;
+    if (dx * dx + dy * dy < viewH * viewH * 0.016) {
+      coopIncShake = 0.6;
+      if (coopInc < 0) coopFullNote();
+    }
     coopBasket.push(d.p);
     coopFly.push({ x0: d.gx, y0: d.gy, x1: sp.basket.x, y1: sp.basket.y - viewH * 0.05, t: 0.3, p: d.p, gold: 0, back: 1 });
     playNote(330, 0, 0.1, 'triangle', 0.2);
@@ -871,6 +884,7 @@ function updateCoop(dt) {
   d = coopDay();
   sp = coopSpots();
   if (coopIncShake > 0) coopIncShake -= dt;
+  if (coopFullT > 0) coopFullT -= dt;
   if (coopBasketBounce > 0) coopBasketBounce -= dt;
   coopBubbleT += dt;
   if (coopHatchT > 0) {
@@ -1388,6 +1402,19 @@ function drawCoopGround(c) {
     }
     c.restore();
     if (ready && coopHatchT <= 0) drawHintArrow(c, ic.x, ic.y - h * 0.15);
+  }
+  if (coopFullT > 0) {
+    var fa = Math.min(1, coopFullT * 2), fy = ic.y - h * 0.2 + Math.sin(globalT * 3) * h * 0.005;
+    c.save();
+    c.globalAlpha = fa;
+    c.font = 'bold ' + Math.round(h * 0.03) + 'px ' + UI_FONT;
+    var fw = c.measureText('Tarha on täynnä!').width + h * 0.04;
+    artRoundRect(c, ic.x - fw / 2 + h * 0.03, fy - h * 0.03, fw, h * 0.06, h * 0.03, '#fff8fb', { lineColor: '#b85a80' });
+    c.fillStyle = '#7a3a5a';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('Tarha on täynnä!', ic.x + h * 0.03, fy);
+    c.restore();
   }
   // Levossa olevat työkalut
   var held = homeDrag && homeDrag.coop === 'tool' ? homeDrag.tool : '';
