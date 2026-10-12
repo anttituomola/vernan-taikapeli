@@ -17,6 +17,9 @@
 //   - Pesän muna napautetaan koriin. Korin napautus maalaa munan kirjavaksi.
 //     Korista muna raahataan hautomoon, ja seuraavana päivänä napautus
 //     kuoriuttaa tipun. Tipu seuraa emoa ja kasvaa kanaksi kolmessa päivässä.
+//     Jos tarha on täynnä, hautomoon raahattu muna menee silti sisään ja vanhin
+//     tavallinen kana vilkuttaa ja kävelee aidan ohi kylään (kultakana, kukko
+//     ja tiput jäävät aina).
 //   - Kultamuna (harvoin, tai kukon salaisuus) on yksi tähti.
 // Kanoja voi nostaa sormella (sylissä syntyy sydämiä) ja laskea orrelle,
 // pesään, pupun viereen tai maahan. Kukko kiekuu päivän ensimmäisellä
@@ -72,6 +75,7 @@ var coopIncShake = 0;
 var coopBasketBounce = 0;
 var coopBubbleT = 0;
 var coopFullT = 0;           // "Tarha on täynnä" -kuplan aika hautomon yllä
+var coopLeavers = [];        // kylään muuttavat kanat (eivät enää coopBirds-listassa)
 
 function coopDay() {
   return yardDay();
@@ -127,6 +131,7 @@ function coopLoadData(d) {
   coopLayer = null;
   coopGrain = coopWater = 0;
   coopFly = [];
+  coopLeavers = [];
   if (!d || typeof d !== 'object') return;
   if (d.b && d.b.length !== undefined) {
     for (i = 0; i < d.b.length && coopBirds.length < COOP_MAX; i++) {
@@ -556,6 +561,54 @@ function coopIncTap() {
   }
 }
 
+// Tarha täynnä: vanhin tavallinen kana muuttaa kylään, jotta hautomoon mahtuu
+// muna. Kana poistuu heti tallennuksesta; coopLeavers vain näyttää lähdön.
+// False = ei ketään, joka voisi lähteä (kultakana, kukko ja tiput jäävät).
+function coopSendAway() {
+  var i, b;
+  for (i = 0; i < coopBirds.length; i++) {
+    b = coopBirds[i];
+    if (b.k === 'hen' && b.c !== COOP_GOLD_C && b.state !== 'held' && b !== coopLayer) break;
+  }
+  if (i >= coopBirds.length) return false;
+  coopBirds.splice(i, 1);
+  b.state = 'leave';
+  b.zt = 0;
+  b.ox = b.oy = 0;
+  b.peck = 0;
+  b.flapT = 1.2;
+  b.timer = 1.2;           // vilkuttaa ensin paikallaan
+  b.fade = 1;
+  coopLeavers.push(b);
+  coopHearts.push({ x: b.fx * viewW, y: b.fy * viewH - coopBirdSize(b) * 1.6, age: 0 });
+  coopCluck(0.3);
+  return true;
+}
+function coopCanSendAway() {
+  for (var i = 0; i < coopBirds.length; i++) if (coopBirds[i].k === 'hen' && coopBirds[i].c !== COOP_GOLD_C && coopBirds[i] !== coopLayer) return true;
+  return false;
+}
+function coopUpdateLeaver(b, dt) {
+  var room = homeRoom(), s = coopBirdSize(b), tx = room.x1 + s, ty = room.floorY + viewH * 0.08, dx, dy, dist, spd;
+  b.ph += dt;
+  if (b.flapT > 0) b.flapT -= dt;
+  if (b.z > 0) { b.z = Math.max(0, b.z - viewH * 0.7 * dt); b.flapT = Math.max(b.flapT, 0.1); return; }
+  b.timer -= dt;
+  if (b.timer > 0) {
+    // Vilkutus: siipi heiluu ja katse vaihtelee
+    if (Math.sin(b.ph * 6) > 0.6) b.flapT = Math.max(b.flapT, 0.1);
+    b.dir = Math.sin(b.ph * 3) > 0 ? 1 : -1;
+    return;
+  }
+  dx = tx - b.fx * viewW; dy = ty - b.fy * viewH;
+  dist = Math.sqrt(dx * dx + dy * dy);
+  spd = viewH * 0.16 * dt;
+  b.dir = dx > 0 ? 1 : -1;
+  if (dist > spd) { b.fx += dx / dist * spd / viewW; b.fy += dy / dist * spd / viewH; }
+  if (Math.random() < dt * 0.6) coopCluck(0);
+  if (dist < viewH * 0.15) b.fade = Math.max(0, b.fade - dt * 2);
+}
+
 // Tarha täynnä: kupla hautomon ylle ja linnut räpyttelevät
 function coopFullNote() {
   var i;
@@ -630,7 +683,7 @@ function coopDrop() {
       coopBasketBounce = 0.5;
       return;
     }
-    if (dx * dx + dy * dy < viewH * viewH * 0.016 && coopInc < 0 && coopCount() < COOP_MAX) {
+    if (dx * dx + dy * dy < viewH * viewH * 0.016 && coopInc < 0 && (coopCount() < COOP_MAX || coopSendAway())) {
       coopInc = coopDay();
       coopIncP = d.p;
       spawnSparkles(sp.inc.x, sp.inc.y - viewH * 0.06, 16, '#ffd6a0');
@@ -809,6 +862,7 @@ function coopOnEnter() {
   var i, d = coopDay(), b, sp;
   for (i = 0; i < HOME_ITEMS.length; i++) if (HOME_ITEMS[i].id === 'hen') break;
   homeShopPage = Math.floor(i / HOME_SHOP_PAGE);
+  coopLeavers = [];
   if (!coopInit) {
     // Aloituskanat: valkoinen ja ruskea
     coopInit = true;
@@ -952,6 +1006,10 @@ function updateCoop(dt) {
     }
   }
   if (coopLayer && coopBirds.indexOf(coopLayer) < 0) coopLayer = null;
+  for (i = coopLeavers.length - 1; i >= 0; i--) {
+    coopUpdateLeaver(coopLeavers[i], dt);
+    if (coopLeavers[i].fade <= 0) coopLeavers.splice(i, 1);
+  }
   // Linnut
   var swing = homeHasHere('coopswing');
   for (i = 0; i < coopBirds.length; i++) coopUpdateBird(coopBirds[i], i, dt, d, sp, swing);
@@ -1149,11 +1207,13 @@ function drawCoopBirdShape(c, k, col, x, y, s, dir, o) {
 function drawCoopBird(c, b) {
   var s = coopBirdSize(b), x = b.fx * viewW + (b.ox || 0), y = b.fy * viewH + (b.oy || 0) - b.z;
   var sit = b.state === 'lay' || b.state === 'perch' || b.state === 'swing' || b.state === 'hug';
+  if (b.state === 'leave') { c.save(); c.globalAlpha = b.fade; }
   if (b.z < viewH * 0.02 && !b.oy) artShadow(c, b.fx * viewW, b.fy * viewH + s * 0.05, s * 0.7, s * 0.18, 0.18);
   if (b.state === 'bathe') y += s * 0.15;
   var blink = (b.state === 'perch' && b.timer > 2 && Math.sin(b.ph * 0.7) > 0.3) || Math.sin(b.ph * 1.3) > 0.985 ? 1 : 0;
   drawCoopBirdShape(c, b.k, b.c, x, y, s, b.dir, { flap: b.flapT > 0 || b.state === 'bathe' || b.state === 'held', peck: b.peck, sit: sit, blink: blink, crow: b.crowT > 0, age: coopAge(b) });
   if (b.grewT > 0) artGlow(c, x, y - s * 0.7, s * 1.4, '#fff2a0', Math.min(0.6, b.grewT * 0.3));
+  if (b.state === 'leave') c.restore();
 }
 
 // Lajittelu muiden kanssa (drawHome): linnut, joita ei pidellä
@@ -1165,6 +1225,7 @@ function coopDrawOrder(order) {
     if (b.state === 'held') continue;
     order.push({ y: b.fy * viewH + (b.state === 'swing' ? homeItemSize() * 0.01 : 0), coopBird: b });
   }
+  for (i = 0; i < coopLeavers.length; i++) order.push({ y: coopLeavers[i].fy * viewH, coopBird: coopLeavers[i] });
 }
 
 function drawCoopEgg(c, x, y, r, p, gold) {
@@ -1524,7 +1585,7 @@ function drawCoopAbove(c) {
     drawCoopTool(c, homeDrag.tool, false);
   } else if (homeDrag.coop === 'egg') {
     var onInc = Math.abs(homeDrag.gx - sp.inc.x) < h * 0.12 && Math.abs(homeDrag.gy - (sp.inc.y - h * 0.06)) < h * 0.12;
-    if (onInc && coopInc < 0 && coopCount() < COOP_MAX) artGlow(c, sp.inc.x, sp.inc.y - h * 0.06, h * 0.1, '#fff2a0', 0.7);
+    if (onInc && coopInc < 0 && (coopCount() < COOP_MAX || coopCanSendAway())) artGlow(c, sp.inc.x, sp.inc.y - h * 0.06, h * 0.1, '#fff2a0', 0.7);
     drawCoopEgg(c, homeDrag.gx, homeDrag.gy + h * 0.02, h * 0.024, homeDrag.p, 0);
   }
 }
