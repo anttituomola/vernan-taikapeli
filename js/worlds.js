@@ -1492,6 +1492,52 @@ var WORLDS = [
         respawn: function () { respawnTwin(); }
       }
     ]
+  },
+  {
+    // Pupula: mantereen seitsemäs paikka, pupujen pikkukaupunki kartan
+    // kaakkoiskulmassa. Rytmi: pitkä helppo Pupujen leipomo, sitten vaikea
+    // pulma Peilipupu. Usvahuoneet ('?') odottavat tulevia kenttiä ja vartijaa.
+    id: 16, name: 'Pupula', region: 'land', band: 'town',
+    place: { fx: 0.70, fy: 0.85, size: 0.75, finaleKind: 'reflect', deco: ['bakery', 'reflect'] },
+    map: [
+      '#########',
+      '#B.....L#',
+      '#######.#',
+      '#M......#',
+      '#.#######',
+      '#......?#',
+      '#######.#',
+      '#?......#',
+      '#########'
+    ],
+    levels: [
+      {
+        kind: 'bakery', room: 'L', name: 'Pupujen leipomo', color: '#ff9f7a', script: 'play-bakery',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#ffe8d0', ambient: 'sparkle', fg: null,
+        init: function () { initBakery(); },
+        update: function (dt) { updateBakery(dt); },
+        draw: function () { drawBakery(); },
+        tap: function (x, y) { handleBakeryTap(x, y); },
+        resize: function () { resizeBakery(); },
+        renderBg: function (b, w, h) { renderBakeryBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff0d0', raysAlpha: 0.3, tint: ['rgba(255,230,190,0.06)', 'rgba(200,140,90,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnBakery(); }
+      },
+      {
+        kind: 'reflect', room: 'M', name: 'Peilipupu', color: '#9fc8ff', script: 'play-reflect',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#e8e0ff', ambient: 'sparkle', fg: null,
+        init: function () { initReflect(); },
+        update: function (dt) { updateReflect(dt); },
+        draw: function () { drawReflect(); },
+        tap: function (x, y) { handleReflectTap(x, y); },
+        resize: function () { resizeReflect(); },
+        renderBg: function (b, w, h) { renderReflectBg(b, w, h); },
+        light: { rays: true, raysColor: '#f0e8ff', raysAlpha: 0.3, tint: ['rgba(230,220,255,0.06)', 'rgba(120,100,180,0.04)'], vignette: 0.25 },
+        respawn: function () { respawnReflect(); }
+      }
+    ]
   }
 ];
 
