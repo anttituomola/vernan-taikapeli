@@ -977,6 +977,54 @@ ja vartijana vaikeampi pulma.
   variksenpelätin, lammas aidalla, heinäpaali, kissa, kukat, traktori ja
   aidan tolpan kukko (molemmat puput vilkuttavat).
 
+### Kaukamaa: Pupula (maailma 16)
+
+Mantereen seitsemäs paikka, pupujen pikkukaupunki kartan kaakkoiskulmassa
+(13.10.2026). Aukeaa Maalaiskylän vartijan jälkeen. Rytmi: ensin pitkä ja
+helppo kenttä, sitten vaikea pulma. Sokkelossa on kaksi usvahuonetta ('?')
+tuleville kentille ja vartijalle; siihen asti Peilipupu on paikan viimeinen
+kenttä (finaleKind 'reflect').
+
+- **Pupujen leipomo** — pitkä ja helppo kenttä ilman sydämiä ja aikarajaa,
+  kaikki raahaamalla yhdellä ruudulla. Eläinasiakas (pupu, kana, possu,
+  lammas, lehmä, ankka, poni, kissa) tulee tiskille, ja kuplassa on kuva
+  leivoksesta. Pohja (kakku, sydänkakku, muffinssi, keksi, pulla)
+  taikinalaatikosta lautaselle ja uuniin; kello kilahtaa ja ikkuna hehkuu
+  kultaisena (ottoikkuna 2,6 s), myöhemmin leivos tummuu, mutta asiakas
+  ottaa sen huokaisten. Kuorrute sudotaan pursottimella, koristeet
+  (mansikka, kirsikka, kynttilä, sokeritähti) raahataan kulhoista ja pois
+  takaisin kulhoon. Väärä yksityiskohta: kuplan kohta sykkii, leivos palaa
+  korjattavaksi. Aamu: pohja + kuorrute; päivä: + koristeet kuvina 1–3;
+  ilta: kaksi lajia numeroin, kynttilät laskuna "2 + 3" tai kaksi samanlaista.
+  Haamukäsi näyttää jokaisen raahauksen kerran, 8 s toimettomuuden jälkeen
+  uudelleen. Toimittajan pakettiauto = tehtävät (kysymykseen vastaus
+  kirjaimin, kirjoita sana kuvasta). Kultainen vispilä, jos kaikki osui
+  ensimmäisellä ojennuksella eikä mikään palanut. Tökättävät: vatkain
+  (5.: muffinssi), keksipurkki (5.: kultainen keksi), kassakone, tiskikello,
+  käkikello (käkipupu), kissa uunilla, jauhosäkki (hiiri) ja kaulin
+  (piparkakkupupu). Kesto botilla 3,3–4 min, toiminto 2–3 s välein.
+  Säädöt: `BAKE_T`, `BAKE_GOLD`, `BAKE_FROST_NEED`, `BAKE_PLAN`,
+  `BAKE_TASK_AFTER`, `BAKE_HINT_IDLE`.
+- **Peilipupu** — peilitalon pulma: kaksi yhtä suurta lautaa rinnakkain ja
+  välissä hohtava taikapeili. Vasemmalla pinkki pupu, oikealla sen
+  läpikuultava lila peilikuva. Nuolen napautus hypäyttää molempia: ylös ja
+  alas ovat samat, mutta vasen ja oikea ovat peilikuvalle peilatut (napissa
+  iso pinkki nuoli = oma pupu, pieni lila = peilikuva; myös laudan
+  napautus pupun viereen käy). Pensasruukku tai reuna pysäyttää pupun, joka
+  tömähtää paikallaan toisen liikkuessa; laudoilla on eri pensaat, joten
+  pupuja siirretään toistensa suhteen tömähdyksillä. Kierros on läpi, kun
+  molemmat seisovat porkkanallaan yhtä aikaa. Neljä arvottua kierrosta
+  (`REFL_ROUNDS`): 4×4 (5–7 hyppyä, 1 tömähdys); 5×5 (8–10, 2–3); 5×5
+  taikakuopilla (8–11; putoaminen palauttaa molemmat alkuun); 6×5 kuopilla ja
+  kahdella bonustähdellä (9–12). Leveyshaku yhteisestä tilasta varmistaa
+  ratkaisun pituuden ja tömähdysten tarpeen eikä salli jumitiloja. Esittely
+  alussa, peruutus ↶ ilmainen, ↻ alusta, vihjekäsi 12 s:n tai kahden
+  putoamisen jälkeen; kultainen porkkana ilman vihjettä ja enintään 2
+  ylimääräisellä hypyllä (tassunjäljet). Ei sydämiä. Tehtävät: kysymykseen
+  vastaus kirjaimin, peilikuva. Tökättävät: vääristävä peili (5.:
+  yksisarvinen), lamppu, kissa, vieterikaappi ja taikapeili (puput
+  vilkuttavat).
+
 ### Linnan sisustus
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet

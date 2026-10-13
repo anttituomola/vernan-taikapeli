@@ -106,6 +106,13 @@ sen päällä. Pupuparin pihalla lisäksi **luukku** (avaimen ojennus aidan yli)
 ja **STOP-laatta**, joka pysäyttää toisen puolen traktorin.
 _Vältä_: kaksinpeli (ei kilpailla), moninpeli
 
+**Peilikuva**:
+Peilipupun toinen pupu: oikean laudan lila pupu, joka hyppii samaan aikaan
+kuin pinkki pupu, mutta vasen ja oikea vaihtavat paikkaa. Kun pensas
+pysäyttää vain toisen pupun, se **tömähtää** paikallaan, ja puput siirtyvät
+toistensa suhteen. (Ei sama kuin peilikuvatehtävä, joka on tehtävätyyppi.)
+_Vältä_: kaksoispupu, varjo
+
 **Purjehdus**:
 Lyhyt siirtymäkohtaus saaristosta Kaukamaalle ja takaisin: vene avomerellä,
 manner nousee usvasta. Napautus ohittaa.
