@@ -423,30 +423,32 @@ palautuvat. Kenttä itse ei ala alusta.
 
 ### Revontulimaa (maailma 9)
 
-Aukeaa, kun Taikurin teltta on läpäisty. Prinsessa seilaa horisonttiin ja
-löytää revontulten maan. Pelimekaniikka on tuttua (vene, ratsastus, lento,
-napautus), mutta tehtävät painottavat päättelyä, hahmotusta, matematiikkaa
-ja lukemista Kirjainsaaren jälkeen: loppusointu, loppukirjain ja puuttuva
-tavu.
+Aukeaa, kun Taikurin teltta on läpäisty: Myrskynoidan pilvi pakeni
+pohjoiseen. Revontuliketun läpäisy avaa avomerimerkin Kaukamaalle (tarinan
+luku 'revontuli'). Korjattu 14.10.2026: jokaisessa kentässä ele → suora näkyvä
+seuraus ja tavoite näkyy heti. Tehtävät painottavat lukemista (loppusointu,
+loppukirjain, puuttuva tavu).
 
-- **Horisontti** ♥ — vene kulkee itse eteenpäin; pidä sormea ohjataksesi
-  (vasemmalla palaa, oikealla jatkaa, ylös/alas väistää jäitä). Kahdeksan
-  tähteä: ohi mennyt tähti ilmestyy uudelleen eteen, laituri pysäyttää veneen
-  ja jäljellä olevat leijuvat luo. Tehtävät: laske, kummalla enemmän.
-- **Revontulipolku** ♥ — ratsastus. Valopallot syttyvät vain, kun revontuli
-  on niiden yllä; kerää ne loistaessaan. Tuulenpuuskat vievät sydämen.
-  Tehtävät: kuviosarja, muistiloitsu 5/4.
-- **Porolaakso** — ratsastus. Kolme poroa seuraa; revontulipulssi pelästyttää
-  ne kivien taa. Napauta piilossa olevaa poroa ja vie kaikki aitaukseen.
-  Tehtävät: anna N, vähennys.
-- **Kelkkamäki** ♥ — ruutu vierii itse. Ohjaa kelkkaa pidolla, lennä
-  revontulirenkaiden läpi, väistä kiviä. Tehtävät: peilikuva, yhdistä pisteet.
-- **Lumisana** — ei liikkumista. Kuusi kierrosta vuorottelee loppusointua,
-  loppukirjainta ja puuttuvaa tavua. Tehtäväkaaret (laske, vähennys) toisen
-  ja neljännen kierroksen jälkeen.
-- **Revontulikettu** — vartija. Ratsastus tunturissa, neljä tehtäväporttia
-  (loppusointu, loppukirjain, puuttuva tavu, muisti 5/4) ja kuusi
-  revontulikidettä. Kettu herää, kun portteja on avattu.
+- **Horisontti** — vene kulkee itse eteenpäin; sormi ohjaa pehmeästi ylös ja
+  alas. Kahdeksan tähteä; jäälautta vain tönäisee venettä (ei sydämiä).
+- **Revontulipolku** — ratsastus. Revontuli kirkastuu ja tiputtaa valopisaran
+  renkaaseen lumessa; ratsasta renkaaseen (tai napauta) ennen kuin pisara
+  laskeutuu. Jokainen pisara sytyttää taivaalle uuden raidan. Ohi mennyt pisara
+  ei haittaa.
+- **Porolaakso** — ratsastus, pitkä ja helppo. Viisi poroa (kaksi kurkkii
+  kiven takaa) liittyy jonoon tökkäyksestä tai lähelle ratsastamalla ja hyppää
+  lopuksi aitaukseen. Nuoli osoittaa puuttuvaa poroa.
+- **Kelkkamäki** ♥ — saaren vaikea kenttä. Ruutu vierii itse; pito nostaa
+  kelkkaa sormen korkeudelle, irti päästäminen laskee lumelle. Kuusi
+  revontulirengasta (ohi mennyt kiertää uudestaan eteen); noidan pikku
+  myrskypilvet vievät sydämen.
+- **Lumisana** — ei liikkumista. Jokainen ratkaistu tehtävä (kuusi
+  lukukierrosta ja kaksi laskua) rakentaa isoon lumiukkoon palan; valmiin
+  ukon ääriviiva näkyy alusta.
+- **Revontulikettu** — vartija. Kettu leikkii piilosta: se juoksee edellä,
+  jättää hohtavat tassunjäljet ja piiloutuu kinoksen taa; luo ratsastamalla
+  se antaa revontulikiteen (kuusi kidettä, neljä tehtäväporttia). Lopuksi kettu
+  pyyhkäisee hännällään revontulisillan meren yli Kaukamaalle.
 
 ### Kaukamaa: Lohikäärmelaakso (maailma 10)
 
@@ -1406,11 +1408,11 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Ankkaonginta: kaistat `DUCK_LANES` (suunta, nopeus), koukun sukellus `0.35` s, pyyntisäde `viewH * 0.065`
 - Taikurin teltta: kierrokset `MAG_ROUNDS` (kupit, vaihdot, vaihdon kesto)
 - Maksa: rahat `PAY_COINS`, hinta `6 + randInt(8)`; Reitti: ruudukko `ROUTE_N`, askeleita `4–6`, askelaika `0.5` s; Palapeli: kuvat `JIGSAW_PICS`
-- Horisontti: tähdet `VOY_STARS`, jäät `voyIceDefs`, veneen nopeus `viewW * 0.20`
-- Revontulipolku: valoja `AUR_COUNT`, verhon leveys `viewW * 0.20`, tuulenpuuskat `aurWind`
-- Porolaakso: poroja `REIN_N`, pulssiväli `5.2 + Math.random() * 1.4`
-- Kelkkamäki: renkaat `SLED_RINGS`, vieritys `SLED_SPEEDS`, kivet `sledRocks`
-- Lumisana: kierrokset `SW_ROUNDS`, tyypit `SW_KINDS`
+- Horisontti: tähdet `VOY_STARS`, jäät `voyIceDefs`, veneen nopeus `VOY_SPEED` (viewW/s)
+- Revontulipolku: pisaroita `AUR_COUNT`, osuudet `AUR_QUOTA`, putoamisaika `AUR_FALL`, varoitus `AUR_WARN`
+- Porolaakso: poroja `REIN_N`
+- Kelkkamäki: renkaat `SLED_RINGS`, vieritys `SLED_SPEEDS`, myrskypilvet
+- Lumisana: kierrokset `SW_ROUNDS`, tyypit `SW_KINDS`, lumiukon palat `SW_PARTS`
 - Revontulikettu: kiteet `FOX_STONES`
 - Pesäkallio: asemat `NEST_STATIONS` (pesien paikat, toiveet, `peek`, `swing`, `overhang`, pilarit `rocks`), laukaisu `NEST_VMAX` / veto `NEST_PULL`, painovoima `NEST_G`, kurkistus `NEST_PEEK_UP` / `NEST_PEEK_DOWN`, suun säde `nestMouth` (`s * 1.1`), ennakkokaaren osumatarkkuus `nestPreview` (`m.r * m.r * 0.6`), harakan väli `3.5 + Math.random() * 2`; osumaikkunat voi mitata selaimessa käymällä vedot läpi `nestLaunchVel` + `nestPreview`
 - Tulilento: soihdut `FLY_TORCHES`, portit `FLY_GATES` (kesto `hp: 2`), pilarit `FLY_PILLARS`, tuhkapilvet `FLY_CLOUDS` (poissa `gone = 7` s), marjat `FLY_BERRIES`, liekkejä `FLY_FLAMES`, palautuminen `FLY_RECHARGE`, liekin pituus `FLY_CONE` ja puolikulma `FLY_CONE_ANG`, lentonopeus `FLY_SPEED`, ohjauksen pehmeys `FLY_ACCEL` (kiihtyvyys sormen etäisyyden mukaan), vajoaminen `FLY_SINK`, osumasäde `R = s * 0.62` (updateDragonfly)
