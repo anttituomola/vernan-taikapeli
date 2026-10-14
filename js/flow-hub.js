@@ -358,8 +358,16 @@ function handleHubTap(px, py) {
     }
   }
   var cell = hubPixelCell(px, py, lay);
-  if (!cell) { hubFxTapOutside(px, py); return; }
-  if (!hubWalkable(hubAt(cell.c, cell.r))) { hubFxPlant(px, py, lay); return; }
+  if (!cell) {
+    if (!hubFxTapOutside(px, py) && !hubSpotTap(px, py, lay)) spawnSparkles(px, py, 5, '#ffffff');
+    return;
+  }
+  if (!hubWalkable(hubAt(cell.c, cell.r))) {
+    var prop = hubPropAt(px, py, cell);
+    if (prop) hubPropPoke(prop);
+    else if (!hubSpotTap(px, py, lay)) hubFxPlant(px, py, lay);
+    return;
+  }
   if (cell.c === hubPawn.c && cell.r === hubPawn.r && hubPawn.path.length === 0) {
     var here = hubAt(cell.c, cell.r);
     // Tavallisessa polkuruudussa nappulan napautus hypähdyttää yksisarvisen
@@ -373,6 +381,8 @@ function handleHubTap(px, py) {
 function updateHub(dt) {
   globalT += dt;
   hubFxUpdate(dt);
+  hubPropsUpdate(dt);
+  updateParticles(dt);
   if (hubToast.t > 0) hubToast.t -= dt;
   var lay = hubLayout();
   if (hubPawn.path.length > 0) {
@@ -980,6 +990,8 @@ function drawHub() {
   renderHubBg(lay);
   ctx.clearRect(0, 0, viewW, viewH);
   ctx.drawImage(hubBgCanvas, 0, 0, hubBgCanvas.width, hubBgCanvas.height, 0, 0, viewW, viewH);
+  drawHubSpotFx(ctx, lay);
+  drawHubProps(ctx);
 
   var r, c, ch, x, y, s, room, i;
   s = lay.cell;
@@ -1027,6 +1039,7 @@ function drawHub() {
   ctx.globalAlpha = 1;
 
   drawHubFx(ctx, lay);
+  drawParticlesLayerAbs(ctx);
   drawMapSun(ctx);
 
   // Prinsessa ratsastaa yksisarvisella
@@ -1442,7 +1455,9 @@ function renderHubBg(lay) {
   }
   b.restore();
 
-  // Seinäruutujen maisemakoristeet takaa eteen (saavat kurottaa ruudun yli ylöspäin)
+  // Seinäruutujen maisemakoristeet piirretään kukin omaan pieneen kuvaansa
+  // (hubProps), jotta ne voivat heilahtaa tökättäessä; piirto joka ruudulla takaa eteen
+  hubProps = [];
   for (r = 0; r < lay.rows; r++) {
     for (c = 0; c < lay.cols; c++) {
       if (hubWalkable(hubAt(c, r))) continue;
@@ -1450,7 +1465,7 @@ function renderHubBg(lay) {
       if (!th || !th.wall) continue;
       var rn = hubHash(c, r);
       if (rn > (th.density === undefined ? 0.9 : th.density)) continue;
-      th.wall(b, lay.ox + (c + 0.5) * s + (hubHash(r, c) - 0.5) * s * 0.2, lay.oy + (r + 0.92) * s, s, rn, hubHash(r + 7, c + 3));
+      hubProps.push(hubPropMake(th, c, r, lay.ox + (c + 0.5) * s + (hubHash(r, c) - 0.5) * s * 0.2, lay.oy + (r + 0.92) * s, s, rn, hubHash(r + 7, c + 3)));
     }
   }
 
@@ -1458,6 +1473,99 @@ function renderHubBg(lay) {
   if (hubWorld === 1) {
     var stc = hubFind('B');
     drawCottage(b, lay.ox + (stc.c + 1.5) * s, lay.oy + (stc.r - 0.5) * s + s * 0.42, s * 0.85);
+  }
+}
+
+// ---------- Tökättävät maisemakoristeet ----------
+// Koriste: { th, c, r, x, y (jalan kohta), s, rnd, rnd2, img, ix, iy, iw, ih, t (tökkäyksen aika,
+// -1 = levossa), n (tökkäysten määrä) }. Kuva kattaa 2 ruutua leveyttä ja 2,3 korkeutta.
+var hubProps = [];
+var hubSpotFx = [];          // maiseman kohteiden tehosteet: { spot, t }
+var HUB_POKE_T = 0.9;
+function hubPropMake(th, c, r, x, y, s, rnd, rnd2) {
+  var iw = s * 2, ih = s * 2.3, ix = x - iw / 2, iy = y - ih + s * 0.25;
+  var img = document.createElement('canvas');
+  img.width = Math.max(1, Math.round(iw * DPR));
+  img.height = Math.max(1, Math.round(ih * DPR));
+  var g = img.getContext('2d');
+  g.setTransform(DPR, 0, 0, DPR, -ix * DPR, -iy * DPR);
+  th.wall(g, x, y, s, rnd, rnd2);
+  return { th: th, c: c, r: r, x: x, y: y, s: s, rnd: rnd, rnd2: rnd2, img: img, ix: ix, iy: iy, iw: iw, ih: ih, t: -1, n: 0 };
+}
+function drawHubProps(cx) {
+  var i, p, k, sq;
+  for (i = 0; i < hubProps.length; i++) {
+    p = hubProps[i];
+    if (p.t < 0) { cx.drawImage(p.img, p.ix, p.iy, p.iw, p.ih); continue; }
+    // Heilahdus: lyhyt litistys-venytys ja keinahdus jalan ympäri
+    k = Math.min(1, p.t / HUB_POKE_T);
+    sq = Math.sin(k * Math.PI * 3) * 0.14 * (1 - k);
+    cx.save();
+    cx.translate(p.x, p.y);
+    cx.rotate(Math.sin(k * Math.PI * 4) * 0.08 * (1 - k));
+    cx.scale(1 - sq, 1 + sq);
+    cx.drawImage(p.img, p.ix - p.x, p.iy - p.y, p.iw, p.ih);
+    cx.restore();
+    if (p.th.pokeDraw) p.th.pokeDraw(cx, p.x, p.y, p.s, p.rnd, p.rnd2, Math.min(1, p.t / (p.th.pokeDur || 1.4)), p.n);
+  }
+}
+// Napautettu koriste: ruudun oma tai alemman ruudun koriste, joka kurottaa tänne
+function hubPropAt(px, py, cell) {
+  var i, p, best = null;
+  for (i = 0; i < hubProps.length; i++) {
+    p = hubProps[i];
+    if (p.c !== cell.c || (p.r !== cell.r && p.r !== cell.r + 1)) continue;
+    if (px < p.x - p.s * 0.7 || px > p.x + p.s * 0.7 || py > p.y + p.s * 0.1 || py < p.y - p.s * 1.6) continue;
+    // Lähin koriste, jonka jalka on napautuksen alapuolella (oma ruutu ennen alemman latvusta)
+    if (!best || p.y - py < best.y - py) best = p;
+  }
+  return best;
+}
+function hubPropPoke(p) {
+  if (p.t >= 0 && p.t < 0.35) return;
+  p.t = 0;
+  p.n++;
+  spawnSparkles(p.x, p.y - p.s * 0.8, 6, p.th.pokeColor || '#ffe27a');
+  var notes = [523, 587, 659, 784, 880, 988];
+  playNote(notes[Math.floor(p.rnd * notes.length)], 0, 0.12, 'triangle', 0.28);
+  playNote(notes[Math.floor(p.rnd2 * notes.length)] * 1.5, 0.08, 0.14, 'sine', 0.2);
+  if (p.th.poke) p.th.poke(p);
+}
+function hubPropsUpdate(dt) {
+  var i, p, dur;
+  for (i = 0; i < hubProps.length; i++) {
+    p = hubProps[i];
+    if (p.t < 0) continue;
+    p.t += dt;
+    dur = Math.max(HUB_POKE_T, p.th.pokeDur || 1.4);
+    if (p.t > dur) p.t = -1;
+  }
+  for (i = hubSpotFx.length - 1; i >= 0; i--) {
+    hubSpotFx[i].t += dt;
+    if (hubSpotFx[i].t > (hubSpotFx[i].dur || 2)) hubSpotFx.splice(i, 1);
+  }
+}
+// Maiseman kohteet (teeman spots): napautus käynnistää teeman spotDraw-tehosteen
+function hubSpotTap(px, py, lay) {
+  var st0 = hubFind('B'), th = hubTheme(hubBand(st0.c, st0.r)), list, i, sp;
+  if (!th.spots) return false;
+  list = th.spots(viewW, viewH, lay);
+  for (i = 0; i < list.length; i++) {
+    sp = list[i];
+    if (Math.hypot(px - sp.x, py - sp.y) > sp.r) continue;
+    hubSpotFx.push({ spot: sp, t: 0, dur: sp.dur || th.spotDur || 2, th: th });
+    playNote(659, 0, 0.12, 'triangle', 0.28);
+    playNote(988, 0.1, 0.16, 'triangle', 0.22);
+    if (sp.sound) sp.sound();
+    return true;
+  }
+  return false;
+}
+function drawHubSpotFx(c, lay) {
+  var i, f;
+  for (i = 0; i < hubSpotFx.length; i++) {
+    f = hubSpotFx[i];
+    if (f.th.spotDraw) f.th.spotDraw(c, f.spot, Math.min(1, f.t / f.dur), lay);
   }
 }
 

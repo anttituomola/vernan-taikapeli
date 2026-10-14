@@ -21,6 +21,18 @@
 //                                      tilalle (st = { cleared, next }); piirrä kentän kuva
 //                                      drawHubRoomIcon(c, room.kind, x, y, s * 1.05)
 //
+// Tökkäys (valinnainen; moottori hoitaa heilahduksen, kimalteen ja äänen kaikille):
+//   pokeColor: '#hex'                  kimalteiden väri
+//   pokeDur:   sekuntia                 tehosteen kesto (oletus 1,4)
+//   pokeDraw:  function (c, x, baseY, s, rnd, rnd2, k, n)  tökätyn koristeen päälle
+//                                      piirrettävä yllätys; k = 0..1 kesto, n = tökkäysten
+//                                      määrä (esim. joka 3. tökkäys isompi yllätys)
+//   poke:      function (p)            tökkäyksen hetkellä (ääni tms.), p = koriste
+//   spots:     function (w, h, lay)    maiseman tökättävät kohteet laatan ulkopuolella:
+//                                      [{ id, x, y, r, dur?, sound? }] (samat paikat kuin backdrop)
+//   spotDraw:  function (c, spot, k, lay)  kohteen elävä tehoste (k = 0..1)
+//   spotDur:   sekuntia                 oletuskesto kohteille (oletus 2)
+//
 // rnd ja rnd2 ovat ruudun pysyviä satunnaislukuja 0..1. Kaikki piirretään art.js:n
 // tarrakirjailmeellä (artBlob, artCircle, artFillPath, artShadow...). Teema voi olla
 // omassa tiedostossaan (js/hub-theme-*.js), joka lisätään worlds.js:n scriptManifestiin.
