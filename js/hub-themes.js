@@ -91,5 +91,63 @@ HUB_THEMES.forest = {
       artShadow(b, x, baseY, s * 0.3, s * 0.08, 0.15);
       artBlob(b, x, baseY - s * 0.14, s * 0.3, s * 0.18, '#b8b4c8', { lineColor: '#6e6a80' });
     }
+  },
+  // Tökkäys (apupalat hub-theme-linna.js:ssä, htLinnaPoke*): puusta putoaa omena
+  // ja lehtiä (iso: kolme omenaa ja lintu lentää pois), pensaasta lehahtaa
+  // perhonen (iso: pupu pilkistää), kivi avaa silmänsä ja hymyilee (iso: tähti)
+  pokeColor: '#b8f08a',
+  pokeDur: 2.2,
+  poke: function (p) {
+    var big = p.n % 3 === 0;
+    if (p.rnd < 0.62) { htLinnaPokePlop(0.3); if (big) htLinnaPokeTweet(0.15); }
+    else if (p.rnd < 0.82) {
+      if (big) soundBunny();
+      else { playNote(1047, 0.1, 0.1, 'sine', 0.18); playNote(1319, 0.2, 0.1, 'sine', 0.16); }
+    } else { playNote(196, 0.05, 0.18, 'triangle', 0.3); playNote(294, 0.2, 0.2, 'triangle', 0.25); if (big) soundStar(3); }
+  },
+  pokeDraw: function (c, x, baseY, s, rnd, rnd2, k, n) {
+    var big = n % 3 === 0, bs;
+    c.save();
+    c.globalAlpha = htLinnaPokeFade(k);
+    if (rnd < 0.62) htLinnaPokeTreeFx(c, x, baseY, s * (0.8 + rnd2 * 0.35), k, big, '#6cc45c', rnd2, '#ff5a5a');
+    else if (rnd < 0.82) {
+      bs = s * 0.28;
+      if (big) htLinnaPokePeek(c, x + (rnd2 - 0.5) * bs, baseY - s * 0.05 - bs * 1.1, bs * 0.7, k);
+      else htLinnaPokeFlutter(c, x, baseY - s * 0.05 - bs * 0.6, s * 1.2, k, 1, rnd2 < 0.5 ? '#ff9ad0' : '#ffd24f');
+    } else {
+      c.save();
+      htLinnaPokeWobble(c, x, baseY, k, 2.2);
+      htLinnaPokeFace(c, x, baseY - s * 0.15, s * 0.2, k, big, false);
+      c.restore();
+      if (big) drawStar(c, x, baseY - s * 0.35 - htLinnaPokeEase(k / 0.4) * s * 0.6, s * 0.13, k * 4, 1);
+    }
+    c.restore();
+  },
+  // Linnasaaren maisema: kaukaisista puista varisee lehtiä (joka 3. lintu),
+  // pilvistä sataa (joka 3. sateenkaari), kummuilla loikkii pupu
+  spotDur: 2.4,
+  spots: function (w, h, lay) {
+    var out = [], i, x, by, ts;
+    for (i = 0; i < 18; i++) {
+      x = (i / 17) * w;
+      by = lay.oy + lay.rows * lay.cell * 0.3 + h * 0.2 + (i % 3) * h * 0.05;
+      if (x > lay.ox - lay.cell && x < lay.ox + lay.cols * lay.cell + lay.cell) continue;
+      ts = h * (0.07 + (i % 3) * 0.02);
+      out.push(htLinnaPokeSpot('forest-tree' + i, 'tree', x, by - ts * 0.9, ts * 0.8, ts, function (sp, big) {
+        htLinnaPokePlop(0.35); if (big) htLinnaPokeTweet(0.2);
+      }));
+      out[out.length - 1].by = by;
+    }
+    htLinnaPokeCloudSpots('forest', w, h, 7, out);
+    htLinnaPokeHillSpots('forest', w, h, lay, out);
+    return out;
+  },
+  spotDraw: function (c, sp, k, lay) {
+    if (sp.kind === 'cloud') { htLinnaPokeCloudFx(c, sp, k); return; }
+    if (sp.kind === 'hill') { htLinnaPokeHillFx(c, sp, k); return; }
+    c.save();
+    c.globalAlpha = htLinnaPokeFade(k);
+    htLinnaPokeTreeFx(c, sp.x, sp.by, sp.size, k, sp.n % 3 === 0, '#9ccf8c', htLinnaPokeHash(sp.x, 1), '#ff6a6a');
+    c.restore();
   }
 };
