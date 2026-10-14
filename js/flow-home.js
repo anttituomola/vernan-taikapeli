@@ -183,9 +183,20 @@ function homeDoorsOf(roomIdx) {
   right.to = COOP_ROOM;
   return [right];
 }
-function homeDoors() {
-  return homeDoorsOf(homeRoomIdx);
+// Ulkoalueiden väliset kulut ovat aidan portteja (kind 'gate'), muut ovia.
+// Lukittuun huoneeseen (linna kasvaa tarinan mukana) johtava ovi on lukossa.
+function homeOutdoor(idx) {
+  return idx === YARD_ROOM || idx === COOP_ROOM || idx === STABLE_ROOM;
 }
+function homeDoors() {
+  var ds = homeDoorsOf(homeRoomIdx), i;
+  for (i = 0; i < ds.length; i++) {
+    ds[i].kind = homeOutdoor(homeRoomIdx) && homeOutdoor(ds[i].to) ? 'gate' : 'door';
+    ds[i].locked = !castleRoomOpen(ds[i].to);
+  }
+  return ds;
+}
+var homeDoorShake = { to: -1, t: 0 };
 // Ovi, joka johtaa huoneeseen `to` (tai ensimmäinen ovi)
 function homeDoorTo(to) {
   var ds = homeDoors(), i;
@@ -495,9 +506,13 @@ function handleHomeTap(px, py) {
       return;
     }
   }
-  // Ovi: toiseen huoneeseen
+  // Ovi: toiseen huoneeseen (lukossa: lukko kilahtaa)
   var door = homeDoorAt(px, py, 0);
-  if (door) homeGoRoom(door.to);
+  if (door && door.locked) {
+    homeDoorShake = { to: door.to, t: 0.6 };
+    playNote(330, 0, 0.1, 'square', 0.12);
+    playNote(294, 0.1, 0.14, 'square', 0.12);
+  } else if (door) homeGoRoom(door.to);
 }
 
 // Onko raahattava kaupan puolella (haamu: ei ostoa vielä; oma tavara: varastoon)
@@ -514,7 +529,8 @@ function homeDragOnDoor() {
   var x = homeDrag.item.fx * viewW, y = homeDrag.item.fy * viewH;
   var def = homeItemDef(homeDrag.item.id);
   if (def && def.kind !== 'wall') y -= homeItemSize() * 0.4;
-  return homeDoorAt(x, y, 0.2);
+  var d = homeDoorAt(x, y, 0.2);
+  return d && !d.locked ? d : null;
 }
 
 function homeMove(px, py) {
@@ -690,6 +706,7 @@ function updateHome(dt) {
   var i, it, b, room = homeRoom();
   globalT += dt;
   if (homeShake.t > 0) homeShake.t -= dt;
+  if (homeDoorShake.t > 0) homeDoorShake.t -= dt;
   for (i = 0; i < homeItems.length; i++) {
     it = homeItems[i];
     if (it.phase > 0) it.phase = Math.max(0, it.phase - dt * 3);
@@ -847,6 +864,11 @@ function drawHome() {
   var dragging = !!(homeDrag && homeDrag.item && !homeDrag.ghost);
   for (k = 0; k < doors.length; k++) {
     dr = doors[k];
+    if (dr.locked) {
+      var lgy = dr.kind === 'gate' ? dr.y + dr.h * 0.62 : dr.y + dr.h * 0.45;
+      drawCastleLockBadge(ctx, dr.x + dr.w / 2, lgy, dr.w * 0.38, castleUnlockKind(dr.to), homeDoorShake.to === dr.to ? homeDoorShake.t : 0);
+      continue;
+    }
     var otherHas = false;
     for (i = 0; i < homeItems.length; i++) if (homeItemRoom(homeItems[i]) === dr.to) otherHas = true;
     var dg = ctx.createRadialGradient(dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 0.2, dr.x + dr.w / 2, dr.y + dr.h * 0.5, dr.w * 1.3);
@@ -1945,6 +1967,7 @@ function renderHomeDoors(b, h) {
   var doors = homeDoors(), dr, d, i;
   for (d = 0; d < doors.length; d++) {
     dr = doors[d];
+    if (dr.kind === 'gate') { renderHomeGate(b, h, dr); continue; }
     b.fillStyle = '#8a5a30';
     roundRect(b, dr.x, dr.y, dr.w, dr.h, h * 0.03);
     b.fill();
@@ -1962,6 +1985,34 @@ function renderHomeDoors(b, h) {
     }
     homeRoomSign(b, dr.to, dr.x + dr.w / 2, dr.y - h * 0.045, h * 0.05);
   }
+}
+
+// Aidan portti ulkoalueiden välissä: polku kaartaa portin takaa kauemmas
+function renderHomeGate(b, h, dr) {
+  var cx = dr.x + dr.w / 2, fy = dr.y + dr.h, gh = dr.h * 0.55, top = fy - gh, i, lw = Math.max(1.5, h * 0.004);
+  b.beginPath();
+  b.moveTo(dr.x - dr.w * 0.1, fy + h * 0.01);
+  b.lineTo(dr.x + dr.w * 1.1, fy + h * 0.01);
+  b.quadraticCurveTo(cx + dr.w * 0.3, top, cx + dr.w * 0.12, top - h * 0.05);
+  b.lineTo(cx - dr.w * 0.06, top - h * 0.05);
+  b.quadraticCurveTo(cx - dr.w * 0.3, top, dr.x - dr.w * 0.1, fy + h * 0.01);
+  b.closePath();
+  artFillPath(b, '#ecd6a4', top - h * 0.05, fy, dr.w * 0.5, { lineColor: '#c9a77a', line: lw });
+  // Pylväät
+  artLimb(b, dr.x, fy, dr.x, top - h * 0.02, h * 0.018, '#a9743f', '#5a3a1e');
+  artLimb(b, dr.x + dr.w, fy, dr.x + dr.w, top - h * 0.02, h * 0.018, '#a9743f', '#5a3a1e');
+  // Säleportti raollaan: poikkipuut ja suippokärkiset säleet
+  var gx0 = dr.x + h * 0.012, gw = dr.w - h * 0.024;
+  artRoundRect(b, gx0, top + gh * 0.22, gw, h * 0.016, h * 0.006, '#b07a44', { lineColor: '#5a3a1e' });
+  artRoundRect(b, gx0, top + gh * 0.68, gw, h * 0.016, h * 0.006, '#b07a44', { lineColor: '#5a3a1e' });
+  for (i = 0; i < 4; i++) {
+    var sx = gx0 + gw * (0.06 + i * 0.27), sw = gw * 0.16;
+    b.beginPath();
+    b.moveTo(sx, fy - h * 0.004); b.lineTo(sx, top + sw * 0.6); b.lineTo(sx + sw / 2, top); b.lineTo(sx + sw, top + sw * 0.6); b.lineTo(sx + sw, fy - h * 0.004);
+    b.closePath();
+    artFillPath(b, '#d9a066', top, fy, sw, { lineColor: '#5a3a1e', line: lw });
+  }
+  homeRoomSign(b, dr.to, cx, top - h * 0.085, h * 0.05);
 }
 
 // Huoneen kyltti (ovien yllä ja linnakartalla): portaat = torni, sydän = sali,

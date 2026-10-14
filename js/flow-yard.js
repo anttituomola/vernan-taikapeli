@@ -409,6 +409,24 @@ function renderYardBg(b, room, h, wallP, floorP) {
 
 // Linnakartan pienoiskuva: taivas, aita ja nurmikko
 function yardThumbBg(c, x, y, w, hh, fyRel, wallP) {
+  if (thumbBare) {
+    // Linnakartan niityllä: vain aita ja kasvimaan multa
+    var bf = y + hh * fyRel, bt = bf - hh * 0.12, bk, br;
+    // Kolme kasvipenkkiä taimineen
+    for (br = 0; br < 3; br++) {
+      var by = bf + hh * (0.08 + br * 0.1), bw = w * (0.7 - br * 0.04);
+      artRoundRect(c, x + w * 0.45 - bw / 2, by, bw, hh * 0.06, hh * 0.03, '#b98a5a', { lineColor: '#7a5634' });
+      for (bk = 0; bk < 6; bk++) {
+        var sx = x + w * 0.45 - bw / 2 + bw * (0.1 + bk * 0.16);
+        artBlob(c, sx - hh * 0.012, by + hh * 0.005, hh * 0.014, hh * 0.008, '#5fbf55', { rot: -0.5, line: false });
+        artBlob(c, sx + hh * 0.012, by + hh * 0.005, hh * 0.014, hh * 0.008, '#5fbf55', { rot: 0.5, line: false });
+      }
+    }
+    c.fillStyle = wallP.pot;
+    c.fillRect(x, bt + hh * 0.04, w, hh * 0.02);
+    for (bk = 0; bk < 15; bk++) c.fillRect(x + w * 0.02 + bk * w * 0.065, bt, w * 0.025, bf - bt);
+    return;
+  }
   var sky = c.createLinearGradient(0, y, 0, y + hh * fyRel);
   sky.addColorStop(0, '#8fd0ff');
   sky.addColorStop(1, '#e6f6ff');

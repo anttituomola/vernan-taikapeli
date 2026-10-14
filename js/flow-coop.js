@@ -1349,13 +1349,15 @@ function coopThumbBg(c, x, y, w, hh, wallP, floorP) {
   c.save();
   c.translate(x - room.x0 * sc, y - room.wallTop * sc);
   c.scale(sc, sc);
-  var sky = c.createLinearGradient(0, room.wallTop, 0, fy);
-  sky.addColorStop(0, '#9fd8ff');
-  sky.addColorStop(1, '#eaf7ff');
-  c.fillStyle = sky;
-  c.fillRect(room.x0, room.wallTop, rw, fy - room.wallTop);
-  c.fillStyle = '#9ee07f';
-  c.fillRect(room.x0, fy, rw, room.bottom - fy);
+  if (!thumbBare) {
+    var sky = c.createLinearGradient(0, room.wallTop, 0, fy);
+    sky.addColorStop(0, '#9fd8ff');
+    sky.addColorStop(1, '#eaf7ff');
+    c.fillStyle = sky;
+    c.fillRect(room.x0, room.wallTop, rw, fy - room.wallTop);
+    c.fillStyle = '#9ee07f';
+    c.fillRect(room.x0, fy, rw, room.bottom - fy);
+  }
   c.fillStyle = floorP.floor[0];
   c.beginPath();
   if (c.ellipse) c.ellipse(room.x0 + rw * 0.45, fy + (room.bottom - fy) * 0.5, rw * 0.44, (room.bottom - fy) * 0.42, 0, 0, Math.PI * 2); else c.arc(room.x0 + rw * 0.45, fy + (room.bottom - fy) * 0.5, rw * 0.3, 0, Math.PI * 2);

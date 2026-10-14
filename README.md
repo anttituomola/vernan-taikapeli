@@ -34,7 +34,11 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
   yhteinen alku (`levelBegin`: tilan nollaus ja nappien ilme rekisterin lipuista; skipTo
   ja uusinta kutsuvat sitä ennen kentän omaa init-koukkua)
 - `js/flow-home.js` — linnan sisustus (tähtikauppa, raahaus, puput)
-- `js/flow-castle.js` — linnakartta (linnan oma karttanäkymä, huoneiden pienoiskuvat)
+- `js/flow-castle.js` — linnakartta yhtenä maisemana: linna leikattuna auki (torni, keittiö, sali,
+  holvi kukkulan sisällä) ja piha samassa järjestyksessä kuin ovet (keittiö → puutarha → kanatarha
+  → kukkulan talli; ulkoalueet piirretään paljaina niitylle, `thumbBare`). **Linna kasvaa**:
+  `CASTLE_UNLOCK` kertoo, minkä maailman vartija avaa huoneen; lukitussa huoneessa on luukut tai
+  kyltti ja vartijan merkki, ja ovi siihen on lukossa. Tarinakirja on jalustalla linnan edessä
 - `js/story.js` — **tarina**: kuvakirjan luvut (`STORY_CHAPTERS`, kohtaukset `STORY_SCENES`), luvun
   näyttö kartalle palatessa (`storyMaybe`), linnan tarinakirja ja Myrskynoidan pilvi kartoilla
   (`mapWitch`). Tarinan kaari on CONTEXT.md:ssä. Uusi luku = alkio `STORY_CHAPTERS`-taulukkoon
