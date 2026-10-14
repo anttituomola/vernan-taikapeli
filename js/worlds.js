@@ -1539,13 +1539,14 @@ var WORLDS = [
       {
         kind: 'festival', room: 'J', name: 'Lyhtyjuhla', color: '#ffb347', script: 'play-festival',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
-        bgColor: '#2a2a5a', ambient: 'sparkle', fg: null,
+        bgColor: '#2a2a5a', ambient: 'fireflies', fg: null,
         init: function () { initFestival(); },
         update: function (dt) { updateFestival(dt); },
         draw: function () { drawFestival(); },
         tap: function (x, y) { handleFestivalTap(x, y); },
         resize: function () { resizeFestival(); },
         renderBg: function (b, w, h) { renderFestivalBg(b, w, h); },
+        light: { vignette: 0.28 },
         respawn: function () { respawnFestival(); }
       },
       {
