@@ -224,7 +224,9 @@ function drawHeartShape(c, x, y, s, filled) {
 function drawHearts(c) {
   if (!heartsOn()) return;
   var s = viewH * 0.028;
-  var cx = viewW / 2;
+  // Oikeassa yläkulmassa ääninapin vieressä: vasemmalta alkavat keräilyrivit eivät
+  // ulotu sinne kapeallakaan (4:3) näytöllä
+  var cx = viewW - viewH * 0.14 - s * 4.6;
   var y = viewH * 0.055;
   var i;
   drawHudPanel(c, cx - s * 4.6, y - s * 1.4, s * 9.2, s * 2.9, s);

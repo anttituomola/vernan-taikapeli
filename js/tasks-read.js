@@ -21,11 +21,13 @@ function wordsBySyl(min, max) {
 }
 
 function pickDistinct(pool, n, keyFn) {
-  var p = shuffleNums(pool.slice()), out = [], keys = {}, i, k;
+  var p = shuffleNums(pool.slice()), out = [], keys = {}, icons = {}, i, k;
   for (i = 0; i < p.length && out.length < n; i++) {
     k = keyFn ? keyFn(p[i]) : p[i].w;
-    if (keys[k]) continue;
+    // Myös kuva vain kerran: samannäköisiä vaihtoehtoja ei voi erottaa (TIMANTTI/KIVI)
+    if (keys[k] || (p[i].icon && icons[p[i].icon])) continue;
     keys[k] = true;
+    if (p[i].icon) icons[p[i].icon] = true;
     out.push(p[i]);
   }
   return out;

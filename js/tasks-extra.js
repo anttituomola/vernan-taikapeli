@@ -451,6 +451,10 @@ function makeWordProblem(t) {
   for (i = 0; i < WORD_LIST.length; i++) if (WORD_LIST[i].w.split('-').length <= t.maxSyl) pool.push(WORD_LIST[i]);
   if (pool.length < 5) pool = WORD_LIST.slice();
   for (i = pool.length - 1; i > 0; i--) { k = randInt(i + 1); tmp = pool[i]; pool[i] = pool[k]; pool[k] = tmp; }
+  // Sama kuva vain kerran (esim. TIMANTTI ja KIVI jakavat jalokiven kuvan)
+  var seen = {}, uniq = [];
+  for (i = 0; i < pool.length; i++) if (!seen[pool[i].icon]) { seen[pool[i].icon] = true; uniq.push(pool[i]); }
+  pool = uniq;
   var slot = randInt(5);
   var choices = [];
   for (i = 0; i < 5; i++) choices.push({ icon: pool[i].icon, wrong: false });

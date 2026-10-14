@@ -615,8 +615,8 @@ function drawDowseHud(c) {
     artCircle(c, x + hs * 0.5, y - hs * 0.45, hs * 0.25, '#9a6030', { line: false });
     c.globalAlpha = 1;
   }
-  // Arkut oikealla
-  var rx = viewW * 0.64;
+  // Arkut tassujen perässä (oikea yläkulma on sydämien paikka)
+  var rx = left + hs * 2.4 * n + hs * 2.6;
   c.fillStyle = 'rgba(255,255,255,0.45)';
   roundRect(c, rx, pad * 0.5, hs * 3 * R.chests + hs * 7, hs * 3.6, hs);
   c.fill();

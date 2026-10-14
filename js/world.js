@@ -1056,13 +1056,37 @@ function drawNorthGate(c, x, y, s, open) {
     c.beginPath(); c.arc(x, y - s * 0.5, s * 0.55, 0, Math.PI * 2); c.fill();
   }
 }
+// Kota: kartiomainen kangasteltta, raidat, ovi raollaan ja salot huipulla
 function drawNorthKota(c, x, baseY, s) {
+  var top = baseY - s * 1.0, hw = s * 0.55, i;
   artShadow(c, x, baseY + s * 0.04, s * 0.7, s * 0.16, 0.16);
-  artBlob(c, x, baseY - s * 0.42, s * 0.48, s * 0.5, '#c48a48', { shadeTo: '#8a5224', lineColor: '#5a3416', hi: 0.18 });
-  artBlob(c, x + s * 0.12, baseY - s * 0.62, s * 0.28, s * 0.18, '#ffffff', { shadeTo: '#dce8f4', line: false, hi: 0.35 });
-  artRoundRect(c, x - s * 0.1, baseY - s * 0.28, s * 0.2, s * 0.28, s * 0.08, '#3a2414', { line: false });
-  artCircle(c, x + s * 0.02, baseY - s * 0.16, s * 0.03, '#ffd24f', { line: false });
-  artLimb(c, x, baseY - s * 0.88, x, baseY - s * 1.05, s * 0.04, '#5a3416');
+  // Salot
+  artLimb(c, x - s * 0.04, top + s * 0.08, x - s * 0.14, top - s * 0.14, s * 0.035, '#8a5a30', '#4a2e14');
+  artLimb(c, x + s * 0.04, top + s * 0.08, x + s * 0.14, top - s * 0.14, s * 0.035, '#8a5a30', '#4a2e14');
+  c.beginPath();
+  c.moveTo(x - hw, baseY); c.quadraticCurveTo(x, baseY + s * 0.06, x + hw, baseY);
+  c.lineTo(x + s * 0.05, top); c.lineTo(x - s * 0.05, top);
+  c.closePath();
+  artFillPath(c, '#e9d8bc', top, baseY, s * 0.5, { lineColor: '#8a6a44' });
+  // Raidat (punainen ja sininen, kuten saamelaisessa kodassa)
+  c.save();
+  c.clip();
+  c.fillStyle = '#d9534f';
+  c.fillRect(x - hw, baseY - s * 0.3, hw * 2, s * 0.07);
+  c.fillStyle = '#4a7ac8';
+  c.fillRect(x - hw, baseY - s * 0.22, hw * 2, s * 0.05);
+  c.restore();
+  // Ovi raollaan, sisällä lämmin hehku
+  c.beginPath();
+  c.moveTo(x - s * 0.14, baseY); c.lineTo(x, baseY - s * 0.42); c.lineTo(x + s * 0.14, baseY); c.closePath();
+  c.fillStyle = '#ffcf7a';
+  c.fill();
+  artGlow(c, x, baseY - s * 0.1, s * 0.25, '#ffb347', 0.35);
+  c.beginPath();
+  c.moveTo(x - s * 0.14, baseY); c.lineTo(x, baseY - s * 0.42); c.lineTo(x - s * 0.02, baseY); c.closePath();
+  artFillPath(c, '#c9b090', baseY - s * 0.42, baseY, s * 0.1, { lineColor: '#8a6a44' });
+  // Lunta reunalla
+  for (i = -1; i <= 1; i += 2) artBlob(c, x + i * hw * 0.85, baseY - s * 0.02, s * 0.14, s * 0.05, '#ffffff', { shadeTo: '#dce8f4', line: false });
 }
 function drawNorthSnowman(c, x, y, s) {
   artShadow(c, x, y + s * 0.18, s * 0.55, s * 0.14, 0.14);
