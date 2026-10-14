@@ -1538,6 +1538,50 @@ var WORLDS = [
         respawn: function () { respawnReflect(); }
       }
     ]
+  },
+  {
+    // Myrskyvuori: Kaukamaan viimeinen paikka vuorijonon huipulla (place.final).
+    // Aukeaa, kun kaikki säteet on ansaittu; tarinan luvut 'vuori' ja 'ystava'
+    // käynnistyvät rekisteristä. Helppo pitkä Sateenvarjo, sitten ystävyyden
+    // vartija Myrskynoita: sade + aurinko = sateenkaari.
+    id: 17, name: 'Myrskyvuori', region: 'land', band: 'storm',
+    place: { fx: 0.27, fy: 0.21, size: 0.85, finaleKind: 'witch', deco: ['umbrella', 'witch'], final: true },
+    map: [
+      '#########',
+      '#B.....V#',
+      '#######.#',
+      '#N......#',
+      '#########'
+    ],
+    levels: [
+      {
+        kind: 'umbrella', room: 'V', name: 'Sateenvarjo', color: '#9f8fff', script: 'play-umbrella',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#cfc3f2', ambient: 'sparkle', fg: null,
+        init: function () { initUmbrella(); },
+        update: function (dt) { updateUmbrella(dt); },
+        draw: function () { drawUmbrella(); },
+        tap: function (x, y) { handleUmbrellaTap(x, y); },
+        resize: function () { resizeUmbrella(); },
+        renderBg: function (b, w, h) { renderUmbrellaBg(b, w, h); },
+        renderBgLayers: function () { return umbrellaLayers(); },
+        light: { rays: true, raysColor: '#fff4d0', raysAlpha: 0.3, tint: ['rgba(150,130,220,0.08)', 'rgba(80,60,140,0.06)'], vignette: 0.28 },
+        respawn: function () { respawnUmbrella(); }
+      },
+      {
+        kind: 'witch', room: 'N', name: 'Myrskynoita', color: '#7a5cc8', script: 'play-witch',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 7000,
+        bgColor: '#d8ccf4', ambient: 'sparkle', fg: null,
+        init: function () { initMwitch(); },
+        update: function (dt) { updateMwitch(dt); },
+        draw: function () { drawMwitch(); },
+        tap: function (x, y) { handleMwitchTap(x, y); },
+        resize: function () { resizeMwitch(); },
+        renderBg: function (b, w, h) { renderMwitchBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4d0', raysAlpha: 0.3, tint: ['rgba(170,150,230,0.06)', 'rgba(90,70,150,0.05)'], vignette: 0.25 },
+        respawn: function () { respawnMwitch(); }
+      }
+    ]
   }
 ];
 
@@ -1617,7 +1661,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
 function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient', 'props',
-    'flow-hub', 'hub-themes', 'hub-theme-linna', 'hub-theme-saaret1', 'hub-theme-saaret2', 'hub-theme-pohjoinen', 'hub-theme-manner', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-yard', 'flow-coop', 'flow-stable', 'flow-castle', 'story',
+    'flow-hub', 'hub-themes', 'hub-theme-linna', 'hub-theme-saaret1', 'hub-theme-saaret2', 'hub-theme-pohjoinen', 'hub-theme-manner', 'hub-theme-storm', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-yard', 'flow-coop', 'flow-stable', 'flow-castle', 'story',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north', 'tasks-write',
     'platformer', 'pen-core'
   ];

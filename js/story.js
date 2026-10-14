@@ -813,6 +813,14 @@ function landWitchReset() {
   // Pilvi peittää Kaukamaan auringon reunaa (säteet näkyvät sen takaa)
   mapWitch.x = viewW * 0.80;
   mapWitch.y = viewH * 0.15;
+  // Kun säteet ovat koossa, pilvi on paennut Myrskyvuorelle (ja häviää, kun noita on ystävä)
+  var fin = landFinalPlace();
+  if (fin && landRaysEarned() >= landRayPlaces().length) {
+    var fp = landPlacePos(fin);
+    mapWitch.x = fp.x + fp.r * 0.6;
+    mapWitch.y = fp.y - fp.r * 1.1;
+  }
+  if (storyWorldDone('Myrskyvuori')) mapWitch.on = false;
 }
 function mapWitchUpdate(dt, target) {
   if (!mapWitch.on) return;

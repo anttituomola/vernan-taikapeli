@@ -124,6 +124,19 @@ ja soi (`props.js`), mutta mikään ei muutu pelissä. Toistuva tökkäys (3. ta
 voi paljastaa pienen **yllätyksen**.
 _Vältä_: klikkaus, osuma (osuma on vihollisen kosketus)
 
+**Sateenvarjo**:
+Myrskyvuoren verbi: sormi raahaa isoa sateenkaarivarjoa (sormi pitää varren
+päästä), ja varjo suojaa prinsessaa sateelta ja rakeilta. Varjolla otetaan
+kiinni myös **aurinkokipinät**. Kastuminen ei vie sydäntä: prinsessa
+**hytisee** hetken.
+_Vältä_: suoja, kilpi, sateenvarjoviiva (se on Sadesuojan kynäviiva)
+
+**Säde**:
+Auringonsäde: jokainen Kaukamaan paikka antaa auringolle yhden säteen.
+Myrskynoidan kentässä säde on raahattava hehkuva pallo sateenkaaren värissä;
+sateeseen viety säde kasvattaa oman **raitansa** sateenkaareen.
+_Vältä_: pallo yksinään, valo, väri (väri on saarten palautettava sateenkaaren väri)
+
 ### Pelin käsitteet
 
 **Tehtävä**:

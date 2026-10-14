@@ -83,6 +83,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
 - `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js`, `play-clockwork.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut), Käkikello (viisarit kellonaikaan) ja vartija Kellokoneisto (vesi, rattaat ja viisarit yhdessä koneessa), sokkelon maasto `HUB_TILE_DECOR.clock`
 - `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js`, `play-hideseek.js`, `play-twin.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät), vartija Postireitti (ohjelmointi) sekä bonushuoneet Kanojen piilosleikki (tökättävä kylä) ja Pupuparin piha (reaaliaikainen yhteispeli kahdelle), sokkelon maasto `HUB_TILE_DECOR.farm`
+- `js/play-umbrella.js`, `play-witch.js` — Kaukamaa, Myrskyvuori (maailma 17, viimeinen paikka `place.final`): Sateenvarjo (pitkä helppo kenttä, varjon raahaus sateessa) ja ystävyyden vartija Myrskynoita (auringonsäteet sateeseen -> sateenkaari)
+- `js/hub-theme-storm.js` — Myrskyvuoren sokkeloteema `HUB_THEMES.storm` (laventelikalliot, sadepilvet, lätäköt, kurkkivat sateenkaaret; käyttää hub-theme-manner.js:n yhteisiä paloja)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -1038,6 +1040,42 @@ kenttä (finaleKind 'reflect').
   yksisarvinen), lamppu, kissa, vieterikaappi ja taikapeili (puput
   vilkuttavat).
 
+### Kaukamaa: Myrskyvuori (maailma 17)
+
+Kaukamaan viimeinen paikka vuorijonolla kartan luoteisosassa (14.10.2026,
+`place.final`). Aukeaa Pupulan jälkeen; tarinan luvut 'vuori' (kaikki säteet
+ansaittu) ja 'ystava' (vartija läpäisty) tulevat rekisteristä. Rytmi: pitkä
+helppo kenttä, sitten ystävyyden vartija (ei taistelu).
+
+- **Sateenvarjo** — yksisarvinen kantaa prinsessaa itsestään vuoripolkua
+  huipulle (n. 65 s kävelyä + kaksi tehtäväkaarta). Myrskynoidan pilvet
+  varoittavat (tummuvat, mutisevat, 0,9 s) ja sataa vettä tai raetta
+  sadeverhona. Sormi raahaa isoa sateenkaarivarjoa (sormi pitää varren päästä);
+  pisarat roiskahtavat ja rakeet kimpoavat varjosta. Kastuminen ei satu:
+  prinsessa hytisee ja yksisarvinen hidastaa hetkeksi. Tavoite: seitsemän
+  aurinkokipinää (yksi jokaista Kaukamaan sädettä kohti), jotka laskeutuvat
+  kultaisena säteenä pilvien raosta ja jäävät kiinni vain varjoon; ohi menneitä
+  tulee lisää, ja huipulla niitä leijuu, kunnes seitsemän on koossa. Huipulla
+  kipinät lentävät aurinkokiveen ja aurinko nousee. Kultainen sateenvarjo, jos
+  prinsessa kastui enintään kahdesti. Pilvien paikat, raekuurot ja kipinät
+  arvotaan; sade pitenee ja rakeita tulee enemmän loppua kohti. Tehtävät:
+  kysymykseen vastaus kirjaimin, peilikuva. Tökättävät: vuorikauris (3.:
+  ilohyppy), kivikasa (5.: murmeli lehtisateenvarjon alla), lätäkön sammakko
+  (3.: lumpeenlehti sateenvarjoksi), yksisarvinen. Lopussa noita murjottaa
+  pilvellään ja lentää huipulle.
+- **Myrskynoita** (vartija) — huipulla surullinen noita ja hänen iso
+  sadepilvensä. Korissa seitsemän auringonsädettä palloina
+  (`RAINBOW_COLORS`), ja haaleat pisteviivakaaret näyttävät raitojen paikat.
+  Säde raahataan sateeseen: päästetty säde lentää omalle raidalleen, ja raita
+  kasvaa kaarelle (järjestyksellä ei väliä). Sateen ulkopuolelle pudotettu
+  leijuu koriin. Joka raita ilahduttaa noitaa (surullinen -> murjottava ->
+  iloinen) ja vaalentaa pilveä; noidan oma pikkupilvi haihtuu. Ensimmäisen
+  raidan jälkeen pilvi jyrähtää välillä (tärisee 1 s, salama, hyppää uuteen
+  paikkaan), joten säde pitää tähdätä. Lopuksi noita nauraa, pilvi sataa
+  kimalletta ja noita lentää luudalla silmukan. Oma sateenkaari korvaa
+  juhlan yleisen sateenkaaren (`mwitchEndWorld`). Tökättävät: noita,
+  pilvi, yksisarvinen, kellokukat (3.: kimalainen), vuorikauris, kivikasat.
+
 ### Linnan sisustus
 
 Jokainen läpäisty kenttä (myös uusinta) antaa **2 tähteä**, ja +1 jos sydämet
@@ -1439,6 +1477,8 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
+- Sateenvarjo: kävely `UMBR_SPEED`, hytinä `UMBR_WET_T` / `UMBR_WET_SLOW`, varjon koko `UMBR_R` ja varsi `UMBR_HANDLE`, pilven varoitus `UMBR_WARN`, sade `UMBR_POUR` / tauko `UMBR_REST` / raekuurot `UMBR_HAIL` (reitin alku / loppu), kipinöiden väli `UMBR_SPARK_GAP` ja putoaminen `UMBR_SPARK_FALL`, kultainen varjo `UMBR_GOLD_WET`, osuma-alue `UMBR_PRIN_W` / `UMBR_PRIN_H`. Botilla (varjo aina prinsessan yllä sateessa, muuten kipinän alla) n. 64 s ilman tehtäviä, 0–2 kastumista
+- Myrskynoita: pilven lipuminen `MWITCH_DRIFT` (+`MWITCH_DRIFT_UP` per raita), jyrähdysten väli `MWITCH_JUMP_GAP`, varoitus `MWITCH_JUMP_WARN`, hyppy `MWITCH_JUMP_T`, raidan kasvu `MWITCH_GROW_T`, sadealue `mwitchInRain` (pilven leveys `mwitchCloudS`), vihje `MWITCH_HINT_IDLE`
 
 ## Tyyliopas
 
