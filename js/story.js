@@ -69,6 +69,25 @@ var STORY_CHAPTERS = [
       { scene: 'sunhidden', text: 'KAUKAMAAN AURINKO ON MYRSKYPILVEN TAKANA.' },
       { scene: 'rays', text: 'JOKAINEN PAIKKA ANTAA AURINGOLLE SÄTEEN.' }
     ]
+  },
+  {
+    id: 'vuori', title: 'MYRSKYVUORI', where: 'land', cover: 'mountain',
+    cond: function () { return !!landFinalPlace() && landRaysEarned() >= landRayPlaces().length; },
+    pages: [
+      { scene: 'sunfull', text: 'KAIKKI SÄTEET LOISTAVAT! AURINKO ON TÄYNNÄ VOIMAA.' },
+      { scene: 'mountain', text: 'MYRSKYPILVI PAKENI VUORELLE. MENNÄÄN PERÄÄN!' }
+    ]
+  },
+  {
+    id: 'ystava', title: 'YSTÄVÄ', where: 'land', cover: 'rainbowbirth',
+    cond: function () { return storyWorldDone('Myrskyvuori'); },
+    pages: [
+      { scene: 'witchsad', text: 'MYRSKYNOITA OLI SURULLINEN. HÄN OSAA TEHDÄ VAIN SADETTA.' },
+      { scene: 'lonely', text: 'KUKAAN EI OLLUT KUTSUNUT HÄNTÄ SATEENKAARIJUHLIIN.' },
+      { scene: 'rainbowbirth', text: 'MUTTA KUN SADE JA AURINKO KOHTAAVAT, SYNTYY SATEENKAARI!' },
+      { scene: 'invite', text: 'TULE MEIDÄN LINNAAN, MYRSKYNOITA! OLLAAN YSTÄVIÄ.' },
+      { scene: 'party', text: 'JA SITTEN JUHLITTIIN KAIKKI YHDESSÄ. LOPPU.' }
+    ]
   }
 ];
 
@@ -555,7 +574,7 @@ var STORY_SCENES = {
   },
   rays: function (c, w, h, t) {
     storySky(c, w, h, '#a8dcff', '#fff2d8');
-    var i, n = LAND_PLACES.length, lit = Math.min(n, Math.floor(t * 1.5)), a;
+    var i, n = landRayPlaces().length, lit = Math.min(n, Math.floor(t * 1.5)), a;
     var sx = w * 0.5, sy = h * 0.42, r = h * 0.12;
     for (i = 0; i < n; i++) {
       a = Math.PI + (i + 0.5) / n * Math.PI;
@@ -574,6 +593,115 @@ var STORY_SCENES = {
     c.lineWidth = r * 0.08;
     c.beginPath(); c.arc(sx, sy + r * 0.15, r * 0.3, Math.PI * 0.2, Math.PI * 0.8); c.stroke();
     storyHill(c, w, h, h * 0.8, '#8fd673', 1);
+  }
+};
+
+// Lopun kohtaukset (Myrskyvuori ja ystävyys)
+function storyMountain(c, w, h, top) {
+  c.beginPath();
+  c.moveTo(w * 0.15, h);
+  c.lineTo(w * 0.45, top); c.lineTo(w * 0.52, top + h * 0.05); c.lineTo(w * 0.58, top - h * 0.02);
+  c.lineTo(w * 0.9, h);
+  c.closePath();
+  artFillPath(c, '#8a86b8', top, h, h * 0.3, { lineColor: '#5a5688' });
+  c.beginPath();
+  c.moveTo(w * 0.4, top + h * 0.08); c.lineTo(w * 0.45, top); c.lineTo(w * 0.52, top + h * 0.05);
+  c.lineTo(w * 0.58, top - h * 0.02); c.lineTo(w * 0.63, top + h * 0.09);
+  c.lineTo(w * 0.55, top + h * 0.12); c.lineTo(w * 0.48, top + h * 0.1);
+  c.closePath();
+  artFillPath(c, '#f4f2ff', top, top + h * 0.12, h * 0.1, { lineColor: '#9a96c8' });
+}
+function storySunRays(c, x, y, r, t, n) {
+  var i, a;
+  c.lineCap = 'round';
+  for (i = 0; i < n; i++) {
+    a = -Math.PI / 2 + i / n * Math.PI * 2 + t * 0.3;
+    c.strokeStyle = 'rgba(255,190,40,0.9)';
+    c.lineWidth = r * 0.3;
+    c.beginPath();
+    c.moveTo(x + Math.cos(a) * r * 1.3, y + Math.sin(a) * r * 1.3);
+    c.lineTo(x + Math.cos(a) * r * (2.2 + Math.sin(t * 3 + i) * 0.15), y + Math.sin(a) * r * (2.2 + Math.sin(t * 3 + i) * 0.15));
+    c.stroke();
+  }
+  artCircle(c, x, y, r, '#ffd24f', { lineColor: '#e0a020', hi: 0.4 });
+  artEye(c, x - r * 0.3, y - r * 0.1, r * 0.12, 0, false);
+  artEye(c, x + r * 0.3, y - r * 0.1, r * 0.12, 0, false);
+  c.strokeStyle = '#b06a10';
+  c.lineWidth = r * 0.08;
+  c.beginPath(); c.arc(x, y + r * 0.15, r * 0.3, Math.PI * 0.2, Math.PI * 0.8); c.stroke();
+}
+STORY_SCENES.sunfull = function (c, w, h, t) {
+  storySky(c, w, h, '#ffe9a8', '#fff8e0');
+  storySunRays(c, w * 0.5, h * 0.42, h * 0.13, t, 7);
+  storyHill(c, w, h, h * 0.82, '#8fd673', 1);
+  storyRider(c, w * 0.2, h * 0.84, h * 0.0026, 1, false, t);
+};
+STORY_SCENES.mountain = function (c, w, h, t) {
+  storySky(c, w, h, '#a8b8e8', '#e8ecff');
+  storyMountain(c, w, h, h * 0.25);
+  drawWitchCloud(c, w * 0.52, h * 0.16, h * 0.12, t, 0.8);
+  storyHill(c, w, h, h * 0.84, '#8fd673', 0.6);
+  storySunRays(c, w * 0.12, h * 0.18, h * 0.06, t, 7);
+  storyRider(c, w * 0.25 + Math.min(1, t / 3) * w * 0.1, h * 0.88, h * 0.0024, 1, true, t);
+};
+STORY_SCENES.witchsad = function (c, w, h, t) {
+  storySky(c, w, h, '#8a8ab8', '#c8c8e8');
+  storyMountain(c, w, h, h * 0.45);
+  drawWitchCloud(c, w * 0.5, h * 0.16, h * 0.15, t, 1);
+  drawStormWitch(c, w * 0.52, h * 0.5 + Math.sin(t * 1.5) * h * 0.01, h * 0.075, -1, 'sad');
+};
+STORY_SCENES.lonely = function (c, w, h, t) {
+  storySky(c, w, h, '#8fd0ff', '#e6f6ff');
+  storyHill(c, w, h, h * 0.74, '#8fd673', 1);
+  // Kaukana juhlat: liput ja ilmapallot, noita katsoo vuoren rinteeltä
+  var i;
+  for (i = 0; i < 4; i++) {
+    var bx = w * (0.62 + i * 0.08), by = h * (0.4 + Math.sin(t * 2 + i) * 0.02);
+    c.strokeStyle = 'rgba(90,60,120,0.5)';
+    c.lineWidth = h * 0.004;
+    c.beginPath(); c.moveTo(bx, by + h * 0.05); c.lineTo(bx, h * 0.72); c.stroke();
+    artBlob(c, bx, by, h * 0.035, h * 0.045, RAINBOW_COLORS[i * 2 % 7], { lineColor: artShade(RAINBOW_COLORS[i * 2 % 7], -0.35) });
+  }
+  storyBunnies(c, w * 0.66, h * 0.88, h * 0.05, 3, t, true, 1.8);
+  storyMountain(c, w * 0.6, h, h * 0.4);
+  drawStormWitch(c, w * 0.26, h * 0.62, h * 0.06, 1, 'sad');
+};
+STORY_SCENES.rainbowbirth = function (c, w, h, t) {
+  storySky(c, w, h, '#a8dcff', '#fff2d8');
+  var n = Math.min(7, Math.floor(t * 2.5));
+  storyRainbow(c, w * 0.5, h * 0.86, h * 0.62, h * 0.05, n);
+  drawWitchCloud(c, w * 0.22, h * 0.22, h * 0.11, t, 1);
+  storySunRays(c, w * 0.8, h * 0.2, h * 0.07, t, 7);
+  storyHill(c, w, h, h * 0.84, '#8fd673', 0.6);
+  drawStormWitch(c, w * 0.22, h * 0.5, h * 0.06, 1, n >= 7 ? 'happy' : 'sad');
+};
+STORY_SCENES.invite = function (c, w, h, t) {
+  storySky(c, w, h, '#ffe0f0', '#fff6e8');
+  storyRainbow(c, w * 0.5, h * 0.9, h * 0.75, h * 0.04, 7, 0.6);
+  storyHill(c, w, h, h * 0.8, '#8fd673', 0.5);
+  drawCastle(c, w * 0.78, h * 0.84, h * 0.3);
+  storyRider(c, w * 0.3, h * 0.82, h * 0.0028, 1, false, t);
+  drawStormWitch(c, w * 0.55, h * 0.55 + Math.sin(t * 2) * h * 0.02, h * 0.06, -1, 'happy');
+};
+STORY_SCENES.party = function (c, w, h, t) {
+  storySky(c, w, h, '#8fd0ff', '#e6f6ff');
+  storyRainbow(c, w * 0.5, h * 0.82, h * 0.62, h * 0.045, 7);
+  drawStar(c, w * 0.5, h * 0.17, h * 0.05, t, 1);
+  storyHill(c, w, h, h * 0.76, '#8fd673', 1);
+  drawCastle(c, w * 0.5, h * 0.8, h * 0.3);
+  storyRider(c, w * 0.18, h * 0.86, h * 0.0026, 1, false, t);
+  storyBunnies(c, w * 0.32, h * 0.92, h * 0.05, 3, t, true, 1.6);
+  drawStormWitch(c, w * 0.78, h * 0.58 + Math.sin(t * 3) * h * 0.02, h * 0.055, -1, 'happy');
+  // Konfetti
+  var i;
+  for (i = 0; i < 24; i++) {
+    var k = (t * 0.25 + i * 0.137) % 1;
+    c.fillStyle = RAINBOW_COLORS[i % 7];
+    c.save();
+    c.translate(w * ((i * 0.293) % 1), h * k);
+    c.rotate(t * 3 + i);
+    c.fillRect(-h * 0.008, -h * 0.004, h * 0.016, h * 0.008);
+    c.restore();
   }
 };
 
@@ -724,9 +852,20 @@ function mapWitchTap(px, py) {
 // Jokaisen Kaukamaan paikan vartija antaa auringolle yhden säteen (luku 'kaukamaa').
 // Säteet piirretään kartan aurinkoon; uusi säde kasvaa esiin, kun kartalle palataan.
 var landRays = { reveal: -1, t: 0 };
+// Kaukamaan viimeinen paikka (rekisterissä place.final): Myrskyvuori
+function landFinalPlace() {
+  var i;
+  for (i = 0; i < LAND_PLACES.length; i++) if (LAND_PLACES[i].final) return LAND_PLACES[i];
+  return null;
+}
+function landRayPlaces() {
+  var out = [], i;
+  for (i = 0; i < LAND_PLACES.length; i++) if (!LAND_PLACES[i].final) out.push(LAND_PLACES[i]);
+  return out;
+}
 function landRaysEarned() {
-  var n = 0, i;
-  for (i = 0; i < LAND_PLACES.length; i++) if (islandDone(LAND_PLACES[i])) n++;
+  var n = 0, i, ps = landRayPlaces();
+  for (i = 0; i < ps.length; i++) if (islandDone(ps[i])) n++;
   return n;
 }
 function landRaysShown() {
@@ -753,7 +892,7 @@ function landRaysUpdate(dt) {
   }
 }
 function drawLandRays(c) {
-  var n = LAND_PLACES.length, got = landRaysShown(), i, a, len, k, x0, y0;
+  var n = landRayPlaces().length, got = landRaysShown(), i, a, len, k, x0, y0;
   var sx = viewW * 0.86, sy = viewH * 0.10, r = viewH * 0.045;
   c.lineCap = 'round';
   for (i = 0; i < n; i++) {
