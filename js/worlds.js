@@ -1534,6 +1534,7 @@ var WORLDS = [
         tap: function (x, y) { handleMerryTap(x, y); },
         resize: function () { resizeMerry(); },
         renderBg: function (b, w, h) { renderMerryBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff0d0', raysAlpha: 0.3, tint: ['rgba(255,230,190,0.06)', 'rgba(200,140,90,0.04)'], vignette: 0.22 },
         respawn: function () { respawnMerry(); }
       },
       {
