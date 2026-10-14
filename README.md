@@ -35,6 +35,10 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
   ja uusinta kutsuvat sitä ennen kentän omaa init-koukkua)
 - `js/flow-home.js` — linnan sisustus (tähtikauppa, raahaus, puput)
 - `js/flow-castle.js` — linnakartta (linnan oma karttanäkymä, huoneiden pienoiskuvat)
+- `js/story.js` — **tarina**: kuvakirjan luvut (`STORY_CHAPTERS`, kohtaukset `STORY_SCENES`), luvun
+  näyttö kartalle palatessa (`storyMaybe`), linnan tarinakirja ja Myrskynoidan pilvi kartoilla
+  (`mapWitch`). Tarinan kaari on CONTEXT.md:ssä. Uusi luku = alkio `STORY_CHAPTERS`-taulukkoon
+  (ehto läpäistyistä vartijoista `storyWorldDone(nimi)`) ja tarvittaessa uusi kohtaus.
 - `js/flow-bank.js` — pankkiholvi (talletus, nosto, korko, pankin huonekalut)
 - `js/flow-yard.js` — linnan puutarha (kasvit, kastelu, sato, rikkaruohot, puutarhan tavarat)
 - `js/flow-coop.js` — linnan kanatarha (kanat, ruokinta, vesi, munat, hautomo, tiput, kanatarhan tavarat)
@@ -121,8 +125,8 @@ Avatulla saaressa, jossa on vielä pelaamattomia huoneita, näkyy keltainen
 numero saaren vasemmassa yläkulmassa.
 
 **Kaukamaa** on saariston takainen manner ja pelin toinen ylätason kartta
-(`js/flow-land.js`). Kun kultatähti loistaa kaaren huipulla (Taikurin teltta
-läpäisty), saaristokartan itäreunaan ilmestyy **avomerimerkki**: poiju, jossa on
+(`js/flow-land.js`). Kun Revontulimaan vartija (Revontulikettu) on läpäisty,
+saaristokartan itäreunaan ilmestyy **avomerimerkki**: poiju, jossa on
 nuolikyltti ja lohikäärmeen pää. Sen napautus purjehduttaa veneen avomerelle, ja
 lyhyen purjehduksen jälkeen (delfiinit, manner nousee usvasta; napautus
 ohittaa) aukeaa mantereen kartta. Mantereella **paikat** (`LAND_PLACES`,
@@ -141,6 +145,9 @@ seitsemän väriä on koossa, sateenkaaren päästä löytyy Tivolisaari, jonka
 vartija kruunaa kaaren **kultatähdellä** (`RAINBOW_COLORS.length`:n jälkeinen
 paljastus piirretään tähtenä). Tähti ei kasva: `rainbowEarned()` rajataan
 seitsemään väriin plus kultatähteen, vaikka saaria olisi enemmän.
+Koko pelin kaari (alku, noidan pako, Revontulimaa, Kaukamaa) kerrotaan
+kuvakirjan lukuina (`js/story.js`), ja Myrskynoidan pilvi näyttää kartalla,
+minne seuraavaksi mennään.
 
 Linnasaaren labyrintissä huoneet ovat portteja: jokainen on läpäistävä, jotta
 tie jatkuu. Kun kaikki kahdeksan on läpäisty, linna hehkuu ja avaa finaalin.

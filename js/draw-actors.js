@@ -336,3 +336,97 @@ function drawPrincessFree(c, x, y, s, facing, walkPhase, moving, t) {
   c.beginPath(); c.arc(0, -s * 52.2, s * 1.1, 0, Math.PI * 2); c.fill();
   c.restore();
 }
+
+// Myrskynoita luudalla (finaali, tarinakirja, kartan myrskypilvi). s = mittayksikkö
+// (pää on 0,45 s), dir = 1 oikealle / -1 vasemmalle, mood: 'grumpy' äreä,
+// 'sulk' murjottaa (pakenee), 'sad' surullinen (kyynel), 'happy' iloinen (punastuu).
+function drawStormWitch(c, x, y, s, dir, mood) {
+  c.save();
+  c.translate(x, y);
+  c.scale(dir, 1);
+  // Luuta
+  artLimb(c, -s * 1.6, s * 0.9, s * 1.1, s * 0.5, s * 0.18, '#8a5a30', '#4a2e14');
+  c.beginPath();
+  c.moveTo(-s * 1.5, s * 0.6); c.lineTo(-s * 2.4, s * 0.55); c.lineTo(-s * 2.5, s * 1.3); c.lineTo(-s * 1.6, s * 1.15);
+  c.closePath();
+  artFillPath(c, '#c9a25a', s * 0.55, s * 1.3, s * 0.4, { lineColor: '#7a5a20' });
+  // Kaapu
+  c.beginPath();
+  c.moveTo(0, -s * 0.9);
+  c.quadraticCurveTo(-s * 1.3, s * 0.2, -s * 1.0, s * 0.8);
+  c.lineTo(s * 0.8, s * 0.8);
+  c.quadraticCurveTo(s * 0.9, 0, 0, -s * 0.9);
+  c.closePath();
+  artFillPath(c, '#6a3a98', -s * 0.9, s * 0.8, s * 0.9, { lineColor: '#2e1a4a' });
+  // Pää, silmä ja suu ilmeen mukaan
+  artCircle(c, 0, -s * 1.1, s * 0.45, '#b8e0a0', { lineColor: '#4a7a3a' });
+  artEye(c, s * 0.16, -s * 1.15, s * 0.1, 0.3, false);
+  c.strokeStyle = '#2a1a3a';
+  c.lineWidth = s * 0.06;
+  c.lineCap = 'round';
+  c.beginPath();
+  if (mood === 'happy') {
+    c.arc(s * 0.12, -s * 1.02, s * 0.15, Math.PI * 0.15, Math.PI * 0.85);
+    c.stroke();
+    artBlush(c, s * 0.28, -s * 0.98, s * 0.08);
+  } else if (mood === 'sad') {
+    c.arc(s * 0.12, -s * 0.84, s * 0.12, Math.PI * 1.2, Math.PI * 1.8);
+    c.stroke();
+    artBlob(c, s * 0.22, -s * 0.98, s * 0.04, s * 0.07, '#8fd0ff', { lineColor: '#4a8ac0' });
+  } else if (mood === 'sulk') {
+    c.moveTo(s * 0.02, -s * 0.9); c.lineTo(s * 0.26, -s * 0.94);
+    c.stroke();
+  } else {
+    c.arc(s * 0.1, -s * 0.9, s * 0.15, Math.PI * 1.2, Math.PI * 1.9);
+    c.stroke();
+  }
+  // Hattu
+  c.beginPath();
+  c.moveTo(-s * 0.75, -s * 1.38); c.lineTo(s * 0.75, -s * 1.38); c.lineTo(s * 0.1, -s * 2.7);
+  c.closePath();
+  artFillPath(c, '#3a2460', -s * 2.7, -s * 1.38, s * 0.75, { lineColor: '#1a1030' });
+  artRoundRect(c, -s * 0.9, -s * 1.48, s * 1.8, s * 0.15, s * 0.05, '#3a2460', { lineColor: '#1a1030' });
+  c.fillStyle = '#ffe27a';
+  c.fillRect(-s * 0.32, -s * 1.63, s * 0.64, s * 0.15);
+  c.restore();
+}
+
+// Noidan myrskypilvi: tumma pilvi, sadeviirut ja välillä salama. (x, y) pilven keskikohta,
+// s koko, t aika, rain 0..1 sateen määrä.
+function drawWitchCloud(c, x, y, s, t, rain) {
+  var i, k, rx, ry;
+  if (rain > 0) {
+    c.strokeStyle = 'rgba(120,140,200,' + (0.55 * rain) + ')';
+    c.lineWidth = Math.max(1, s * 0.05);
+    c.lineCap = 'round';
+    for (i = 0; i < 9; i++) {
+      k = ((t * 1.6 + i * 0.37) % 1);
+      rx = x + (i - 4) * s * 0.28 - k * s * 0.15;
+      ry = y + s * 0.3 + k * s * 1.4;
+      c.beginPath(); c.moveTo(rx, ry); c.lineTo(rx - s * 0.08, ry + s * 0.3); c.stroke();
+    }
+  }
+  // Salama välähtää muutaman sekunnin välein
+  var flash = (t % 3.7) < 0.12;
+  if (flash) {
+    c.strokeStyle = '#ffe27a';
+    c.lineWidth = Math.max(1.5, s * 0.07);
+    c.beginPath();
+    c.moveTo(x + s * 0.2, y + s * 0.3); c.lineTo(x - s * 0.05, y + s * 0.8);
+    c.lineTo(x + s * 0.15, y + s * 0.8); c.lineTo(x - s * 0.1, y + s * 1.3);
+    c.stroke();
+  }
+  c.fillStyle = flash ? '#8a86b8' : '#6f6a9a';
+  c.beginPath();
+  c.arc(x - s * 0.6, y + s * 0.05, s * 0.42, 0, Math.PI * 2);
+  c.arc(x + s * 0.6, y + s * 0.08, s * 0.4, 0, Math.PI * 2);
+  c.arc(x - s * 0.15, y - s * 0.2, s * 0.55, 0, Math.PI * 2);
+  c.arc(x + s * 0.3, y - s * 0.12, s * 0.45, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = 'rgba(40,30,80,0.35)';
+  c.beginPath();
+  c.ellipse(x, y + s * 0.3, s * 0.95, s * 0.14, 0, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = 'rgba(255,255,255,0.18)';
+  c.beginPath(); c.arc(x - s * 0.3, y - s * 0.38, s * 0.22, 0, Math.PI * 2); c.fill();
+}

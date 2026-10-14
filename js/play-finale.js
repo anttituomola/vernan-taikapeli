@@ -477,38 +477,7 @@ function drawBoss(c) {
   var shake = boss.shakeT > 0 ? Math.sin(globalT * 40) * s * 0.15 : 0;
   var i;
   if (boss.mode !== 'gone' || boss.gone < 4) {
-    c.save();
-    c.translate(x + shake, y);
-    c.scale(boss.dir, 1);
-    // Luuta
-    artLimb(c, -s * 1.6, s * 0.9, s * 1.1, s * 0.5, s * 0.18, '#8a5a30', '#4a2e14');
-    c.beginPath();
-    c.moveTo(-s * 1.5, s * 0.6); c.lineTo(-s * 2.4, s * 0.55); c.lineTo(-s * 2.5, s * 1.3); c.lineTo(-s * 1.6, s * 1.15);
-    c.closePath();
-    artFillPath(c, '#c9a25a', s * 0.55, s * 1.3, s * 0.4, { lineColor: '#7a5a20' });
-    // Kaapu
-    c.beginPath();
-    c.moveTo(0, -s * 0.9);
-    c.quadraticCurveTo(-s * 1.3, s * 0.2, -s * 1.0, s * 0.8);
-    c.lineTo(s * 0.8, s * 0.8);
-    c.quadraticCurveTo(s * 0.9, 0, 0, -s * 0.9);
-    c.closePath();
-    artFillPath(c, '#6a3a98', -s * 0.9, s * 0.8, s * 0.9, { lineColor: '#2e1a4a' });
-    // Pää, silmä, virnistys ja hattu
-    artCircle(c, 0, -s * 1.1, s * 0.45, '#b8e0a0', { lineColor: '#4a7a3a' });
-    artEye(c, s * 0.16, -s * 1.15, s * 0.1, 0.3, false);
-    c.strokeStyle = '#2a1a3a';
-    c.lineWidth = s * 0.06;
-    c.lineCap = 'round';
-    c.beginPath(); c.arc(s * 0.1, -s * 0.9, s * 0.15, Math.PI * 1.2, Math.PI * 1.9); c.stroke();
-    c.beginPath();
-    c.moveTo(-s * 0.75, -s * 1.38); c.lineTo(s * 0.75, -s * 1.38); c.lineTo(s * 0.1, -s * 2.7);
-    c.closePath();
-    artFillPath(c, '#3a2460', -s * 2.7, -s * 1.38, s * 0.75, { lineColor: '#1a1030' });
-    artRoundRect(c, -s * 0.9, -s * 1.48, s * 1.8, s * 0.15, s * 0.05, '#3a2460', { lineColor: '#1a1030' });
-    c.fillStyle = '#ffe27a';
-    c.fillRect(-s * 0.32, -s * 1.63, s * 0.64, s * 0.15);
-    c.restore();
+    drawStormWitch(c, x + shake, y, s, boss.dir, boss.mode === 'gone' ? 'sulk' : 'grumpy');
   }
   if (finale.phase !== 'boss') return;
   // Suojakilvet: jäljellä olevat kierrokset renkaina

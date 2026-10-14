@@ -29,6 +29,12 @@ function loop(ts) {
   } else if (mode === 'castle') {
     updateCastle(dt);
     drawCastleMap();
+  } else if (mode === 'story') {
+    updateStory(dt);
+    drawStory();
+  } else if (mode === 'book') {
+    updateBook(dt);
+    drawBook();
   } else if (mode === 'hub') {
     updateHub(dt);
     drawHub();
@@ -116,6 +122,14 @@ function pointerDown(e) {
     handleCastleTap(p.x, p.y);
     return;
   }
+  if (mode === 'story') {
+    handleStoryTap(p.x, p.y);
+    return;
+  }
+  if (mode === 'book') {
+    handleBookTap(p.x, p.y);
+    return;
+  }
   if (mode === 'hub') {
     handleHubTap(p.x, p.y);
     return;
@@ -201,7 +215,7 @@ window.addEventListener('mouseup', pointerUp);
 
 // Kartta-nappi: kentästä sokkeloon, linnan huoneesta linnakartalle
 document.getElementById('karttaBtn').addEventListener('click', function () {
-  if (mode === 'home') showCastle();
+  if (mode === 'home' || mode === 'book') showCastle();
   else showHub();
 });
 
@@ -312,6 +326,9 @@ window.VT = {
   homeState: function () { return { stars: starCoins, items: homeItems, bunnies: homeBunnies, drag: homeDrag, cells: homeShopCells(), room: homeRoomIdx }; },
   homeTick: function (dt) { updateHome(dt); drawHome(); },
   castle: showCastle,
+  story: function (id) { storyShow(id, showSea, true); },
+  storySeen: function () { return storySeen; },
+  book: function () { storyBookOpen(); },
   castleTap: handleCastleTap,
   castleTick: function (dt) { updateCastle(dt); drawCastleMap(); },
   castleLayout: castleLayout,
@@ -436,6 +453,7 @@ setInterval(function () {
 }, 15000);
 
 loadProgress();
+if (storyLegacy) storyLegacySeen();
 hubWorld = lastIsland;
 resize();
 // Peli alkaa siltä kartalta, jolla viimeksi oltiin: saaristo tai Kaukamaa

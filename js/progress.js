@@ -11,10 +11,12 @@ var lastIsland = 1;     // viimeksi vierailtu saari (maailma)
 var starCoins = 0;      // kentistä kerätyt tähdet (sisustuksen valuutta); 'stars' on metsän tähtitaulukko
 var homeItems = [];     // linnaan ostetut huonekalut: { id, fx, fy, on }
 var starGain = { n: 0, until: 0 };  // juhlassa näytettävä "+n"
+var storyLegacy = false;   // ladattiin tallennus ajalta ennen tarinaa
+var castleAllOpen = false; // vanha tallennus: kaikki linnan huoneet auki
 
 function saveProgress() {
   try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland, stars: starCoins, home: homeItems, decor: homeDecor, bows: homeBows, bank: { stars: bankStars, t: bankT, unseen: bankUnseen, closed: bankClosed }, coop: coopSaveData(), stable: stabSaveData() }));
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify({ cleared: hubCleared, finaleDone: finaleDone, rainbowShown: rainbowShown, lastIsland: lastIsland, stars: starCoins, home: homeItems, decor: homeDecor, bows: homeBows, bank: { stars: bankStars, t: bankT, unseen: bankUnseen, closed: bankClosed }, coop: coopSaveData(), stable: stabSaveData(), story: storySeen, castleAll: castleAllOpen }));
   } catch (e) { /* yksityinen tila tms: pelataan ilman tallennusta */ }
 }
 
@@ -50,6 +52,16 @@ function loadProgress() {
     // Kanatarha (vanha tallennus ilman sitä: tyhjä, aloituskanat ensikäynnillä)
     coopLoadData(d && d.coop);
     stabLoadData(d && d.stable);
+    // Tarina ja linnan kasvu: vanhassa tallennuksessa ei ole tarinaa, joten
+    // kaikki linnan huoneet pysyvät auki ja jo ohitetut luvut merkitään nähdyiksi
+    if (d && d.story && typeof d.story === 'object') {
+      storySeen = d.story;
+      castleAllOpen = !!d.castleAll;
+    } else if (d) {
+      storySeen = {};
+      storyLegacy = true;
+      castleAllOpen = true;
+    }
   } catch (e) { /* rikkinäinen tallennus: aloitetaan alusta */ }
 }
 
@@ -68,6 +80,8 @@ function resetProgress() {
   bankClosed = false;
   coopLoadData(null);
   stabLoadData(null);
+  storySeen = {};
+  castleAllOpen = false;
   saveProgress();
 }
 

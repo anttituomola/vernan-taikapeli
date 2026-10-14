@@ -188,6 +188,45 @@ Prinsessan ratsu ja opas; kantaa juoksukentissä ja ehdottaa uusintaa
 puhekuplassa.
 
 **Myrskynoita**:
-Pelin antagonisti, jonka myrsky huuhtoi sateenkaaren värit mereen. Ei
-koskaan suoraa taistelua — jokaisen saaren vartija on hänen jättämänsä
-este.
+Pelin vastavoima: hän valtasi linnan, sulki puput saliin ja puhalsi
+sateenkaaren värit saarille. Finaalissa hän **pakenee** luudalla (ei häviä),
+ja hänen **myrskypilvensä** näkyy kartalla aina sen paikan yllä, jonne hän
+pakeni seuraavaksi. Kaukamaan lopussa selviää, että hän oli äreä, koska
+osaa tehdä vain sadetta — kukaan ei ollut kutsunut häntä sateenkaarijuhliin.
+Sateesta ja auringosta syntyy sateenkaari, ja noidasta tulee **ystävä**.
+_Vältä_: paha noita, konna, vihollinen (lapselle hän on äreä, ei paha)
+
+## Tarina
+
+Tarina kerrotaan **kuvakirjan sivuina** (`js/story.js`): lyhyt iso teksti
+ja animoitu kuva, napautus kääntää sivua. Tarinan eteneminen päätellään
+läpäistyistä vartijoista; tallennus muistaa vain, mitkä **luvut** on jo
+näytetty. Kaikki näytetyt luvut voi lukea uudestaan linnan **tarinakirjasta**.
+
+**Luku**:
+Yksi kuvakirjan kohtaus (1–5 sivua), joka näytetään kerran, kun sen ehto
+täyttyy ja pelaaja palaa kartalle.
+_Vältä_: välianimaatio, cutscene, tarina yksinään
+
+Kaari:
+
+1. **Alku** (uusi peli): linna sateenkaaren alla, Myrskynoita valtaa linnan
+   ja puhaltaa värit saarille. Verna ja yksisarvinen lähtevät matkaan.
+2. **Pako** (Linnasaaren finaali): puput vapaina, noita pakenee. Linna on
+   taas koti (linnanappi ilmestyy) ja punainen väri palasi.
+3. **Saaret**: jokainen vartija palauttaa värin; myrskypilvi siirtyy aina
+   seuraavan saaren ylle.
+4. **Kultatähti** (Tivolisaari): kaari on ehjä, mutta myrskypilvi lentää
+   pohjoiseen Revontulimaahan.
+5. **Revontulet** (Revontulimaa): Revontulikettu näyttää tien meren yli
+   Kaukamaalle (avomerimerkki ilmestyy).
+6. **Kaukamaa**: aurinko on myrskypilven takana; jokainen paikka antaa
+   auringolle yhden **säteen**. Kun säteet ovat koossa, Myrskyvuori aukeaa.
+7. **Ystävä** (Myrskyvuori): sade + aurinko = sateenkaari; noita muuttaa
+   linnan torniin, ja juhlitaan kaikkien kanssa.
+
+**Linna kasvaa**: maailmojen vartijat avaavat linnaan huoneita. Sali aukeaa
+Linnasaaresta, keittiö Karkkisaaresta, torni Kuutamosaaresta, puutarha
+Hoivasaaresta, pankkiholvi Vuorisaaresta, ponitalli Tivolisaaresta ja
+kanatarha Maalaiskylästä. Vanha tallennus (ennen tarinaa) pitää kaikki
+huoneet auki.

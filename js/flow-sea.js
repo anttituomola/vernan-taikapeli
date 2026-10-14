@@ -71,6 +71,7 @@ function seaHarbor(isl) {
 
 function showSea() {
   var isl, h, i, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'fireBtn', 'penBtn', 'karttaBtn', 'seaBtn'];
+  if (storyMaybe('sea', showSea)) return;
   if (mode !== 'sea') fadeStart();
   mode = 'sea';
   running = false;
@@ -96,6 +97,7 @@ function showSea() {
     seaReveal = { idx: rainbowShown, t: 0 };
     soundFanfare();
   }
+  seaWitchReset(seaReveal ? ISLANDS[seaReveal.idx] : null);
 }
 
 function seaToastShow(p) {
@@ -109,6 +111,7 @@ function handleSeaTap(px, py) {
   var i, p, dx, dy, isl = null, idx = -1;
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  if (mapWitchTap(px, py)) return;
   for (i = 0; i < ISLANDS.length; i++) {
     p = seaIslandPos(ISLANDS[i]);
     dx = px - p.x;
@@ -157,6 +160,7 @@ function handleSeaTap(px, py) {
 function updateSea(dt) {
   globalT += dt;
   seaFxUpdate(dt);
+  mapWitchUpdate(dt, seaWitchTarget());
   if (seaToast.t > 0) seaToast.t -= dt;
   if (seaReveal) {
     seaReveal.t += dt;
@@ -245,6 +249,7 @@ function drawSea() {
 
   drawSeaExit(ctx);
   drawSeaFx(ctx);
+  drawMapWitch(ctx);
 
   // Vene ja ratsastajat
   var bob = Math.sin(globalT * 2.5) * viewH * 0.005;

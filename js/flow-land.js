@@ -156,7 +156,8 @@ function placeStarted(pl) {
 function landUnlocked() {
   var i;
   if (LAND_PLACES.length === 0) return false;
-  if (rainbowEarned() > RAINBOW_COLORS.length) return true;
+  // Revontulikettu näyttää tien Kaukamaalle (tarinan luku 'revontuli')
+  if (storyWorldDone('Revontulimaa')) return true;
   for (i = 0; i < LAND_PLACES.length; i++) if (placeStarted(LAND_PLACES[i])) return true;
   return false;
 }
@@ -186,6 +187,7 @@ function seaExitPos() {
 function showLand(opts) {
   var i, pl, p, ids = ['replayBtn', 'continueBtn', 'jumpBtn', 'fireBtn', 'penBtn', 'karttaBtn', 'seaBtn'];
   opts = opts || {};
+  if (!opts.sail && storyMaybe('land', showLand)) return;
   if (mode !== 'land' && !opts.sail) fadeStart();
   mode = 'land';
   running = false;
@@ -217,6 +219,7 @@ function showLand(opts) {
   land.pawn.x = p.x;
   land.pawn.y = p.y;
   land.pawn.facing = 1;
+  landWitchReset();
 }
 
 // Vene lähtee mantereelta takaisin saaristoon
@@ -233,6 +236,7 @@ function landSailEnd() {
   if (land.dir > 0) {
     land.state = 'map';
     land.t = 0;
+    storyMaybe('land', showLand);
     return;
   }
   seaArriveFromLand();
@@ -272,6 +276,7 @@ function handleLandTap(px, py) {
     landSailEnd();
     return;
   }
+  if (mapWitchTap(px, py)) return;
   h = landHarbor();
   dx = px - h.x; dy = py - h.y;
   if (dx * dx + dy * dy <= h.r * h.r * 1.6) {
@@ -305,6 +310,7 @@ function updateLand(dt) {
   var s, dx, dy, dist, sp;
   globalT += dt;
   landFxUpdate(dt);
+  mapWitchUpdate(dt, null);
   if (land.toast.t > 0) land.toast.t -= dt;
   land.dragonT -= dt;
   if (land.dragonT < -9) land.dragonT = 7 + Math.random() * 6;
@@ -351,6 +357,7 @@ function drawLand() {
   drawLandSkyDragon(ctx);
   drawLandSeaWaves(ctx);
   drawLandFx(ctx);
+  drawMapWitch(ctx);
   drawMapSun(ctx);
 
   var i, p, pl, nx = landNextPlace(), left, h = landHarbor();
