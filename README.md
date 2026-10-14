@@ -995,10 +995,11 @@ ja vartijana vaikeampi pulma.
 ### Kaukamaa: Pupula (maailma 16)
 
 Mantereen seitsemäs paikka, pupujen pikkukaupunki kartan kaakkoiskulmassa
-(13.10.2026). Aukeaa Maalaiskylän vartijan jälkeen. Rytmi: ensin pitkä ja
-helppo kenttä, sitten vaikea pulma. Sokkelossa on kaksi usvahuonetta ('?')
-tuleville kentille ja vartijalle; siihen asti Peilipupu on paikan viimeinen
-kenttä (finaleKind 'reflect').
+(13.10.2026). Aukeaa Maalaiskylän vartijan jälkeen. 15.10.2026 Peilipupu
+(peilisokkelo) poistettiin liian vaikeana: lapsi ei päässyt sitä yksin läpi
+eikä jaksanut keskittyä yhteiseen miettimiseen. Tilalle tuli kolme lyhyttä,
+suoran eleen kenttää: haaste syntyy reaaliaikaisesta tekemisestä, ei
+suunnittelusta.
 
 - **Pupujen leipomo** — pitkä ja helppo kenttä ilman sydämiä ja aikarajaa,
   kaikki raahaamalla yhdellä ruudulla. Eläinasiakas (pupu, kana, possu,
@@ -1020,25 +1021,17 @@ kenttä (finaleKind 'reflect').
   (piparkakkupupu). Kesto botilla 3,3–4 min, toiminto 2–3 s välein.
   Säädöt: `BAKE_T`, `BAKE_GOLD`, `BAKE_FROST_NEED`, `BAKE_PLAN`,
   `BAKE_TASK_AFTER`, `BAKE_HINT_IDLE`.
-- **Peilipupu** — peilitalon pulma: kaksi yhtä suurta lautaa rinnakkain ja
-  välissä hohtava taikapeili. Vasemmalla pinkki pupu, oikealla sen
-  läpikuultava lila peilikuva. Nuolen napautus hypäyttää molempia: ylös ja
-  alas ovat samat, mutta vasen ja oikea ovat peilikuvalle peilatut (napissa
-  iso pinkki nuoli = oma pupu, pieni lila = peilikuva; myös laudan
-  napautus pupun viereen käy). Pensasruukku tai reuna pysäyttää pupun, joka
-  tömähtää paikallaan toisen liikkuessa; laudoilla on eri pensaat, joten
-  pupuja siirretään toistensa suhteen tömähdyksillä. Kierros on läpi, kun
-  molemmat seisovat porkkanallaan yhtä aikaa. Neljä arvottua kierrosta
-  (`REFL_ROUNDS`): 4×4 (5–7 hyppyä, 1 tömähdys); 5×5 (8–10, 2–3); 5×5
-  taikakuopilla (8–11; putoaminen palauttaa molemmat alkuun); 6×5 kuopilla ja
-  kahdella bonustähdellä (9–12). Leveyshaku yhteisestä tilasta varmistaa
-  ratkaisun pituuden ja tömähdysten tarpeen eikä salli jumitiloja. Esittely
-  alussa, peruutus ↶ ilmainen, ↻ alusta, vihjekäsi 12 s:n tai kahden
-  putoamisen jälkeen; kultainen porkkana ilman vihjettä ja enintään 2
-  ylimääräisellä hypyllä (tassunjäljet). Ei sydämiä. Tehtävät: kysymykseen
-  vastaus kirjaimin, peilikuva. Tökättävät: vääristävä peili (5.:
-  yksisarvinen), lamppu, kissa, vieterikaappi ja taikapeili (puput
-  vilkuttavat).
+- **Karuselli** (js/play-merry.js) — helppo ajoituskenttä: jonon ensimmäisellä
+  pupulla on lippu, jonka väri vastaa karusellin eläimen satulaa; kun se
+  eläin on hehkuvan maton kohdalla, napautus hypäyttää pupun kyytiin (väärä
+  satula: pupu hihittää ja hyppää takaisin). Kolme kierrosta, kiihtyvä.
+- **Lyhtyjuhla** (js/play-festival.js) — rauhallinen ilta: lyhdyt raahataan
+  taloille, joiden kyltissä on väri ja määrä; valmis talo syttyy ja perhe
+  vilkuttaa. Lopuksi ilotulitus (taivaan napautus laukaisee lisää).
+- **Liikennevalot** (js/play-traffic.js) — vartija: risteyksessä pupuja
+  odottaa suojatien reunalla ja autoja tulee; valon napautus vaihtaa vuoron.
+  Ei kolareita: liian pitkään odottava vain mököttää. Kolmannella kierroksella
+  kaksi risteystä omine valoineen.
 
 ### Kaukamaa: Myrskyvuori (maailma 17)
 
