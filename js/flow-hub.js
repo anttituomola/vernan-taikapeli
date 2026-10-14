@@ -359,7 +359,8 @@ function handleHubTap(px, py) {
   }
   var cell = hubPixelCell(px, py, lay);
   if (!cell) {
-    if (!hubFxTapOutside(px, py) && !hubSpotTap(px, py, lay)) spawnSparkles(px, py, 5, '#ffffff');
+    // Teeman omat maiseman kohteet ensin (esim. Kuutamosaaren kuu yleisen auringon paikalla)
+    if (!hubSpotTap(px, py, lay) && !hubFxTapOutside(px, py)) spawnSparkles(px, py, 5, '#ffffff');
     return;
   }
   if (!hubWalkable(hubAt(cell.c, cell.r))) {
