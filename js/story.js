@@ -543,7 +543,8 @@ var STORY_SCENES = {
     storySky(c, w, h, '#2a2a6a', '#5a6ab0');
     if (typeof drawAuroraCurtain === 'function') drawAuroraCurtain(c, w, h, t, 0);
     storyHill(c, w, h, h * 0.72, '#eef6ff', 0.6);
-    if (typeof drawFoxShrine === 'function') drawFoxShrine(c, w * 0.62, h * 0.74, h * 0.18, true);
+    // Kettu istuu ja nostaa häntäänsä kohti tähtipolkua
+    if (typeof drawFoxBody === 'function') drawFoxBody(c, w * 0.62, h * 0.74, h * 0.2, 1, 'sit', t * 4, 0.6 + Math.sin(t * 3) * 0.3);
     storyRider(c, w * 0.25, h * 0.72, h * 0.0028, 1, false, t);
     // Tähtipolku näyttää suunnan
     var i;
