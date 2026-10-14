@@ -153,6 +153,7 @@ function showHub() {
   holding = false;
   celebrating = false;
   document.getElementById('hubChrome').style.display = 'flex';
+  setChromeTitle(WORLD_INFO[hubWorld] ? WORLD_INFO[hubWorld].name : 'Vernan taikapolku');
   document.getElementById('replayBtn').style.display = 'none';
   document.getElementById('continueBtn').style.display = 'none';
   document.getElementById('jumpBtn').style.display = 'none';

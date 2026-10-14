@@ -79,6 +79,7 @@ function showSea() {
   celebrating = false;
   hubOffer = null;
   document.getElementById('hubChrome').style.display = 'flex';
+  setChromeTitle('Vernan taikapolku');
   for (i = 0; i < ids.length; i++) document.getElementById(ids[i]).style.display = 'none';
   document.getElementById('muteBtn').style.display = 'block';
   castleBtnShow();

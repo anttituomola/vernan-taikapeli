@@ -682,8 +682,9 @@ function landWitchReset() {
   mapWitch.on = true;
   mapWitch.poke = 0;
   mapWitch.delay = 0;
-  mapWitch.x = viewW * 0.47;
-  mapWitch.y = viewH * 0.13;
+  // Pilvi peittää Kaukamaan auringon reunaa (säteet näkyvät sen takaa)
+  mapWitch.x = viewW * 0.80;
+  mapWitch.y = viewH * 0.15;
 }
 function mapWitchUpdate(dt, target) {
   if (!mapWitch.on) return;
@@ -717,4 +718,64 @@ function mapWitchTap(px, py) {
     playNote(587, 0.27, 0.16, 'square', 0.12);
   }
   return true;
+}
+
+// ---------- Kaukamaan aurinko ----------
+// Jokaisen Kaukamaan paikan vartija antaa auringolle yhden säteen (luku 'kaukamaa').
+// Säteet piirretään kartan aurinkoon; uusi säde kasvaa esiin, kun kartalle palataan.
+var landRays = { reveal: -1, t: 0 };
+function landRaysEarned() {
+  var n = 0, i;
+  for (i = 0; i < LAND_PLACES.length; i++) if (islandDone(LAND_PLACES[i])) n++;
+  return n;
+}
+function landRaysShown() {
+  return storySeen.rays | 0;
+}
+// Kartan avaus: aloita seuraavan ansaitun säteen paljastus
+function landRaysCheck() {
+  landRays.reveal = -1;
+  if (landRaysEarned() > landRaysShown()) {
+    landRays.reveal = landRaysShown();
+    landRays.t = 0;
+    if (landRaysEarned() - landRays.reveal > 1) playNote(659 + landRays.reveal * 60, 0, 0.2, 'triangle', 0.3);
+    else soundFanfare();
+  }
+}
+function landRaysUpdate(dt) {
+  if (landRays.reveal < 0) return;
+  landRays.t += dt;
+  // Monta odottavaa sädettä (esim. vanha tallennus): paljastetaan reippaammin peräkkäin
+  if (landRays.t > (landRaysEarned() - landRays.reveal > 1 ? 0.9 : 2.2)) {
+    storySeen.rays = landRays.reveal + 1;
+    saveProgress();
+    landRaysCheck();
+  }
+}
+function drawLandRays(c) {
+  var n = LAND_PLACES.length, got = landRaysShown(), i, a, len, k, x0, y0;
+  var sx = viewW * 0.86, sy = viewH * 0.10, r = viewH * 0.045;
+  c.lineCap = 'round';
+  for (i = 0; i < n; i++) {
+    a = -Math.PI / 2 + (i / n) * Math.PI * 2 + Math.sin(globalT * 0.4) * 0.03;
+    x0 = sx + Math.cos(a) * r * 1.35;
+    y0 = sy + Math.sin(a) * r * 1.35;
+    if (i < got || i === landRays.reveal) {
+      k = i === landRays.reveal ? easeOutBack(Math.min(1, landRays.t / 1.2)) : 1;
+      len = r * (1.1 + Math.sin(globalT * 3 + i) * 0.08) * k;
+      c.strokeStyle = 'rgba(255,190,40,0.9)';
+      c.lineWidth = r * 0.34;
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + Math.cos(a) * len, y0 + Math.sin(a) * len); c.stroke();
+      c.strokeStyle = '#fff1a8';
+      c.lineWidth = r * 0.16;
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + Math.cos(a) * len, y0 + Math.sin(a) * len); c.stroke();
+      if (i === landRays.reveal && landRays.t < 1.6) {
+        drawStar(c, x0 + Math.cos(a) * len, y0 + Math.sin(a) * len, r * 0.35 * (1 - landRays.t / 1.6), globalT * 3, 1);
+      }
+    } else {
+      c.strokeStyle = 'rgba(200,190,220,0.6)';
+      c.lineWidth = r * 0.2;
+      c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + Math.cos(a) * r * 0.35, y0 + Math.sin(a) * r * 0.35); c.stroke();
+    }
+  }
 }

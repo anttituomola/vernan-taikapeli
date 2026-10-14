@@ -195,6 +195,7 @@ function showLand(opts) {
   celebrating = false;
   hubOffer = null;
   document.getElementById('hubChrome').style.display = 'flex';
+  setChromeTitle('Kaukamaa');
   for (i = 0; i < ids.length; i++) document.getElementById(ids[i]).style.display = 'none';
   document.getElementById('muteBtn').style.display = 'block';
   castleBtnShow();
@@ -220,6 +221,7 @@ function showLand(opts) {
   land.pawn.y = p.y;
   land.pawn.facing = 1;
   landWitchReset();
+  if (land.state === 'map') landRaysCheck();
 }
 
 // Vene lähtee mantereelta takaisin saaristoon
@@ -236,7 +238,7 @@ function landSailEnd() {
   if (land.dir > 0) {
     land.state = 'map';
     land.t = 0;
-    storyMaybe('land', showLand);
+    if (!storyMaybe('land', showLand)) landRaysCheck();
     return;
   }
   seaArriveFromLand();
@@ -311,6 +313,7 @@ function updateLand(dt) {
   globalT += dt;
   landFxUpdate(dt);
   mapWitchUpdate(dt, null);
+  landRaysUpdate(dt);
   if (land.toast.t > 0) land.toast.t -= dt;
   land.dragonT -= dt;
   if (land.dragonT < -9) land.dragonT = 7 + Math.random() * 6;
@@ -357,6 +360,7 @@ function drawLand() {
   drawLandSkyDragon(ctx);
   drawLandSeaWaves(ctx);
   drawLandFx(ctx);
+  drawLandRays(ctx);
   drawMapWitch(ctx);
   drawMapSun(ctx);
 

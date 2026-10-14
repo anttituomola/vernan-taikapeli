@@ -7,6 +7,11 @@
 var FADE_DUR = 0.45;
 var fadeT = 0;
 function fadeStart() { fadeT = FADE_DUR; }
+// Yläreunan otsikkobanneri kertoo, missä ollaan: saaristo, Kaukamaa tai maailman nimi
+function setChromeTitle(text) {
+  var h = document.querySelector('#hubChrome h1');
+  if (h) h.textContent = '✨ ' + text.toUpperCase() + ' ✨';
+}
 function drawFade(dt) {
   if (fadeT <= 0) return;
   fadeT -= dt;
