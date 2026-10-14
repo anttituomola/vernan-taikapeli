@@ -1,49 +1,50 @@
 'use strict';
 
-// Revontulipolku: ratsastus. Valopallot syttyvät vain kun revontuli on niiden
-// yllä — kerää ne loistaessaan. Sydämet ja lyhdyt käytössä.
+// Revontulipolku: ratsastus. Revontulesta tippuu valopisara kerrallaan; lumeen
+// ilmestyy hohtava rengas siihen kohtaan, johon pisara putoaa. Ratsasta (tai
+// napauta pisaraa) renkaaseen ennen kuin pisara osuu lumeen: pisara jää kiinni
+// ja taivaan revontuleen syttyy uusi värijuova. Ohi mennyt pisara vain
+// pöllähtää lumeen, ja uusi tippuu pian. Kahdeksan pisaraa avaa portin.
+// Ei sydämiä. Vaikeus kasvaa tehtäväkaari kerrallaan (lyhyempi putoaminen,
+// viimeisellä osuudella pisara leijailee sivuttain).
 
 var AUR_COUNT = 8;
-var aurLights = [];
+var AUR_QUOTA = [3, 6, 8];           // kerättyjä pisaroita ennen kutakin tehtäväkaarta / porttia
+var AUR_FALL = [3.2, 2.8, 2.4];      // putoamisaika osuuksittain (s)
+var AUR_WARN = 0.7;                  // revontuli kirkastuu ennen tippumista (s)
+var aurLights = [];                  // HUD-rivi: { collected }
+var aurWind = [];                    // (VT-kahvan yhteensopivuus: puuskia ei enää ole)
 var aurGate = northGateAt(0.96);
-var aurWind = [];
-var aurDefs = [
-  { fx: 0.10, fy: 0.16 }, { fx: 0.20, fy: 0.28 }, { fx: 0.32, fy: 0.14 }, { fx: 0.44, fy: 0.26 },
-  { fx: 0.55, fy: 0.12 }, { fx: 0.66, fy: 0.24 }, { fx: 0.78, fy: 0.15 }, { fx: 0.88, fy: 0.27 }
-];
+var aurDrop = null;                  // { x0, x, y, landY, t, dur, drift, warn }
+var aurDropCd = 1.2;                 // tauko ennen seuraavaa pisaraa
+var aurStrands = [];                 // taivaalle syttyneet värijuovat
+var AUR_STRAND_COLS = ['#7cffc4', '#c9a0ff', '#8ad8ff', '#a8ff9a', '#ff9ad8', '#7cffc4', '#c9a0ff', '#ffe27a'];
 
-var AUR_GLOW = 1.8;
-var AUR_BAND = 0.28;
-
-function aurCurtainX() {
-  return (0.12 + 0.76 * (0.5 + 0.5 * Math.sin(globalT * 0.24))) * worldW;
+function aurCaught() {
+  return countCollected(aurLights);
 }
-function aurUnderCurtain(g) {
-  return Math.abs(g.ax - aurCurtainX()) < viewW * AUR_BAND;
+function aurZone() {
+  var i, n = 0;
+  for (i = 0; i < tasks.length; i++) if (tasks[i].opened) n++;
+  return Math.min(n, AUR_QUOTA.length - 1);
 }
-function aurLit(g) {
-  return !g.collected && g.glowT > 0;
+function aurZoneSpan(z) {
+  var lo = z === 0 ? viewW * 0.12 : tasks[z - 1].x + viewW * 0.12;
+  var hi = z < tasks.length ? tasks[z].x - viewW * 0.16 : aurGate.x - viewW * 0.12;
+  return { lo: lo, hi: hi };
 }
 
 function initAurora() {
   var i;
   tasks = [makeTask(0.32, 'pattern'), makeTask(0.66, 'memory', { seqLen: 5, orbs: 4 })];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
-  makeCheckpoints([0.40, 0.72]);
+  makeCheckpoints([]);
   aurLights = [];
-  for (i = 0; i < AUR_COUNT; i++) {
-    aurLights.push({
-      ax: aurDefs[i].fx * worldW, ay: groundTop - aurDefs[i].fy * viewH,
-      collected: false, phase: Math.random() * Math.PI * 2, glowT: 0
-    });
-  }
-  // Puuskat ylä- ja alareunaan: keskilinja on vapaa, ettei aloitusratsastus
-  // osu näkymättömään esteeseen. Ensimmäinen vasta valojen jälkeen.
-  aurWind = [
-    { zA: 0.30, zB: 0.46, fy: 0.12, dir: 1 },
-    { zA: 0.62, zB: 0.80, fy: 0.82, dir: -1 }
-  ];
-  for (i = 0; i < aurWind.length; i++) aurPlaceWind(aurWind[i]);
+  for (i = 0; i < AUR_COUNT; i++) aurLights.push({ collected: false });
+  aurWind = [];
+  aurDrop = null;
+  aurDropCd = 1.2;
+  aurStrands = [];
   aurGate.x = aurGate.fx * worldW;
   aurGate.open = false;
   unicorn.speed = 265;
@@ -59,29 +60,13 @@ function initAurora() {
   playNote(784, 0.14, 0.3, 'triangle', 0.3);
 }
 
-function respawnAurora() {
-  unicorn.x = unicorn.tx = checkpoint.x;
-  unicorn.y = unicorn.ty = (groundTop + groundBottom) / 2;
-  unicorn.moving = false;
-  camX = Math.min(Math.max(unicorn.x - viewW / 2, 0), Math.max(0, worldW - viewW));
-  spawnSparkles(unicorn.x, unicorn.y - viewH * 0.1, 12, '#a8ffe0');
-}
-
-function aurPlaceWind(wh) {
-  var pathH = groundBottom - groundTop;
-  wh.x = (wh.zA + wh.zB) * 0.5 * worldW;
-  wh.y = groundTop + pathH * wh.fy;
-}
+function respawnAurora() {}
 
 function resizeAurora(ratio) {
-  var i;
-  for (i = 0; i < aurLights.length; i++) {
-    aurLights[i].ax = aurDefs[i].fx * worldW;
-    aurLights[i].ay = groundTop - aurDefs[i].fy * viewH;
-  }
-  for (i = 0; i < aurWind.length; i++) {
-    aurWind[i].x *= ratio;
-    aurWind[i].y = groundTop + (groundBottom - groundTop) * aurWind[i].fy;
+  if (aurDrop) {
+    aurDrop.x0 *= ratio;
+    aurDrop.x *= ratio;
+    aurDrop.landY = Math.min(Math.max(aurDrop.landY, groundTop + viewH * 0.03), groundBottom - viewH * 0.03);
   }
   aurGate.x = aurGate.fx * worldW;
   aurSetupProps();
@@ -93,8 +78,9 @@ function aurSetupProps() {
   var i, h = viewH, w = worldW;
   propsReset();
   for (i = 0; i < 5; i++) voyPineProp(w * (0.1 + i * 0.18), groundTop, h * 0.16, '#1a3850');
-  aurRockProp(w * 0.34, groundTop + h * 0.02, h * 0.045);
-  aurRockProp(w * 0.68, groundTop + h * 0.015, h * 0.038);
+  aurRockProp(w * 0.24, groundTop + h * 0.02, h * 0.045);
+  aurRockProp(w * 0.5, groundTop + h * 0.015, h * 0.04);
+  aurRockProp(w * 0.8, groundTop + h * 0.015, h * 0.038);
 }
 
 function aurRockProp(x, y, s) {
@@ -130,60 +116,95 @@ function aurBirdFly(x, y) {
   });
 }
 
-function aurCollect(g) {
-  g.collected = true;
-  registerCollected(g);
-  spawnSparkles(g.ax, g.ay, 14, '#7cffc4');
-  soundStar(countCollected(aurLights));
-  if (countCollected(aurLights) === AUR_COUNT) aurGate.open = true;
+function aurSpawnDrop() {
+  var z = aurZone(), sp = aurZoneSpan(z), side, x, d;
+  // Useimmiten edessä, joskus takana; aina vähän matkan päässä
+  side = Math.random() < 0.75 ? 1 : -1;
+  d = viewW * (0.16 + Math.random() * 0.24);
+  x = unicorn.x + side * d;
+  if (x > sp.hi || x < sp.lo) x = unicorn.x - side * d;
+  x = Math.min(Math.max(x, Math.max(sp.lo, camX + viewW * 0.08)), Math.min(sp.hi, camX + viewW * 0.92));
+  if (sp.hi < sp.lo) x = (sp.lo + sp.hi) / 2;
+  aurDrop = {
+    x0: x, x: x, y: viewH * 0.1,
+    landY: groundTop + viewH * 0.03 + Math.random() * (groundBottom - groundTop - viewH * 0.06),
+    t: 0, dur: AUR_FALL[z], drift: z === 2 ? viewW * 0.05 : 0, warn: AUR_WARN
+  };
+  playNote(1319, 0, 0.12, 'sine', 0.18);
+  playNote(1568, 0.1, 0.18, 'sine', 0.16);
+}
+
+// Pisaran saa kiinni sen pudottua vähän matkaa (rengas on silloin jo kirkas)
+function aurDropCatchable(d) {
+  return d && d.warn <= 0 && d.t / d.dur > 0.45;
+}
+
+function aurCatch(d) {
+  var idx = aurCaught();
+  aurLights[idx].collected = true;
+  spawnSparkles(d.x, d.y, 16, '#7cffc4');
+  spawnSparkles(d.x, d.y - viewH * 0.06, 10, AUR_STRAND_COLS[idx]);
+  soundStar(idx + 1);
+  aurStrands.push({ col: AUR_STRAND_COLS[idx], t: 0, ph: Math.random() * 6 });
+  aurDrop = null;
+  aurDropCd = 0.7;
+  if (aurCaught() === AUR_COUNT) {
+    aurGate.open = true;
+    playNote(523, 0.2, 0.25, 'triangle', 0.35);
+    playNote(784, 0.4, 0.4, 'triangle', 0.35);
+  }
+}
+
+// Ohi mennyt pisara pöllähtää lumeen; ei rangaistusta, uusi tulee pian
+function aurMiss(d) {
+  var k;
+  for (k = 0; k < 3; k++) voySnowPuff(d.x + (k - 1) * viewH * 0.03, d.landY - viewH * 0.01, viewH * 0.012, d.landY + viewH * 0.01);
+  spawnSparkles(d.x, d.landY, 8, '#b8ffe0');
+  playNote(392, 0, 0.18, 'sine', 0.18);
+  aurDrop = null;
+  aurDropCd = 0.9;
 }
 
 function handleAuroraTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
-  var wx = px + camX, i, dx, dy, g;
-  for (i = 0; i < aurLights.length; i++) {
-    g = aurLights[i];
-    if (g.collected || !aurLit(g)) continue;
-    dx = wx - g.ax; dy = py - g.ay;
-    if (dx * dx + dy * dy < viewH * 0.07 * viewH * 0.07) { aurCollect(g); return; }
+  var wx = px + camX, d = aurDrop;
+  // Napautus pisaraan tai sen renkaaseen ohjaa yksisarvisen suoraan renkaalle
+  if (d && Math.abs(wx - d.x) < viewH * 0.1 && (py < d.y + viewH * 0.08 || Math.abs(py - d.landY) < viewH * 0.1)) {
+    setWalkTarget(d.x - camX, d.landY);
+    return;
   }
-  // Ei osunut valoon: koriste saa heilahtaa, ja ratsastus jatkuu kohti napautusta kuten ennen
   propsTap(wx, py);
   setWalkTarget(px, py);
 }
 
 function updateAurora(dt) {
-  var i, g, dx, dy, busy, wh;
+  var i, d, busy, z, k;
   updateTasks(dt);
   propsUpdate(dt);
   busy = puzzleBusy();
   northRideUnicorn(dt, busy);
-  updateCheckpoints(unicorn.x, unicorn.y);
-  for (i = 0; i < aurLights.length; i++) {
-    g = aurLights[i];
-    g.phase += dt * 2;
-    if (aurUnderCurtain(g)) g.glowT = AUR_GLOW;
-    else if (g.glowT > 0 && !busy) g.glowT = Math.max(0, g.glowT - dt);
-    if (g.collected || busy || celebrating) continue;
-    if (!aurLit(g)) continue;
-    dx = g.ax - unicorn.x; dy = g.ay - unicorn.y;
-    if (dx * dx + dy * dy < viewH * 0.1 * viewH * 0.1) aurCollect(g);
-  }
-  for (i = 0; i < aurWind.length; i++) {
-    wh = aurWind[i];
-    if (!busy && !celebrating) {
-      wh.x += wh.dir * viewW * 0.07 * dt;
-      if (wh.x < wh.zA * worldW) { wh.x = wh.zA * worldW; wh.dir = 1; }
-      if (wh.x > wh.zB * worldW) { wh.x = wh.zB * worldW; wh.dir = -1; }
+  for (i = 0; i < aurStrands.length; i++) aurStrands[i].t += dt;
+  if (!busy && !celebrating) {
+    z = aurZone();
+    if (!aurDrop && aurCaught() < AUR_QUOTA[z]) {
+      aurDropCd -= dt;
+      if (aurDropCd <= 0) aurSpawnDrop();
     }
-    if (!celebrating && Math.abs(wh.x - unicorn.x) < viewH * 0.05 && Math.abs(wh.y - unicorn.y) < viewH * 0.05) {
-      if (loseHeart()) {
-        unicorn.tx = Math.min(Math.max(unicorn.x + (unicorn.x < wh.x ? -1 : 1) * viewW * 0.08, viewW * 0.05), worldW);
-        spawnSparkles(unicorn.x, unicorn.y, 8, '#c8e8ff');
+    d = aurDrop;
+    if (d) {
+      if (d.warn > 0) d.warn -= dt;
+      else {
+        d.t += dt;
+        k = Math.min(1, d.t / d.dur);
+        // Alussa hitaampi, lopussa nopeampi (painovoiman tuntu, mutta pehmeä)
+        d.y = viewH * 0.1 + (d.landY - viewH * 0.1) * (0.35 * k + 0.65 * k * k);
+        d.x = d.x0 + Math.sin(d.t * 1.7) * d.drift;
+        if (aurDropCatchable(d) && Math.abs(unicorn.x - d.x) < viewH * 0.11 && Math.abs(unicorn.y - d.landY) < viewH * 0.09) aurCatch(d);
+        else if (k >= 1) aurMiss(d);
       }
     }
   }
-  if (aurGate.open && !celebrating && Math.abs(unicorn.x - aurGate.x) < viewH * 0.09) startCelebration();
+  if (aurGate.open && !celebrating && Math.abs(unicorn.x - aurGate.x) < viewH * 0.12) startCelebration();
   updateParticles(dt);
   updateConfetti(dt);
 }
@@ -212,87 +233,97 @@ function renderAuroraNear(b, w, h) {
   renderNorthGround(b, w, h);
 }
 
-function drawAuroraGust(c, x, y, t, dir) {
-  var r = viewH * 0.07, i, a, px, py, g;
+// Taivaan revontuli kasvaa: jokainen kiinni saatu pisara sytyttää oman juovansa
+function drawAuroraStrands(c) {
+  var i, s, x, y, base, a, amp;
   c.save();
-  c.translate(x, y);
-  g = c.createRadialGradient(0, 0, 2, 0, 0, r);
-  g.addColorStop(0, 'rgba(255,255,255,1)');
-  g.addColorStop(0.35, 'rgba(120,210,255,0.85)');
-  g.addColorStop(1, 'rgba(40,140,210,0)');
-  c.fillStyle = g;
-  c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fill();
-  c.strokeStyle = '#3aa8e8';
-  c.lineWidth = 3.2;
+  c.globalCompositeOperation = 'lighter';
   c.lineCap = 'round';
-  c.beginPath(); c.arc(0, 0, r * 0.72, 0, Math.PI * 2); c.stroke();
-  c.strokeStyle = '#ffffff';
-  c.lineWidth = 2.6;
-  for (i = 0; i < 3; i++) {
-    a = t * 2.6 * dir + i * 2.1;
+  for (i = 0; i < aurStrands.length; i++) {
+    s = aurStrands[i];
+    a = Math.min(1, s.t / 0.8);
+    base = viewH * (0.1 + (i % 4) * 0.035);
+    amp = viewH * (0.025 + (i % 3) * 0.01);
     c.beginPath();
-    c.arc(0, 0, r * (0.28 + i * 0.2), a, a + 1.5);
+    for (x = -20; x <= viewW + 20; x += 24) {
+      y = base + Math.sin((x + camX * 0.25) * 0.004 + s.ph + globalT * 0.5) * amp;
+      if (x === -20) c.moveTo(x, y); else c.lineTo(x, y);
+    }
+    // Leveä hehku ja kapea kirkas ydin; uusi juova välähtää syttyessään
+    c.strokeStyle = artRGBA(s.col, (0.3 + 0.4 * Math.max(0, 1 - s.t)) * a);
+    c.lineWidth = viewH * (0.04 - (i % 3) * 0.008);
     c.stroke();
-  }
-  c.fillStyle = '#ffffff';
-  for (i = 0; i < 7; i++) {
-    a = t * 2.0 * dir + i * 0.9;
-    px = Math.cos(a) * r * 0.88;
-    py = Math.sin(a * 1.25) * r * 0.55;
-    c.beginPath(); c.arc(px, py, 3, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = artRGBA(s.col, 0.5 * a);
+    c.lineWidth = viewH * 0.008;
+    c.stroke();
   }
   c.restore();
 }
 
-function drawAuroraFollow(c) {
-  var x = aurCurtainX() - camX, half = viewW * AUR_BAND, g;
-  g = c.createLinearGradient(x - half, 0, x + half, 0);
-  g.addColorStop(0, 'rgba(140,255,210,0)');
-  g.addColorStop(0.5, 'rgba(140,255,210,0.2)');
+// Pisaran oma revontulikaistale, rengas lumessa ja itse pisara
+function drawAuroraDrop(c) {
+  var d = aurDrop, x, k, warnA, ring, g, i;
+  if (!d) return;
+  x = d.x - camX;
+  k = d.warn > 0 ? 0 : Math.min(1, d.t / d.dur);
+  warnA = d.warn > 0 ? 1 - d.warn / AUR_WARN : 1;
+  // Kirkas verho pisaran yllä: näyttää heti, mistä se tulee
+  g = c.createLinearGradient(0, 0, 0, viewH * 0.32);
+  g.addColorStop(0, 'rgba(140,255,210,' + (0.38 * warnA) + ')');
   g.addColorStop(1, 'rgba(140,255,210,0)');
   c.fillStyle = g;
-  c.fillRect(x - half, 0, half * 2, groundTop);
+  c.fillRect(x - viewH * 0.07, 0, viewH * 0.14, viewH * 0.32);
+  // Rengas lumessa kasvaa ja kirkastuu pisaran lähestyessä
+  ring = viewH * (0.055 + 0.03 * k) * (1 + Math.sin(globalT * 8) * 0.06);
+  c.save();
+  c.globalAlpha = 0.55 + 0.45 * Math.max(warnA * 0.5, k);
+  c.fillStyle = 'rgba(160,255,215,0.45)';
+  c.beginPath();
+  if (c.ellipse) c.ellipse(x, d.landY, ring, ring * 0.38, 0, 0, Math.PI * 2);
+  else c.arc(x, d.landY, ring, 0, Math.PI * 2);
+  c.fill();
+  c.strokeStyle = '#2a9a70';
+  c.lineWidth = Math.max(4, viewH * 0.008);
+  c.stroke();
+  c.strokeStyle = '#b8ffe0';
+  c.lineWidth = Math.max(2, viewH * 0.004);
+  c.stroke();
+  c.restore();
+  if (d.warn > 0) {
+    artGlow(c, x, d.y, viewH * 0.05 * warnA + 1, '#b8ffe0', 0.7);
+    return;
+  }
+  for (i = 1; i <= 3; i++) {
+    c.globalAlpha = 0.3 / i;
+    artCircle(c, x, d.y - i * viewH * 0.025, viewH * (0.022 - i * 0.004), '#b8ffe0', { line: false });
+  }
+  c.globalAlpha = 1;
+  artGlow(c, x, d.y, viewH * 0.07, '#8affd0', 0.75);
+  artCircle(c, x, d.y, viewH * 0.026, '#d8fff0', { shadeTo: '#4ad0a0', lineColor: '#2a9a70', hi: 0.55 });
 }
 
 function drawAurora() {
-  var i, g, lit, us, glowA;
+  var i, us, z;
   if (!beginPlayWorld()) return;
   drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
-  drawAuroraFollow(ctx);
+  drawAuroraStrands(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
-  for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], groundTop);
   propsDraw(ctx);
-  for (i = 0; i < aurLights.length; i++) {
-    g = aurLights[i];
-    if (g.collected) continue;
-    lit = aurLit(g);
-    glowA = g.glowT >= 1 ? 1 : Math.max(0, g.glowT);
-    if (lit) {
-      var gl = ctx.createRadialGradient(g.ax - camX, g.ay, 2, g.ax - camX, g.ay, viewH * 0.08);
-      gl.addColorStop(0, 'rgba(140,255,200,' + (0.9 * glowA) + ')');
-      gl.addColorStop(1, 'rgba(140,255,200,0)');
-      ctx.fillStyle = gl;
-      ctx.beginPath(); ctx.arc(g.ax - camX, g.ay, viewH * 0.08, 0, Math.PI * 2); ctx.fill();
-    }
-    // Valopallo tarrakirja-ilmeessä: kaksi sävyä, reunaviiva ja kiilto; sammuneena haalea
-    ctx.globalAlpha = lit ? 0.45 + 0.55 * glowA : 0.4;
-    if (lit) artCircle(ctx, g.ax - camX, g.ay + Math.sin(g.phase) * 3, viewH * 0.018, '#b8ffe0', { shadeTo: '#4ad0a0', lineColor: '#2a9a70', hi: 0.5 });
-    else artCircle(ctx, g.ax - camX, g.ay + Math.sin(g.phase) * 3, viewH * 0.018, '#b4d2e6', { shadeTo: '#7a9ab4', lineColor: '#5a7a94', hi: 0.3 });
-    ctx.globalAlpha = 1;
-  }
-  for (i = 0; i < aurWind.length; i++) {
-    drawAuroraGust(ctx, aurWind[i].x - camX, aurWind[i].y, globalT, aurWind[i].dir);
-  }
   drawNorthGate(ctx, aurGate.x - camX, groundTop + viewH * 0.02, viewH * 0.16, aurGate.open);
+  // Rengas piirretään yksisarvisen taakse, jos se on syvemmällä kuvassa
+  if (aurDrop && aurDrop.landY < unicorn.y) drawAuroraDrop(ctx);
   us = viewH / 800;
-  if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
   drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
-  ctx.globalAlpha = 1;
+  if (aurDrop && aurDrop.landY >= unicorn.y) drawAuroraDrop(ctx);
   drawParticlesLayer(ctx);
-  if (aurGate.open && !celebrating) drawEdgeArrow(ctx, aurGate.x);
+  if (!celebrating) {
+    z = aurZone();
+    if (aurDrop) drawEdgeArrow(ctx, aurDrop.x);
+    else if (aurGate.open) drawEdgeArrow(ctx, aurGate.x);
+    else if (aurCaught() >= AUR_QUOTA[z] && z < tasks.length) drawEdgeArrow(ctx, tasks[z].x);
+  }
   endPlayWorld();
   drawPickupHud(ctx, AUR_COUNT, function (k) { return aurLights[k] && aurLights[k].collected; },
     function (c, x, y, sz) { artCircle(c, x, y, sz * 0.45, '#7cffc4', { hi: 0.4 }); });
-  drawHearts(ctx);
   drawTaskOverlay(ctx);
 }

@@ -1,16 +1,30 @@
 'use strict';
 
-// Kelkkamäki: ruutu vierii itse. Ohjaa kelkkaa pidolla, lennä revontulirenkaiden
-// läpi, väistä kiviä. Sydämet ja lyhdyt käytössä.
+// Kelkkamäki: taikakelkka liukuu itse eteenpäin ja ruutu vierii. Pidä sormea
+// ruudulla: kelkka nousee ilmaan ja liukuu pehmeästi sormen luo (vaimennettu
+// jousi, ei nykivää kiihdytystä). Irrota: kelkka laskeutuu lumelle. Lennä
+// revontulirenkaiden läpi ja väistä Myrskynoidan äreitä lumipilviä (vievät
+// sydämen). Ohi mennyt rengas kaartaa uudelleen eteen, ei rangaistusta.
+// Saaren vaikein kenttä: sydämet ja lyhdyt käytössä.
 
-var SLED_RINGS = 8;
+var SLED_RINGS = 6;
 var sledRings = [];
-var sledRocks = [];
-var SLED_SPEEDS = [0.14, 0.17, 0.20];
+var sledRocks = [];     // äreät lumipilvet (nimi säilyy VT-kahvaa varten)
+var sled = { sx: 0, vx: 0 };   // kelkan paikka ruudulla ja nopeus suhteessa kameraan
+var SLED_SPEEDS = [0.15, 0.18, 0.21];
 var sledFx = { hopT: 0, bellT: 0 };   // kelkan pomppu ja kulkunen tökkäyksestä (vain piirtoon)
 var sledRingDefs = [
-  { fx: 0.12, fy: 0.38 }, { fx: 0.22, fy: 0.22 }, { fx: 0.32, fy: 0.48 }, { fx: 0.44, fy: 0.28 },
-  { fx: 0.56, fy: 0.44 }, { fx: 0.66, fy: 0.20 }, { fx: 0.78, fy: 0.40 }, { fx: 0.88, fy: 0.26 }
+  { fx: 0.14, fy: 0.30 }, { fx: 0.26, fy: 0.46 }, { fx: 0.45, fy: 0.22 },
+  { fx: 0.58, fy: 0.44 }, { fx: 0.80, fy: 0.24 }, { fx: 0.90, fy: 0.40 }
+];
+// Lumipilvet: fy = keskikorkeus maan yllä, amp = pystyheilunta (viewH)
+var sledCloudDefs = [
+  { fx: 0.12, fy: 0.40, amp: 0.06 }, { fx: 0.19, fy: 0.24, amp: 0.10 },
+  { fx: 0.24, fy: 0.42, amp: 0.10 }, { fx: 0.31, fy: 0.30, amp: 0.14 },
+  { fx: 0.43, fy: 0.36, amp: 0.12 }, { fx: 0.50, fy: 0.30, amp: 0.14 },
+  { fx: 0.55, fy: 0.24, amp: 0.10 }, { fx: 0.63, fy: 0.34, amp: 0.14 },
+  { fx: 0.74, fy: 0.40, amp: 0.12 }, { fx: 0.78, fy: 0.18, amp: 0.08 },
+  { fx: 0.86, fy: 0.30, amp: 0.14 }, { fx: 0.92, fy: 0.22, amp: 0.10 }
 ];
 
 function sledSpeed() {
@@ -36,16 +50,18 @@ function initSled() {
     sledRings[i].homeY = sledRings[i].ay;
   }
   sledRocks = [];
-  var tFx = [0.18, 0.38, 0.52, 0.64, 0.80];
-  for (i = 0; i < tFx.length; i++) {
+  for (i = 0; i < sledCloudDefs.length; i++) {
     sledRocks.push({
-      fx: tFx[i], x: tFx[i] * worldW,
-      baseY: viewH * (0.32 + (i % 3) * 0.12), y: 0,
-      amp: viewH * 0.07, t: i * 1.1, f: 1.1 + (i % 3) * 0.25
+      fx: sledCloudDefs[i].fx, x: sledCloudDefs[i].fx * worldW,
+      baseY: groundTop - sledCloudDefs[i].fy * viewH, y: 0,
+      amp: viewH * sledCloudDefs[i].amp, t: i * 1.1, f: 1.0 + (i % 3) * 0.2, puffT: 0
     });
+    sledRocks[i].y = sledRocks[i].baseY;
   }
-  princess.x = viewW * 0.25;
-  princess.y = groundTop - viewH * 0.28;
+  sled.sx = viewW * 0.22;
+  sled.vx = 0;
+  princess.x = sled.sx;
+  princess.y = groundTop;
   princess.vx = 0; princess.vy = 0; princess.facing = 1;
   princess.onGround = false; princess.walkPhase = 0;
   checkpoint.x = princess.x;
@@ -94,8 +110,10 @@ function respawnSled() {
   var i;
   camX = Math.min(Math.max(checkpoint.x - viewW * 0.25, 0), Math.max(0, worldW - viewW));
   princess.x = checkpoint.x;
-  princess.y = groundTop - viewH * 0.28;
+  princess.y = groundTop;
   princess.vx = 0; princess.vy = 0;
+  sled.sx = princess.x - camX;
+  sled.vx = 0;
   for (i = 0; i < sledRings.length; i++) {
     if (sledRings[i].homeX > checkpoint.x - viewW * 0.1 && !sledRings[i].collected) {
       sledRings[i].ax = sledRings[i].homeX;
@@ -115,7 +133,12 @@ function resizeSled(ratio) {
     sledRings[i].ax = sledRings[i].homeX;
     sledRings[i].ay = sledRings[i].homeY;
   }
-  for (i = 0; i < sledRocks.length; i++) sledRocks[i].x = sledRocks[i].fx * worldW;
+  for (i = 0; i < sledRocks.length; i++) {
+    sledRocks[i].x = sledRocks[i].fx * worldW;
+    sledRocks[i].baseY = groundTop - sledCloudDefs[i].fy * viewH;
+    sledRocks[i].amp = viewH * sledCloudDefs[i].amp;
+  }
+  sled.sx = princess.x - camX;
   sledSetupProps();
 }
 
@@ -132,64 +155,97 @@ function sledCollect(r) {
   soundStar(countCollected(sledRings));
 }
 
+// Ohi mennyt rengas kaartaa uudelleen eteen (ei sydäntä): kokeile uudestaan
 function sledMiss(r) {
-  loseHeart();
-  var ahead = camX + viewW * (1.1 + Math.random() * 0.2);
-  r.ax = Math.min(ahead, worldW - viewW * 0.5);
-  r.ay = groundTop - viewH * (0.18 + Math.random() * 0.32);
+  var ahead = camX + viewW * (1.05 + Math.random() * 0.15);
+  r.ax = Math.min(ahead, worldW - viewW * 0.3);
+  r.ay = groundTop - viewH * (0.18 + Math.random() * 0.3);
   r.returned = true;
 }
 
+// Lumipilven tömäys: sydän lähtee, lunta pöllähtää ja kelkka tipahtaa alemmas
+function sledHitCloud(cl) {
+  var k;
+  if (!loseHeart()) return;
+  cl.puffT = 0.8;
+  princess.vy = viewH * 0.35;
+  for (k = 0; k < 4; k++) voySnowPuff(cl.x + (k - 1.5) * viewH * 0.03, cl.y + viewH * 0.03, viewH * 0.01, groundTop);
+  spawnSparkles(princess.x, princess.y - viewH * 0.04, 10, '#c8d0e0');
+}
+
 function updateSled(dt) {
-  var i, pw = viewH * 0.045, r, dx, dy, rr, busy, scrolling, maxCam;
+  var i, r, dx, dy, rr, busy, scrolling, maxCam, camStep, wantSX, wantY, ky, cy, pw = viewH * 0.045;
   updateTasks(dt);
   propsUpdate(dt);
   if (sledFx.hopT > 0) sledFx.hopT -= dt;
   if (sledFx.bellT > 0) sledFx.bellT -= dt;
   busy = puzzleBusy();
   scrolling = !busy && !celebrating;
+  // Tehtäväkaari pysäyttää vierityksen, kun se on ruudun oikealla puolella,
+  // ja tehtävä alkaa heti: kelkan ei tarvitse ehtiä kaaren luo itse
   for (i = 0; i < tasks.length; i++) {
-    if (!tasks[i].opened && tasks[i].x - princess.x < viewW * 0.3 && tasks[i].x > princess.x - viewW * 0.05) scrolling = false;
+    if (tasks[i].opened || tasks[i].x - camX > viewW * 0.72) continue;
+    scrolling = false;
+    if (!activeTask && !celebrating) taskStart(tasks[i]);
   }
   maxCam = Math.max(0, worldW - viewW);
-  if (scrolling && camX < maxCam) camX = Math.min(maxCam, camX + sledSpeed() * dt);
-  if (!celebrating && holding && !busy) {
-    princess.vx += ((holdWorldX - princess.x) > 0 ? 1 : -1) * viewW * 0.55 * dt;
-    princess.vy += ((lastPY - princess.y) > 0 ? 1 : -1) * viewH * 0.7 * dt;
-    if (holdWorldX > princess.x + 8) princess.facing = 1;
-    else if (holdWorldX < princess.x - 8) princess.facing = -1;
-  } else {
-    princess.vx *= Math.max(0, 1 - dt * 1.8);
-    princess.vy += viewH * 0.88 * dt;
+  camStep = 0;
+  if (scrolling && camX < maxCam) {
+    camStep = Math.min(maxCam - camX, sledSpeed() * dt);
+    camX += camStep;
   }
-  princess.vx = Math.min(Math.max(princess.vx, -viewW * 0.3), viewW * 0.3);
-  princess.vy = Math.min(Math.max(princess.vy, -viewH * 0.40), viewH * 0.72);
-  if (!busy) { princess.x += princess.vx * dt; princess.y += princess.vy * dt; }
-  princess.x = Math.min(Math.max(princess.x, camX + viewW * 0.08), camX + viewW * 0.7);
+  if (!busy && !celebrating) {
+    // Sormi pohjassa: kelkka liukuu sormen luo vaimennetulla jousella.
+    // Ilman sormea kelkka laskeutuu lumelle ja liukuu paikallaan ruudulla.
+    if (holding) {
+      wantSX = Math.min(Math.max(lastPX, viewW * 0.1), viewW * 0.66);
+      wantY = Math.min(Math.max(lastPY + viewH * 0.04, viewH * 0.16), groundTop);
+      ky = 10;
+      if (lastPX > sled.sx + 8) princess.facing = 1;
+      else if (lastPX < sled.sx - 8) princess.facing = -1;
+    } else {
+      wantSX = sled.sx;
+      wantY = groundTop;
+      ky = 3;
+      princess.facing = 1;
+    }
+    sled.vx += ((wantSX - sled.sx) * 10 - sled.vx * 6) * dt;
+    princess.vy += ((wantY - princess.y) * ky - princess.vy * (ky > 5 ? 6 : 3.5)) * dt;
+    sled.vx = Math.min(Math.max(sled.vx, -viewW * 0.3), viewW * 0.3);
+    princess.vy = Math.min(Math.max(princess.vy, -viewH * 0.45), viewH * 0.45);
+    sled.sx += sled.vx * dt;
+    princess.y += princess.vy * dt;
+  }
+  sled.sx = Math.min(Math.max(sled.sx, viewW * 0.08), viewW * 0.7);
+  princess.x = camX + sled.sx;
   princess.x = Math.min(Math.max(princess.x, pw), worldW - pw);
-  if (princess.y <= viewH * 0.12 && princess.vy < 0) princess.vy = 0;
-  princess.y = Math.min(Math.max(princess.y, viewH * 0.12), groundTop);
+  if (princess.y < viewH * 0.14) { princess.y = viewH * 0.14; princess.vy = Math.max(0, princess.vy); }
+  if (princess.y > groundTop) { princess.y = groundTop; princess.vy = Math.min(0, princess.vy); }
   blockPrincessAtTasks();
+  sled.sx = princess.x - camX;
   princess.walkPhase += dt * 8;
   updateCheckpoints(princess.x, princess.y);
   for (i = 0; i < sledRings.length; i++) {
     r = sledRings[i];
     if (r.collected) continue;
     r.phase += dt * 2;
-    rr = viewH * 0.07;
+    rr = viewH * 0.075;
     dx = princess.x - r.ax; dy = princess.y - viewH * 0.05 - r.ay;
-    if (Math.abs(dx) < rr * 0.7 && Math.abs(dy) < rr) { sledCollect(r); continue; }
+    if (!busy && Math.abs(dx) < rr * 0.8 && Math.abs(dy) < rr) { sledCollect(r); continue; }
     if (camX >= maxCam - 2) {
-      if (r.ax < camX + viewW * 0.12 || r.ax > camX + viewW * 0.6) r.ax = camX + viewW * 0.3;
+      if (r.ax < camX + viewW * 0.12 || r.ax > camX + viewW * 0.6) {
+        r.ax = camX + viewW * (0.35 + (i % 3) * 0.1);
+        spawnSparkles(r.ax, r.ay, 8, r.color);
+      }
     } else if (r.ax < camX + viewW * 0.02 && !busy) sledMiss(r);
   }
   for (i = 0; i < sledRocks.length; i++) {
-    sledRocks[i].t += dt;
-    sledRocks[i].y = sledRocks[i].baseY + Math.sin(sledRocks[i].t * sledRocks[i].f) * sledRocks[i].amp;
-    dx = princess.x - sledRocks[i].x; dy = princess.y - sledRocks[i].y;
-    if (dx * dx + dy * dy < viewH * 0.055 * viewH * 0.055) {
-      if (loseHeart()) spawnSparkles(princess.x, princess.y, 8, '#c8d0e0');
-    }
+    cy = sledRocks[i];
+    if (!busy) cy.t += dt;
+    if (cy.puffT > 0) cy.puffT -= dt;
+    cy.y = cy.baseY + Math.sin(cy.t * cy.f) * cy.amp;
+    dx = princess.x - cy.x; dy = princess.y - viewH * 0.04 - cy.y;
+    if (!busy && !celebrating && dx * dx + dy * dy < viewH * 0.065 * viewH * 0.065) sledHitCloud(cy);
   }
   if (!celebrating && camX >= maxCam - 2 && countCollected(sledRings) === SLED_RINGS) startCelebration();
   updateParticles(dt);
@@ -235,6 +291,32 @@ function drawSledBody(c, x, y, s, facing) {
   c.restore();
 }
 
+// Myrskynoidan äreä lumipilvi: harmaanlila möhkäle kulmat kurtussa, hiutaleita alla
+function drawSledCloud(c, x, y, r, t, puff) {
+  var i, sq = puff > 0 ? 1 + Math.sin(puff * 20) * 0.08 : 1, fx, fy;
+  c.fillStyle = 'rgba(240,248,255,0.8)';
+  for (i = 0; i < 4; i++) {
+    fx = x + (i - 1.5) * r * 0.45 + Math.sin(t * 2 + i) * r * 0.1;
+    fy = y + r * (0.6 + ((t * 0.6 + i * 0.27) % 1) * 0.8);
+    c.beginPath(); c.arc(fx, fy, Math.max(1.5, r * 0.06), 0, Math.PI * 2); c.fill();
+  }
+  c.save();
+  c.translate(x, y);
+  c.scale(sq, 2 - sq);
+  artBlob(c, -r * 0.5, r * 0.1, r * 0.5, r * 0.4, '#9a98c0', { shadeTo: '#64628c', lineColor: '#46446a', hi: 0.15 });
+  artBlob(c, r * 0.5, r * 0.12, r * 0.48, r * 0.38, '#9a98c0', { shadeTo: '#64628c', lineColor: '#46446a', hi: 0.15 });
+  artBlob(c, 0, -r * 0.1, r * 0.62, r * 0.55, '#a8a6cc', { shadeTo: '#706e98', lineColor: '#46446a', hi: 0.22 });
+  artEye(c, -r * 0.2, 0, r * 0.1, 0, false);
+  artEye(c, r * 0.2, 0, r * 0.1, 0, false);
+  c.strokeStyle = '#2a2848';
+  c.lineWidth = Math.max(2, r * 0.07);
+  c.lineCap = 'round';
+  c.beginPath(); c.moveTo(-r * 0.34, -r * 0.2); c.lineTo(-r * 0.1, -r * 0.12); c.stroke();
+  c.beginPath(); c.moveTo(r * 0.34, -r * 0.2); c.lineTo(r * 0.1, -r * 0.12); c.stroke();
+  c.beginPath(); c.arc(0, r * 0.26, r * 0.12, Math.PI * 1.15, Math.PI * 1.85); c.stroke();
+  c.restore();
+}
+
 function drawSled() {
   var i, r, ry, us, hop;
   if (!beginPlayWorld()) return;
@@ -249,7 +331,7 @@ function drawSled() {
     drawNorthHoop(ctx, r.ax - camX, ry, viewH * 0.055, r.color, r.phase);
   }
   for (i = 0; i < sledRocks.length; i++) {
-    drawNorthIce(ctx, sledRocks[i].x - camX, sledRocks[i].y, viewH * 0.05);
+    drawSledCloud(ctx, sledRocks[i].x - camX, sledRocks[i].y, viewH * 0.06, globalT + i, sledRocks[i].puffT);
   }
   us = viewH / 520;
   hop = sledFx.hopT > 0 ? Math.sin(Math.min(1, (0.45 - sledFx.hopT) / 0.45) * Math.PI) * viewH * 0.025 : 0;

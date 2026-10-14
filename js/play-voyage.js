@@ -1,34 +1,37 @@
 'use strict';
 
-// Horisontti: merimatka Revontulimaan rantaan. Vene kulkee itse eteenpäin;
-// pidä sormea ohjataksesi: vasemmalla palaa, oikealla jatkaa, ylös/alas
-// väistää jäitä. Tähdet jotka jäävät taakse tulevat uudelleen eteen.
-// Laituri pysäyttää veneen; jäljellä olevat tähdet leijuvat luo.
+// Horisontti: merimatka Revontulimaan rantaan. Vene purjehtii itse eteenpäin;
+// sormi ohjaa vain ylös ja alas: vene liukuu pehmeästi sormen korkeudelle.
+// Jäälautta ei vie sydäntä, vaan vene tömähtää siitä sivuun ja hidastaa hetken.
+// Tähdet jotka jäävät taakse tulevat uudelleen eteen. Laituri pysäyttää
+// veneen; jäljellä olevat tähdet leijuvat luo.
 
 var VOY_STARS = 8;
-var voy = { x: 0, y: 0, vy: 0 };
+var voy = { x: 0, y: 0, vy: 0, bumpT: 0 };
+var VOY_SPEED = 0.18;   // purjehdusnopeus, viewW/s
 var voyStars = [];
 var voyIce = [];
 var voyDock = { fx: 0.94, x: 0, ready: false };
 var voyFx = { hopT: 0 };   // veneen pomppu tökkäyksestä (vain piirtoon)
 var voyStarDefs = [
-  { fx: 0.12, fy: 0.42 }, { fx: 0.22, fy: 0.28 }, { fx: 0.32, fy: 0.50 }, { fx: 0.44, fy: 0.32 },
-  { fx: 0.55, fy: 0.48 }, { fx: 0.66, fy: 0.26 }, { fx: 0.76, fy: 0.44 }, { fx: 0.86, fy: 0.30 }
+  { fx: 0.12, fy: 0.56 }, { fx: 0.22, fy: 0.40 }, { fx: 0.30, fy: 0.68 }, { fx: 0.44, fy: 0.44 },
+  { fx: 0.55, fy: 0.66 }, { fx: 0.62, fy: 0.40 }, { fx: 0.76, fy: 0.60 }, { fx: 0.86, fy: 0.42 }
 ];
 var voyIceDefs = [
-  { fx: 0.18, fy: 0.36, r: 0.055 }, { fx: 0.28, fy: 0.55, r: 0.05 },
-  { fx: 0.48, fy: 0.30, r: 0.06 }, { fx: 0.58, fy: 0.58, r: 0.05 },
-  { fx: 0.72, fy: 0.38, r: 0.055 }, { fx: 0.82, fy: 0.56, r: 0.05 }
+  { fx: 0.18, fy: 0.48, r: 0.055 }, { fx: 0.27, fy: 0.74, r: 0.05 },
+  { fx: 0.48, fy: 0.42, r: 0.06 }, { fx: 0.58, fy: 0.76, r: 0.05 },
+  { fx: 0.72, fy: 0.48, r: 0.055 }, { fx: 0.82, fy: 0.72, r: 0.05 }
 ];
 
-function voyWaterTop() { return viewH * 0.22; }
-function voyWaterBot() { return viewH * 0.70; }
+// Vene kulkee horisontin alapuolella; yläreuna jättää tilaa HUDille
+function voyWaterTop() { return viewH * 0.34; }
+function voyWaterBot() { return viewH * 0.80; }
 
 function initVoyage() {
   var i;
   tasks = [makeTask(0.33, 'count'), makeTask(0.64, 'compare')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
-  makeCheckpoints([0.36, 0.68]);
+  makeCheckpoints([]);
   voyStars = [];
   for (i = 0; i < VOY_STARS; i++) {
     voyStars.push({
@@ -46,8 +49,9 @@ function initVoyage() {
   voyDock.x = voyDock.fx * worldW;
   voyDock.ready = false;
   voy.x = viewW * 0.14;
-  voy.y = viewH * 0.46;
+  voy.y = viewH * 0.56;
   voy.vy = 0;
+  voy.bumpT = 0;
   princess.x = voy.x;
   princess.y = voy.y;
   princess.facing = 1;
@@ -218,11 +222,24 @@ function voyMissedStar() {
   return null;
 }
 
+// Jäälautta tömäyttää veneen sivuun: roiske, tömähdys ja hetken hitaampi vauhti
+function voyBump(ice, dy) {
+  var k;
+  voy.bumpT = 0.9;
+  voy.vy = (dy >= 0 ? 1 : -1) * viewH * 0.45;
+  for (k = 0; k < 4; k++) voyDroplet(voy.x + (k - 1.5) * viewH * 0.03, voyBoatY(), voyBoatY() + viewH * 0.05);
+  spawnSparkles(voy.x, voyBoatY(), 8, '#d0e8f8');
+  artShakeStart(viewH * 0.008, 0.2);
+  playNote(220, 0, 0.12, 'triangle', 0.3);
+  playNote(165, 0.08, 0.2, 'triangle', 0.25);
+}
+
 function updateVoyage(dt) {
-  var i, n, dx, dy, busy, blocked, wantY, wantX, rr, atEnd;
+  var i, n, dx, dy, busy, blocked, wantY, rr, atEnd;
   updateTasks(dt);
   propsUpdate(dt);
   if (voyFx.hopT > 0) voyFx.hopT -= dt;
+  if (voy.bumpT > 0) voy.bumpT -= dt;
   busy = puzzleBusy();
   blocked = false;
   atEnd = voyAtDock();
@@ -236,31 +253,24 @@ function updateVoyage(dt) {
         if (!activeTask) taskStart(n);
       }
     }
-    if (!blocked) {
-      if (holding) {
-        wantX = lastPX + camX;
-        voy.x += ((wantX > voy.x ? 1 : -1) * viewW * 0.22) * dt;
-      } else if (!atEnd) {
-        voy.x += viewW * 0.20 * dt;
-      }
-    }
+    // Vene purjehtii itse; tömähdyksen jälkeen hetken hitaammin
+    if (!blocked && !atEnd) voy.x += viewW * VOY_SPEED * (voy.bumpT > 0 ? 0.45 : 1) * dt;
     voy.x = Math.min(Math.max(voy.x, voyXMin()), voyXMax());
     atEnd = voyAtDock();
-    wantY = holding ? lastPY : voy.y;
-    voy.vy += ((wantY > voy.y ? 1 : -1) * viewH * 0.7 - voy.vy * 0.8) * dt;
+    // Sormi ohjaa vain korkeutta: vaimennettu jousi kohti sormea, ilman sormea
+    // vene lipuu hiljalleen paikoilleen (ei kiihdy itsestään mihinkään)
+    wantY = holding ? Math.min(Math.max(lastPY, voyWaterTop()), voyWaterBot()) : voy.y;
+    voy.vy += ((wantY - voy.y) * 9 - voy.vy * 5) * dt;
+    voy.vy = Math.min(Math.max(voy.vy, -viewH * 0.45), viewH * 0.45);
     voy.y += voy.vy * dt;
-    voy.y = Math.min(Math.max(voy.y, voyWaterTop()), voyWaterBot());
+    if (voy.y < voyWaterTop()) { voy.y = voyWaterTop(); voy.vy = Math.max(0, voy.vy); }
+    if (voy.y > voyWaterBot()) { voy.y = voyWaterBot(); voy.vy = Math.min(0, voy.vy); }
     for (i = 0; i < voyIce.length; i++) {
       voyIce[i].t += dt;
       voyIce[i].y = voyIce[i].baseY + Math.sin(voyIce[i].t * 1.3) * viewH * 0.025;
       dx = voy.x - voyIce[i].x; dy = voy.y - voyIce[i].y;
       rr = voyIce[i].r + viewH * 0.04;
-      if (dx * dx + dy * dy < rr * rr) {
-        if (loseHeart()) {
-          voy.y += (dy >= 0 ? 1 : -1) * viewH * 0.08;
-          spawnSparkles(voy.x, voy.y, 8, '#d0e8f8');
-        }
-      }
+      if (voy.bumpT <= 0 && dx * dx + dy * dy < rr * rr) voyBump(voyIce[i], dy);
     }
     for (i = 0; i < voyStars.length; i++) {
       n = voyStars[i];
@@ -275,15 +285,13 @@ function updateVoyage(dt) {
         voyPlaceStar(n, voy.x + viewW * (0.32 + Math.random() * 0.22));
       }
       dx = n.ax - voy.x; dy = n.ay - voy.y;
-      if (dx * dx + dy * dy < viewH * 0.08 * viewH * 0.08) voyCollect(n);
+      if (dx * dx + dy * dy < viewH * 0.09 * viewH * 0.09) voyCollect(n);
     }
   }
   princess.x = voy.x;
   princess.y = voy.y;
-  if (holding && lastPX + camX < voy.x - 8) princess.facing = -1;
-  else princess.facing = 1;
+  princess.facing = 1;
   followCam(voy.x, dt);
-  updateCheckpoints(voy.x, voy.y);
   if (voyDock.ready && !celebrating && atEnd) startCelebration();
   updateParticles(dt);
   updateConfetti(dt);
@@ -299,47 +307,49 @@ function voyageLayers() {
 function renderVoyageBg(b, w, h) {
   renderVoyageFar(b, w, h); renderVoyageMid(b, w, h); renderVoyageNear(b, w, h);
 }
+// Horisontti on korkealla (VOY_HORIZON): taivaalle jää tilaa revontulelle
+var VOY_HORIZON = 0.30;
 function renderVoyageFar(b, w, h) {
-  var i, x, sky = b.createLinearGradient(0, 0, 0, h * 0.28);
+  var i, x, hz = h * VOY_HORIZON, sky = b.createLinearGradient(0, 0, 0, hz);
   sky.addColorStop(0, '#061018');
-  sky.addColorStop(0.55, '#102838');
-  sky.addColorStop(1, '#1a4860');
+  sky.addColorStop(0.55, '#123048');
+  sky.addColorStop(1, '#2a6080');
   b.fillStyle = sky;
   b.fillRect(0, 0, w, h);
   b.fillStyle = '#fff8d8';
-  for (i = 0; i < 36; i++) {
+  for (i = 0; i < 40; i++) {
     x = w * ((i * 0.137 + 0.04) % 1);
     b.globalAlpha = 0.28 + (i % 5) * 0.14;
-    b.beginPath(); b.arc(x, h * (0.03 + (i * 0.061) % 0.16), 1.0 + (i % 4) * 0.45, 0, Math.PI * 2); b.fill();
+    b.beginPath(); b.arc(x, h * (0.03 + (i * 0.061) % 0.2), 1.0 + (i % 4) * 0.45, 0, Math.PI * 2); b.fill();
   }
   b.globalAlpha = 1;
-  drawBgSun(b, w * 0.82, h * 0.07, h * 0.04, 0.18, '#c8f0ff', '#f4fbff', '#d8eeff');
-  fillHillBand(b, w, h, h * 0.22, '#1a3848', function (px) {
-    return h * 0.168 - Math.sin(px * 0.0016 + 0.4) * h * 0.028 - Math.sin(px * 0.004) * h * 0.012;
+  drawBgSun(b, w * 0.82, h * 0.08, h * 0.045, 0.18, '#c8f0ff', '#f4fbff', '#d8eeff');
+  fillHillBand(b, w, h, hz + 2, '#1a3848', function (px) {
+    return hz - h * 0.035 - Math.sin(px * 0.0016 + 0.4) * h * 0.03 - Math.sin(px * 0.004) * h * 0.012;
   });
   b.fillStyle = 'rgba(236,246,255,0.7)';
   b.beginPath();
-  b.moveTo(0, h * 0.155);
-  for (x = 0; x <= w; x += 12) b.lineTo(x, h * 0.155 - Math.sin(x * 0.0016 + 0.4) * h * 0.016);
-  for (x = w; x >= 0; x -= 12) b.lineTo(x, h * 0.188 - Math.sin(x * 0.0016 + 0.4) * h * 0.01);
+  b.moveTo(0, hz - h * 0.045);
+  for (x = 0; x <= w; x += 12) b.lineTo(x, hz - h * 0.045 - Math.sin(x * 0.0016 + 0.4) * h * 0.016);
+  for (x = w; x >= 0; x -= 12) b.lineTo(x, hz - h * 0.012 - Math.sin(x * 0.0016 + 0.4) * h * 0.01);
   b.closePath(); b.fill();
   for (i = 0; i < 8; i++) {
-    drawNorthPine(b, w * (0.04 + i * 0.12), h * 0.195, h * (0.055 + (i % 3) * 0.015), '#142838');
+    drawNorthPine(b, w * (0.04 + i * 0.12), hz - h * 0.004, h * (0.055 + (i % 3) * 0.015), '#142838');
   }
 }
 function renderVoyageMid(b, w, h) {
-  var i, x, water = b.createLinearGradient(0, h * 0.20, 0, h);
-  water.addColorStop(0, '#4aa8c8');
-  water.addColorStop(0.35, '#2a7090');
-  water.addColorStop(1, '#143848');
+  var i, x, hz = h * VOY_HORIZON, water = b.createLinearGradient(0, hz, 0, h);
+  water.addColorStop(0, '#5ab8d4');
+  water.addColorStop(0.3, '#2e7a9c');
+  water.addColorStop(1, '#16405a');
   b.fillStyle = water;
-  b.fillRect(0, h * 0.20, w, h * 0.80);
-  b.fillStyle = 'rgba(210,240,255,0.18)';
-  for (i = 0; i < 14; i++) {
+  b.fillRect(0, hz, w, h - hz);
+  b.fillStyle = 'rgba(210,240,255,0.2)';
+  for (i = 0; i < 16; i++) {
     x = (i * 277.1) % w;
     b.beginPath();
-    if (b.ellipse) b.ellipse(x, h * (0.28 + (i % 5) * 0.1), h * 0.11, h * 0.012, 0, 0, Math.PI * 2);
-    else b.arc(x, h * 0.4, h * 0.05, 0, Math.PI * 2);
+    if (b.ellipse) b.ellipse(x, h * (0.36 + (i % 5) * 0.09), h * 0.11, h * 0.012, 0, 0, Math.PI * 2);
+    else b.arc(x, h * 0.45, h * 0.05, 0, Math.PI * 2);
     b.fill();
   }
 }
@@ -376,12 +386,31 @@ function renderVoyageNear(b, w, h) {
   // Kiinnityspaalu ja laiturin kuuset ovat tökättäviä koristeita (voySetupProps)
 }
 
+// Revontuli taivaalla ja sen heijastus vedessä (peilataan horisontin yli).
+// Koko ruudun verho näytti veden päällä savulta.
+function drawVoyageAurora(c) {
+  var hz = viewH * VOY_HORIZON, hh = hz / 0.7;
+  c.save();
+  c.beginPath(); c.rect(0, 0, viewW, hz); c.clip();
+  // Kahdesti piirrettynä verho hehkuu kirkkaammin matalalla taivaalla
+  drawAuroraCurtain(c, viewW, hh, globalT, camX);
+  drawAuroraCurtain(c, viewW, hh, globalT + 3.1, camX * 1.3);
+  c.restore();
+  c.save();
+  c.beginPath(); c.rect(0, hz, viewW, viewH * 0.4); c.clip();
+  c.globalAlpha = 0.45;
+  c.translate(0, hz);
+  c.scale(1, -0.9);
+  c.translate(0, -hz);
+  drawAuroraCurtain(c, viewW, hh, globalT, camX);
+  c.restore();
+}
+
 function drawVoyage() {
   var i, s, ps, miss, hop;
   if (!beginPlayWorld()) return;
-  drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
+  drawVoyageAurora(ctx);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
-  for (i = 0; i < checkpoints.length; i++) drawLantern(ctx, checkpoints[i], voyWaterBot());
   for (i = 0; i < voyStars.length; i++) {
     s = voyStars[i];
     if (s.collected) continue;
@@ -399,10 +428,8 @@ function drawVoyage() {
   }
   ps = viewH / 520;
   hop = voyFx.hopT > 0 ? Math.sin(Math.min(1, (0.5 - voyFx.hopT) / 0.5) * Math.PI) * viewH * 0.03 : 0;
-  if (hurtT > 0 && Math.sin(globalT * 22) > 0) ctx.globalAlpha = 0.45;
   drawNorthBoat(ctx, voy.x - camX, voyBoatY() - hop, viewH * 0.12);
   drawPrincessFree(ctx, voy.x - camX, voy.y - hop, ps, princess.facing, globalT * 4, true, globalT);
-  ctx.globalAlpha = 1;
   drawParticlesLayer(ctx);
   if (!celebrating) {
     miss = voyMissedStar();
@@ -412,6 +439,5 @@ function drawVoyage() {
   endPlayWorld();
   drawPickupHud(ctx, VOY_STARS, function (k) { return voyStars[k] && voyStars[k].collected; },
     function (c, x, y, sz) { drawStar(c, x, y, sz, 0, 0); });
-  drawHearts(ctx);
   drawTaskOverlay(ctx);
 }

@@ -878,7 +878,7 @@ var WORLDS = [
     levels: [
       {
         kind: 'voyage', room: 'H', name: 'Horisontti', color: '#3a88a8', script: 'play-voyage',
-        control: 'tap', usesJump: false, usesWand: false, usesHearts: true,
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false,
         bgColor: '#1a4060', ambient: 'sparkle', fg: null,
         init: function () { initVoyage(); },
         update: function (dt) { updateVoyage(dt); },
@@ -892,7 +892,7 @@ var WORLDS = [
       },
       {
         kind: 'aurora', room: 'R', name: 'Revontulipolku', color: '#7cffc4', script: 'play-aurora',
-        control: 'ride', usesJump: false, usesWand: false, usesHearts: true,
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false,
         bgColor: '#123048', ambient: 'sparkle', fg: { kind: 'snow', color: 'rgba(200,230,240,0.75)' },
         init: function () { initAurora(); },
         update: function (dt) { updateAurora(dt); },
@@ -920,7 +920,7 @@ var WORLDS = [
       },
       {
         kind: 'sled', room: 'K', name: 'Kelkkamäki', color: '#c46b3a', script: 'play-sled',
-        control: 'fly', usesJump: true, jumpKind: 'flap', usesWand: false, usesHearts: true,
+        control: 'fly', usesJump: false, usesWand: false, usesHearts: true,
         bgColor: '#123048', ambient: 'sparkle', fg: null,
         init: function () { initSled(); },
         update: function (dt) { updateSled(dt); },
@@ -948,7 +948,7 @@ var WORLDS = [
       },
       {
         kind: 'foxguard', room: 'F', name: 'Revontulikettu', color: '#e88a3a', script: 'play-foxguard',
-        control: 'ride', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5000,
+        control: 'ride', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6500,
         bgColor: '#0e2438', ambient: 'stars', fg: { kind: 'snow', color: 'rgba(200,230,240,0.75)' },
         init: function () { initFoxguard(); },
         update: function (dt) { updateFoxguard(dt); },

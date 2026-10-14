@@ -1,23 +1,34 @@
 'use strict';
 
-// Porolaakso: ratsastus. Kolme poroa seuraa; revontulipulssi pelästyttää
-// ne kivien taa. Napauta piilossa olevaa poroa. Vie kaikki aitaukseen.
-// Ei sydämiä.
+// Porolaakso: ratsastus. Viisi poroa laiduntaa pitkin laaksoa (kaksi kurkistaa
+// kiven takaa, vain sarvet näkyvät). Ratsasta poron luo tai napauta sitä: poro
+// pomppaa ja liittyy jonoon yksisarvisen perään. Jono seuraa minne ratsastat;
+// aitauksen luona porot hyppäävät yksi kerrallaan sisään. Ei sydämiä, ei
+// säikähtelyä: helppo ja pitkä kenttä.
 
-var REIN_N = 3;
+var REIN_N = 5;
 var reinDeer = [];
 var reinRocks = [];
+var reinTrain = [];      // jonossa kulkevat porot liittymisjärjestyksessä
 var reinPen = { fx: 0.94, x: 0 };
-var reinPulseT = 4.2;
-var reinRockDefs = [0.16, 0.30, 0.46, 0.60, 0.74, 0.86];
-var reinStart = [{ fx: 0.10, fy: 0.28 }, { fx: 0.14, fy: 0.62 }, { fx: 0.18, fy: 0.45 }];
+var reinDefs = [
+  { fx: 0.13, fy: 0.35, rock: false }, { fx: 0.25, fy: 0, rock: true },
+  { fx: 0.47, fy: 0.62, rock: false }, { fx: 0.58, fy: 0, rock: true },
+  { fx: 0.82, fy: 0.45, rock: false }
+];
+var reinRockDefs = [0.25, 0.40, 0.58, 0.76];
 
 function reinPathY(f) {
   return groundTop + (groundBottom - groundTop) * f;
 }
+// Poron laidunpaikka: kiven takana lähellä polun yläreunaa, muuten polulla
+function reinHomeSpot(i) {
+  var d = reinDefs[i];
+  return { x: d.fx * worldW, y: d.rock ? groundTop + viewH * 0.012 : reinPathY(d.fy) };
+}
 
 function initReindeer() {
-  var i;
+  var i, sp;
   tasks = [makeTask(0.36, 'give'), makeTask(0.68, 'minus')];
   for (i = 0; i < tasks.length; i++) tasks[i].x = tasks[i].fx * worldW;
   reinRocks = [];
@@ -26,18 +37,17 @@ function initReindeer() {
   }
   reinPen.x = reinPen.fx * worldW;
   reinDeer = [];
+  reinTrain = [];
   for (i = 0; i < REIN_N; i++) {
+    sp = reinHomeSpot(i);
     reinDeer.push({
-      x: reinStart[i].fx * worldW, y: reinPathY(reinStart[i].fy),
-      tx: 0, ty: 0, state: 'follow', hop: 0, rock: -1, facing: 1, idleT: 1 + i,
-      shakeT: 0, noseT: 0
+      x: sp.x, y: sp.y, tx: sp.x, ty: sp.y, hx: sp.x, hy: sp.y,
+      state: reinDefs[i].rock ? 'hid' : 'graze', hop: 0, jumpT: 0, rock: reinDefs[i].rock ? reinNearestRock(sp.x) : -1,
+      facing: i % 2 ? -1 : 1, idleT: 1 + i * 0.4, shakeT: 0, noseT: 0, slot: 0
     });
-    reinDeer[i].tx = reinDeer[i].x;
-    reinDeer[i].ty = reinDeer[i].y;
   }
-  reinPulseT = 4.2;
   unicorn.speed = 265;
-  unicorn.x = unicorn.tx = viewW * 0.22;
+  unicorn.x = unicorn.tx = viewW * 0.08;
   unicorn.y = unicorn.ty = reinPathY(0.5);
   unicorn.facing = 1;
   unicorn.moving = false;
@@ -50,9 +60,13 @@ function initReindeer() {
 function respawnReindeer() {}
 
 function resizeReindeer(ratio) {
-  var i;
-  for (i = 0; i < reinDeer.length; i++) { reinDeer[i].x *= ratio; reinDeer[i].tx *= ratio; }
+  var i, sp;
   for (i = 0; i < reinRocks.length; i++) reinRocks[i].x = reinRockDefs[i] * worldW;
+  for (i = 0; i < reinDeer.length; i++) {
+    sp = reinHomeSpot(i);
+    reinDeer[i].hx = sp.x; reinDeer[i].hy = sp.y;
+    reinDeer[i].x *= ratio; reinDeer[i].tx *= ratio;
+  }
   reinPen.x = reinPen.fx * worldW;
   reinSetupProps();
 }
@@ -66,17 +80,17 @@ function reinSetupProps() {
   for (i = 0; i < reinDeer.length; i++) reinDeerProp(reinDeer[i]);
   voyPineProp(w * 0.05, groundTop, h * 0.14, '#1a3850');
   reinKotaProp(w * 0.88, groundTop + h * 0.01, h * 0.16, 0);
-  reinSnowmanProp(w * 0.24, groundTop - h * 0.01, h * 0.08);
+  reinSnowmanProp(w * 0.31, groundTop - h * 0.01, h * 0.08);
 }
 
-// Poron osuma-alue seuraa poroa; piilossa oleva poro ei ole tökättävä
-// (sen napautus on pelimekaniikkaa ja käsitellään ennen koristeita).
+// Poron osuma-alue seuraa poroa; laiduntava tai piilossa oleva poro ei ole
+// tökättävä (sen napautus kutsuu poron jonoon ennen koristeita).
 function reinDeerProp(b) {
   propAdd({
     x: b.x, y: b.y, r: viewH * 0.06, hy: viewH * 0.045, color: '#f0d2aa', note: 587,
     draw: function () {},
     update: function (p, dt) {
-      p.x = (b.state === 'hid' || b.state === 'hiding') ? -1e6 : b.x;
+      p.x = (b.state === 'hid' || b.state === 'graze') ? -1e6 : b.x;
       p.y = b.y;
       if (b.shakeT > 0) b.shakeT -= dt;
       if (b.noseT > 0) b.noseT -= dt;
@@ -172,6 +186,11 @@ function reinHomeCount() {
   for (i = 0; i < reinDeer.length; i++) if (reinDeer[i].state === 'home') n++;
   return n;
 }
+function reinFoundCount() {
+  var i, n = 0;
+  for (i = 0; i < reinDeer.length; i++) if (reinDeer[i].state !== 'graze' && reinDeer[i].state !== 'hid') n++;
+  return n;
+}
 
 function reinNearestRock(x) {
   var i, best = 0, bd = 1e9, d;
@@ -182,77 +201,102 @@ function reinNearestRock(x) {
   return best;
 }
 
-function reinScare(b) {
-  b.state = 'hiding';
-  b.rock = reinNearestRock(b.x + (Math.random() - 0.5) * viewW * 0.15);
-  b.tx = reinRocks[b.rock].x;
-  b.ty = groundTop + viewH * 0.03;
+// Poro löytyi: pomppaa ilosta ja liittyy jonon perään
+function reinJoin(b) {
+  b.state = 'follow';
+  b.jumpT = 0.6;
+  reinTrain.push(b);
+  spawnSparkles(b.x, b.y - viewH * 0.06, 12, '#ffe27a');
+  playNote(523 + reinTrain.length * 66, 0, 0.12, 'triangle', 0.3);
+  playNote(784 + reinTrain.length * 66, 0.1, 0.2, 'triangle', 0.3);
 }
 
 function handleReindeerTap(px, py) {
   if (!running || celebrating || puzzleBusy()) return;
-  var wx = px + camX, i, b, dx, dy;
+  var wx = px + camX, i, b, dx, dy, hy;
   for (i = 0; i < reinDeer.length; i++) {
     b = reinDeer[i];
-    if (b.state !== 'hid') continue;
-    dx = wx - b.x; dy = py - b.y;
-    if (dx * dx + dy * dy < viewH * 0.1 * viewH * 0.1) {
-      b.state = 'follow';
-      spawnSparkles(b.x, b.y, 8, '#ffe27a');
-      playNote(660, 0, 0.12, 'sine', 0.3);
-      return;
-    }
+    if (b.state !== 'graze' && b.state !== 'hid') continue;
+    // Piilossa olevasta porosta näkyvät sarvet kiven yllä: osuma-alue niiden kohdalla
+    hy = b.state === 'hid' ? b.y - viewH * 0.06 : b.y - viewH * 0.04;
+    dx = wx - b.x; dy = py - hy;
+    if (dx * dx + dy * dy < viewH * 0.11 * viewH * 0.11) { reinJoin(b); return; }
   }
-  // Ei osunut piilossa olevaan poroon: koriste saa heilahtaa, ratsastus jatkuu kuten ennen
+  // Ei osunut löytämättömään poroon: koriste saa heilahtaa, ratsastus jatkuu
   propsTap(wx, py);
   setWalkTarget(px, py);
 }
 
 function updateReindeer(dt) {
-  var i, b, dx, dy, dist, step, busy, spd;
+  var i, b, dx, dy, dist, step, busy, spd, lead, gap, atPen, slot;
   updateTasks(dt);
   propsUpdate(dt);
   busy = puzzleBusy();
+  // Yksisarvinen pysähtyy aitauksen eteen, jotta porot näkyvät hyppäämässä sisään
+  unicorn.tx = Math.min(unicorn.tx, reinPen.x - viewH * 0.24);
   northRideUnicorn(dt, busy);
-  if (!busy && !celebrating) {
-    reinPulseT -= dt;
-    if (reinPulseT <= 0) {
-      reinPulseT = 5.2 + Math.random() * 1.4;
-      spawnSparkles(unicorn.x, viewH * 0.2, 16, '#7cffc4');
-      playNote(330, 0, 0.18, 'sine', 0.25);
-      for (i = 0; i < reinDeer.length; i++) {
-        b = reinDeer[i];
-        if (b.state === 'follow' && Math.abs(b.x - unicorn.x) < viewW * 0.32) reinScare(b);
+  atPen = unicorn.x > reinPen.x - viewH * 0.45;
+  for (i = 0; i < reinDeer.length; i++) {
+    b = reinDeer[i];
+    if (b.jumpT > 0) b.jumpT -= dt;
+    // Ratsasta lähelle: löytämätön poro huomaa yksisarvisen
+    if ((b.state === 'graze' || b.state === 'hid') && !busy && !celebrating &&
+        Math.abs(unicorn.x - b.x) < viewH * 0.17 && Math.abs(unicorn.y - b.y) < viewH * 0.16) reinJoin(b);
+    if (b.state === 'graze') {
+      // Laidunnus: pieniä askelia kotipaikan ympärillä
+      b.idleT -= dt;
+      if (b.idleT <= 0) {
+        b.tx = b.hx + (Math.random() - 0.5) * viewH * 0.2;
+        b.ty = Math.min(Math.max(b.hy + (Math.random() - 0.5) * viewH * 0.06, groundTop + viewH * 0.02), groundBottom - viewH * 0.01);
+        b.idleT = 1.6 + Math.random() * 1.4;
       }
     }
   }
+  // Jono: jokainen poro seuraa edellistä (ensimmäinen yksisarvista)
+  slot = 0;
+  for (i = 0; i < reinTrain.length; i++) {
+    b = reinTrain[i];
+    if (b.state !== 'follow') continue;
+    if (atPen && !busy && !celebrating) {
+      // Aitaus: porot hyppäävät sisään yksi kerrallaan omille paikoilleen
+      b.state = 'enter';
+      b.slot = reinHomeCount() + slot;
+      slot++;
+      b.tx = reinPen.x - viewH * 0.05 + (b.slot % 3) * viewH * 0.08;
+      b.ty = groundTop + viewH * (0.005 + Math.floor(b.slot / 3) * 0.035);
+      b.jumpT = 0.6;
+      continue;
+    }
+    lead = i === 0 ? null : reinTrain[i - 1];
+    gap = viewH * (i === 0 ? 0.16 : 0.12);
+    if (lead && lead.state === 'follow') {
+      b.tx = lead.x - lead.facing * gap;
+      b.ty = lead.y + viewH * 0.01;
+    } else {
+      b.tx = unicorn.x - unicorn.facing * gap;
+      b.ty = unicorn.y + viewH * 0.01;
+    }
+    b.tx = Math.max(viewW * 0.03, b.tx);
+    b.ty = Math.min(Math.max(b.ty, groundTop + viewH * 0.01), groundBottom);
+  }
   for (i = 0; i < reinDeer.length; i++) {
     b = reinDeer[i];
-    b.hop += dt * 8;
-    if (b.state === 'follow') {
-      b.tx = Math.max(viewW * 0.08, unicorn.x - unicorn.facing * viewH * (0.14 + i * 0.09));
-      b.ty = unicorn.y + (i - 1) * viewH * 0.03;
-    } else if (b.state === 'free') {
-      b.idleT -= dt;
-      if (b.idleT <= 0) {
-        b.tx = b.x + (Math.random() - 0.5) * viewW * 0.12;
-        b.ty = reinPathY(0.2 + Math.random() * 0.6);
-        b.idleT = 1.4 + Math.random();
-      }
-    }
+    if (busy && b.state !== 'graze') continue;
     dx = b.tx - b.x; dy = b.ty - b.y;
     dist = Math.sqrt(dx * dx + dy * dy);
-    spd = b.state === 'hiding' ? viewW * 0.32 : viewW * 0.22;
-    if (dist > 4) {
+    spd = b.state === 'graze' ? viewW * 0.04 : viewW * 0.3;
+    if (b.state === 'hid') spd = 0;
+    if (dist > 4 && spd > 0) {
       step = Math.min(spd * dt, dist);
       b.x += (dx / dist) * step;
       b.y += (dy / dist) * step;
       if (Math.abs(dx) > 3) b.facing = dx > 0 ? 1 : -1;
-    } else if (b.state === 'hiding') b.state = 'hid';
-    if (b.state === 'follow' && Math.abs(b.x - reinPen.x) < viewH * 0.12 && Math.abs(unicorn.x - reinPen.x) < viewH * 0.16) {
+      b.hop += dt * (b.state === 'graze' ? 3 : 9);
+    } else if (b.state === 'enter') {
       b.state = 'home';
-      spawnSparkles(reinPen.x, groundTop, 10, '#ffe27a');
-      playNote(784, 0, 0.2, 'triangle', 0.35);
+      b.facing = -1;
+      spawnSparkles(b.x, b.y - viewH * 0.05, 12, '#ffe27a');
+      playNote(659 + reinHomeCount() * 80, 0, 0.2, 'triangle', 0.35);
     }
   }
   if (!celebrating && reinHomeCount() === REIN_N) startCelebration();
@@ -350,16 +394,21 @@ function drawNorthPen(c, x, y, s) {
 }
 
 function drawReindeer() {
-  var i, r, b, us, hid, hx, hy, order = [];
+  var i, r, b, us, hid, hx, hy, order = [], miss, best, jump;
   if (!beginPlayWorld()) return;
   drawAuroraCurtain(ctx, viewW, viewH, globalT, camX);
   for (i = 0; i < tasks.length; i++) drawTaskArch(ctx, tasks[i]);
   propsDraw(ctx);
-  drawNorthPen(ctx, reinPen.x - camX, groundTop + viewH * 0.02, viewH * 0.12);
+  // Aitauksessa olevat porot piirretään aidan taakse
+  for (i = 0; i < reinDeer.length; i++) {
+    b = reinDeer[i];
+    if (b.state === 'home') drawNorthDeer(ctx, b.x - camX, b.y - Math.abs(Math.sin(globalT * 3 + i)) * viewH * 0.01, viewH * 0.07, b.facing, 0, b);
+  }
+  drawNorthPen(ctx, reinPen.x - camX, groundTop + viewH * 0.06, viewH * 0.2);
   us = viewH / 800;
   for (i = 0; i < reinDeer.length; i++) {
     b = reinDeer[i];
-    if (b.state === 'hid' || b.state === 'hiding') continue;
+    if (b.state === 'hid' || b.state === 'home') continue;
     order.push({ y: b.y, d: b });
   }
   order.push({ y: unicorn.y, u: true });
@@ -369,39 +418,44 @@ function drawReindeer() {
       drawUnicorn(ctx, unicorn.x - camX, unicorn.y, us * 1.6, unicorn.facing, unicorn.walkPhase, unicorn.moving, globalT);
     } else {
       b = order[i].d;
-      drawNorthDeer(ctx, b.x - camX, b.y, viewH * 0.07, b.facing, b.hop, b);
+      jump = b.jumpT > 0 ? Math.sin((0.6 - b.jumpT) / 0.6 * Math.PI) * viewH * 0.06 : 0;
+      drawNorthDeer(ctx, b.x - camX, b.y - jump, viewH * 0.07, b.facing, b.state === 'graze' ? 0 : b.hop, b);
+      if (b.state === 'graze') {
+        // Laiduntava poro odottaa: sydänkupla pään yllä kertoo, että sen voi hakea
+        hx = b.x - camX + b.facing * viewH * 0.05;
+        hy = b.y - viewH * 0.15 + Math.sin(globalT * 3 + i) * viewH * 0.006;
+        artCircle(ctx, hx, hy, viewH * 0.036, '#ffffff', { lineColor: '#9ab4c8', hi: 0.2 });
+        drawHeartShape(ctx, hx, hy + viewH * 0.003, viewH * 0.017, true);
+      }
     }
   }
   for (i = 0; i < reinRocks.length; i++) {
     hid = null;
     for (r = 0; r < reinDeer.length; r++) {
       b = reinDeer[r];
-      if ((b.state === 'hid' || b.state === 'hiding') && b.rock === i) hid = b;
+      if (b.state === 'hid' && b.rock === i) hid = b;
     }
     if (hid) {
-      drawNorthDeer(ctx, hid.x - camX, hid.y + (hid.state === 'hid' ? viewH * 0.012 : 0),
-        viewH * (hid.state === 'hid' ? 0.055 : 0.07), hid.facing, hid.state === 'hid' ? 0 : hid.hop);
+      // Kiven takaa näkyvät sarvet ja korvat: piilo on hauska, ei salaisuus
+      drawNorthDeer(ctx, hid.x - camX - hid.facing * viewH * 0.02, hid.y + viewH * 0.01 - Math.abs(Math.sin(globalT * 1.6 + i)) * viewH * 0.012,
+        viewH * 0.06, hid.facing, 0, hid);
     }
     drawNorthRock(ctx, reinRocks[i].x - camX, groundTop + viewH * 0.02, viewH * 0.075);
-    if (hid && hid.state === 'hid') {
-      hx = hid.x - camX;
-      hy = groundTop - viewH * 0.09 + Math.sin(globalT * 3) * viewH * 0.006;
-      // Huutomerkki piilossa olevan poron kohdalla: reunaviivalla tarrakirja-ilmeeseen
-      artRoundRect(ctx, hx - 3, hy, 6, viewH * 0.028, 3, '#ff5f7e', { lineColor: '#b03050', line: 1.4 });
-      artCircle(ctx, hx, hy + viewH * 0.038, 3.5, '#ff5f7e', { lineColor: '#b03050', line: 1.4 });
-    }
   }
   drawParticlesLayer(ctx);
   if (!celebrating) {
-    hid = null;
+    // Nuoli lähimpään löytämättömään poroon, muuten aitaukselle
+    best = null;
     for (i = 0; i < reinDeer.length; i++) {
-      if (reinDeer[i].state === 'hid' || reinDeer[i].state === 'hiding') { hid = reinDeer[i]; break; }
+      miss = reinDeer[i];
+      if (miss.state !== 'graze' && miss.state !== 'hid') continue;
+      if (!best || Math.abs(miss.x - unicorn.x) < Math.abs(best.x - unicorn.x)) best = miss;
     }
-    if (hid) drawEdgeArrow(ctx, hid.x);
-    else if (reinHomeCount() < REIN_N) drawEdgeArrow(ctx, reinPen.x);
+    if (best) drawEdgeArrow(ctx, best.x);
+    else drawEdgeArrow(ctx, reinPen.x);
   }
   endPlayWorld();
-  drawPickupHud(ctx, REIN_N, function (k) { return reinDeer[k] && reinDeer[k].state === 'home'; },
-    function (c, x, y, sz) { drawNorthDeer(c, x, y + sz * 0.3, sz * 0.55, 1, 0); });
+  drawPickupHud(ctx, REIN_N, function (k) { return k < reinFoundCount(); },
+    function (c, x, y, sz) { drawNorthDeer(c, x - sz * 0.3, y + sz * 0.55, sz * 0.9, 1, 0); });
   drawTaskOverlay(ctx);
 }
