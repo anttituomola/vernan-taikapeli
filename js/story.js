@@ -23,73 +23,126 @@ function storyWorldDone(name) {
 }
 
 // Luvut järjestyksessä. where: millä kartalla luku voi alkaa ('sea', 'land' tai
-// 'any'). cond: tarinan kohta saavutettu. cover: kohtaus tarinakirjan kanteen.
+// 'any'); maiden alkuluvut ('maa' + maailman id) näytetään maahan saavuttaessa
+// (storyWorldIntro). cond: tarinan kohta saavutettu. cover: tarinakirjan kansi.
+// Tekstit ovat tavutettuja kuten lukutehtävissä; ääneen luku ohittaa viivat.
+// Luvut kertovat, mitä on edessä — jälkikäteen kertominen hämmensi (palaute 15.10.).
 var STORY_CHAPTERS = [
   {
-    id: 'alku', title: 'ALKU', where: 'any', cover: 'castle',
+    id: 'alku', title: 'AL-KU', where: 'any', cover: 'castle',
     cond: function () { return true; },
     pages: [
-      { scene: 'castle', text: 'OLIPA KERRAN LINNA SATEENKAAREN ALLA.' },
-      { scene: 'friends', text: 'SIELLÄ ASUIVAT VERNA, YKSISARVINEN JA PUPUT.' },
-      { scene: 'storm', text: 'ERÄÄNÄ PÄIVÄNÄ TULI MYRSKYNOITA JA VALTASI LINNAN.' },
-      { scene: 'colors', text: 'MYRSKY PUHALSI SATEENKAAREN VÄRIT SAARILLE.' },
-      { scene: 'depart', text: 'LÄHDETÄÄN PELASTAMAAN PUPUT!' }
+      { scene: 'castle', text: 'O-LI-PA KER-RAN LIN-NA SA-TEEN-KAA-REN AL-LA.' },
+      { scene: 'friends', text: 'SIEL-LÄ A-SUI-VAT VER-NA, YK-SI-SAR-VI-NEN JA PU-PUT.' },
+      { scene: 'storm', text: 'E-RÄÄ-NÄ PÄI-VÄ-NÄ TU-LI MYRS-KY-NOI-TA JA VAL-TA-SI LIN-NAN.' },
+      { scene: 'colors', text: 'MYRS-KY PU-HAL-SI SA-TEEN-KAA-REN VÄ-RIT SAA-RIL-LE.' },
+      { scene: 'depart', text: 'LÄH-DE-TÄÄN PE-LAS-TA-MAAN PU-PUT!' }
     ]
   },
   {
-    id: 'pako', title: 'PAKO', where: 'sea', cover: 'free',
+    // Heti Linnasaaren finaalin jälkeen: linna aukeaa kodiksi (linnanappi)
+    id: 'pako', title: 'KO-TI', where: 'sea', cover: 'home',
     cond: function () { return storyWorldDone('Linnasaari'); },
     pages: [
-      { scene: 'free', text: 'PUPUT OVAT VAPAINA! MYRSKYNOITA LENSI KARKUUN.' },
-      { scene: 'home', text: 'LINNA ON TAAS KOTI. SINNE VOI PALATA AINA.' },
-      { scene: 'red', text: 'PUNAINEN VÄRI PALASI. MUUT OVAT VIELÄ SAARILLA.' },
-      { scene: 'cloud', text: 'SEURAA MYRSKYPILVEÄ! SIELLÄ ON SEURAAVA VÄRI.' }
+      { scene: 'free', text: 'PU-PUT O-VAT VA-PAI-NA! MYRS-KY-NOI-TA LEN-SI KAR-KUUN.' },
+      { scene: 'home', text: 'LIN-NA ON TAAS KO-TI. SIN-NE VOI PA-LA-TA AI-NA.' }
     ]
   },
   {
-    id: 'tahti', title: 'KULTATÄHTI', where: 'sea', cover: 'goldstar',
-    cond: function () { return storyWorldDone('Tivolisaari'); },
-    pages: [
-      { scene: 'goldstar', text: 'SATEENKAARI ON EHJÄ! KULTATÄHTI LOISTAA.' },
-      { scene: 'north', text: 'MYRSKYNOITA PAKENI POHJOISEEN, REVONTULTEN MAAHAN.' }
-    ]
-  },
-  {
-    id: 'revontuli', title: 'REVONTULET', where: 'sea', cover: 'fox',
-    cond: function () { return storyWorldDone('Revontulimaa'); },
-    pages: [
-      { scene: 'fox', text: 'REVONTULIKETTU NÄYTTI TIEN MEREN YLI.' },
-      { scene: 'farland', text: 'SIELLÄ ON KAUKAMAA. MYRSKYPILVI LENSI SINNE.' }
-    ]
-  },
-  {
-    id: 'kaukamaa', title: 'KAUKAMAA', where: 'land', cover: 'sunhidden',
+    id: 'kaukamaa', title: 'KAU-KA-MAA', where: 'land', cover: 'sunhidden',
     cond: function () { return true; },
     pages: [
-      { scene: 'sunhidden', text: 'KAUKAMAAN AURINKO ON MYRSKYPILVEN TAKANA.' },
-      { scene: 'rays', text: 'JOKAINEN PAIKKA ANTAA AURINGOLLE SÄTEEN.' }
+      { scene: 'sunhidden', text: 'KAU-KA-MAAN AU-RIN-KO ON MYRS-KY-PIL-VEN TA-KA-NA.' },
+      { scene: 'rays', text: 'JO-KAI-NEN PAIK-KA AN-TAA AU-RIN-GOL-LE SÄ-TEEN.' }
     ]
   },
   {
-    id: 'vuori', title: 'MYRSKYVUORI', where: 'land', cover: 'mountain',
+    id: 'vuori', title: 'MYRS-KY-VUO-RI', where: 'land', cover: 'mountain',
     cond: function () { return !!landFinalPlace() && landRaysEarned() >= landRayPlaces().length; },
     pages: [
-      { scene: 'sunfull', text: 'KAIKKI SÄTEET LOISTAVAT! AURINKO ON TÄYNNÄ VOIMAA.' },
-      { scene: 'mountain', text: 'MYRSKYPILVI PAKENI VUORELLE. MENNÄÄN PERÄÄN!' }
+      { scene: 'sunfull', text: 'KAIK-KI SÄ-TEET LOIS-TA-VAT! AU-RIN-KO ON TÄYN-NÄ VOI-MAA.' },
+      { scene: 'mountain', text: 'MYRS-KY-PIL-VI PA-KE-NI VUO-REL-LE. MEN-NÄÄN PE-RÄÄN!' }
     ]
   },
   {
-    id: 'ystava', title: 'YSTÄVÄ', where: 'land', cover: 'rainbowbirth',
+    // Loppu: finaalin jälkeen (noidan suru kerrotaan Myrskyvuoren alussa)
+    id: 'ystava', title: 'YS-TÄ-VÄ', where: 'land', cover: 'party',
     cond: function () { return storyWorldDone('Myrskyvuori'); },
     pages: [
-      { scene: 'witchsad', text: 'MYRSKYNOITA OLI SURULLINEN. HÄN OSAA TEHDÄ VAIN SADETTA.' },
-      { scene: 'lonely', text: 'KUKAAN EI OLLUT KUTSUNUT HÄNTÄ SATEENKAARIJUHLIIN.' },
-      { scene: 'rainbowbirth', text: 'MUTTA KUN SADE JA AURINKO KOHTAAVAT, SYNTYY SATEENKAARI!' },
-      { scene: 'invite', text: 'TULE MEIDÄN LINNAAN, MYRSKYNOITA! OLLAAN YSTÄVIÄ.' },
-      { scene: 'party', text: 'JA SITTEN JUHLITTIIN KAIKKI YHDESSÄ. LOPPU.' }
+      { scene: 'invite', text: 'TU-LE MEI-DÄN LIN-NAAN, MYRS-KY-NOI-TA! OL-LAAN YS-TÄ-VI-Ä.' },
+      { scene: 'party', text: 'JA SIT-TEN JUH-LIT-TIIN KAIK-KI YH-DES-SÄ. LOP-PU.' }
     ]
   }
 ];
+
+// Maiden alkuluvut: nimi tavutettuna ja mitä maasta etsitään (sateenkaaren värin
+// indeksi, kultatähti, revontulikettu tai auringon säde). Linnasaaren alku on 'alku'.
+var STORY_COLOR_NAMES = ['PU-NAI-NEN', 'O-RANS-SI', 'KEL-TAI-NEN', 'VIH-RE-Ä', 'SI-NI-NEN', 'VI-O-LET-TI', 'LI-LA'];
+var STORY_WORLD_INTROS = {
+  'Karkkisaari': { name: 'KARK-KI-SAA-RI', color: 1 },
+  'Kuutamosaari': { name: 'KUU-TA-MO-SAA-RI', color: 2 },
+  'Taikakynän saari': { name: 'TAI-KA-KY-NÄN SAA-RI', color: 3 },
+  'Hoivasaari': { name: 'HOI-VA-SAA-RI', color: 4 },
+  'Vuorisaari': { name: 'VUO-RI-SAA-RI', color: 5 },
+  'Kirjainsaari': { name: 'KIR-JAIN-SAA-RI', color: 6 },
+  'Tivolisaari': { name: 'TI-VO-LI-SAA-RI', gold: true },
+  'Revontulimaa': { name: 'RE-VON-TU-LI-MAA', fox: true },
+  'Lohikäärmelaakso': { name: 'LO-HI-KÄÄR-ME-LAAK-SO', ray: true },
+  'Hohtometsä': { name: 'HOH-TO-MET-SÄ', ray: true },
+  'Aurinkodyynit': { name: 'AU-RIN-KO-DYY-NIT', ray: true, plural: true },
+  'Porkkanakumpu': { name: 'POR-KAN-NA-KUM-PU', ray: true },
+  'Kellopaja': { name: 'KEL-LO-PA-JA', ray: true },
+  'Maalaiskylä': { name: 'MAA-LAIS-KY-LÄ', ray: true },
+  'Pupula': { name: 'PU-PU-LA', ray: true },
+  'Myrskyvuori': { name: 'MYRS-KY-VUO-RI', witch: true }
+};
+(function () {
+  var i, w, d, pages, arg;
+  for (i = 0; i < WORLDS.length; i++) {
+    w = WORLDS[i];
+    d = STORY_WORLD_INTROS[w.name];
+    if (!d) continue;
+    arg = { world: w.id, color: d.color, gold: d.gold, fox: d.fox, ray: d.ray, witch: d.witch };
+    if (d.witch) {
+      pages = [
+        { scene: 'witchsad', text: 'MYRS-KY-NOI-TA ON VUO-REL-LA. HÄN O-SAA TEH-DÄ VAIN SA-DET-TA.' },
+        { scene: 'lonely', text: 'KU-KAAN EI KUT-SU-NUT HÄN-TÄ SA-TEEN-KAA-RI-JUH-LIIN.' },
+        { scene: 'rainbowbirth', text: 'SA-DE JA AU-RIN-KO YH-DES-SÄ TE-KE-VÄT SA-TEEN-KAA-REN. AU-TE-TAAN HÄN-TÄ!' }
+      ];
+    } else if (d.gold) {
+      pages = [
+        { scene: 'worldintro', arg: arg, text: 'SA-TEEN-KAA-REN PÄÄS-SÄ ON ' + d.name + '.' },
+        { scene: 'worldintro', arg: arg, text: 'TÄÄL-TÄ LÖY-TYY KUL-TA-TÄH-TI SA-TEEN-KAA-REN HUI-PUL-LE!' }
+      ];
+    } else if (d.fox) {
+      pages = [
+        { scene: 'worldintro', arg: arg, text: 'MYRS-KY-PIL-VI PA-KE-NI POH-JOI-SEEN. TÄ-MÄ ON ' + d.name + '.' },
+        { scene: 'worldintro', arg: arg, text: 'RE-VON-TU-LI-KET-TU TIE-TÄÄ TIEN E-TEEN-PÄIN. ET-SI-TÄÄN SE!' }
+      ];
+    } else if (d.ray) {
+      pages = [
+        { scene: 'worldintro', arg: arg, text: (d.plural ? 'NÄ-MÄ O-VAT ' : 'TÄ-MÄ ON ') + d.name + '. TÄÄL-TÄ LÖY-TYY AU-RIN-GOL-LE SÄ-DE!' }
+      ];
+    } else {
+      pages = [
+        { scene: 'worldintro', arg: arg, text: 'TÄ-MÄ ON ' + d.name + '. MYRS-KY-PIL-VI ON TÄÄL-LÄ!' },
+        { scene: 'worldintro', arg: arg, text: 'SAA-REL-LA ON PII-LOS-SA ' + STORY_COLOR_NAMES[d.color] + ' VÄ-RI. ET-SI-TÄÄN SE!' }
+      ];
+    }
+    STORY_CHAPTERS.push({ id: 'maa' + w.id, title: d.name, where: 'world', cover: pages[0].scene, coverArg: pages[0].arg, world: w.id, pages: pages });
+  }
+})();
+
+// Maahan saavuttaessa: maan alkuluku kerran, jos maata ei ole vielä läpäisty.
+// then() avaa maan (sokkelon). Palauttaa true, jos luku alkoi.
+function storyWorldIntro(worldId, then) {
+  var ch = storyChapter('maa' + worldId), w, i;
+  if (!ch || storySeen[ch.id]) return false;
+  for (i = 0; i < WORLDS.length; i++) if (WORLDS[i].id === worldId) w = WORLDS[i];
+  if (!w || storyWorldDone(w.name)) return false;
+  storyShow(ch.id, then, false);
+  return true;
+}
 
 function storyChapter(id) {
   var i;
@@ -124,7 +177,7 @@ function storyLegacySeen() {
   var i, ch;
   for (i = 0; i < STORY_CHAPTERS.length; i++) {
     ch = STORY_CHAPTERS[i];
-    if (ch.id === 'alku' || ch.where === 'land') continue;
+    if (ch.id === 'alku' || ch.where === 'land' || ch.where === 'world') continue;
     if (ch.cond()) storySeen[ch.id] = true;
   }
 }
@@ -175,7 +228,7 @@ function storySpeak() {
   if (!v) return;
   try {
     speechSynthesis.cancel();
-    var u = new SpeechSynthesisUtterance(story.ch.pages[story.page].text.toLowerCase());
+    var u = new SpeechSynthesisUtterance(story.ch.pages[story.page].text.replace(/-/g, '').toLowerCase());
     u.voice = v;
     u.lang = v.lang;
     u.rate = 0.9;
@@ -249,7 +302,7 @@ function drawStory() {
   c.scale(0.92 + 0.08 * k, 0.92 + 0.08 * k);
   c.globalAlpha = Math.min(1, story.t / 0.25);
   c.translate(-cd.w / 2, -cd.h / 2);
-  storyDrawCard(c, pg.scene, cd.w, cd.h, story.t);
+  storyDrawCard(c, pg.scene, cd.w, cd.h, story.t, pg.arg);
   c.restore();
   c.globalAlpha = 1;
   // Teksti
@@ -314,7 +367,7 @@ function storyArrow(c, x, y, s, last) {
 }
 
 // Kuvakortti: kehys, leikattu kohtaus ja kiilto
-function storyDrawCard(c, scene, w, h, t) {
+function storyDrawCard(c, scene, w, h, t, arg) {
   var rr = h * 0.07;
   c.fillStyle = 'rgba(90,45,145,0.18)';
   roundRect(c, h * 0.015, h * 0.03, w, h, rr);
@@ -322,7 +375,7 @@ function storyDrawCard(c, scene, w, h, t) {
   c.save();
   roundRect(c, 0, 0, w, h, rr);
   c.clip();
-  (STORY_SCENES[scene] || STORY_SCENES.castle)(c, w, h, t);
+  (STORY_SCENES[scene] || STORY_SCENES.castle)(c, w, h, t, arg);
   c.restore();
   c.strokeStyle = '#ffffff';
   c.lineWidth = h * 0.03;
@@ -502,70 +555,6 @@ var STORY_SCENES = {
     storyRider(c, w * 0.18, h * 0.8, h * 0.0026, 1, false, t);
     storyBunnies(c, w * 0.66, h * 0.92, h * 0.06, 3, t, true, 1.6);
   },
-  red: function (c, w, h, t) {
-    storySky(c, w, h, '#8fd0ff', '#e6f6ff');
-    storySea(c, w, h, h * 0.7, t, false);
-    storyRainbow(c, w * 0.5, h * 0.78, h * 0.6, h * 0.05, 1);
-    if ((t % 1.2) < 0.8) artGlow(c, w * 0.5 - h * 0.6, h * 0.74, h * 0.1, '#ff5a5a', 0.6);
-    storyIsland(c, w * 0.5, h * 0.84, h * 0.13);
-    drawCastle(c, w * 0.5, h * 0.8, h * 0.16);
-  },
-  cloud: function (c, w, h, t) {
-    storySky(c, w, h, '#8fd0ff', '#e6f6ff');
-    storySea(c, w, h, h * 0.5, t, false);
-    storyIsland(c, w * 0.2, h * 0.78, h * 0.12);
-    storyIsland(c, w * 0.72, h * 0.66, h * 0.1, '#ffb3d1');
-    drawWitchCloud(c, w * 0.72, h * 0.3, h * 0.11, t, 0.8);
-    // Vene seuraa pilveä
-    var k = (t * 0.12) % 1, bx = w * (0.22 + k * 0.35), by = h * (0.8 - k * 0.1);
-    drawBoatWithRider(c, bx, by, h * 0.16, 1, true);
-  },
-  goldstar: function (c, w, h, t) {
-    storySky(c, w, h, '#8fd0ff', '#f0faff');
-    storySea(c, w, h, h * 0.72, t, false);
-    storyRainbow(c, w * 0.5, h * 0.8, h * 0.6, h * 0.05, 7);
-    var i;
-    for (i = 0; i < 8; i++) {
-      var a = t * 1.2 + i * Math.PI / 4;
-      drawStar(c, w * 0.5 + Math.cos(a) * h * 0.14, h * 0.2 + Math.sin(a) * h * 0.1, h * 0.015, a, 0);
-    }
-    drawStar(c, w * 0.5, h * 0.2, h * 0.075, t * 0.5, 1);
-  },
-  north: function (c, w, h, t) {
-    storySky(c, w, h, '#2a2a6a', '#5a6ab0');
-    if (typeof drawAuroraCurtain === 'function') drawAuroraCurtain(c, w, h, t, 0);
-    storySea(c, w, h, h * 0.7, t, true);
-    storyIsland(c, w * 0.75, h * 0.76, h * 0.12, '#e8f4ff');
-    var k = Math.min(1, t / 3);
-    drawWitchCloud(c, w * (0.3 + k * 0.4), h * (0.35 - k * 0.12), h * 0.1, t, 0.5);
-  },
-  fox: function (c, w, h, t) {
-    storySky(c, w, h, '#2a2a6a', '#5a6ab0');
-    if (typeof drawAuroraCurtain === 'function') drawAuroraCurtain(c, w, h, t, 0);
-    storyHill(c, w, h, h * 0.72, '#eef6ff', 0.6);
-    // Kettu istuu ja nostaa häntäänsä kohti tähtipolkua
-    if (typeof drawFoxBody === 'function') drawFoxBody(c, w * 0.62, h * 0.74, h * 0.2, 1, 'sit', t * 4, 0.6 + Math.sin(t * 3) * 0.3);
-    storyRider(c, w * 0.25, h * 0.72, h * 0.0028, 1, false, t);
-    // Tähtipolku näyttää suunnan
-    var i;
-    for (i = 0; i < 6; i++) {
-      var k2 = (i / 6 + t * 0.15) % 1;
-      drawStar(c, w * (0.7 + k2 * 0.3), h * (0.6 - k2 * 0.35), h * 0.015, t + i, 1);
-    }
-  },
-  farland: function (c, w, h, t) {
-    storySky(c, w, h, '#ffd8a8', '#fff2d8');
-    storySea(c, w, h, h * 0.62, t, false);
-    // Manner horisontissa: vuoret ja tulivuori
-    c.beginPath();
-    c.moveTo(w * 0.35, h * 0.63);
-    c.lineTo(w * 0.48, h * 0.42); c.lineTo(w * 0.56, h * 0.52); c.lineTo(w * 0.68, h * 0.34);
-    c.lineTo(w * 0.8, h * 0.5); c.lineTo(w * 0.9, h * 0.44); c.lineTo(w * 1.02, h * 0.63);
-    c.closePath();
-    artFillPath(c, '#9a88c8', h * 0.34, h * 0.63, h * 0.2, { lineColor: '#6a5aa0' });
-    drawWitchCloud(c, w * 0.68, h * 0.24, h * 0.1, t, 0.6);
-    drawBoatWithRider(c, w * 0.22, h * 0.8, h * 0.18, 1, true);
-  },
   sunhidden: function (c, w, h, t) {
     storySky(c, w, h, '#9a9ac8', '#e0e0f0');
     storySun(c, w * 0.6, h * 0.3, h * 0.11, t);
@@ -595,6 +584,55 @@ var STORY_SCENES = {
     c.beginPath(); c.arc(sx, sy + r * 0.15, r * 0.3, Math.PI * 0.2, Math.PI * 0.8); c.stroke();
     storyHill(c, w, h, h * 0.8, '#8fd673', 1);
   }
+};
+
+// Maan alku: maailman sokkeloteeman maisema taustana, myrskypilvi ja etsittävä
+// asia sen alla (värin pisara, kultatähti, kettu tai auringon säde)
+function storyWorldBand(worldId) {
+  var saved = hubWorld, st, band;
+  hubWorld = worldId;
+  st = hubFind('B');
+  band = hubBand(st.c, st.r);
+  hubWorld = saved;
+  return band;
+}
+STORY_SCENES.worldintro = function (c, w, h, t, a) {
+  a = a || {};
+  var th = HUB_THEMES[storyWorldBand(a.world)] || {}, sky = th.sky || ['#8fd0ff', '#e6f6ff'];
+  storySky(c, w, h, sky[0], sky[1]);
+  if (th.backdrop) {
+    try { th.backdrop(c, w, h, { ox: w * 0.5, oy: h * 0.55, cell: h * 0.07, cols: 0, rows: 0 }); } catch (e) { /* teema ilman tukea pienelle kortille */ }
+  }
+  var cx = w * 0.64, cy = h * 0.22, bob = Math.sin(t * 2) * h * 0.015;
+  if (!a.ray || a.witch) drawWitchCloud(c, cx, cy, h * 0.1, t, 0.7);
+  if (a.gold) {
+    artGlow(c, cx, cy + h * 0.25 + bob, h * 0.12, '#ffe27a', 0.6);
+    drawStar(c, cx, cy + h * 0.25 + bob, h * 0.06, t, 1);
+  } else if (a.fox) {
+    if (typeof drawFoxBody === 'function') drawFoxBody(c, cx, h * 0.78, h * 0.16, -1, 'sit', t * 4, 0.5 + Math.sin(t * 3) * 0.3);
+  } else if (a.ray) {
+    // Aurinko, josta puuttuu säde: puuttuva kohta hehkuu
+    var sx = w * 0.7, sy = h * 0.26, r = h * 0.08, i, ang;
+    c.lineCap = 'round';
+    for (i = 0; i < 7; i++) {
+      ang = -Math.PI / 2 + i / 7 * Math.PI * 2;
+      c.strokeStyle = i === 0 ? artRGBA('#ffe27a', 0.4 + Math.sin(t * 4) * 0.3) : 'rgba(255,190,40,0.9)';
+      c.lineWidth = r * 0.3;
+      c.beginPath();
+      c.moveTo(sx + Math.cos(ang) * r * 1.35, sy + Math.sin(ang) * r * 1.35);
+      c.lineTo(sx + Math.cos(ang) * r * 2.1, sy + Math.sin(ang) * r * 2.1);
+      c.stroke();
+    }
+    artCircle(c, sx, sy, r, '#ffd24f', { lineColor: '#e0a020', hi: 0.4 });
+    artEye(c, sx - r * 0.3, sy - r * 0.1, r * 0.12, 0, false);
+    artEye(c, sx + r * 0.3, sy - r * 0.1, r * 0.12, 0, false);
+  } else if (a.color !== undefined) {
+    // Värin pisara kurkistaa pilven alta
+    var col = RAINBOW_COLORS[a.color];
+    artGlow(c, cx, cy + h * 0.24 + bob, h * 0.1, col, 0.55);
+    artBlob(c, cx, cy + h * 0.24 + bob, h * 0.04, h * 0.055, col, { lineColor: artShade(col, -0.35) });
+  }
+  storyRider(c, w * 0.22, h * 0.9, h * 0.0026, 1, false, t);
 };
 
 // Lopun kohtaukset (Myrskyvuori ja ystävyys)
@@ -768,7 +806,7 @@ function drawBook() {
     r = lay[i];
     c.save();
     c.translate(r.x, r.y);
-    storyDrawCard(c, r.ch.cover, r.w, r.h, globalT);
+    storyDrawCard(c, r.ch.cover, r.w, r.h, globalT, r.ch.coverArg);
     c.restore();
     storyText(c, r.ch.title, r.x + r.w / 2, r.y + r.h + viewH * 0.045, r.w, viewH * 0.04);
   }

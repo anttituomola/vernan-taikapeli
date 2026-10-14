@@ -1711,6 +1711,8 @@ function drawReplayArrow(c, x, y, r) {
 // Saaristokartalta saaren sokkeloon: nappula aloittaa satamasta (B)
 function hubEnterIsland(w) {
   var pos, lay, cpos;
+  // Maan alkuluku ensimmäisellä käynnillä (tarina kertoo, mitä täältä etsitään)
+  if (storyWorldIntro(w, function () { hubEnterIsland(w); })) return;
   hubWorld = w;
   hubBgKey = '';
   hubFx.flowers = [];

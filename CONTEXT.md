@@ -211,32 +211,41 @@ _Vältä_: paha noita, konna, vihollinen (lapselle hän on äreä, ei paha)
 
 ## Tarina
 
-Tarina kerrotaan **kuvakirjan sivuina** (`js/story.js`): lyhyt iso teksti
-ja animoitu kuva, napautus kääntää sivua. Tarinan eteneminen päätellään
-läpäistyistä vartijoista; tallennus muistaa vain, mitkä **luvut** on jo
-näytetty. Kaikki näytetyt luvut voi lukea uudestaan linnan **tarinakirjasta**.
+Tarina kerrotaan **kuvakirjan sivuina** (`js/story.js`): lyhyt iso
+**tavutettu** teksti (kuten lukutehtävissä) ja animoitu kuva, napautus kääntää
+sivua. Luvut kertovat, **mitä on edessä**, eivät mitä jo tapahtui (palaute
+15.10.2026: jälkikäteen kerrotut luvut hämmensivät). Tallennus muistaa
+näytetyt luvut; ne voi lukea uudestaan linnan **tarinakirjasta**.
 
 **Luku**:
-Yksi kuvakirjan kohtaus (1–5 sivua), joka näytetään kerran, kun sen ehto
-täyttyy ja pelaaja palaa kartalle.
+Yksi kuvakirjan kohtaus (1–5 sivua), joka näytetään kerran.
 _Vältä_: välianimaatio, cutscene, tarina yksinään
+
+**Maan alku**:
+Luku, joka näytetään, kun maahan (saari tai paikka) saavutaan ensimmäistä
+kertaa eikä sitä ole läpäisty: missä ollaan ja mitä täältä etsitään (värin
+pisara, kultatähti, revontulikettu tai auringon säde). Taustana maailman
+oma sokkelomaisema.
 
 Kaari:
 
 1. **Alku** (uusi peli): linna sateenkaaren alla, Myrskynoita valtaa linnan
-   ja puhaltaa värit saarille. Verna ja yksisarvinen lähtevät matkaan.
-2. **Pako** (Linnasaaren finaali): puput vapaina, noita pakenee. Linna on
-   taas koti (linnanappi ilmestyy) ja punainen väri palasi.
-3. **Saaret**: jokainen vartija palauttaa värin; myrskypilvi siirtyy aina
-   seuraavan saaren ylle.
-4. **Kultatähti** (Tivolisaari): kaari on ehjä, mutta myrskypilvi lentää
-   pohjoiseen Revontulimaahan.
-5. **Revontulet** (Revontulimaa): Revontulikettu näyttää tien meren yli
-   Kaukamaalle (avomerimerkki ilmestyy).
-6. **Kaukamaa**: aurinko on myrskypilven takana; jokainen paikka antaa
-   auringolle yhden **säteen**. Kun säteet ovat koossa, Myrskyvuori aukeaa.
-7. **Ystävä** (Myrskyvuori): sade + aurinko = sateenkaari; noita muuttaa
-   linnan torniin, ja juhlitaan kaikkien kanssa.
+   ja puhaltaa värit saarille. Lähdetään pelastamaan puput.
+2. **Koti** (heti Linnasaaren finaalin jälkeen): puput vapaina, noita
+   pakenee, linna on taas koti (linnanappi ilmestyy).
+3. **Saaret**: kunkin saaren alussa kerrotaan, mikä väri sieltä löytyy;
+   myrskypilvi leijuu kartalla aina seuraavan saaren yllä. Värin paluu
+   näkyy sateenkaaren paljastuksena kartalla.
+4. **Tivolisaari** (alku): sateenkaaren päästä löytyy kultatähti.
+5. **Revontulimaa** (alku): pilvi pakeni pohjoiseen, Revontulikettu tietää
+   tien. Ketun läpäisy avaa avomerimerkin Kaukamaalle.
+6. **Kaukamaa**: aurinko on myrskypilven takana; jokaisen paikan alussa
+   kerrotaan, että täältä löytyy auringolle **säde**. Kun säteet ovat koossa,
+   Myrskyvuori aukeaa (luku 'vuori').
+7. **Myrskyvuori** (alku): noita osaa tehdä vain sadetta, eikä häntä
+   kutsuttu sateenkaarijuhliin; sade ja aurinko yhdessä tekevät
+   sateenkaaren, autetaan häntä. **Ystävä** (finaalin jälkeen): noita
+   muuttaa linnan torniin, ja juhlitaan kaikkien kanssa.
 
 **Linna kasvaa**: maailmojen vartijat avaavat linnaan huoneita. Sali aukeaa
 Linnasaaresta, keittiö Karkkisaaresta, torni Kuutamosaaresta, puutarha
