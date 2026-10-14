@@ -515,6 +515,8 @@ function drawCastleMap() {
     ctx.fillText('+' + bankUnseen, bx - u * 0.045, by + u * 0.016);
   }
   drawCastleBook(ctx, lay.book);
+  // Tarinan lopussa Myrskynoita muuttaa torniin: istuu katolla iloisen pilvensä alla
+  if (storySeen.ystava) drawCastleWitch(ctx, castleRoomRect(lay, 1), u);
   // Prinsessa yksisarvisella ja puput pihalla
   var pw = lay.pawn;
   drawUnicorn(ctx, pw.x, pw.y, u * 0.0011, 1, 0, false, globalT);
@@ -526,6 +528,20 @@ function drawCastleMap() {
   }
   drawParticlesLayerAbs(ctx);
   drawStarBalance(ctx, viewH * 0.03 + viewH * 0.11, viewH * 0.065);
+}
+
+// Ystävä tornissa: pieni sadepilvi, sateenkaari ja vilkuttava noita tornin vieressä
+function drawCastleWitch(c, tow, u) {
+  var x = tow.x + tow.w + u * 0.09, y = tow.y + tow.h * 0.35 + Math.sin(globalT * 1.6) * u * 0.01;
+  c.lineCap = 'butt';
+  var i;
+  for (i = 0; i < RAINBOW_COLORS.length; i++) {
+    c.strokeStyle = artRGBA(RAINBOW_COLORS[i], 0.7);
+    c.lineWidth = u * 0.008;
+    c.beginPath(); c.arc(x + u * 0.04, y + u * 0.02, u * (0.1 - i * 0.008), Math.PI, 0); c.stroke();
+  }
+  drawStormWitch(c, x, y, u * 0.03, -1, 'happy');
+  drawWitchCloud(c, x + u * 0.01, y - u * 0.1, u * 0.03, globalT, 0.5);
 }
 
 // Tarinakirja jalustalla: avoin kirja, joka hehkuu, kun siinä on luettavaa
