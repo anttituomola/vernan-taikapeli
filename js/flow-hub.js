@@ -214,9 +214,10 @@ function hubLayout() {
   var cols = hubMap()[0].length;
   var top = viewH * 0.15;
   var bot = viewH * 0.03;
-  var cell = Math.min((viewW * 0.92) / cols, (viewH - top - bot) / rows);
+  // Sokkelo on pienoismaailman laatta: alle jää tilaa laatan maareunalle (0,6 ruutua)
+  var cell = Math.min((viewW * 0.9) / (cols + 0.5), (viewH - top - bot) / (rows + 0.7));
   var ox = (viewW - cell * cols) / 2;
-  var oy = top + (viewH - top - bot - cell * rows) / 2;
+  var oy = top + (viewH - top - bot - cell * (rows + 0.6)) / 2 + cell * 0.1;
   return { rows: rows, cols: cols, cell: cell, ox: ox, oy: oy };
 }
 
@@ -411,6 +412,10 @@ function updateHub(dt) {
 // Samoin sokkelon maaston koristeet vyöhykkeelle: HUB_TILE_DECOR[band].
 var HUB_ICONS = {};
 var HUB_TILE_DECOR = {};
+// Sokkelon teema vyöhykkeelle (js/hub-themes*.js): taivas, maisema laatan ympärillä,
+// maa, polku, ruutujen pikkuyksityiskohdat, seinäruutujen maisemakoristeet ja
+// valinnainen huoneen maamerkki. Ks. hub-themes.js:n ohje.
+var HUB_THEMES = {};
 
 // Pienet yllätykset sokkelossa: laudan ulkopuolelle ei-kulkukelpoiseen ruutuun
 // napautus istuttaa kukan, mökin ikkunasta kurkkaa pupu, nappula hyppää ja
@@ -1062,6 +1067,7 @@ function hubHash(c, r) {
 function hubBand(c, r) {
   var wi = WORLD_INFO[hubWorld];
   if (wi && wi.band) return wi.band;
+  if (hubWorld === 9) return 'north';
   if (hubWorld === 8) return 'fair';
   if (hubWorld === 7) return 'letters';
   if (hubWorld === 6) return r <= 2 ? 'mine' : 'mountain';
@@ -1105,6 +1111,7 @@ var HUB_TILE_COLORS = {
   mountain: ['#dfe9f5', '#cfdcee'],
   letters: ['#fff6e3', '#f7ead2'],
   fair: ['#ffe6f2', '#fff3d6'],
+  north: ['#eef6ff', '#e2eefc'],
   dragon: ['#e9a374', '#e09a6a'],
   glow: ['#2e5a6a', '#285262'],
   desert: ['#f2cf8a', '#ebc47c'],
@@ -1309,49 +1316,94 @@ function renderHubBg(lay) {
   hubBgCanvas.height = Math.round(viewH * DPR);
   var b = hubBgCanvas.getContext('2d');
   b.setTransform(DPR, 0, 0, DPR, 0, 0);
-  var s = lay.cell, r, c, ch, x, y, i;
+  var s = lay.cell, r, c, ch, x, y, i, th;
+  // Maailman päävyöhyke (taivas, maisema, maareuna, polku): lähtöruudun vyöhyke
+  var st0 = hubFind('B'), mainTh = hubTheme(hubBand(st0.c, st0.r));
 
-  // Taivas ja aurinko
+  // Taivas ja maisema laatan ympärillä
   var g = b.createLinearGradient(0, 0, 0, viewH);
-  g.addColorStop(0, '#ffd6ec');
-  g.addColorStop(0.5, '#d6b3ff');
-  g.addColorStop(1, '#b3e0ff');
+  var sky = mainTh.sky || ['#ffd6ec', '#b3e0ff'];
+  g.addColorStop(0, sky[0]);
+  g.addColorStop(1, sky[1]);
   b.fillStyle = g;
   b.fillRect(0, 0, viewW, viewH);
-  var sunX = viewW * 0.9, sunY = viewH * 0.1, sunR = viewH * 0.06;
-  var sg = b.createRadialGradient(sunX, sunY, sunR * 0.3, sunX, sunY, sunR * 3);
-  sg.addColorStop(0, 'rgba(255,240,180,0.9)');
-  sg.addColorStop(1, 'rgba(255,240,180,0)');
-  b.fillStyle = sg;
-  b.fillRect(sunX - sunR * 3, sunY - sunR * 3, sunR * 6, sunR * 6);
-  b.fillStyle = 'rgba(255,255,255,0.85)';
-  for (i = 0; i < 6; i++) cloudShape(b, viewW * (0.05 + i * 0.18), viewH * (0.06 + (i % 2) * 0.05), viewH * 0.02);
+  (mainTh.backdrop || hubDefaultBackdrop)(b, viewW, viewH, lay);
 
-  // Karttalauta
-  var pad = s * 0.45;
-  var bx = lay.ox - pad, by = lay.oy - pad, bw = lay.cols * s + pad * 2, bh = lay.rows * s + pad * 2;
+  // Laatta: varjo, maareuna ja pinta
+  var pad = s * 0.28, bx = lay.ox - pad, by = lay.oy - pad, bw = lay.cols * s + pad * 2, bh = lay.rows * s + pad * 2;
+  var side = s * 0.5, rad = s * 0.55;
+  b.fillStyle = 'rgba(40,20,60,0.18)';
+  b.beginPath();
+  if (b.ellipse) b.ellipse(bx + bw / 2, by + bh + side * 0.9, bw * 0.52, s * 0.5, 0, 0, Math.PI * 2);
+  b.fill();
+  var earth = mainTh.earth || '#b98a5a';
+  var eg = b.createLinearGradient(0, by + bh - rad, 0, by + bh + side);
+  eg.addColorStop(0, earth);
+  eg.addColorStop(1, artShade(earth, -0.25));
+  b.fillStyle = eg;
+  roundRect(b, bx, by + side * 0.15, bw, bh + side * 0.85, rad);
+  b.fill();
+  // Maakerroksen kivet reunassa
+  b.save();
+  roundRect(b, bx, by + side * 0.15, bw, bh + side * 0.85, rad);
+  b.clip();
   b.fillStyle = 'rgba(0,0,0,0.12)';
-  roundRect(b, bx + s * 0.12, by + s * 0.16, bw, bh, s * 0.6);
-  b.fill();
-  b.fillStyle = '#f7ead2';
-  roundRect(b, bx, by, bw, bh, s * 0.6);
-  b.fill();
-  b.strokeStyle = '#d9b98a';
-  b.lineWidth = Math.max(2, s * 0.08);
+  for (i = 0; i < 24; i++) {
+    b.beginPath();
+    b.arc(bx + hubHash(i, 3) * bw, by + bh + side * (0.2 + hubHash(3, i) * 0.6), s * (0.04 + hubHash(i, i) * 0.05), 0, Math.PI * 2);
+    b.fill();
+  }
+  b.restore();
+  b.strokeStyle = artShade(earth, -0.4);
+  b.lineWidth = Math.max(1.5, s * 0.04);
+  roundRect(b, bx, by + side * 0.15, bw, bh + side * 0.85, rad);
   b.stroke();
 
-  // Maasto
+  // Pinta: ruutujen maa vyöhykkeittäin (teemattomat vyöhykkeet vanhalla tavalla)
   b.save();
-  roundRect(b, lay.ox, lay.oy, lay.cols * s, lay.rows * s, s * 0.35);
+  roundRect(b, bx, by, bw, bh, rad);
   b.clip();
+  b.fillStyle = mainTh.ground ? mainTh.ground[0] : '#8fd97a';
+  b.fillRect(bx, by, bw, bh);
   for (r = 0; r < lay.rows; r++) {
     for (c = 0; c < lay.cols; c++) {
-      drawHubTile(b, hubBand(c, r), lay.ox + c * s, lay.oy + r * s, s, c, r);
+      var band = hubBand(c, r);
+      th = HUB_THEMES[band];
+      x = lay.ox + c * s; y = lay.oy + r * s;
+      // Reunaruutu jatkuu laatan reunaan asti
+      var x0 = c === 0 ? bx : x, y0 = r === 0 ? by : y;
+      var x1 = c === lay.cols - 1 ? bx + bw : x + s, y1 = r === lay.rows - 1 ? by + bh : y + s;
+      if (!th) {
+        b.fillStyle = HUB_TILE_COLORS[band] ? HUB_TILE_COLORS[band][0] : '#8fd97a';
+        b.fillRect(x0 - 0.5, y0 - 0.5, x1 - x0 + 1, y1 - y0 + 1);
+        drawHubTile(b, band, x, y, s, c, r);
+        continue;
+      }
+      var gr2 = th.ground || ['#8fd97a', '#86d070'];
+      b.fillStyle = hubHash(c, r) < 0.5 ? gr2[0] : artMix(gr2[0], gr2[1], 0.5);
+      b.fillRect(x0 - 0.5, y0 - 0.5, x1 - x0 + 1, y1 - y0 + 1);
     }
   }
+  // Pikkuyksityiskohdat
+  for (r = 0; r < lay.rows; r++) {
+    for (c = 0; c < lay.cols; c++) {
+      th = HUB_THEMES[hubBand(c, r)];
+      if (th && th.floor) th.floor(b, lay.ox + c * s, lay.oy + r * s, s, hubHash(c, r), hubHash(r, c));
+    }
+  }
+  // Pinnan reuna: vaalea kiilto yläreunassa
+  b.restore();
+  b.strokeStyle = 'rgba(255,255,255,0.45)';
+  b.lineWidth = Math.max(1.5, s * 0.05);
+  roundRect(b, bx, by, bw, bh, rad);
+  b.stroke();
+  b.save();
+  roundRect(b, bx, by, bw, bh, rad);
+  b.clip();
 
-  // Polku yhtenäisenä tienä: reunus ja päällyste
-  var passes = [['#b8965e', 0.7], ['#f3e2b3', 0.54]];
+  // Polku yhtenäisenä tienä: reunus ja päällyste (teeman värit)
+  var pth = mainTh.path || ['#b8965e', '#f3e2b3'];
+  var passes = [[pth[0], 0.7], [pth[1], 0.54]];
   var p, cx, cy;
   for (p = 0; p < passes.length; p++) {
     b.strokeStyle = passes[p][0];
@@ -1371,7 +1423,7 @@ function renderHubBg(lay) {
     }
   }
   // Kivet tiellä
-  b.fillStyle = 'rgba(180,150,100,0.45)';
+  b.fillStyle = artRGBA(pth[0], 0.45);
   for (r = 0; r < lay.rows; r++) {
     for (c = 0; c < lay.cols; c++) {
       ch = hubAt(c, r);
@@ -1389,11 +1441,43 @@ function renderHubBg(lay) {
   }
   b.restore();
 
+  // Seinäruutujen maisemakoristeet takaa eteen (saavat kurottaa ruudun yli ylöspäin)
+  for (r = 0; r < lay.rows; r++) {
+    for (c = 0; c < lay.cols; c++) {
+      if (hubWalkable(hubAt(c, r))) continue;
+      th = HUB_THEMES[hubBand(c, r)];
+      if (!th || !th.wall) continue;
+      var rn = hubHash(c, r);
+      if (rn > (th.density === undefined ? 0.9 : th.density)) continue;
+      th.wall(b, lay.ox + (c + 0.5) * s + (hubHash(r, c) - 0.5) * s * 0.2, lay.oy + (r + 0.92) * s, s, rn, hubHash(r + 7, c + 3));
+    }
+  }
+
   // Mökki sataman vieressä (vain maailmassa 1)
   if (hubWorld === 1) {
-    var st = hubFind('B');
-    drawCottage(b, lay.ox + (st.c + 1.5) * s, lay.oy + (st.r - 0.5) * s + s * 0.42, s * 0.85);
+    var stc = hubFind('B');
+    drawCottage(b, lay.ox + (stc.c + 1.5) * s, lay.oy + (stc.r - 0.5) * s + s * 0.42, s * 0.85);
   }
+}
+
+// Vyöhykkeen teema (tai tyhjä: vanha ilme)
+function hubTheme(band) {
+  return HUB_THEMES[band] || {};
+}
+
+// Oletusmaisema: pilviä ja kaksi kukkulajonoa laatan takana
+function hubDefaultBackdrop(b, w, h, lay) {
+  var i, x, hz = lay.oy + lay.rows * lay.cell * 0.35;
+  b.fillStyle = 'rgba(255,255,255,0.85)';
+  for (i = 0; i < 6; i++) cloudShape(b, w * (0.05 + i * 0.18), h * (0.06 + (i % 2) * 0.05), h * 0.02);
+  b.fillStyle = 'rgba(190,230,170,0.7)';
+  b.beginPath(); b.moveTo(0, h);
+  for (x = 0; x <= w; x += w / 30) b.lineTo(x, hz - Math.sin(x / w * 6 + 1) * h * 0.05);
+  b.lineTo(w, h); b.closePath(); b.fill();
+  b.fillStyle = 'rgba(150,210,130,0.8)';
+  b.beginPath(); b.moveTo(0, h);
+  for (x = 0; x <= w; x += w / 30) b.lineTo(x, hz + h * 0.12 - Math.sin(x / w * 9 + 2) * h * 0.04);
+  b.lineTo(w, h); b.closePath(); b.fill();
 }
 
 // Tuleva huone: harmaa mitali usvapilvien alla ja haalea lukko
@@ -1416,6 +1500,49 @@ function drawHubFogRoom(c, x, y, s, seed) {
   }
 }
 
+// Kentän maamerkki: kiviportti kentän värissä, sisällä kentän kuva. Portti seisoo
+// polulla kuin ovi pienoismaailmaan. Teema voi antaa oman maamerkkinsä (landmark).
+function drawHubArch(c, x, y, s, room, cleared, th) {
+  var col = room.color || '#8a5cb8', base = y + s * 0.34, pw = s * 0.1, aw = s * 0.36, top = y - s * 0.2;
+  var stone = th && th.arch ? th.arch : '#efe4f7', line = artShade(col, -0.45);
+  artShadow(c, x, base + s * 0.02, s * 0.46, s * 0.1, 0.22);
+  // Kynnys
+  artRoundRect(c, x - aw - pw, base - s * 0.06, (aw + pw) * 2, s * 0.1, s * 0.04, artShade(stone, -0.12), { lineColor: line });
+  // Kaari: ulkoreuna kentän värillä, sisäaukko
+  c.beginPath();
+  c.moveTo(x - aw - pw, base - s * 0.05);
+  c.lineTo(x - aw - pw, top);
+  c.arc(x, top, aw + pw, Math.PI, 0);
+  c.lineTo(x + aw + pw, base - s * 0.05);
+  c.closePath();
+  artFillPath(c, col, top - aw - pw, base, s * 0.3, { lineColor: line });
+  c.beginPath();
+  c.moveTo(x - aw + pw * 0.2, base - s * 0.05);
+  c.lineTo(x - aw + pw * 0.2, top);
+  c.arc(x, top, aw - pw * 0.2, Math.PI, 0);
+  c.lineTo(x + aw - pw * 0.2, base - s * 0.05);
+  c.closePath();
+  var ig = c.createLinearGradient(0, top - aw, 0, base);
+  ig.addColorStop(0, cleared ? '#fff3c4' : '#fffaf0');
+  ig.addColorStop(1, cleared ? '#ffe08a' : stone);
+  c.fillStyle = ig;
+  c.fill();
+  // Kaaren kivet
+  c.strokeStyle = 'rgba(255,255,255,0.45)';
+  c.lineWidth = Math.max(1, s * 0.025);
+  var i, a;
+  for (i = 1; i < 5; i++) {
+    a = Math.PI + i * Math.PI / 5;
+    c.beginPath();
+    c.moveTo(x + Math.cos(a) * (aw - pw * 0.2), top + Math.sin(a) * (aw - pw * 0.2));
+    c.lineTo(x + Math.cos(a) * (aw + pw), top + Math.sin(a) * (aw + pw));
+    c.stroke();
+  }
+  c.fillStyle = 'rgba(255,255,255,0.35)';
+  c.beginPath(); c.arc(x - aw * 0.6, top - aw * 0.55, s * 0.05, 0, Math.PI * 2); c.fill();
+  drawHubRoomIcon(c, room.kind, x, y - s * 0.02, s * 1.05);
+}
+
 function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
   var rad = s * (isNext ? 0.36 + Math.sin(globalT * 4) * 0.02 : 0.34);
   var pop = hubFx.pop && hubFx.pop.kind === room.kind ? hubFx.pop : null, pk, i, a;
@@ -1433,17 +1560,11 @@ function drawHubMedallion(c, room, x, y, s, isCleared, isNext) {
     c.fillStyle = gl;
     c.beginPath(); c.arc(x, y, rad * 1.9, 0, Math.PI * 2); c.fill();
   }
-  c.fillStyle = 'rgba(0,0,0,0.2)';
-  c.beginPath(); c.arc(x + s * 0.03, y + s * 0.06, rad, 0, Math.PI * 2); c.fill();
-  artCircle(c, x, y, rad, isCleared ? '#d9cfe6' : '#ffe27a', { lineColor: isCleared ? '#a898b8' : '#c8901e' });
-  artCircle(c, x, y, rad * 0.8, isCleared ? '#c5b8d0' : room.color, { line: false });
-  c.fillStyle = 'rgba(255,255,255,0.35)';
-  c.beginPath(); c.arc(x - rad * 0.3, y - rad * 0.38, rad * 0.26, 0, Math.PI * 2); c.fill();
-  if (isCleared) c.globalAlpha = 0.5;
-  drawHubRoomIcon(c, room.kind, x, y, s * 1.15);
-  c.globalAlpha = 1;
-  if (isCleared) drawStar(c, x + rad * 0.72, y - rad * 0.72, s * 0.13, 0, 0.9);
-  if (isNext) drawHintArrow(c, x, y - rad * 2.2);
+  var th = hubTheme(hubBand(Math.floor((x - hubLayout().ox) / s), Math.floor((y - hubLayout().oy) / s)));
+  if (th.landmark) th.landmark(c, x, y, s, room, { cleared: isCleared, next: isNext });
+  else drawHubArch(c, x, y, s, room, isCleared, th);
+  if (isCleared) drawStar(c, x + s * 0.34, y - s * 0.5, s * 0.14, 0, 0.9);
+  if (isNext) drawHintArrow(c, x, y - s * 1.0);
   if (pop) {
     c.restore();
     c.globalAlpha = Math.max(0, 1 - pop.t / 1.8);
