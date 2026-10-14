@@ -889,3 +889,1035 @@ HUB_THEMES.fair = {
     drawHubRoomIcon(c, room.kind, x, y - s * 0.02, s * 1.05);
   }
 };
+
+// ---------- Tökkäysyllätykset (paper, mine, mountain, letters, fair) ----------
+// Jokainen seinäkoriste ja maiseman isot kohteet tekevät tökättäessä oman
+// pikku temppunsa; joka 3. tökkäys on isompi yllätys. Tehosteet ovat taulussa
+// htSaari2PokeFx[nimi](c, x, baseY, s, k, big, o) ja äänet htSaari2PokeSnd[nimi](big, o);
+// samat tehosteet palvelevat sekä koristeita (pokeDraw) että maisemaa (spotDraw).
+
+function htSaari2PokeSeg(k, a, b) { return Math.max(0, Math.min(1, (k - a) / (b - a))); }
+function htSaari2PokeTune(notes, step, type, vol, len) {
+  for (var i = 0; i < notes.length; i++) if (notes[i]) playNote(notes[i], i * step, len || step * 1.4, type || 'triangle', vol || 0.22);
+}
+
+// Väriliitusydän piirtyy viiva kerrallaan (p = 0..1 valmiina)
+function htSaari2PokeHeart(c, x, y, r, p, col) {
+  var i, t, n = Math.max(2, Math.round(40 * p)), px, py;
+  if (p <= 0) return;
+  c.strokeStyle = col; c.lineWidth = Math.max(2, r * 0.16); c.lineCap = 'round'; c.lineJoin = 'round';
+  c.beginPath();
+  for (i = 0; i <= n; i++) {
+    t = i / 40 * Math.PI * 2;
+    px = x + Math.pow(Math.sin(t), 3) * r;
+    py = y - (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16 * r;
+    if (i) c.lineTo(px, py); else c.moveTo(px, py);
+  }
+  c.stroke();
+  if (p >= 1) { c.closePath(); c.fillStyle = artRGBA(col, 0.4); c.fill(); }
+}
+// Tähti piirtyy kärki kerrallaan
+function htSaari2PokeStarLine(c, x, y, r, p, col) {
+  var i, a, n = p * 10, pts = [];
+  if (p <= 0) return;
+  for (i = 0; i <= 10; i++) {
+    a = i / 10 * Math.PI * 2 - Math.PI / 2;
+    pts.push([x + Math.cos(a) * (i % 2 ? r * 0.45 : r), y + Math.sin(a) * (i % 2 ? r * 0.45 : r)]);
+  }
+  c.strokeStyle = col; c.lineWidth = Math.max(2, r * 0.13); c.lineCap = 'round'; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(pts[0][0], pts[0][1]);
+  for (i = 1; i <= Math.floor(n); i++) c.lineTo(pts[i][0], pts[i][1]);
+  if (n < 10) {
+    var f = n - Math.floor(n), q = pts[Math.floor(n)], q2 = pts[Math.floor(n) + 1];
+    c.lineTo(q[0] + (q2[0] - q[0]) * f, q[1] + (q2[1] - q[1]) * f);
+  }
+  c.stroke();
+  if (p >= 1) { c.closePath(); c.fillStyle = artRGBA(col, 0.45); c.fill(); }
+}
+// Konfettisuihku pisteestä (k = 0..1)
+function htSaari2PokeConfetti(c, x, y, s, k, cnt, seed, power) {
+  var i, a, sp, px, py, t = k * 1.6;
+  c.globalAlpha = Math.min(1, (1 - k) * 4);
+  for (i = 0; i < cnt; i++) {
+    a = -Math.PI / 2 + (hubHash(i, seed) - 0.5) * 2.4;
+    sp = s * (power || 1.6) * (0.5 + hubHash(seed, i) * 0.6);
+    px = x + Math.cos(a) * sp * t + Math.sin(t * 6 + i) * s * 0.05;
+    py = y + Math.sin(a) * sp * t + s * 1.4 * t * t;
+    c.save(); c.translate(px, py); c.rotate(t * 8 + i);
+    c.fillStyle = HTSAARI2_COLORS[i % 6];
+    c.fillRect(-s * 0.04, -s * 0.02, s * 0.08, s * 0.04);
+    c.restore();
+  }
+  c.globalAlpha = 1;
+}
+// Nuotti: pää, varsi ja lippu
+function htSaari2PokeNote(c, x, y, sz, col) {
+  c.save(); c.translate(x, y); c.rotate(-0.25);
+  artBlob(c, 0, 0, sz * 0.32, sz * 0.24, col, { lineColor: artShade(col, -0.5), line: 1 });
+  c.restore();
+  c.strokeStyle = artShade(col, -0.5); c.lineWidth = Math.max(1.5, sz * 0.1); c.lineCap = 'round';
+  c.beginPath(); c.moveTo(x + sz * 0.28, y - sz * 0.05); c.lineTo(x + sz * 0.28, y - sz * 0.9);
+  c.quadraticCurveTo(x + sz * 0.55, y - sz * 0.7, x + sz * 0.6, y - sz * 0.45); c.stroke();
+}
+function htSaari2PokeNotes(c, x, y, s, k, cnt, col) {
+  for (var i = 0; i < cnt; i++) {
+    var t = htSaari2PokeSeg(k, i * 0.12, 0.6 + i * 0.12);
+    if (t <= 0 || t >= 1) continue;
+    c.globalAlpha = Math.sin(t * Math.PI);
+    htSaari2PokeNote(c, x + Math.sin(t * 6 + i * 2) * s * 0.2 + (i - (cnt - 1) / 2) * s * 0.15, y - t * s * 0.9, s * 0.22, col || HTSAARI2_COLORS[(i * 2) % 6]);
+  }
+  c.globalAlpha = 1;
+}
+// Puhekupla tekstillä, sc = ponnahdusskaala
+function htSaari2PokeBubble(c, x, y, text, sz, col, sc) {
+  if (sc <= 0) return;
+  c.save(); c.translate(x, y); c.scale(sc, sc);
+  c.font = 'bold ' + Math.round(sz) + 'px ' + UI_FONT;
+  var w = c.measureText(text).width + sz * 0.8, h = sz * 1.35;
+  c.beginPath();
+  c.moveTo(-sz * 0.2, h / 2 - 2); c.lineTo(-sz * 0.45, h / 2 + sz * 0.45); c.lineTo(sz * 0.15, h / 2 - 2); c.closePath();
+  c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = artShade(col, -0.4); c.lineWidth = Math.max(1.5, sz * 0.07); c.stroke();
+  artRoundRect(c, -w / 2, -h / 2, w, h, h * 0.4, '#ffffff', { lineColor: artShade(col, -0.4) });
+  htSaari2Letter(c, text, 0, sz * 0.04, sz, col, null);
+  c.restore();
+}
+// Perhonen (flap -1..1 siipien asento)
+function htSaari2PokeButterfly(c, x, y, r, col, flap) {
+  var f = 0.25 + Math.abs(flap) * 0.75;
+  artBlob(c, x - r * 0.55 * f, y - r * 0.2, r * 0.6 * f, r * 0.55, col, { lineColor: artShade(col, -0.45), line: 1 });
+  artBlob(c, x + r * 0.55 * f, y - r * 0.2, r * 0.6 * f, r * 0.55, col, { lineColor: artShade(col, -0.45), line: 1 });
+  artBlob(c, x - r * 0.4 * f, y + r * 0.35, r * 0.4 * f, r * 0.35, artShade(col, 0.2), { line: false });
+  artBlob(c, x + r * 0.4 * f, y + r * 0.35, r * 0.4 * f, r * 0.35, artShade(col, 0.2), { line: false });
+  artBlob(c, x, y, r * 0.12, r * 0.6, '#4a3a4a', { line: false });
+}
+// Tähtiräjähdys (säteet + pikkutähti)
+function htSaari2PokeBurst(c, x, y, r, k, col) {
+  var i, a, d = r * easeOutCubic(k);
+  c.globalAlpha = 1 - k;
+  c.strokeStyle = col; c.lineWidth = Math.max(2, r * 0.1); c.lineCap = 'round';
+  for (i = 0; i < 8; i++) {
+    a = i / 8 * Math.PI * 2;
+    c.beginPath(); c.moveTo(x + Math.cos(a) * d * 0.5, y + Math.sin(a) * d * 0.5); c.lineTo(x + Math.cos(a) * d, y + Math.sin(a) * d); c.stroke();
+  }
+  drawStar(c, x, y, r * 0.35 * (1 - k * 0.5), k * 3, 0.5);
+  c.globalAlpha = 1;
+}
+// Kotka lentämässä (flap = siiven asento -1..1, dir = suunta)
+function htSaari2PokeEagle(c, x, y, r, flap, dir) {
+  var wy = flap * r * 0.7;
+  c.save(); c.translate(x, y); c.scale(dir || 1, 1);
+  for (var i = -1; i <= 1; i += 2) {
+    c.beginPath(); c.moveTo(-r * 0.1, 0); c.quadraticCurveTo(i * r * 0.2 - r * 0.1, -wy - r * 0.2, i * r * 1.1, -wy);
+    c.quadraticCurveTo(i * r * 0.5, r * 0.15, -r * 0.1, r * 0.15); c.closePath();
+    artFillPath(c, '#8a5a34', -Math.abs(wy) - r * 0.3, Math.abs(wy) + r * 0.2, r * 0.3, { lineColor: '#4a2a14', line: Math.max(1, r * 0.06) });
+  }
+  artBlob(c, 0, r * 0.05, r * 0.45, r * 0.22, '#8a5a34', { lineColor: '#4a2a14', line: Math.max(1, r * 0.06) });
+  artCircle(c, r * 0.42, -r * 0.08, r * 0.2, '#ffffff', { lineColor: '#7a7a8a', line: 1 });
+  c.fillStyle = '#2a2020'; c.beginPath(); c.arc(r * 0.47, -r * 0.12, r * 0.045, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.moveTo(r * 0.58, -r * 0.1); c.lineTo(r * 0.75, -r * 0.04); c.lineTo(r * 0.58, 0); c.closePath();
+  c.fillStyle = '#ffb83e'; c.fill();
+  c.restore();
+}
+// Lepakko (söpö, suurisilmäinen)
+function htSaari2PokeBat(c, x, y, r, flap) {
+  var wy = flap * r * 0.6, i;
+  for (i = -1; i <= 1; i += 2) {
+    c.beginPath(); c.moveTo(x, y);
+    c.quadraticCurveTo(x + i * r * 0.6, y - r * 0.5 - wy, x + i * r * 1.3, y - wy);
+    c.quadraticCurveTo(x + i * r * 1.0, y + r * 0.1, x + i * r * 0.8, y + r * 0.25 - wy * 0.3);
+    c.quadraticCurveTo(x + i * r * 0.5, y + r * 0.05, x, y + r * 0.3); c.closePath();
+    artFillPath(c, '#6a4a8a', y - r * 1.1, y + r * 0.6, r * 0.4, { lineColor: '#2a1a3a', line: Math.max(1, r * 0.06) });
+  }
+  artCircle(c, x, y, r * 0.38, '#7a5a9a', { lineColor: '#2a1a3a', line: Math.max(1, r * 0.06) });
+  artEye(c, x - r * 0.13, y - r * 0.04, r * 0.11);
+  artEye(c, x + r * 0.13, y - r * 0.04, r * 0.11);
+}
+// Lumijänis (y = vatsan kohta)
+function htSaari2PokeHare(c, x, y, r) {
+  artBlob(c, x - r * 0.22, y - r * 1.15, r * 0.15, r * 0.45, '#ffffff', { lineColor: '#8a96b0', rot: -0.2 });
+  artBlob(c, x + r * 0.22, y - r * 1.15, r * 0.15, r * 0.45, '#ffffff', { lineColor: '#8a96b0', rot: 0.2 });
+  artBlob(c, x - r * 0.22, y - r * 1.1, r * 0.06, r * 0.28, '#ffc0d0', { line: false, rot: -0.2 });
+  artBlob(c, x + r * 0.22, y - r * 1.1, r * 0.06, r * 0.28, '#ffc0d0', { line: false, rot: 0.2 });
+  artBlob(c, x, y - r * 0.15, r * 0.6, r * 0.55, '#ffffff', { lineColor: '#8a96b0' });
+  artEye(c, x - r * 0.2, y - r * 0.25, r * 0.1);
+  artEye(c, x + r * 0.2, y - r * 0.25, r * 0.1);
+  artCircle(c, x, y - r * 0.08, r * 0.06, '#ff9ec6', { line: false });
+  artBlush(c, x - r * 0.35, y - r * 0.02, r * 0.08);
+  artBlush(c, x + r * 0.35, y - r * 0.02, r * 0.08);
+}
+// Jäätelötötterö (y = alimman pallon kohta)
+function htSaari2PokeCone(c, x, y, s, scoops, cherry) {
+  var i, cols = ['#ff9ec6', '#fff3c4', '#9fffd8', '#b07a54', '#c9a0ff'];
+  c.beginPath(); c.moveTo(x - s * 0.13, y); c.lineTo(x + s * 0.13, y); c.lineTo(x, y + s * 0.34); c.closePath();
+  artFillPath(c, '#f2b46a', y, y + s * 0.34, s * 0.1, { lineColor: '#9a6430' });
+  for (i = 0; i < scoops; i++) artCircle(c, x + (i % 2 ? s * 0.02 : -s * 0.02), y - s * 0.03 - i * s * 0.15, s * 0.12, cols[i % 5], { lineColor: artShade(cols[i % 5], -0.45), hi: 0.4 });
+  if (cherry) artCircle(c, x, y - s * 0.03 - scoops * s * 0.15 + s * 0.02, s * 0.06, '#ff3f4f', { hi: 0.5 });
+}
+// Karkki käärepaperissa
+function htSaari2PokeCandy(c, x, y, r, col, rot) {
+  c.save(); c.translate(x, y); c.rotate(rot);
+  c.fillStyle = artShade(col, 0.25);
+  for (var i = -1; i <= 1; i += 2) {
+    c.beginPath(); c.moveTo(i * r * 0.6, 0); c.lineTo(i * r * 1.3, -r * 0.5); c.lineTo(i * r * 1.3, r * 0.5); c.closePath(); c.fill();
+  }
+  artCircle(c, 0, 0, r * 0.65, col, { lineColor: artShade(col, -0.45), hi: 0.5, line: 1 });
+  c.restore();
+}
+// Piste viirinauhan kaarella (sama kaava kuin htSaari2Bunting)
+function htSaari2PokeBuntPt(x0, y0, x1, y1, sag, t) {
+  var mx = (x0 + x1) / 2, my = (y0 + y1) / 2 + sag;
+  return [(1 - t) * (1 - t) * x0 + 2 * t * (1 - t) * mx + t * t * x1, (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * my + t * t * y1];
+}
+// Viirinauhan valot vilkkuvat kiertäen (o: x0, y0, x1, y1, sag, n)
+function htSaari2PokeLights(c, o, k, fs) {
+  var i, p, on;
+  c.globalAlpha = Math.min(1, (1 - k) * 4);
+  for (i = 0; i < o.n; i++) {
+    p = htSaari2PokeBuntPt(o.x0, o.y0, o.x1, o.y1, o.sag, (i + 0.5) / o.n);
+    on = (Math.floor(k * 16) + i) % 3 === 0;
+    artGlow(c, p[0], p[1] + fs * 0.4, fs * (on ? 1.6 : 0.8), HTSAARI2_COLORS[i % 6], on ? 0.85 : 0.35);
+    if (on) artCircle(c, p[0], p[1] + fs * 0.4, fs * 0.28, '#fffbe0', { line: false });
+  }
+  c.globalAlpha = 1;
+}
+// Ilotulite: raketti nousee ja räjähtää värikukaksi
+function htSaari2PokeFirework(c, x, y, hgt, k, col) {
+  var up = htSaari2PokeSeg(k, 0, 0.35), ex = htSaari2PokeSeg(k, 0.35, 1), ty = y - hgt * easeOutCubic(up), i, a;
+  if (k <= 0) return;
+  if (ex <= 0) {
+    artCircle(c, x, ty, hgt * 0.04, '#fff3a0', { line: false });
+    c.strokeStyle = 'rgba(255,220,140,0.7)'; c.lineWidth = Math.max(1.5, hgt * 0.02);
+    c.beginPath(); c.moveTo(x, ty); c.lineTo(x, ty + hgt * 0.15); c.stroke();
+    return;
+  }
+  c.globalAlpha = 1 - ex;
+  for (i = 0; i < 12; i++) {
+    a = i / 12 * Math.PI * 2;
+    var d = hgt * 0.35 * easeOutCubic(ex);
+    artCircle(c, x + Math.cos(a) * d, ty + Math.sin(a) * d + ex * ex * hgt * 0.1, hgt * 0.035, HTSAARI2_COLORS[(i + (col || 0)) % 6], { line: false });
+  }
+  c.globalAlpha = 1;
+}
+// Kirjainpalikan kääntö: palauttaa { sx, show, lift } (ki = 0..1)
+function htSaari2PokeFlip(ki, ch, nw, s) {
+  var f1 = htSaari2PokeSeg(ki, 0, 0.22), f2 = htSaari2PokeSeg(ki, 0.85, 1);
+  var r = { sx: Math.abs(Math.cos(f1 * Math.PI)), show: f1 > 0.5 ? nw : ch, lift: Math.sin(f1 * Math.PI) * s * 0.25 + Math.sin(f2 * Math.PI) * s * 0.12 };
+  if (f2 > 0) { r.sx = Math.abs(Math.cos(f2 * Math.PI)); r.show = f2 > 0.5 ? ch : nw; }
+  r.sx = Math.max(0.05, r.sx);
+  return r;
+}
+
+var HTSAARI2_POKE_WORDS = { KA: 'KAKKU', LE: 'LELU', PU: 'PUPU', MA: 'MANSIKKA', SO: 'SOKERI', TI: 'TIIKERI', VE: 'VENE', NO: 'NOITA', LU: 'LUMI', HE: 'HEPPA' };
+
+var htSaari2PokeFx = {
+  // --- Paperi ---
+  // Väriliitupuu piirtää sydämen (iso: kolme sydäntä, omenapuusta putoaa omena)
+  tree: function (c, x, baseY, s, k, big, o) {
+    var S = o.S, cy = baseY - S * 0.95, p = htSaari2PokeSeg(k, 0, 0.45), up = easeOutCubic(htSaari2PokeSeg(k, 0.45, 1));
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    htSaari2PokeHeart(c, x, cy - S * 0.55 - up * S * 0.35, S * (big ? 0.26 : 0.2), p, '#ff5f7e');
+    if (big) {
+      htSaari2PokeHeart(c, x - S * 0.45, cy - S * 0.35 - up * S * 0.3, S * 0.13, htSaari2PokeSeg(k, 0.15, 0.5), '#c9a0ff');
+      htSaari2PokeHeart(c, x + S * 0.45, cy - S * 0.35 - up * S * 0.3, S * 0.13, htSaari2PokeSeg(k, 0.25, 0.6), '#ffae3c');
+      if (o.apples) {
+        var f = htSaari2PokeSeg(k, 0.1, 0.5), ay = cy + S * 0.12 + (baseY - S * 0.06 - cy - S * 0.12) * f * f;
+        var bo = htSaari2PokeSeg(k, 0.5, 0.9);
+        if (f >= 1) ay -= Math.abs(Math.sin(bo * Math.PI * 2)) * S * 0.12 * (1 - bo);
+        artCircle(c, x + S * 0.02 + f * S * 0.3 + bo * S * 0.15, ay, S * 0.065, '#ff4f5a', { hi: 0.45 });
+      }
+    }
+    c.globalAlpha = 1;
+  },
+  // Kynä piirtää tähden (iso: tähdestä tulee kultatähti joka lentää)
+  pencil: function (c, x, baseY, s, k, big, o) {
+    var S = o.S, sx = x - (o.ang > 0 ? 1 : -1) * S * 0.42, sy = baseY - S * 0.55, p = htSaari2PokeSeg(k, 0, 0.5);
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    if (big && k > 0.5) {
+      var t = htSaari2PokeSeg(k, 0.5, 1);
+      drawStar(c, sx, sy - t * S * 0.6, S * (0.2 + t * 0.06), t * 5, 1);
+    } else htSaari2PokeStarLine(c, sx, sy, S * 0.2, p, o.col);
+    c.globalAlpha = 1;
+  },
+  // Mustepullo roiskahtaa (iso: sateenkaariroiskeet ja mustesydän)
+  ink: function (c, x, baseY, s, k, big, o) {
+    var kk = s * 0.28, mx = x, my = baseY - kk * 2.15, i, n = big ? 7 : 4, t = htSaari2PokeSeg(k, 0, 0.45);
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.75, 1);
+    for (i = 0; i < n; i++) {
+      var lx = x + (i - (n - 1) / 2) * s * (big ? 0.2 : 0.24) + (i % 2 ? s * 0.04 : 0), ly = baseY + s * 0.06 + (i % 3) * s * 0.03;
+      var col = big ? HTSAARI2_COLORS[i % 6] : '#8a4dff';
+      if (t < 1) htSaari2Drop(c, mx + (lx - mx) * t, my + (ly - my) * t - Math.sin(t * Math.PI) * s * 0.5, s * 0.035, col);
+      else artBlob(c, lx, ly, s * 0.07 * (1 + htSaari2PokeSeg(k, 0.45, 0.6) * 0.4), s * 0.03, col, { line: false });
+    }
+    if (big && k > 0.45) drawHeartShape(c, x, baseY - s * 0.15 - htSaari2PokeSeg(k, 0.45, 1) * s * 0.5, s * 0.16, true);
+    c.globalAlpha = 1;
+  },
+  // Sadepilvi sataa ja kukka kasvaa (iso: sateenkaari)
+  rain: function (c, x, baseY, s, k, big, o) {
+    var cy = baseY - s * 1.05, i, top = cy + s * 0.2, len = baseY - top;
+    if (k < 0.75) for (i = 0; i < 10; i++) {
+      var dy = ((k * 2.4 + hubHash(i, 3)) % 1) * len;
+      htSaari2Drop(c, x + (hubHash(3, i) - 0.5) * s * 0.55, top + dy, s * 0.03, '#5fb0ff');
+    }
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    var g = easeOutCubic(htSaari2PokeSeg(k, 0.2, 0.7));
+    c.strokeStyle = '#4fa046'; c.lineWidth = Math.max(1.5, s * 0.025); c.lineCap = 'round';
+    if (!o.sky) {
+    c.beginPath(); c.moveTo(x + s * 0.24, baseY - s * 0.05); c.lineTo(x + s * 0.24, baseY - s * 0.14 - g * s * 0.28); c.stroke();
+    drawFlower(c, x + s * 0.24, baseY - s * 0.14 - g * s * 0.28, s * (0.05 + g * 0.05), o.rnd < 0.5 ? '#ff7bac' : '#ffd23e');
+    }
+    if (big && k > 0.3) {
+      var rb = ['#ff5f7e', '#ffae3c', '#ffd23e', '#5fd36b', '#5fb0ff', '#c9a0ff'], q = easeOutCubic(htSaari2PokeSeg(k, 0.3, 0.7));
+      c.lineWidth = Math.max(2, s * 0.045); c.lineCap = 'butt';
+      for (i = 0; i < 6; i++) {
+        c.strokeStyle = rb[i];
+        c.beginPath(); c.arc(x, cy + s * 0.3, s * (0.7 - i * 0.045), Math.PI, Math.PI + Math.PI * q); c.stroke();
+      }
+      c.lineCap = 'round';
+    }
+    c.globalAlpha = 1;
+  },
+  // Pensaasta lehahtaa perhonen (iso: kolme)
+  bush: function (c, x, baseY, s, k, big, o) {
+    var i, n = big ? 3 : 1;
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    for (i = 0; i < n; i++) {
+      var t = htSaari2PokeSeg(k, i * 0.1, 1), dir = i % 2 ? -1 : 1;
+      htSaari2PokeButterfly(c, x + dir * Math.sin(t * 3) * s * (0.3 + i * 0.1) + dir * t * s * 0.2, baseY - s * 0.3 - t * s * (0.9 + i * 0.2), s * 0.12, HTSAARI2_COLORS[(i * 2 + 4 + (o.n || 0)) % 6], Math.sin(k * 50 + i));
+    }
+    c.globalAlpha = 1;
+  },
+  // Aurinko: säteet pyörähtävät ja aurinko iskee silmää (iso: "HEI!"-kupla)
+  sun: function (c, x, y, r, k, big, o) {
+    var i, a, rot = easeOutCubic(k) * Math.PI;
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    c.strokeStyle = '#ffd23e'; c.lineWidth = Math.max(2, r * 0.12); c.lineCap = 'round';
+    for (i = 0; i < 12; i++) {
+      a = i / 12 * Math.PI * 2 + rot;
+      var L = r * (1.75 + Math.sin(k * Math.PI * 6 + i) * 0.15);
+      c.beginPath(); c.moveTo(x + Math.cos(a) * r * 1.3, y + Math.sin(a) * r * 1.3); c.lineTo(x + Math.cos(a) * L, y + Math.sin(a) * L); c.stroke();
+    }
+    if (k > 0.2 && k < 0.6) {
+      artCircle(c, x - r * 0.32, y - r * 0.12, r * 0.14, '#ffd84f', { line: false });
+      c.strokeStyle = '#7a4a1a'; c.lineWidth = Math.max(1.5, r * 0.07);
+      c.beginPath(); c.arc(x - r * 0.32, y - r * 0.16, r * 0.1, 0.3, Math.PI - 0.3); c.stroke();
+    }
+    if (big) htSaari2PokeBubble(c, x + r * 1.6, y - r * 0.8, 'HEI!', r * 0.5, '#ffae3c', easeOutBack(htSaari2PokeSeg(k, 0, 0.3)));
+    c.globalAlpha = 1;
+  },
+
+  // --- Kaivos ---
+  // Tunneli: lyhty lepattaa, pimeässä vilkkuu silmäpari (iso: lepakko lentää ulos)
+  tunnel: function (c, x, baseY, s, k, big, o) {
+    var fl = (0.45 + 0.4 * Math.abs(Math.sin(k * 37)) * Math.abs(Math.sin(k * 13 + 1))) * (1 - htSaari2PokeSeg(k, 0.8, 1));
+    artGlow(c, x + s * 0.36, baseY - s * 0.43, s * (0.35 + fl * 0.3), '#ffd27a', fl);
+    if (!big || k < 0.25) {
+      var bl = (k > 0.45 && k < 0.55) ? 0.15 : 1, ey = baseY - s * 0.3;
+      c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+      for (var i = -1; i <= 1; i += 2) {
+        artBlob(c, x + i * s * 0.06, ey, s * 0.04, s * 0.045 * bl, '#fffbe0', { line: false });
+        if (bl > 0.5) artCircle(c, x + i * s * 0.06 + s * 0.01, ey + s * 0.01, s * 0.018, '#2a1a1a', { line: false });
+      }
+      c.globalAlpha = 1;
+    } else {
+      var t = htSaari2PokeSeg(k, 0.25, 1);
+      c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.85, 1);
+      htSaari2PokeBat(c, x - t * s * 0.7 + Math.sin(t * 7) * s * 0.15, baseY - s * 0.35 - t * s * 1.0, s * 0.18, Math.sin(k * 60));
+      c.globalAlpha = 1;
+    }
+  },
+  // Kaivosvaunu: pyörät pyörivät ja kyydistä pomppaa jalokivi (iso: kivisuihku)
+  cart: function (c, x, baseY, s, k, big, o) {
+    var i, sp = (1 - k) * k * 60;
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    c.strokeStyle = '#d6dae8'; c.lineWidth = Math.max(1.5, s * 0.02);
+    for (i = -1; i <= 1; i += 2) {
+      var wx = x + i * s * 0.2, wy = baseY - s * 0.13;
+      for (var j = 0; j < 2; j++) {
+        var a = sp + j * Math.PI / 2;
+        c.beginPath(); c.moveTo(wx - Math.cos(a) * s * 0.06, wy - Math.sin(a) * s * 0.06); c.lineTo(wx + Math.cos(a) * s * 0.06, wy + Math.sin(a) * s * 0.06); c.stroke();
+      }
+    }
+    if (k < 0.4) {
+      c.strokeStyle = 'rgba(90,80,100,0.45)'; c.lineWidth = Math.max(1.5, s * 0.025);
+      for (i = 0; i < 3; i++) { c.beginPath(); c.moveTo(x - s * (0.5 + i * 0.05), baseY - s * (0.2 + i * 0.12)); c.lineTo(x - s * (0.68 + i * 0.05), baseY - s * (0.2 + i * 0.12)); c.stroke(); }
+    }
+    var n = big ? 5 : 1;
+    for (i = 0; i < n; i++) {
+      var t = htSaari2PokeSeg(k, 0.05 + i * 0.05, 0.6 + i * 0.05), dir = (i % 2 ? -1 : 1) * (1 + Math.floor(i / 2) * 0.5);
+      var gx = x + dir * t * s * 0.45, gy = baseY - s * 0.55 + (s * 0.5) * t - Math.sin(t * Math.PI) * s * 0.55;
+      drawGem(c, gx, gy, s * 0.1, GEM_COLORS[(i + (o.n || 0) + Math.floor(o.rnd * 6)) % 6]);
+    }
+    c.globalAlpha = 1;
+  },
+  // Kristalli soi: värirenkaat ja nuotit (iso: sateenkaarirenkaat ja valokiilat)
+  crystal: function (c, x, baseY, s, k, big, o) {
+    var i, cy = baseY - s * 0.5;
+    artGlow(c, x, cy, s * (0.5 + Math.sin(k * Math.PI) * 0.4), o.col, 0.6 * (1 - k));
+    for (i = 0; i < 3; i++) {
+      var t = htSaari2PokeSeg(k, i * 0.15, 0.6 + i * 0.15);
+      if (t <= 0 || t >= 1) continue;
+      c.strokeStyle = artRGBA(big ? HTSAARI2_COLORS[(i * 2) % 6] : o.col, 1 - t);
+      c.lineWidth = Math.max(2, s * 0.04);
+      c.beginPath(); c.arc(x, cy, s * (0.2 + t * 0.6), 0, Math.PI * 2); c.stroke();
+    }
+    if (big) {
+      c.globalAlpha = Math.sin(k * Math.PI) * 0.6;
+      for (i = 0; i < 6; i++) {
+        var a = i / 6 * Math.PI * 2 + k * 2;
+        c.fillStyle = HTSAARI2_COLORS[i];
+        c.beginPath(); c.moveTo(x, cy); c.lineTo(x + Math.cos(a - 0.12) * s * 0.9, cy + Math.sin(a - 0.12) * s * 0.9); c.lineTo(x + Math.cos(a + 0.12) * s * 0.9, cy + Math.sin(a + 0.12) * s * 0.9); c.closePath(); c.fill();
+      }
+      c.globalAlpha = 1;
+    }
+    htSaari2PokeNotes(c, x, cy - s * 0.2, s, k, big ? 3 : 2, artShade(o.col, -0.15));
+  },
+  // Hakku kilahtaa: kipinät ja jalokivi pomppaa (iso: kivestä nousee iso hehkuva jalokivi)
+  pick: function (c, x, baseY, s, k, big, o) {
+    var i, a, t = htSaari2PokeSeg(k, 0, 0.3), hx = x + s * 0.06, hy = baseY - s * 0.6;
+    if (t < 1) {
+      c.strokeStyle = artRGBA('#ffe27a', 1 - t); c.lineWidth = Math.max(1.5, s * 0.03); c.lineCap = 'round';
+      for (i = 0; i < 6; i++) {
+        a = i / 6 * Math.PI * 2 + 0.3;
+        c.beginPath(); c.moveTo(hx + Math.cos(a) * s * 0.06 * (1 + t * 2), hy + Math.sin(a) * s * 0.06 * (1 + t * 2)); c.lineTo(hx + Math.cos(a) * s * 0.12 * (1 + t * 2), hy + Math.sin(a) * s * 0.12 * (1 + t * 2)); c.stroke();
+      }
+    }
+    var gcol = GEM_COLORS[Math.floor(o.rnd2 * 6)];
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    if (big) {
+      var g = easeOutBack(htSaari2PokeSeg(k, 0.15, 0.5));
+      artGlow(c, x - s * 0.08, baseY - s * 0.45 - g * s * 0.3, s * 0.5 * g, gcol, 0.7);
+      drawGem(c, x - s * 0.08, baseY - s * 0.32 - g * s * 0.35, s * (0.07 + g * 0.12), gcol);
+      if (k > 0.3) htSaari2PokeBurst(c, x - s * 0.08, baseY - s * 0.67, s * 0.45, htSaari2PokeSeg(k, 0.3, 0.9), '#ffe27a');
+    } else {
+      var j = htSaari2PokeSeg(k, 0.1, 0.7);
+      drawGem(c, x - s * 0.08, baseY - s * 0.32 - Math.sin(j * Math.PI) * s * 0.45, s * 0.08, gcol);
+    }
+    c.globalAlpha = 1;
+  },
+  // Majakka välähtää: valokiila pyyhkäisee (iso: kaksi kiilaa ja vilkutus)
+  lighthouse: function (c, x, baseY, S, k, big, o) {
+    var lx = x, ly = baseY - S * 1.21, i, n = big ? 2 : 1, rot = Math.PI + k * Math.PI * (big ? 4 : 2);
+    var fl = (big ? Math.max(0, Math.sin(k * Math.PI * 6)) : Math.sin(k * Math.PI)) * (1 - htSaari2PokeSeg(k, 0.85, 1));
+    artGlow(c, lx, ly, S * (0.5 + fl * 0.6), '#fff3a0', 0.5 + fl * 0.4);
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    for (i = 0; i < n; i++) {
+      var a = rot + i * Math.PI, L = S * 4, ex = lx + Math.cos(a) * L, ey = ly + Math.sin(a) * L * 0.3;
+      var g = c.createLinearGradient(lx, ly, ex, ey);
+      g.addColorStop(0, 'rgba(255,248,180,0.8)'); g.addColorStop(1, 'rgba(255,248,180,0)');
+      c.fillStyle = g;
+      c.beginPath(); c.moveTo(lx, ly);
+      c.lineTo(ex - Math.sin(a) * S * 0.6, ey + Math.cos(a) * S * 0.6);
+      c.lineTo(ex + Math.sin(a) * S * 0.6, ey - Math.cos(a) * S * 0.6);
+      c.closePath(); c.fill();
+    }
+    c.globalAlpha = 1;
+  },
+  // Purjeveneen vierestä hyppää delfiini (iso: kaksi delfiiniä)
+  boat: function (c, x, y, s, k, big, o) {
+    var i, n = big ? 2 : 1;
+    for (i = 0; i < n; i++) {
+      var t = htSaari2PokeSeg(k, i * 0.15, 0.75 + i * 0.15);
+      if (t <= 0 || t >= 1) continue;
+      var dx = x + s * (0.9 + i * 0.5) - t * s * 0.9, dy = y + s * 0.25 - Math.sin(t * Math.PI) * s * 0.9;
+      c.save(); c.translate(dx, dy); c.rotate(-Math.cos(t * Math.PI) * 0.9);
+      artBlob(c, 0, 0, s * 0.3, s * 0.11, '#7fa8d8', { lineColor: '#3a5a8a' });
+      c.fillStyle = '#5a88c0';
+      c.beginPath(); c.moveTo(-s * 0.05, -s * 0.09); c.lineTo(s * 0.05, -s * 0.2); c.lineTo(s * 0.09, -s * 0.08); c.closePath(); c.fill();
+      c.beginPath(); c.moveTo(s * 0.26, 0); c.lineTo(s * 0.4, -s * 0.1); c.lineTo(s * 0.4, s * 0.1); c.closePath(); c.fill();
+      artCircle(c, -s * 0.18, -s * 0.03, s * 0.025, '#1a2a3a', { line: false });
+      c.restore();
+    }
+    for (i = 0; i < 2; i++) {
+      var rt = htSaari2PokeSeg(k, i * 0.35 + 0.1, i * 0.35 + 0.6);
+      if (rt <= 0 || rt >= 1) continue;
+      c.strokeStyle = artRGBA('#ffffff', 1 - rt); c.lineWidth = 2;
+      c.beginPath(); c.ellipse(x + s * (0.9 - i * 0.9), y + s * 0.25, s * 0.3 * (0.4 + rt), s * 0.08 * (0.4 + rt), 0, 0, Math.PI * 2); c.stroke();
+    }
+  },
+  // Taivaan kotka tekee silmukan (iso: kaksi silmukkaa ja laulu)
+  bird: function (c, x, y, s, k, big, o) {
+    var t = easeInOutSine(k) * Math.PI * 2 * (big ? 2 : 1), R = Math.max(s * 0.5, o.r * (big ? 5 : 4));
+    var bx = x + Math.sin(t) * R, by = y - (1 - Math.cos(t)) * R * 0.7;
+    htSaari2PokeEagle(c, bx, by, o.r * 1.6, Math.sin(k * 40), Math.cos(t) >= 0 ? 1 : -1);
+    if (big) htSaari2PokeNotes(c, x, y - R * 0.5, s, k, 2, '#5a4a6a');
+  },
+
+  // --- Vuoret ---
+  // Huippu: lumipallot vierivät rinnettä, lipullisessa lippu liehuu (iso: lumihiutaleet)
+  peak: function (c, x, baseY, s, k, big, o) {
+    var ph = s * (0.95 + o.rnd2 * 0.4), top = baseY - ph, bw = ph * 0.42, i;
+    if (o.rnd2 > 0.6) {
+      var fy = top, w1 = Math.sin(k * 30) * s * 0.04 * (1 - k), w2 = Math.sin(k * 30 + 1.5) * s * 0.05 * (1 - k);
+      c.beginPath(); c.moveTo(x, fy - s * 0.27);
+      c.quadraticCurveTo(x + s * 0.09, fy - s * 0.27 + w1, x + s * 0.19, fy - s * 0.21 + w2);
+      c.quadraticCurveTo(x + s * 0.09, fy - s * 0.15 + w1, x, fy - s * 0.13); c.closePath();
+      artFillPath(c, '#ff5f6e', fy - s * 0.27, fy - s * 0.12, s * 0.06, { lineColor: '#a8303c', line: 1 });
+    }
+    for (i = 0; i < (big ? 4 : 2); i++) {
+      var t = htSaari2PokeSeg(k, i * 0.12, 0.7 + i * 0.08), dir = i % 2 ? 1 : -1;
+      if (t <= 0 || t >= 1) continue;
+      var px = x + dir * bw * 0.85 * t, py = top + ph * 0.08 + (ph - s * 0.06 - ph * 0.08) * t, r = s * (0.04 + t * 0.06);
+      c.globalAlpha = Math.min(1, (1 - t) * 5);
+      artCircle(c, px, py - r, r, '#ffffff', { lineColor: '#8a96b0', line: 1 });
+      c.fillStyle = '#c8d2e6'; c.beginPath(); c.arc(px + Math.cos(t * 20 * dir) * r * 0.5, py - r + Math.sin(t * 20 * dir) * r * 0.5, r * 0.18, 0, Math.PI * 2); c.fill();
+      c.globalAlpha = 1;
+    }
+    if (big) for (i = 0; i < 6; i++) {
+      var a = i / 6 * Math.PI * 2 + k * 2, d = s * 0.6 * easeOutCubic(k);
+      c.globalAlpha = 1 - k;
+      drawSnowflake(c, x + Math.cos(a) * d, top + Math.sin(a) * d * 0.7, s * 0.07);
+      c.globalAlpha = 1;
+    }
+  },
+  // Kuusi: lumi pöllähtää oksilta (iso: punatulkku laulaa latvassa)
+  pine: function (c, x, baseY, s, k, big, o) {
+    var S = s * (0.9 + o.rnd2 * 0.3), px = x - s * 0.12, i;
+    for (i = 0; i < 3; i++) {
+      var ty = baseY - S * 0.15 - i * S * 0.27 - S * 0.32, t = htSaari2PokeSeg(k, i * 0.08, 0.5 + i * 0.08);
+      if (t <= 0 || t >= 1) continue;
+      for (var j = -1; j <= 1; j += 2) artBlob(c, px + j * S * (0.18 - i * 0.03) + j * t * S * 0.08, ty + t * t * (baseY - ty), S * 0.05, S * 0.035, '#ffffff', { lineColor: '#a8b4cc', line: 1 });
+    }
+    if (big) {
+      var q = easeOutBack(htSaari2PokeSeg(k, 0.2, 0.45)) * (1 - htSaari2PokeSeg(k, 0.85, 1)), by = baseY - S * 1.12;
+      if (q > 0) {
+        c.save(); c.translate(px, by); c.scale(q, q);
+        artCircle(c, 0, 0, S * 0.09, '#ff5f4e', { lineColor: '#7a2a24' });
+        artCircle(c, 0, -S * 0.08, S * 0.065, '#3a3a4a', { line: false });
+        artEye(c, S * 0.025, -S * 0.09, S * 0.025);
+        c.fillStyle = '#3a3a4a';
+        c.beginPath(); c.moveTo(S * 0.06, -S * 0.07); c.lineTo(S * 0.1, -S * 0.06); c.lineTo(S * 0.06, -S * 0.045); c.closePath(); c.fill();
+        c.restore();
+      }
+      htSaari2PokeNotes(c, px + s * 0.1, by - S * 0.1, s, htSaari2PokeSeg(k, 0.3, 1), 2, '#ff5f4e');
+    }
+  },
+  // Kotkanpesä: kotka lehahtaa lentoon, poikaset piipittävät (iso: kaksi kierrosta ja sulkia)
+  nest: function (c, x, baseY, s, k, big, o) {
+    var ny = baseY - s * 0.66, t = htSaari2PokeSeg(k, 0, 1), i;
+    var a = t * Math.PI * (big ? 3 : 1.5), ex = x + Math.sin(a) * s * 0.7, ey = ny - s * 0.3 - t * s * 1.0 - (1 - Math.cos(a)) * s * 0.15;
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.85, 1);
+    htSaari2PokeEagle(c, ex, ey, s * 0.3 * (0.7 + Math.min(1, t * 3) * 0.3), Math.sin(k * 45), Math.cos(a) >= 0 ? 1 : -1);
+    if (big) for (i = 0; i < 2; i++) {
+      var f = htSaari2PokeSeg(k, 0.3 + i * 0.1, 1);
+      if (f <= 0) continue;
+      c.save(); c.translate(x + (i ? 0.3 : -0.35) * s + Math.sin(f * 8 + i) * s * 0.1, ny - s * 0.8 + f * s * 0.9); c.rotate(Math.sin(f * 8) * 0.6);
+      artBlob(c, 0, 0, s * 0.04, s * 0.11, '#c9a070', { lineColor: '#6a4a24', line: 1 });
+      c.restore();
+    }
+    if (k < 0.6) for (i = -1; i <= 1; i += 2) {
+      var op = Math.abs(Math.sin(k * 25 + i));
+      c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.45, 0.6);
+      artCircle(c, x + i * s * 0.12, ny - s * 0.07, s * (0.02 + op * 0.015), '#c0402e', { line: false });
+      htSaari2Letter(c, 'piip', x + i * s * 0.3, ny - s * 0.4 - k * s * 0.3, s * 0.13, '#ffa83e', '#ffffff');
+    }
+    c.globalAlpha = 1;
+  },
+  // Vuorimaja: savupiipusta tupruttaa ja ikkuna hehkuu (iso: savusydämet)
+  hut: function (c, x, baseY, s, k, big, o) {
+    var i, cx = x + s * 0.18, cy = baseY - s * 0.74;
+    artGlow(c, x - s * 0.13, baseY - s * 0.24, s * 0.3, '#ffd27a', Math.sin(k * Math.PI) * 0.8);
+    for (i = 0; i < 5; i++) {
+      var t = htSaari2PokeSeg(k, i * 0.1, 0.55 + i * 0.1);
+      if (t <= 0 || t >= 1) continue;
+      var px = cx + t * s * 0.35 + Math.sin(t * 5 + i) * s * 0.05, py = cy - t * s * 0.9, r = s * (0.06 + t * 0.1);
+      c.globalAlpha = 1 - t;
+      if (big) drawHeartShape(c, px, py, r * 1.2, true);
+      else artCircle(c, px, py, r, '#eef2fa', { lineColor: '#a8b4cc', line: 1 });
+      c.globalAlpha = 1;
+    }
+  },
+  // Lohkareen takaa kurkistaa lumijänis (iso: jänis loikkaa yli)
+  boulder: function (c, x, baseY, s, k, big, o) {
+    var r = s * 0.22;
+    if (big) {
+      var t = htSaari2PokeSeg(k, 0.05, 0.8);
+      if (t > 0 && t < 1) htSaari2PokeHare(c, x - s * 0.5 + t * s * 1.0, baseY - s * 0.05 - Math.sin(t * Math.PI) * s * 0.7, r);
+    } else {
+      var up = Math.sin(htSaari2PokeSeg(k, 0, 0.9) * Math.PI);
+      if (up <= 0) return;
+      c.save();
+      c.beginPath(); c.rect(x - s * 0.6, baseY - s * 1.6, s * 1.2, s * 1.6 - s * 0.32); c.clip();
+      htSaari2PokeHare(c, x - s * 0.12, baseY - s * 0.15 - up * s * 0.35, r);
+      c.restore();
+    }
+  },
+
+  // --- Kirjaimet ---
+  // Kirjainpalikka kääntyy ja näyttää uuden kirjaimen (iso: kaikki palikat kääntyvät)
+  blocks: function (c, x, baseY, s, k, big, o) {
+    var nb = o.rnd2 < 0.5 ? 2 : 3, cols = ['#ff5f7e', '#5fa8ff', '#ffc93e', '#5fd36b', '#c9a0ff'], i;
+    for (i = big ? 0 : nb - 1; i < nb; i++) {
+      var bx = x + (i === 0 ? -s * 0.22 : i === 1 ? s * 0.22 : 0), by = baseY - (i === 2 ? s * 0.43 : 0), sz = s * 0.43;
+      var idx = Math.floor(o.rnd2 * 20) + i, ch = HTSAARI2_ABC.charAt(idx), nw = HTSAARI2_ABC.charAt((idx + (o.n || 1) * (big ? 3 : 1)) % 24);
+      var f = htSaari2PokeFlip(htSaari2PokeSeg(k, (nb - 1 - i) * 0.06, 1), ch, nw, s);
+      c.save(); c.translate(bx, by - f.lift); c.scale(f.sx, 1);
+      htSaari2Block(c, 0, 0, sz * 1.04, cols[(i + Math.floor(o.rnd2 * 5)) % 5], f.show, (i - 1) * 0.06);
+      c.restore();
+    }
+  },
+  // Kirjapinon päällä kirja aukeaa ja siitä lentää kirjaimia (iso: kirjainpyörre)
+  books: function (c, x, baseY, s, k, big, o) {
+    var top = baseY - s * 0.68, op = easeOutBack(htSaari2PokeSeg(k, 0, 0.25)) * (1 - htSaari2PokeSeg(k, 0.85, 1)), i, col = HTSAARI2_COLORS[Math.floor(o.rnd * 6) % 6];
+    if (op > 0) {
+      c.save(); c.translate(x + s * 0.08, top - s * 0.02); c.scale(op, op);
+      for (i = -1; i <= 1; i += 2) {
+        c.beginPath(); c.moveTo(0, 0); c.lineTo(i * s * 0.28, -s * 0.06); c.lineTo(i * s * 0.28, s * 0.06); c.lineTo(0, s * 0.1); c.closePath();
+        artFillPath(c, col, -s * 0.06, s * 0.1, s * 0.1, { lineColor: artShade(col, -0.5) });
+        c.beginPath(); c.moveTo(0, -s * 0.02); c.quadraticCurveTo(i * s * 0.12, -s * 0.1, i * s * 0.25, -s * 0.07); c.lineTo(i * s * 0.25, s * 0.03); c.quadraticCurveTo(i * s * 0.12, 0, 0, s * 0.06); c.closePath();
+        artFillPath(c, '#fffaf0', -s * 0.1, s * 0.06, s * 0.1, { lineColor: '#b0a080', line: 1 });
+      }
+      c.restore();
+    }
+    var n = big ? 7 : 3;
+    for (i = 0; i < n; i++) {
+      var t = htSaari2PokeSeg(k, 0.15 + i * 0.06, 0.75 + i * 0.03);
+      if (t <= 0 || t >= 1) continue;
+      var a = t * Math.PI * (big ? 3 : 1.5) + i * 2.1, rr = s * (0.1 + t * 0.4);
+      c.globalAlpha = 1 - t * t;
+      htSaari2Letter(c, HTSAARI2_ABC.charAt((i * 7 + (o.n || 0) * 3 + Math.floor(o.rnd * 24)) % 24), x + s * 0.08 + Math.cos(a) * rr, top - s * 0.15 - t * s * 0.9, s * (0.2 + t * 0.12), HTSAARI2_COLORS[i % 6], '#ffffff');
+      c.globalAlpha = 1;
+    }
+  },
+  // Kirjainpensas sanoo äänteensä puhekuplassa (iso: sateenkaarikirjain nousee, kukat aukeavat)
+  hedge: function (c, x, baseY, s, k, big, o) {
+    var lo = o.ch.toLowerCase(), txt = o.ch + lo + lo + '!';
+    var sc = easeOutBack(htSaari2PokeSeg(k, 0, 0.25)) * (1 - htSaari2PokeSeg(k, 0.85, 1));
+    htSaari2PokeBubble(c, x + s * 0.35, baseY - s * 1.15 - htSaari2PokeSeg(k, 0.3, 1) * s * 0.15, txt, s * 0.24, '#2f7a3a', sc);
+    if (big) {
+      var t = htSaari2PokeSeg(k, 0.15, 1);
+      c.globalAlpha = 1 - t;
+      htSaari2Letter(c, o.ch, x, baseY - s * 0.4 - t * s * 0.9, s * (0.6 + t * 0.4), HTSAARI2_COLORS[Math.floor(k * 18) % 6], '#ffffff');
+      c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+      for (var i = 0; i < 4; i++) {
+        var fs = easeOutBack(htSaari2PokeSeg(k, i * 0.08, 0.3 + i * 0.08));
+        if (fs > 0) drawFlower(c, x + (i - 1.5) * s * 0.25, baseY - s * 0.05, s * 0.06 * fs, HTSAARI2_COLORS[i]);
+      }
+      c.globalAlpha = 1;
+    }
+  },
+  // Tavuviitta: tavusta tulee sana, joka leijuu ylös (iso: sana hyppii sateenkaarena)
+  sign: function (c, x, baseY, s, k, big, o) {
+    var word = HTSAARI2_POKE_WORDS[o.syl] || (o.syl + o.syl), t = htSaari2PokeSeg(k, 0, 1), i;
+    var y = baseY - s * 1.0 - easeOutCubic(t) * s * 0.4, sz = s * 0.3 * easeOutBack(htSaari2PokeSeg(k, 0, 0.25));
+    if (sz <= 1) return;
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    c.font = 'bold ' + Math.round(sz) + 'px ' + UI_FONT;
+    var w = c.measureText(word).width, cx = x - w / 2;
+    for (i = 0; i < word.length; i++) {
+      c.font = 'bold ' + Math.round(sz) + 'px ' + UI_FONT;
+      var cw = c.measureText(word.charAt(i)).width;
+      var col = big ? HTSAARI2_COLORS[i % 6] : (i < o.syl.length ? o.col : '#ffffff');
+      var jy = big ? Math.sin(k * 20 - i) * s * 0.06 : 0;
+      htSaari2Letter(c, word.charAt(i), cx + cw / 2, y + jy, sz, col, artShade(o.col, -0.45));
+      cx += cw;
+    }
+    c.globalAlpha = 1;
+  },
+  // Puusta leijailee kirjainlehtiä (iso: lintu laulaa latvassa)
+  ltree: function (c, x, baseY, s, k, big, o) {
+    var S = s * (0.75 + o.rnd2 * 0.2), i;
+    for (i = 0; i < 3; i++) {
+      var t = htSaari2PokeSeg(k, i * 0.1, 0.8 + i * 0.07);
+      if (t <= 0 || t >= 1) continue;
+      c.globalAlpha = Math.min(1, (1 - t) * 4);
+      c.save(); c.translate(x + (i - 1) * S * 0.25 + Math.sin(t * 7 + i) * S * 0.15, baseY - S * 0.9 + t * S * 0.85); c.rotate(Math.sin(t * 7 + i) * 0.5);
+      htSaari2Letter(c, HTSAARI2_ABC.charAt((i * 5 + (o.n || 0)) % 24), 0, 0, S * 0.2, '#5fbf55', '#ffffff');
+      c.restore();
+      c.globalAlpha = 1;
+    }
+    if (big) htSaari2PokeNotes(c, x, baseY - S * 1.2, s, k, 3, '#ff7bac');
+  },
+  // Leija tekee silmukan (iso: kaksi silmukkaa ja kirjaimen äänne)
+  kite: function (c, x, y, s, k, big, o) {
+    var t = easeInOutSine(k) * Math.PI * 2 * (big ? 2 : 1), R = s * 0.9;
+    var kx = x + Math.sin(t) * R, ky = y - (1 - Math.cos(t)) * R;
+    c.globalAlpha = 0.7 * (1 - htSaari2PokeSeg(k, 0.7, 1));
+    c.strokeStyle = '#ffffff'; c.lineWidth = Math.max(2, s * 0.08); c.lineCap = 'round';
+    c.beginPath(); c.arc(x, y - R, R, Math.PI / 2, Math.PI / 2 - Math.min(t, Math.PI * 2 - 0.01), true); c.stroke();
+    c.globalAlpha = 1;
+    c.save(); c.translate(kx, ky); c.rotate(-t);
+    htSaari2Kite(c, 0, 0, s * 1.05, o.col, o.ch);
+    c.restore();
+    if (big) htSaari2PokeBubble(c, x + s * 1.3, y - s * 1.6, o.ch + o.ch.toLowerCase() + '!', s * 0.6, o.col, easeOutBack(htSaari2PokeSeg(k, 0.1, 0.35)) * (1 - htSaari2PokeSeg(k, 0.85, 1)));
+  },
+  // Hyllyn kirja nousee ja sen kirjain ponnahtaa isona
+  shelf: function (c, x, y, s, k, big, o) {
+    var lift = Math.sin(htSaari2PokeSeg(k, 0, 0.8) * Math.PI) * s * 0.5;
+    artRoundRect(c, o.bx, y - o.bh - lift, o.bw, o.bh, s * 0.06, o.col, { lineColor: artShade(o.col, -0.5) });
+    c.fillStyle = 'rgba(255,255,255,0.6)';
+    c.fillRect(o.bx + o.bw * 0.15, y - o.bh - lift + s * 0.15, o.bw * 0.7, s * 0.06);
+    htSaari2Letter(c, o.ch, o.bx + o.bw / 2, y - o.bh / 2 - lift, s * 0.32, '#ffffff', artShade(o.col, -0.45));
+    var t = htSaari2PokeSeg(k, 0.15, 1);
+    c.globalAlpha = 1 - t;
+    htSaari2Letter(c, o.ch, o.bx + o.bw / 2, y - o.bh - lift - s * 0.4 - t * s * 0.8, s * (0.5 + t * (big ? 0.9 : 0.4)), big ? HTSAARI2_COLORS[Math.floor(k * 18) % 6] : o.col, '#ffffff');
+    c.globalAlpha = 1;
+  },
+  // Palikkatorni (taustalla): A, B ja C kääntyvät uusiksi kirjaimiksi
+  tower: function (c, x, y, s, k, big, o) {
+    var bl = [[-0.36, 0, '#ff5f7e', 0, -0.04], [0.36, 0, '#5fa8ff', 1, 0.05], [0, -0.7, '#5fd36b', 2, 0.1]], i;
+    for (i = 0; i < 3; i++) {
+      var nw = HTSAARI2_ABC.charAt((bl[i][3] + (o.n || 1) * 3) % 24);
+      var f = htSaari2PokeFlip(htSaari2PokeSeg(k, i * 0.08, 1), 'ABC'.charAt(i), nw, s);
+      c.save(); c.translate(x + bl[i][0] * s, y + bl[i][1] * s - f.lift); c.scale(f.sx, 1);
+      htSaari2Block(c, 0, 0, s * 0.72, bl[i][2], f.show, bl[i][4]);
+      c.restore();
+    }
+    if (big) htSaari2PokeConfetti(c, x, y - s * 1.4, s, k, 16, 4, 1.2);
+  },
+
+  // --- Tivoli ---
+  // Teltta: konfettipamaus katolta (iso: pupu kurkistaa ovesta, "TADAA!")
+  tent: function (c, x, baseY, s, k, big, o) {
+    htSaari2PokeConfetti(c, x, baseY - s * 0.95, s, k, big ? 26 : 14, (o.n || 0) + 3, big ? 2.0 : 1.5);
+    if (big) {
+      var up = easeOutBack(htSaari2PokeSeg(k, 0.1, 0.35)) * (1 - htSaari2PokeSeg(k, 0.85, 1));
+      if (up > 0) {
+        c.save(); c.beginPath(); c.rect(x - s * 0.5, baseY - s * 1.4, s, s * 1.4); c.clip();
+        htSaari2PokeHare(c, x, baseY + s * 0.2 - up * s * 0.3, s * 0.13);
+        c.restore();
+      }
+      htSaari2PokeBubble(c, x + s * 0.4, baseY - s * 1.25, 'TADAA!', s * 0.2, '#ff5f7e', easeOutBack(htSaari2PokeSeg(k, 0.2, 0.4)) * (1 - htSaari2PokeSeg(k, 0.85, 1)));
+    }
+  },
+  // Ilmapallo karkaa ja poksahtaa tähdiksi (iso: kolme palloa)
+  balloons: function (c, x, baseY, s, k, big, o) {
+    var i, n = big ? 3 : 1;
+    for (i = 0; i < n; i++) {
+      var t = htSaari2PokeSeg(k, i * 0.08, 0.75 + i * 0.05), col = HTSAARI2_COLORS[(i * 2 + (o.n || 0) + Math.floor(o.rnd2 * 6)) % 6];
+      var bx = x + (i - (n - 1) / 2) * s * 0.25 + Math.sin(t * 6 + i) * s * 0.1, by = baseY - s * 1.0 - t * s * 1.3;
+      if (t < 1) {
+        c.strokeStyle = 'rgba(110,80,110,0.6)'; c.lineWidth = Math.max(1, s * 0.012);
+        c.beginPath(); c.moveTo(bx, by + s * 0.15); c.quadraticCurveTo(bx - s * 0.05, by + s * 0.3, bx + Math.sin(t * 9) * s * 0.05, by + s * 0.42); c.stroke();
+        artBlob(c, bx, by, s * 0.13, s * 0.155, col, { hi: 0.5 });
+      } else htSaari2PokeBurst(c, bx, by, s * 0.35, htSaari2PokeSeg(k, 0.75 + i * 0.05, 1), col);
+    }
+  },
+  // Jäätelökärrystä nousee tötterö (iso: neljän pallon torni kirsikalla)
+  icecart: function (c, x, baseY, s, k, big, o) {
+    var up = easeOutBack(htSaari2PokeSeg(k, 0, 0.35));
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    htSaari2PokeCone(c, x - s * 0.16 + up * s * 0.05, baseY - s * 0.75 - up * s * 0.45, s * (0.9 + up * 0.25), big ? 4 : 2, big);
+    if (k > 0.3) {
+      var t = htSaari2PokeSeg(k, 0.3, 1);
+      c.globalAlpha = 1 - t;
+      drawHeartShape(c, x + s * 0.25, baseY - s * 1.2 - t * s * 0.5, s * 0.08, true);
+    }
+    c.globalAlpha = 1;
+  },
+  // Viirinauhan valot vilkkuvat (iso: ilotulitteet salkojen päistä)
+  bunting: function (c, x, baseY, s, k, big, o) {
+    htSaari2PokeLights(c, { x0: x - s * 0.42, y0: baseY - s * 0.9, x1: x + s * 0.42, y1: baseY - s * 0.9, sag: s * 0.25, n: 5 }, k, s * 0.12);
+    if (big) {
+      htSaari2PokeFirework(c, x - s * 0.42, baseY - s * 0.97, s * 1.0, htSaari2PokeSeg(k, 0, 0.8), 0);
+      htSaari2PokeFirework(c, x + s * 0.42, baseY - s * 0.97, s * 1.2, htSaari2PokeSeg(k, 0.15, 1), 3);
+    } else htSaari2PokeNotes(c, x, baseY - s * 1.0, s, k, 2);
+  },
+  // Tivolin puusta putoilee karkkeja
+  ftree: function (c, x, baseY, s, k, big, o) {
+    var S = s * (0.75 + o.rnd2 * 0.2), i, n = big ? 6 : 3;
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    for (i = 0; i < n; i++) {
+      var t = htSaari2PokeSeg(k, i * 0.07, 0.55 + i * 0.07);
+      if (t <= 0) continue;
+      var cx = x + (i - (n - 1) / 2) * S * 0.18, cy = baseY - S * 0.85 + (S * 0.8) * t * t;
+      htSaari2PokeCandy(c, cx + t * (i % 2 ? 1 : -1) * S * 0.1, cy, S * 0.05, HTSAARI2_COLORS[(i + (o.n || 0)) % 6], t * 6 + i);
+    }
+    c.globalAlpha = 1;
+  },
+  // Maailmanpyörä: valot kiertävät vauhdilla (iso: tähdet kiertävät kehää)
+  wheel: function (c, x, y, r, k, big, o) {
+    var i, a, sp = easeInOutSine(k) * Math.PI * (big ? 6 : 3);
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.8, 1);
+    for (i = 0; i < 16; i++) {
+      a = i / 16 * Math.PI * 2 + sp;
+      var on = (i + Math.floor(k * 20)) % 2 === 0;
+      artGlow(c, x + Math.cos(a) * r, y + Math.sin(a) * r, r * (on ? 0.14 : 0.08), HTSAARI2_COLORS[i % 6], on ? 0.9 : 0.4);
+      if (on) artCircle(c, x + Math.cos(a) * r, y + Math.sin(a) * r, r * 0.035, '#fffbe0', { line: false });
+    }
+    c.strokeStyle = artRGBA('#ffffff', 0.7 * Math.sin(k * Math.PI)); c.lineWidth = Math.max(2, r * 0.03);
+    for (i = 0; i < 8; i++) { a = i * Math.PI / 4 + sp; c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * r * 0.86, y + Math.sin(a) * r * 0.86); c.stroke(); }
+    if (big) for (i = 0; i < 4; i++) {
+      a = i / 4 * Math.PI * 2 + sp * 0.5;
+      drawStar(c, x + Math.cos(a) * r * 1.25, y + Math.sin(a) * r * 1.25, r * 0.09, sp, 0.6);
+    }
+    c.globalAlpha = 1;
+  },
+  // Karuselli: hevoset keinuvat ja soitto soi (iso: konfettia)
+  carousel: function (c, x, baseY, s, k, big, o) {
+    var i, cols = ['#ff7bac', '#ffd24f', '#7fd4ff', '#c9a0ff'];
+    c.globalAlpha = 1 - htSaari2PokeSeg(k, 0.85, 1);
+    for (i = 0; i < 5; i++) {
+      var px = x + (i - 2) * s * 0.4, bob = Math.sin(k * Math.PI * 6 + i * 1.3) * s * 0.12 * Math.sin(k * Math.PI);
+      artCircle(c, px, baseY - s * 0.35 + bob, s * 0.12, cols[i % 4], { lineColor: artShade(cols[i % 4], -0.45), hi: 0.4 });
+      artCircle(c, px + s * 0.07, baseY - s * 0.4 + bob, s * 0.025, '#3a2a2a', { line: false });
+    }
+    c.globalAlpha = 1;
+    htSaari2PokeNotes(c, x, baseY - s * 1.2, s, k, big ? 4 : 3);
+    if (big) htSaari2PokeConfetti(c, x, baseY - s * 1.2, s, k, 18, 7, 1.4);
+  },
+  // Isot tivoliteltat taustalla: viiri liehuu ja konfettia
+  fairtent: function (c, x, baseY, s, k, big, o) {
+    var w = Math.sin(k * 28) * s * 0.06 * (1 - k);
+    c.beginPath(); c.moveTo(x, baseY - s * 1.32); c.quadraticCurveTo(x + s * 0.12, baseY - s * 1.3 + w, x + s * 0.24, baseY - s * 1.25 + w * 1.5);
+    c.quadraticCurveTo(x + s * 0.12, baseY - s * 1.18 + w, x, baseY - s * 1.17); c.closePath();
+    artFillPath(c, '#ffd24f', baseY - s * 1.32, baseY - s * 1.17, s * 0.08, { lineColor: '#b08a2a', line: 1 });
+    htSaari2PokeConfetti(c, x, baseY - s * 1.15, s, k, big ? 26 : 14, (o.n || 0) + 5, big ? 2 : 1.5);
+  },
+  // Viirinauhat yläkulmissa: valot vilkkuvat
+  topbunting: function (c, x, y, s, k, big, o) {
+    htSaari2PokeLights(c, o, k, o.fs);
+    if (big) htSaari2PokeConfetti(c, x, y + s * 0.3, s, k, 20, 9, 1.2);
+  },
+  // Leijuva pallo poksahtaa tähdiksi
+  pop: function (c, x, y, s, k, big, o) {
+    htSaari2PokeBurst(c, x, y, s * (big ? 1.0 : 0.6), k, o.col);
+    if (big) htSaari2PokeBubble(c, x, y - s * 0.8, 'POKS!', s * 0.35, o.col, easeOutBack(htSaari2PokeSeg(k, 0, 0.3)) * (1 - htSaari2PokeSeg(k, 0.8, 1)));
+  }
+};
+
+// Äänet (big = joka 3. tökkäys)
+function htSaari2PokeLetterHz(ch) { return 392 * Math.pow(1.06, Math.max(0, HTSAARI2_ABC.indexOf(ch)) % 12); }
+var htSaari2PokeSnd = {
+  tree: function (big) { htSaari2PokeTune(big ? [523, 659, 784, 1047] : [659, 784], 0.1, 'sine', 0.22); },
+  pencil: function (big) { htSaari2PokeTune(big ? [784, 988, 1175, 1568] : [880, 1047, 880], 0.08, 'triangle', 0.18); },
+  ink: function (big) { htSaari2PokeTune(big ? [330, 262, 392, 523] : [330, 247], 0.07, 'square', 0.12); },
+  rain: function (big) { htSaari2PokeTune(big ? [1175, 988, 1319, 1047, 1568] : [1319, 1175, 1047], 0.09, 'sine', 0.15); },
+  bush: function (big) { htSaari2PokeTune(big ? [988, 1175, 1319, 1568] : [1175, 1319], 0.07, 'sine', 0.16); },
+  sun: function (big) { htSaari2PokeTune(big ? [523, 659, 784, 659, 1047] : [659, 988], 0.1, 'triangle', 0.2); },
+  tunnel: function (big) { htSaari2PokeTune(big ? [220, 330, 1568, 1760] : [196, 247], 0.1, 'triangle', 0.18); },
+  cart: function (big) { htSaari2PokeTune(big ? [196, 220, 1319, 1568, 1760, 2093] : [196, 220, 1568], 0.08, 'triangle', 0.18); },
+  crystal: function (big, o) {
+    var ci = Math.max(0, CRYSTAL_COLORS.indexOf(o.col)), b = [784, 880, 988, 1047, 1175][ci % 5];
+    htSaari2PokeTune(big ? [b, b * 1.25, b * 1.5, b * 2] : [b, b * 1.5], 0.12, 'sine', 0.22, 0.6);
+  },
+  pick: function (big) { htSaari2PokeTune(big ? [1760, 1319, 1568, 2093] : [1760, 1319], 0.06, 'square', 0.1); },
+  lighthouse: function (big) { htSaari2PokeTune(big ? [147, 0, 147, 0, 196] : [147], 0.25, 'triangle', 0.3, 0.5); },
+  boat: function (big) { htSaari2PokeTune(big ? [392, 523, 659, 784] : [523, 784], 0.1, 'sine', 0.2); },
+  bird: function (big) { htSaari2PokeTune(big ? [1568, 1319, 1568, 1319] : [1568, 1319], 0.12, 'sine', 0.15); },
+  peak: function (big) { htSaari2PokeTune(big ? [523, 0, 523, 0, 392] : [659, 523, 440], 0.12, 'sine', 0.18); },
+  pine: function (big) { htSaari2PokeTune(big ? [988, 1319, 988, 1319, 1568] : [784, 659], 0.09, 'sine', 0.16); },
+  nest: function (big) { htSaari2PokeTune(big ? [1397, 1175, 988, 2093, 2349] : [1397, 1175, 2093], 0.1, 'triangle', 0.14); },
+  hut: function (big) { htSaari2PokeTune(big ? [392, 494, 587, 784] : [392, 330], 0.12, 'sine', 0.18); },
+  boulder: function (big) { htSaari2PokeTune(big ? [523, 784, 1047] : [784, 988], 0.1, 'triangle', 0.18); },
+  blocks: function (big, o) {
+    var nb = o.rnd2 < 0.5 ? 2 : 3, idx = Math.floor(o.rnd2 * 20) + nb - 1;
+    var hz = htSaari2PokeLetterHz(HTSAARI2_ABC.charAt((idx + (o.n || 1) * (big ? 3 : 1)) % 24));
+    htSaari2PokeTune(big ? [hz, hz * 1.25, hz * 1.5] : [hz, hz], 0.12, 'triangle', 0.2);
+  },
+  books: function (big) { htSaari2PokeTune(big ? [659, 784, 880, 1047, 1175, 1319] : [784, 988, 1175], 0.07, 'sine', 0.16); },
+  hedge: function (big, o) { var hz = htSaari2PokeLetterHz(o.ch); htSaari2PokeTune(big ? [hz, hz, hz * 1.5, hz * 2] : [hz, hz, hz], 0.13, 'triangle', 0.22, 0.2); },
+  sign: function (big, o) { var hz = htSaari2PokeLetterHz(o.syl.charAt(0)); htSaari2PokeTune(big ? [hz, hz * 1.25, hz, hz * 1.5] : [hz, hz * 1.25], 0.16, 'triangle', 0.2); },
+  ltree: function (big) { htSaari2PokeTune(big ? [1175, 1319, 1568, 1319, 1760] : [988, 784], 0.1, 'sine', 0.15); },
+  kite: function (big) { htSaari2PokeTune(big ? [523, 659, 784, 1047, 784] : [659, 880, 1047], 0.09, 'sine', 0.18); },
+  shelf: function (big, o) { var hz = htSaari2PokeLetterHz(o.ch); htSaari2PokeTune(big ? [hz, hz * 1.5, hz * 2] : [hz, hz * 1.5], 0.1, 'triangle', 0.2); },
+  tower: function (big) { htSaari2PokeTune(big ? [392, 440, 494, 523, 784] : [392, 440, 494], 0.09, 'triangle', 0.18); },
+  tent: function (big) { htSaari2PokeTune(big ? [523, 659, 784, 1047, 0, 1047] : [880, 1319], 0.09, 'square', 0.12); },
+  balloons: function (big) { htSaari2PokeTune(big ? [523, 587, 659, 0, 0, 0, 0, 1568, 1760, 2093] : [659, 784, 0, 0, 0, 0, 0, 1568], 0.09, 'sine', 0.16); },
+  icecart: function (big) { htSaari2PokeTune(big ? [784, 988, 1175, 1568] : [988, 1175], 0.1, 'triangle', 0.18); },
+  bunting: function (big) { htSaari2PokeTune(big ? [262, 392, 0, 0, 1047, 1319, 1568] : [784, 988, 1175], 0.1, 'sine', 0.16); },
+  ftree: function (big) { htSaari2PokeTune(big ? [1047, 1175, 1319, 1397, 1568, 1760] : [1319, 1175, 1047], 0.07, 'sine', 0.15); },
+  wheel: function (big) { htSaari2PokeTune(big ? [523, 659, 784, 659, 523, 659, 784, 1047] : [523, 659, 784, 1047], 0.12, 'triangle', 0.18); },
+  // Karusellin valssi: um-pa-pa
+  carousel: function (big) {
+    var m = big ? [523, 659, 784, 784, 659, 523, 587, 698, 880, 880, 698, 587] : [523, 659, 784, 784, 659, 523];
+    htSaari2PokeTune(m, 0.17, 'triangle', 0.2, 0.25);
+    htSaari2PokeTune(big ? [131, 0, 0, 98, 0, 0, 147, 0, 0, 98] : [131, 0, 0, 98], 0.17, 'sine', 0.18, 0.3);
+  },
+  fairtent: function (big) { htSaari2PokeTune(big ? [523, 659, 784, 1047] : [880, 1319], 0.09, 'square', 0.12); },
+  topbunting: function (big) { htSaari2PokeTune(big ? [784, 988, 1175, 1568] : [988, 1175], 0.1, 'sine', 0.16); },
+  pop: function (big) { htSaari2PokeTune(big ? [1568, 1760, 2093, 2349] : [1760, 1319], 0.06, 'triangle', 0.16); }
+};
+
+// Koristeen laji samoilla kynnyksillä kuin teeman wall-funktio: { fx, o }
+function htSaari2PokeKindPaper(rnd, rnd2, s) {
+  if (rnd < 0.36) return { fx: 'tree', o: { S: s * (0.85 + rnd2 * 0.25), apples: rnd < 0.2 } };
+  if (rnd < 0.52) return { fx: 'pencil', o: { S: s * (0.95 + rnd2 * 0.2), col: HTSAARI2_COLORS[Math.floor(rnd2 * 6)], ang: rnd2 < 0.5 ? 0.3 : -0.3 } };
+  if (rnd < 0.66) return { fx: 'ink', o: {} };
+  if (rnd < 0.8) return { fx: 'rain', o: { rnd: rnd2 } };
+  return { fx: 'bush', o: {} };
+}
+function htSaari2PokeKindMine(rnd, rnd2) {
+  if (rnd < 0.28) return { fx: 'tunnel', o: {} };
+  if (rnd < 0.5) return { fx: 'cart', o: { rnd: rnd2 } };
+  if (rnd < 0.74) return { fx: 'crystal', o: { col: CRYSTAL_COLORS[Math.floor(rnd2 * CRYSTAL_COLORS.length)] } };
+  return { fx: 'pick', o: { rnd2: rnd2 } };
+}
+function htSaari2PokeKindMountain(rnd, rnd2) {
+  if (rnd < 0.34) return { fx: 'peak', o: { rnd2: rnd2 } };
+  if (rnd < 0.62) return { fx: 'pine', o: { rnd2: rnd2 } };
+  if (rnd < 0.8) return { fx: 'nest', o: {} };
+  if (rnd < 0.88) return { fx: 'hut', o: {} };
+  return { fx: 'boulder', o: {} };
+}
+function htSaari2PokeKindLetters(rnd, rnd2) {
+  if (rnd < 0.28) return { fx: 'blocks', o: { rnd2: rnd2 } };
+  if (rnd < 0.5) return { fx: 'books', o: { rnd: rnd2 } };
+  if (rnd < 0.74) return { fx: 'hedge', o: { ch: 'AUVTHMKEÄÖ'.charAt(Math.floor(rnd2 * 10)) } };
+  if (rnd < 0.86) return { fx: 'sign', o: { syl: HTSAARI2_SYLL[Math.floor(rnd2 * HTSAARI2_SYLL.length)], col: HTSAARI2_COLORS[Math.floor(rnd2 * 60) % 6] } };
+  return { fx: 'ltree', o: { rnd2: rnd2 } };
+}
+function htSaari2PokeKindFair(rnd, rnd2) {
+  if (rnd < 0.32) return { fx: 'tent', o: {} };
+  if (rnd < 0.52) return { fx: 'balloons', o: { rnd2: rnd2 } };
+  if (rnd < 0.72) return { fx: 'icecart', o: {} };
+  if (rnd < 0.88) return { fx: 'bunting', o: {} };
+  return { fx: 'ftree', o: { rnd2: rnd2 } };
+}
+
+// Kytkee teemaan pokeDraw- ja poke-koukut
+function htSaari2PokeHook(th, kindFn, color, dur) {
+  th.pokeColor = color;
+  th.pokeDur = dur;
+  th.pokeDraw = function (c, x, baseY, s, rnd, rnd2, k, n) {
+    var d = kindFn(rnd, rnd2, s);
+    d.o.n = n;
+    c.save();
+    htSaari2PokeFx[d.fx](c, x, baseY, s, k, n % 3 === 0, d.o);
+    c.restore();
+  };
+  th.poke = function (p) {
+    var d = kindFn(p.rnd, p.rnd2, p.s), big = p.n % 3 === 0;
+    d.o.n = p.n;
+    htSaari2PokeSnd[d.fx](big, d.o);
+    if (big) spawnSparkles(p.x, p.y - p.s * 0.9, 10, HTSAARI2_COLORS[p.n % 6]);
+  };
+}
+htSaari2PokeHook(HUB_THEMES.paper, htSaari2PokeKindPaper, '#ff7bac', 1.8);
+htSaari2PokeHook(HUB_THEMES.mine, htSaari2PokeKindMine, '#ffe27a', 1.8);
+htSaari2PokeHook(HUB_THEMES.mountain, htSaari2PokeKindMountain, '#ffffff', 2.0);
+htSaari2PokeHook(HUB_THEMES.letters, htSaari2PokeKindLetters, '#5fd36b', 2.0);
+htSaari2PokeHook(HUB_THEMES.fair, htSaari2PokeKindFair, '#ff9ec6', 1.8);
+
+// ---------- Maiseman tökättävät kohteet ----------
+// Kohde { id, x, y, r, fx, bx, by, s, o }: tehoste piirretään kohtaan (bx, by) koolla s.
+// Tökkäyslaskuri kohteittain: joka 3. tökkäys on iso.
+var htSaari2PokeSpotN = {};
+function htSaari2PokeSpot(list, id, fx, x, y, r, bx, by, s, o) {
+  var sp = { id: id, x: x, y: y, r: r, fx: fx, bx: bx, by: by, s: s, o: o || {}, dur: 2.2, big: false };
+  sp.sound = function () {
+    var n = (htSaari2PokeSpotN[id] || 0) + 1;
+    htSaari2PokeSpotN[id] = n;
+    sp.big = n % 3 === 0;
+    sp.o.n = n;
+    htSaari2PokeSnd[fx](sp.big, sp.o);
+    spawnSparkles(sp.x, sp.y, sp.big ? 12 : 6, HTSAARI2_COLORS[n % 6]);
+  };
+  list.push(sp);
+}
+function htSaari2PokeSpotDraw(c, sp, k, lay) {
+  c.save();
+  htSaari2PokeFx[sp.fx](c, sp.bx, sp.by, sp.s, k, sp.big, sp.o);
+  c.restore();
+}
+
+HUB_THEMES.paper.spots = function (w, h, lay) {
+  var list = [], i, k, x, y, s = lay.cell, sd = htSaari2Sides(w, lay), by = lay.oy + lay.rows * s * 0.62;
+  var sx = sd.L[1] * 0.42 + s * 0.4;
+  htSaari2PokeSpot(list, 'sun', 'sun', sx, h * 0.15, s * 1.1, sx, h * 0.15, s * 0.6);
+  var cl = [[0.86, 0.1], [0.72, 0.2], [0.15, 0.36], [0.95, 0.32]];
+  for (i = 0; i < cl.length; i++) {
+    x = w * cl[i][0]; y = h * cl[i][1];
+    // Pilvi sataa: rain-tehosteen pilvi on 1,05 s maan yläpuolella
+    htSaari2PokeSpot(list, 'cl' + i, 'rain', x, y, s * 0.7, x, y + s * 1.1 * 1.05, s * 1.1, { rnd: i / 4, sky: true });
+  }
+  for (k = 0; k < 2; k++) {
+    var a = k ? sd.R : sd.L, wd = a[1] - a[0];
+    if (wd < s) continue;
+    for (i = 0; i < 3; i++) {
+      x = a[0] + wd * (0.2 + i * 0.32);
+      y = by + (i % 2) * s * 1.6 + k * s * 0.6;
+      if ((i + k) % 3 === 1) htSaari2PokeSpot(list, 'p' + k + i, 'pencil', x, y - s * 0.8, s * 0.8, x, y, s, { S: s * 1.6, col: k ? '#5fb0ff' : '#ffcf3e', ang: k ? -0.35 : 0.3 });
+      else htSaari2PokeSpot(list, 't' + k + i, 'tree', x, y - s * 1.5, s * 0.9, x, y, s, { S: s * 1.7, apples: (i + k) % 2 === 0 });
+    }
+    x = a[0] + wd * 0.5; y = by + s * 4.2;
+    htSaari2PokeSpot(list, 'ink' + k, 'ink', x, y - s * 0.6, s * 0.8, x, y, s * 1.5);
+    x = a[0] + wd * (k ? 0.35 : 0.65); y = by - s * 1.6;
+    htSaari2PokeSpot(list, 'rc' + k, 'rain', x, y - s * 1.3, s * 0.8, x, y, s * 1.3, { rnd: k });
+  }
+  return list;
+};
+HUB_THEMES.paper.spotDraw = htSaari2PokeSpotDraw;
+
+function htSaari2PokeMountainSpots(w, h, lay) {
+  var list = [], i, s = lay.cell, sd = htSaari2Sides(w, lay), wd;
+  wd = sd.R[1] - sd.R[0];
+  if (wd >= s) {
+    var lx = sd.R[0] + wd * 0.62, ly = h - s * 0.5;
+    htSaari2PokeSpot(list, 'lh', 'lighthouse', lx, ly - s * 1.1, s * 1.3, lx, ly, s * 1.4);
+  }
+  wd = sd.L[1] - sd.L[0];
+  if (wd >= s) {
+    var bx = sd.L[0] + wd * 0.4, byy = h - s * 0.6;
+    htSaari2PokeSpot(list, 'boat', 'boat', bx, byy - s * 0.4, s * 0.9, bx, byy, s);
+  }
+  for (i = 0; i < 6; i++) {
+    var x = w * (0.06 + hubHash(i, 2) * 0.9), y = h * (0.08 + hubHash(2, i) * 0.22), r = s * (0.12 + (i % 3) * 0.05);
+    htSaari2PokeSpot(list, 'b' + i, 'bird', x, y, Math.max(s * 0.6, r * 3), x, y, s, { r: r });
+  }
+  return list;
+}
+HUB_THEMES.mine.spots = htSaari2PokeMountainSpots;
+HUB_THEMES.mine.spotDraw = htSaari2PokeSpotDraw;
+HUB_THEMES.mountain.spots = htSaari2PokeMountainSpots;
+HUB_THEMES.mountain.spotDraw = htSaari2PokeSpotDraw;
+
+HUB_THEMES.letters.spots = function (w, h, lay) {
+  var list = [], i, k, x, y, s = lay.cell, sd = htSaari2Sides(w, lay), by = lay.oy + lay.rows * s * 0.62;
+  var ks = [[0.07, 0.2, 'A'], [0.92, 0.14, 'Ö'], [0.8, 0.34, 'K'], [0.2, 0.42, 'O']];
+  for (i = 0; i < ks.length; i++) {
+    x = w * ks[i][0]; y = h * ks[i][1];
+    htSaari2PokeSpot(list, 'kite' + i, 'kite', x, y, s * 0.6, x, y, s * 0.6, { col: HTSAARI2_COLORS[i * 2 % 6], ch: ks[i][2] });
+  }
+  for (k = 0; k < 2; k++) {
+    var a = k ? sd.R : sd.L, wd = a[1] - a[0];
+    if (wd < s) continue;
+    x = a[0] + wd * (k ? 0.62 : 0.38); y = by;
+    for (i = 0; i < 5; i++) {
+      var bh = s * (1.6 + hubHash(i, k) * 0.8), bw = s * 0.42, col = HTSAARI2_COLORS[(i + k * 3) % 6], bx = x + (i - 2.5) * bw;
+      htSaari2PokeSpot(list, 'sh' + k + i, 'shelf', bx + bw / 2, y - bh / 2, bw * 0.6, bx + bw / 2, y, s, { bx: bx, bw: bw, bh: bh, col: col, ch: HTSAARI2_ABC.charAt((i * 5 + k * 3) % 24) });
+    }
+    var tx = a[0] + wd * (k ? 0.22 : 0.78), ty = by + s * 2.6;
+    htSaari2PokeSpot(list, 'tw' + k, 'tower', tx, ty - s * 0.7, s * 0.9, tx, ty, s);
+    x = a[0] + wd * (k ? 0.7 : 0.3); y = by + s * 4.4;
+    htSaari2PokeSpot(list, 'hg' + k, 'hedge', x, y - s * 0.5, s * 0.8, x, y, s * 1.4, { ch: k ? 'Ö' : 'Ä' });
+    x = a[0] + wd * (k ? 0.25 : 0.75); y = by + s * 4.7;
+    htSaari2PokeSpot(list, 'sg' + k, 'sign', x, y - s * 0.8, s * 0.6, x, y, s * 1.2, { syl: k ? 'PU' : 'KA', col: k ? '#c9a0ff' : '#ff9d5c' });
+  }
+  return list;
+};
+HUB_THEMES.letters.spotDraw = htSaari2PokeSpotDraw;
+
+HUB_THEMES.fair.spots = function (w, h, lay) {
+  var list = [], i, k, x, y, s = lay.cell, sd = htSaari2Sides(w, lay), hz = lay.oy + lay.rows * s * 0.3, by = lay.oy + lay.rows * s * 0.62;
+  var wr = Math.max(s * 1.5, Math.min((sd.R[1] - sd.R[0]) * 0.4, h * 0.2));
+  if (sd.R[1] - sd.R[0] > s) {
+    x = sd.R[0] + (sd.R[1] - sd.R[0]) * 0.55; y = hz - wr * 0.5;
+    htSaari2PokeSpot(list, 'wheel', 'wheel', x, y, wr * 1.05, x, y, wr);
+  }
+  for (k = 0; k < 2; k++) {
+    var a = k ? sd.R : sd.L, wd = a[1] - a[0];
+    if (wd < s) continue;
+    if (!k) { x = a[0] + wd * 0.5; y = hz + h * 0.1; htSaari2PokeSpot(list, 'car', 'carousel', x, y - s * 0.7, s * 1.3, x, y, s * 1.4); }
+    x = a[0] + wd * (k ? 0.25 : 0.2); y = hz + h * 0.16;
+    htSaari2PokeSpot(list, 'ft' + k, 'fairtent', x, y - s * 0.6, s * 0.9, x, y, s * 1.1);
+    x = a[0] + wd * (k ? 0.7 : 0.3); y = by + s * 1.4;
+    htSaari2PokeSpot(list, 'tA' + k, 'tent', x, y - s * 0.9, s * 1.2, x, y, s * 2.2);
+    x = a[0] + wd * (k ? 0.3 : 0.75); y = by + s * 4.0;
+    htSaari2PokeSpot(list, 'tB' + k, 'tent', x, y - s * 0.75, s * 1.0, x, y, s * 1.8);
+    x = a[0] + wd * (k ? 0.75 : 0.25); y = by + s * 6.2;
+    htSaari2PokeSpot(list, 'bc' + k, 'balloons', x, y - s * 1.4, s * 0.9, x, y + s * 0.2, s * 1.4, { rnd2: k * 0.4 });
+  }
+  var bt = [[-s * 0.2, h * 0.02, w * 0.3, h * 0.03], [w * 0.7, h * 0.03, w + s * 0.2, h * 0.02]];
+  for (i = 0; i < 2; i++) {
+    var o = { x0: bt[i][0], y0: bt[i][1], x1: bt[i][2], y1: bt[i][3], sag: h * 0.07, n: 9, fs: s * 0.26 };
+    var mid = htSaari2PokeBuntPt(o.x0, o.y0, o.x1, o.y1, o.sag, 0.5);
+    htSaari2PokeSpot(list, 'bt' + i, 'topbunting', mid[0], mid[1], Math.max(s, w * 0.12), mid[0], mid[1], s, o);
+  }
+  for (i = 0; i < 6; i++) {
+    var fx = w * (0.04 + hubHash(i, 11) * 0.92), fy = h * (0.18 + hubHash(11, i) * 0.2);
+    if (fx > lay.ox && fx < lay.ox + lay.cols * s) continue;
+    htSaari2PokeSpot(list, 'fb' + i, 'pop', fx, fy, s * 0.45, fx, fy, s * 0.5, { col: HTSAARI2_COLORS[i % 6] });
+  }
+  return list;
+};
+HUB_THEMES.fair.spotDraw = htSaari2PokeSpotDraw;
