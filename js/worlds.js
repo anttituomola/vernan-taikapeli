@@ -1498,16 +1498,16 @@ var WORLDS = [
     // kaakkoiskulmassa. Rytmi: pitkä helppo Pupujen leipomo, sitten vaikea
     // pulma Peilipupu. Usvahuoneet ('?') odottavat tulevia kenttiä ja vartijaa.
     id: 16, name: 'Pupula', region: 'land', band: 'town',
-    place: { fx: 0.70, fy: 0.85, size: 0.75, finaleKind: 'reflect', deco: ['bakery', 'reflect'] },
+    place: { fx: 0.70, fy: 0.85, size: 0.75, finaleKind: 'traffic', deco: ['bakery', 'merry', 'traffic'] },
     map: [
       '#########',
       '#B.....L#',
       '#######.#',
-      '#M......#',
+      '#K......#',
       '#.#######',
-      '#......?#',
+      '#......J#',
       '#######.#',
-      '#?......#',
+      '#R......#',
       '#########'
     ],
     levels: [
@@ -1525,25 +1525,44 @@ var WORLDS = [
         respawn: function () { respawnBakery(); }
       },
       {
-        kind: 'reflect', room: 'M', name: 'Peilipupu', color: '#9fc8ff', script: 'play-reflect',
-        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
-        bgColor: '#e8e0ff', ambient: 'sparkle', fg: null,
-        init: function () { initReflect(); },
-        update: function (dt) { updateReflect(dt); },
-        draw: function () { drawReflect(); },
-        tap: function (x, y) { handleReflectTap(x, y); },
-        resize: function () { resizeReflect(); },
-        renderBg: function (b, w, h) { renderReflectBg(b, w, h); },
-        light: { rays: true, raysColor: '#f0e8ff', raysAlpha: 0.3, tint: ['rgba(230,220,255,0.06)', 'rgba(120,100,180,0.04)'], vignette: 0.25 },
-        respawn: function () { respawnReflect(); }
+        kind: 'merry', room: 'K', name: 'Karuselli', color: '#ff8fc8', script: 'play-merry',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#ffe8f4', ambient: 'sparkle', fg: null,
+        init: function () { initMerry(); },
+        update: function (dt) { updateMerry(dt); },
+        draw: function () { drawMerry(); },
+        tap: function (x, y) { handleMerryTap(x, y); },
+        resize: function () { resizeMerry(); },
+        renderBg: function (b, w, h) { renderMerryBg(b, w, h); },
+        respawn: function () { respawnMerry(); }
+      },
+      {
+        kind: 'festival', room: 'J', name: 'Lyhtyjuhla', color: '#ffb347', script: 'play-festival',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#2a2a5a', ambient: 'sparkle', fg: null,
+        init: function () { initFestival(); },
+        update: function (dt) { updateFestival(dt); },
+        draw: function () { drawFestival(); },
+        tap: function (x, y) { handleFestivalTap(x, y); },
+        resize: function () { resizeFestival(); },
+        renderBg: function (b, w, h) { renderFestivalBg(b, w, h); },
+        respawn: function () { respawnFestival(); }
+      },
+      {
+        kind: 'traffic', room: 'R', name: 'Liikennevalot', color: '#5fd36b', script: 'play-traffic',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
+        bgColor: '#dff2ff', ambient: 'sparkle', fg: null,
+        init: function () { initTraffic(); },
+        update: function (dt) { updateTraffic(dt); },
+        draw: function () { drawTraffic(); },
+        tap: function (x, y) { handleTrafficTap(x, y); },
+        resize: function () { resizeTraffic(); },
+        renderBg: function (b, w, h) { renderTrafficBg(b, w, h); },
+        respawn: function () { respawnTraffic(); }
       }
     ]
   },
   {
-    // Myrskyvuori: Kaukamaan viimeinen paikka vuorijonon huipulla (place.final).
-    // Aukeaa, kun kaikki säteet on ansaittu; tarinan luvut 'vuori' ja 'ystava'
-    // käynnistyvät rekisteristä. Helppo pitkä Sateenvarjo, sitten ystävyyden
-    // vartija Myrskynoita: sade + aurinko = sateenkaari.
     id: 17, name: 'Myrskyvuori', region: 'land', band: 'storm',
     place: { fx: 0.27, fy: 0.21, size: 0.85, finaleKind: 'witch', deco: ['umbrella', 'witch'], final: true },
     map: [
