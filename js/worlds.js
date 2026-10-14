@@ -1606,7 +1606,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
       LAND_PLACES.push({
         world: w.id, name: w.name,
         fx: w.place.fx, fy: w.place.fy, size: w.place.size,
-        finaleKind: w.place.finaleKind, deco: w.place.deco
+        finaleKind: w.place.finaleKind, deco: w.place.deco, final: !!w.place.final
       });
     }
   }
