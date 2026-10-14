@@ -1524,8 +1524,9 @@ function drawHubArch(c, x, y, s, room, cleared, th) {
   c.lineTo(x + aw - pw * 0.2, base - s * 0.05);
   c.closePath();
   var ig = c.createLinearGradient(0, top - aw, 0, base);
-  ig.addColorStop(0, cleared ? '#fff3c4' : '#fffaf0');
-  ig.addColorStop(1, cleared ? '#ffe08a' : stone);
+  // Aukko sävytetään kentän värillä, jotta vaaleakin kuvake erottuu
+  ig.addColorStop(0, cleared ? '#fff3c4' : artMix('#fffaf0', col, 0.3));
+  ig.addColorStop(1, cleared ? '#ffe08a' : artMix(stone, col, 0.45));
   c.fillStyle = ig;
   c.fill();
   // Kaaren kivet
