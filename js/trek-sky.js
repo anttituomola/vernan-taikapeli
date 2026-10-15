@@ -16,8 +16,10 @@
 //   satu: välähdys, pieni tärinä, prinsessa hytisee ja jonon VIIMEINEN sisar
 //   säikähtää ja lepattaa ylös eteenpäin odottamaan, että se otetaan uudestaan
 //   kiinni. Iskut kiristyvät: ilta = ei salamoita (lento ja keräys), hämärä =
-//   yksittäisiä iskuja, yö = kaksi pilveä vuorotellen ja tuplaisku, jonka
-//   välissä on selvä turvarako (kimaltelee).
+//   yksittäisiä iskuja, yö = kaksi pilveä vuorotellen ja lopuksi tuplaisku:
+//   kahden salaman muuri peittää ruudun toisen laidan ja minttuinen,
+//   kimalteleva turvarako on toisella laidalla; heti välähdyksen jälkeen
+//   muuri ja rako vaihtavat puolta (vaikein kohta: välähdys, sitten vauhtia).
 //   Tuulivyöhykkeet (näkyvät kiehkurat) työntävät pilveä lempeästi ylös tai alas.
 //   Lopussa Pilvilinna hehkuu pilvillä sateenkaariviireineen. Portti aukeaa
 //   vasta, kun kaikki viisi sisarta ovat jonossa; puuttuvat leijuvat tyynessä
