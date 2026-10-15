@@ -534,8 +534,8 @@ function tkpAddGuests(gift) {
   var L = tkpL(), H = L.H, i, slot = tkpSlotOf(gift), side;
   if (gift === 'flower') {
     tkp.rides.meadow = { t: 0, spot: tkp.spotN++ % 2, slot: slot, fade: 0 };
-    tkpAddGuest('hedgehog', 'meadow', { ox: -0.052, color: '#c89a6a', note: 392, r: H * 0.06 });
-    tkpAddGuest('sunflower', 'meadow', { ox: 0.05, color: '#ffd23f', note: 523, r: H * 0.07, hy: H * 0.09 });
+    tkpAddGuest('hedgehog', 'meadow', { ox: -0.045, fy: 0.012, color: '#c89a6a', note: 392, r: H * 0.06 });
+    tkpAddGuest('sunflower', 'meadow', { ox: 0.045, fy: 0.006, color: '#ffd23f', note: 523, r: H * 0.07, hy: H * 0.09 });
   } else if (gift === 'shell') {
     tkp.rides.river = { t: 0, spot: 0, slot: slot, fade: 0 };
     tkpAddGuest('duck', 'river', { layer: 3, mom: true, idx: 0, ox: -0.05, color: '#ffffff', note: 330, r: H * 0.04, inT: -1 });
@@ -543,7 +543,7 @@ function tkpAddGuests(gift) {
     tkpAddGuest('otter', 'river', { layer: 3, idx: 6, ox: 0.06, color: '#c8946a', note: 466, r: H * 0.06, hy: H * 0.06, inT: -1 });
   } else if (gift === 'crystal') {
     tkp.rides.cave = { t: 0, spot: tkp.spotN++ % 2, slot: slot, fade: 0 };
-    tkpAddGuest('mole', 'cave', { ox: 0, color: '#ffe9a8', note: 294, r: H * 0.07, hy: H * 0.05 });
+    tkpAddGuest('mole', 'cave', { ox: 0, fy: 0.002, color: '#ffe9a8', note: 294, r: H * 0.07, hy: H * 0.05 });
     for (i = 0; i < 4; i++) {
       side = i % 2 ? 1 : -1;
       tkpAddGuest('moth', 'cave', { layer: 6, idx: i, color: '#eaffb0', note: 1175 + i * 90, r: H * 0.04, hy: 0, ph: Math.random() * 6,
@@ -597,7 +597,7 @@ function tkpGuestUpdate(p, dt) {
     case 'mole':
       rp = tkpRidePos(p.g);
       p.x = rp.x + p.ox * H;
-      p.y = rp.y - H * 0.012;
+      p.y = rp.y + p.fy * H;
       break;
     case 'duck':
     case 'otter':
@@ -1398,6 +1398,13 @@ function tkpDraw() {
   propsDraw(c, 0);
   tkpDrawHints(c, L);
   endPlayWorld();
+  // Kehyksen juhlasateenkaari piirtyy kaiken päälle: taivaan ja pilvien
+  // vieraat nostetaan sen yli, jotta ne näkyvät kirkkaina juhlan loppuun
+  if (celebrating) {
+    tkpDrawRides(c, L);
+    propsDraw(c, 6);
+    propsDraw(c, 2);
+  }
   tkpDrawPhoto(c, L);
 }
 
@@ -1499,7 +1506,7 @@ function tkpDrawGarlands(c, L) {
       u = j / n;
       x = cx + (s[0] + (s[2] - s[0]) * u) * H;
       y = (s[1] + (s[3] - s[1]) * u + Math.sin(u * Math.PI) * s[4]) * H;
-      if (j % 2) artBlob(c, x, y + H * 0.004, H * 0.007, H * 0.004, '#6fd06a', { line: false, rot: j });
+      if (j % 2) artBlob(c, x, y + H * 0.004, H * 0.007, H * 0.004, '#6fd06a', { line: false, flat: true, rot: j });
       else drawFlower(c, x, y, H * 0.0055 * (1 + Math.sin(globalT * 3 + j + i) * 0.08), TKP_FLOWER_COLS[(i + j) % TKP_FLOWER_COLS.length]);
     }
   }
@@ -1621,7 +1628,7 @@ function tkpDrawFlowers(c, L) {
     k = easeOutBack(Math.min(1, k));
     x = f.fx * L.W; y = f.fy * L.H; s = f.s * L.H * k;
     artLimb(c, x, y, x, y + s * 1.6, s * 0.35, '#5fbf55', false);
-    artBlob(c, x - s * 0.9, y + s * 1.3, s * 0.7, s * 0.35, '#6fd06a', { line: false, rot: 0.5 });
+    artBlob(c, x - s * 0.9, y + s * 1.3, s * 0.7, s * 0.35, '#6fd06a', { line: false, flat: true, rot: 0.5 });
     drawFlower(c, x, y, s * (1 + Math.sin(globalT * 2 + f.rot) * 0.06), f.col);
   }
 }
