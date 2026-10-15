@@ -184,6 +184,7 @@ function tkrInit() {
   tkr.spray = false;
   tkr.done = false;
   tkr.fallDone = false;
+  tkr.rapidsWarn = false;
   tkr.frogRide = false;
   tkr.quackT = 2;
   tkr.momHop = 0;
@@ -637,6 +638,16 @@ function tkrUpdateRaft(dt) {
     if (prevHop < 1.0 && r.hopT >= 1.0) trekPupSound('wow');
     if (r.hopT >= 1.2) r.hopT = -1;
   }
+  // Koski lähestyy: vaahto näkyy edessä, Pikkupilvi rohkaistuu ja sanoo "hmm"
+  w = tkrRapidsW(tkrRU() + 0.7) > 0.3;
+  if (w && !tkr.rapidsWarn && tkr.state === 'river') {
+    trekPupSound('hmm');
+    tkrPupMood('brave', 1.6);
+    playNote(262, 0.3, 0.12, 'triangle', 0.14);
+    playNote(330, 0.42, 0.12, 'triangle', 0.14);
+    playNote(392, 0.54, 0.2, 'triangle', 0.14);
+  }
+  tkr.rapidsWarn = w;
   if (!tkr.fallDone && ou < TKR_FALL_U && tkrRU() >= TKR_FALL_U) {
     tkr.fallDone = true;
     r.hopT = 0;
