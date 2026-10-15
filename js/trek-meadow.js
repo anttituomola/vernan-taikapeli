@@ -9,8 +9,8 @@
 //   Ohjaus: sormi raahaa Pikkupilveä (se seuraa pienellä viiveellä ja kallistuu).
 //   Pideltynä pilvi sataa: pisarat putoavat ja roiskahtavat. Sade kasvattaa
 //   kasvia (n. 1,2 s), ja täysi kasvi pomahtaa esiin (venytys, kipinät, sävelet).
-//   Vesi: pilvessä on vettä (1,0); sade kuluttaa sen n. 6,5 sekunnissa ja pilvi
-//   kutistuu ja kalpenee. Tyhjänä se ei sada vaan janoaa (kuivia kipinöitä,
+//   Vesi: pilvessä on vettä (1,0); sade kuluttaa sen vähitellen ja pilvi
+//   kutistuu ja kalpenee (täysi pilvi = 8 s sadetta). Tyhjänä se ei sada vaan janoaa (kuivia kipinöitä,
 //   hmm). Raahaa se veteen (puro, lampi, kastepisara lehdellä, joki) -> se
 //   hörppää ja on taas pullea. Joka esteen lähellä on vettä, ja janoisesta
 //   pilvestä käsi näyttää tien veden luo.
@@ -43,7 +43,7 @@ var TKM_PX = 0.3;             // yksisarvisen paikka ruudulla × viewW
 var TKM_PUP_R = 0.055;        // Pikkupilven säde × viewH
 var TKM_FOLLOW = 10;          // pilven seurannan jäykkyys (pienempi = enemmän viivettä)
 var TKM_GRIP = 0.035;         // pilvi sormen yläpuolella × viewH (sade ei jää sormen alle)
-var TKM_DRAIN = 1 / 6.5;      // sade kuluttaa vettä / s (täysi pilvi = 6,5 s sadetta)
+var TKM_DRAIN = 1 / 8;        // sade kuluttaa vettä / s (täysi pilvi = 8 s sadetta)
 var TKM_REFILL = 1.1;         // juominen täyttää / s
 var TKM_NEED = 1.2;           // sadetta kasvuun, s
 var TKM_NEED_BUD = 0.45;      // nupun avautuminen, s
@@ -1349,21 +1349,23 @@ function tkmRiver(b, x0, w, h) {
 // tarpeen mukaan ja muistissa pidetään muutama (vanha tabletti: ei koko niittyä kerralla)
 var tkmChunks = [];
 var tkmChunkKey = '';
+var tkmChunkUse = 0;
 function tkmChunkW() { return Math.max(64, Math.round(viewW * 0.5)); }
 function tkmChunkGet(k) {
   var i, key = viewW + 'x' + viewH + ':' + tkm.seed;
   if (key !== tkmChunkKey) { tkmChunkKey = key; for (i = 0; i < tkmChunks.length; i++) tkmChunks[i].k = -1; }
-  for (i = 0; i < tkmChunks.length; i++) if (tkmChunks[i].k === k) { tkmChunks[i].used = tkm.t; return tkmChunks[i].cv; }
+  for (i = 0; i < tkmChunks.length; i++) if (tkmChunks[i].k === k) { tkmChunks[i].used = ++tkmChunkUse; return tkmChunks[i].cv; }
   return null;
 }
 function tkmChunkRender(k) {
   var i, ch = null, CW = tkmChunkW(), b;
   if (tkmChunks.length < 6) { ch = { k: -1, used: -1, cv: document.createElement('canvas') }; tkmChunks.push(ch); }
   else {
-    for (i = 0; i < tkmChunks.length; i++) if (!ch || tkmChunks[i].used < ch.used) ch = tkmChunks[i];
+    // Vapaa paikka tai pisimpään käyttämättä ollut pala
+    for (i = 0; i < tkmChunks.length; i++) if (!ch || (tkmChunks[i].k < 0 ? -1 : tkmChunks[i].used) < (ch.k < 0 ? -1 : ch.used)) ch = tkmChunks[i];
   }
   ch.k = k;
-  ch.used = tkm.t;
+  ch.used = ++tkmChunkUse;
   ch.cv.width = CW;
   ch.cv.height = Math.round(viewH);
   b = ch.cv.getContext('2d');
@@ -2159,29 +2161,31 @@ function tkmGiftDraw(c, x, y, s, open) {
 function tkmIcon(c, x, y, s) {
   var g = c.createLinearGradient(0, y - s * 0.5, 0, y + s * 0.5), b = Math.sin(globalT * 2) * s * 0.015, i;
   g.addColorStop(0, '#9fd0f8');
-  g.addColorStop(0.6, '#ffd8dc');
+  g.addColorStop(0.55, '#ffd8dc');
   g.addColorStop(1, '#ffe8c8');
   c.fillStyle = g;
   c.fillRect(x - s * 0.5, y - s * 0.5, s, s);
-  artCircle(c, x + s * 0.28, y - s * 0.05, s * 0.1, '#ffe08a', { line: false });
+  artGlow(c, x + s * 0.3, y - s * 0.05, s * 0.2, '#fff0b0', 0.6);
+  artCircle(c, x + s * 0.3, y - s * 0.05, s * 0.09, '#ffd87a', { line: false });
   c.fillStyle = '#8fdc7a';
   c.beginPath();
-  c.moveTo(x - s * 0.5, y + s * 0.18);
-  c.quadraticCurveTo(x, y + s * 0.06, x + s * 0.5, y + s * 0.2);
+  c.moveTo(x - s * 0.5, y + s * 0.14);
+  c.quadraticCurveTo(x, y + s * 0.02, x + s * 0.5, y + s * 0.16);
   c.lineTo(x + s * 0.5, y + s * 0.5); c.lineTo(x - s * 0.5, y + s * 0.5);
   c.closePath();
   c.fill();
-  for (i = 0; i < 4; i++) drawFlower(c, x - s * 0.36 + i * s * 0.12, y + s * (0.32 + (i % 2) * 0.06), s * 0.018, ['#ffffff', '#ffe066', '#c9a0ff', '#ff9fc8'][i]);
-  // Kukka kasvaa sateessa
-  artLimb(c, x + s * 0.12, y + s * 0.28, x + s * 0.12, y + s * 0.12, s * 0.02, '#6cc45c', '#2f7a2c');
-  tkmGiftDraw(c, x + s * 0.12, y + s * 0.08, s * 0.2, 1);
-  c.strokeStyle = 'rgba(100,160,240,0.9)';
-  c.lineWidth = Math.max(1, s * 0.012);
+  for (i = 0; i < 4; i++) drawFlower(c, x - s * 0.34 + i * s * 0.1, y + s * (0.27 + (i % 2) * 0.06), s * 0.022, ['#ffffff', '#ffe066', '#c9a0ff', '#ff9fc8'][i]);
+  // Kukka kasvaa Pikkupilven sateessa
+  artLimb(c, x + s * 0.08, y + s * 0.34, x + s * 0.08, y + s * 0.12, s * 0.028, '#6cc45c', '#2f7a2c');
+  artBlob(c, x + s * 0.15, y + s * 0.25, s * 0.06, s * 0.025, '#7fd46a', { rot: -0.5, lineColor: '#2f7a2c' });
+  tkmGiftDraw(c, x + s * 0.08, y + s * 0.07, s * 0.34, 1);
+  c.strokeStyle = 'rgba(90,150,235,0.95)';
+  c.lineWidth = Math.max(1, s * 0.016);
   c.lineCap = 'round';
   c.beginPath();
-  for (i = 0; i < 4; i++) { c.moveTo(x - s * 0.02 + i * s * 0.05, y - s * 0.12 + (i % 2) * s * 0.04); c.lineTo(x - s * 0.02 + i * s * 0.05, y - s * 0.07 + (i % 2) * s * 0.04); }
+  for (i = 0; i < 4; i++) { c.moveTo(x - s * 0.2 + i * s * 0.06, y - s * 0.12 + (i % 2) * s * 0.05); c.lineTo(x - s * 0.21 + i * s * 0.06, y - s * 0.06 + (i % 2) * s * 0.05); }
   c.stroke();
-  trekDrawPup(c, x + s * 0.05, y - s * 0.2 + b, s * 0.1, { mood: 'happy', t: globalT, rain: 1, squint: true });
+  trekDrawPup(c, x - s * 0.11, y - s * 0.24 + b, s * 0.14, { mood: 'happy', t: globalT, squint: true });
 }
 
 trekRegister({
