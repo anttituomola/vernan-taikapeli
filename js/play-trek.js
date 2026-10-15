@@ -1,7 +1,7 @@
 'use strict';
 
 // Pikkupilven kotimatka (Kaukamaa, Pilvilinna): pelin ensimmäinen PITKÄ kenttä.
-// Yksi kenttä, viisi lukua ja yksi matka aamusta yöhön. Pieni pilvi on
+// Yksi kenttä, viisi etappia ja yksi matka aamusta yöhön. Pieni pilvi on
 // eksynyt, ja prinsessa ja yksisarvinen saattavat sen kotiin äidin luo
 // Pilvilinnaan. Matkalla Pikkupilvi kasvaa ja oppii uutta, ja ne, joita
 // autetaan, tulevat lopussa juhliin.
@@ -16,41 +16,41 @@
 //   5. Pilvilinna (yö)       äiti, lahjat sytyttävät juhlan, ystävät saapuvat.
 // Koko matkan ajan sama ele: RAAHAUS (pilvi, lautta, valo, iso pilvi, lahjat).
 //
-// Kehys (tämä tiedosto) hoitaa luvut, matkakartan, tallennuksen, piilopuput,
-// lahjat ja Pikkupilven piirron. Luvut ovat omissa tiedostoissaan
+// Kehys (tämä tiedosto) hoitaa etapit, matkakartan, tallennuksen, piilopuput,
+// lahjat ja Pikkupilven piirron. Etapit ovat omissa tiedostoissaan
 // (js/trek-*.js) ja rekisteröityvät trekRegister-kutsulla:
 //   trekRegister({
 //     id: 'meadow', order: 1, name: 'KUK-KA-NIIT-TY', color: '#8fdc7a',
 //     ambient: 'butterflies' | null, light: { ... } | null (ambient.js drawLight),
-//     init(),             luvun alku (maailma, oliot, proppien propAdd)
-//     update(dt),         logiikka; kun luku on valmis -> trekChapterDone()
+//     init(),             etapin alku (maailma, oliot, proppien propAdd)
+//     update(dt),         logiikka; kun etappi on valmis -> trekChapterDone()
 //     draw(),             koko piirto: beginPlayWorld() ... endPlayWorld(), oma HUD
 //                         (x hudX()..viewW*0.6) ja drawTaskOverlay(ctx)
 //     tap(px, py),        kosketuksen alku (holding/lastPX/lastPY kertovat raahauksen)
 //     resize(),           koon muutos
 //     layers(),           parallaksikerrokset [{ speed, render(b, w, h) }]
 //     icon(c, x, y, s),   aseman kuva matkakartalla ja HUD-nauhassa (s = halkaisija)
-//     gift: { draw(c, x, y, s) } | null  luvun lahja (kukka, simpukka, kristalli, tähti)
-//     bunny: true          luvussa on piilopupu (trekBunnyFound)
+//     gift: { draw(c, x, y, s) } | null  etapin lahja (kukka, simpukka, kristalli, tähti)
+//     bunny: true          etapissa on piilopupu (trekBunnyFound)
 //   });
-// Kehyksen palvelut luvuille:
+// Kehyksen palvelut etapeille:
 //   trekDrawPup(c, x, y, r, o)   Pikkupilvi (o: mood, t, look, glow, rain, water...)
 //   trekPupSound(kind)           'giggle' 'sad' 'wow' 'slurp' 'scared' 'yay' 'hmm' 'yawn'
 //   trekBunnyFound(sx, sy)       piilopupu löytyi (ruutukoordinaatit): lentää nauhaan, +1 tähti
-//   trekBunnyFoundNow()          löytyikö tämän luvun pupu jo tällä matkalla
-//   trekChapterDone()            luku valmis -> matkakartta ja seuraava luku
+//   trekBunnyFoundNow()          löytyikö tämän etapin pupu jo tällä matkalla
+//   trekChapterDone()            etappi valmis -> matkakartta ja seuraava etappi
 //   trekUS()                     yksisarvisen piirtoskaala (kuten muissa kävelykentissä)
-//   trekGifts()                  lahjat, jotka on ansaittu (juhlaluku käyttää)
-//   trekGo(i)                    testaus: suoraan lukuun i (0..4)
+//   trekGifts()                  lahjat, jotka on ansaittu (juhlaetappi käyttää)
+//   trekGo(i)                    testaus: suoraan etappiin i (0..4)
 
 var TREK_KEY = 'vt_trek_v1';
 var TREK_CHAPTERS = [];
 var TREK_WALK_T = 2.0;         // nappulan kävely asemalta toiselle matkakartalla
-var TREK_FADE_T = 0.35;        // häivytys kartan ja luvun välillä
-var TREK_CARD_T = 2.0;         // luvun alkukortti
+var TREK_FADE_T = 0.35;        // häivytys kartan ja etapin välillä
+var TREK_CARD_T = 2.0;         // etapin alkukortti
 // Asemien paikat matkakartalla (x × viewW, y × viewH): niitty, joki, luola, taivas, linna
 var TREK_MAP_POS = [[0.15, 0.80], [0.39, 0.71], [0.67, 0.70], [0.47, 0.42], [0.80, 0.20]];
-// Pikkupilven koko matkakartalla luvun mukaan (kasvaa matkan aikana)
+// Pikkupilven koko matkakartalla etapin mukaan (kasvaa matkan aikana)
 var TREK_PUP_GROW = [0.8, 0.9, 1.0, 1.45, 1.2];
 
 var trek = {
@@ -72,7 +72,7 @@ function trekRnd(a, b) { return a + Math.random() * (b - a); }
 
 // ---------- Tallennus ----------
 // Oma avain, jotta pitkän matkan edistyminen ei sotke yleistä tallennusta:
-// reached = pisin luku, johon on päästy; cleared = koko matka tehty;
+// reached = pisin etappi, johon on päästy; cleared = koko matka tehty;
 // bunnies = koskaan löydetyt piilopuput (ne tulevat juhliin).
 function trekLoad() {
   var d;
@@ -89,7 +89,7 @@ function trekSave() {
 }
 function trekReachable(i) { return trek.save.cleared || !!hubCleared.trek || i <= trek.save.reached; }
 function trekStationDone(i) { return trek.save.cleared || !!hubCleared.trek || i < trek.save.reached; }
-// Lahjat, jotka on ansaittu tällä tai aiemmilla matkoilla (juhlaluku sijoittaa ne)
+// Lahjat, jotka on ansaittu tällä tai aiemmilla matkoilla (juhlaetappi sijoittaa ne)
 function trekGifts() {
   var out = [], i;
   for (i = 0; i < TREK_CHAPTERS.length; i++) {
@@ -146,7 +146,7 @@ function renderTrekBg(b, w, h) {
 }
 
 // Matkakartta: at = asema, jolla nappula on; from >= 0 = nappula kävelee
-// edelliseltä asemalta (luvun jälkeen), ja edellisen luvun lahja pomppaa esiin
+// edelliseltä asemalta (etapin jälkeen), ja edellisen etapin lahja pomppaa esiin
 function trekShowMap(at, from) {
   trek.mode = 'map';
   trek.map.at = Math.max(0, Math.min(TREK_CHAPTERS.length - 1, at));
@@ -189,7 +189,7 @@ function trekStartChapter(i) {
   activeTask = null;
   gates = [];
   activeGate = null;
-  // Valo ja tunnelmahiukkaset vaihtuvat luvun mukaan (luvut ovat eri vuorokaudenaikoja)
+  // Valo ja tunnelmahiukkaset vaihtuvat etapin mukaan (etapit ovat eri vuorokaudenaikoja)
   PHASES.trek.light = def.light || null;
   PHASES.trek.ambient = def.ambient || null;
   ambientInit(def.ambient || null);
@@ -207,8 +207,8 @@ function trekFadeTo(then) {
   trek.fadeThen = then;
 }
 
-// Luku valmis: tähti, tallennus ja matkakartalle kävelemään seuraavalle asemalle.
-// Viimeinen luku (juhla) päättää koko kentän.
+// Etappi valmis: tähti, tallennus ja matkakartalle kävelemään seuraavalle asemalle.
+// Viimeinen etappi (juhla) päättää koko kentän.
 function trekChapterDone() {
   var i = trek.ch;
   if (trek.mode !== 'play' || trek.doneLock) return;
@@ -228,7 +228,7 @@ function trekChapterDone() {
   trekFadeTo(function () { trekShowMap(i + 1, i); });
 }
 
-// Testaus: suoraan lukuun i
+// Testaus: suoraan etappiin i
 function trekGo(i) {
   trek.fadeDir = 0;
   trek.fade = 0;
@@ -237,7 +237,7 @@ function trekGo(i) {
 }
 
 // ---------- Piilopuput ----------
-// Jokaisessa pelillisessä luvussa on yksi piilopupu. Löytö lennättää pupun
+// Jokaisessa pelillisessä etapissa on yksi piilopupu. Löytö lennättää pupun
 // HUD-nauhan asemalle ja antaa tähden; koskaan löydetyt puput tulevat juhliin.
 function trekBunnyFound(sx, sy) {
   var def = trekDef();
@@ -320,7 +320,7 @@ function drawTrek() {
   }
 }
 
-// Luvun alkukortti: aseman mitali ja luvun nimi tavutettuna
+// Etapin alkukortti: aseman mitali ja etapin nimi tavutettuna
 function trekDrawCard(c) {
   var def = trekDef(), k, a, cx = viewW / 2, cy = viewH * 0.42, r = viewH * 0.12, fs;
   if (trek.cardT <= 0 || !def) return;
@@ -345,7 +345,7 @@ function trekDrawCard(c) {
   c.globalAlpha = 1;
 }
 
-// Aseman mitali: kultareunus, luvun väri ja kuva. open = saavutettu
+// Aseman mitali: kultareunus, etapin väri ja kuva. open = saavutettu
 function trekDrawMedal(c, x, y, r, def, open, big) {
   var col = open ? (def.color || '#8fc8ff') : '#c4ccd8';
   artShadow(c, x, y + r * 0.95, r * 0.9, r * 0.2, 0.18);
@@ -425,9 +425,10 @@ function trekMapPathPoint(i, k) {
   var a = trekMapStation(i), b = trekMapStation(i + 1), q = trekMapCtrl(a, b, i), u = 1 - k;
   return { x: u * u * a.x + 2 * u * k * q.x + k * k * b.x, y: u * u * a.y + 2 * u * k * q.y + k * k * b.y };
 }
+// Nappula seisoo aseman vasemmalla puolella (ei mitalin päällä)
 function trekPawnSpot(i) {
   var s = trekMapStation(i);
-  return { x: s.x, y: s.y + s.r * 1.25 };
+  return { x: s.x - s.r * 1.55, y: s.y + s.r * 1.0 };
 }
 
 function trekMapTap(px, py) {
@@ -492,14 +493,14 @@ function trekMapPawn() {
     k = easeInOutSine(m.walkT / TREK_WALK_T);
     p = trekMapPathPoint(m.from, k);
     a = trekMapStation(m.from); b = trekMapStation(m.at);
-    return { x: p.x, y: p.y + (a.r * 1.25) * (1 - k) + (b.r * 1.25) * k, moving: true, facing: b.x >= a.x ? 1 : -1 };
+    return { x: p.x - a.r * 1.55, y: p.y + a.r * 1.0, moving: true, facing: b.x >= a.x ? 1 : -1 };
   }
   p = trekPawnSpot(m.at);
   return { x: p.x, y: p.y, moving: false, facing: 1 };
 }
 function trekMapPupPos() {
-  var pw = trekMapPawn(), r = viewH * 0.028 * (TREK_PUP_GROW[trek.map.at] || 1);
-  return { x: pw.x + viewH * 0.075 * pw.facing, y: pw.y - viewH * 0.11 + Math.sin(globalT * 2.2) * viewH * 0.006, r: r };
+  var pw = trekMapPawn(), r = viewH * 0.03 * (TREK_PUP_GROW[trek.map.at] || 1);
+  return { x: pw.x - viewH * 0.02 * pw.facing, y: pw.y - viewH * 0.17 + Math.sin(globalT * 2.2) * viewH * 0.006, r: r };
 }
 
 function trekDrawMap(c) {
@@ -555,7 +556,7 @@ function trekDrawMap(c) {
   }
   // Nappula ja Pikkupilvi
   pw = trekMapPawn();
-  drawUnicorn(c, pw.x, pw.y, viewH * 0.00062, pw.facing, globalT * 9, pw.moving, globalT);
+  drawUnicorn(c, pw.x, pw.y, viewH * 0.00085, pw.facing, globalT * 9, pw.moving, globalT);
   pp = trekMapPupPos();
   trekDrawPup(c, pp.x, pp.y, pp.r, { mood: m.pupT > 0 ? 'wow' : (trek.save.cleared ? 'happy' : (m.at === 0 && m.from < 0 ? 'sad' : 'happy')), t: globalT, look: pw.facing * 0.6, wave: m.pupT > 0 || pw.moving });
   // Vihjenuoli seuraavan aseman yllä; käsi napauttaa, jos lapsi odottaa
@@ -687,8 +688,8 @@ function trekRenderMap() {
   // Puut ja kukat niityllä
   for (i = 0; i < 5; i++) drawTree(b, w * (0.03 + i * 0.065), h * (0.73 + (i % 2) * 0.03), h * 0.045);
   for (i = 0; i < 22; i++) {
-    x = w * ((i * 0.137 + 0.05) % 0.55);
-    y = h * (0.82 + ((i * 0.29) % 0.16));
+    x = w * (0.02 + ((i * 0.618 + 0.13) % 1) * 0.55);
+    y = h * (0.83 + ((i * 0.377 + 0.2) % 1) * 0.15);
     drawFlower(b, x, y, h * 0.007, ['#ff7bac', '#ffe27a', '#c9a0ff', '#ffffff'][i % 4]);
   }
   // Taivaan aseman pilvisaari ja Pilvilinna
