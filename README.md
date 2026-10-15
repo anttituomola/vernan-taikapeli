@@ -85,6 +85,13 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js`, `play-hideseek.js`, `play-twin.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät), vartija Postireitti (ohjelmointi) sekä bonushuoneet Kanojen piilosleikki (tökättävä kylä) ja Pupuparin piha (reaaliaikainen yhteispeli kahdelle), sokkelon maasto `HUB_TILE_DECOR.farm`
 - `js/play-umbrella.js`, `play-witch.js` — Kaukamaa, Myrskyvuori (maailma 17, viimeinen paikka `place.final`): Sateenvarjo (pitkä helppo kenttä, varjon raahaus sateessa) ja ystävyyden vartija Myrskynoita (auringonsäteet sateeseen -> sateenkaari)
 - `js/hub-theme-storm.js` — Myrskyvuoren sokkeloteema `HUB_THEMES.storm` (laventelikalliot, sadepilvet, lätäköt, kurkkivat sateenkaaret; käyttää hub-theme-manner.js:n yhteisiä paloja)
+- `js/play-trek.js` — **pitkän kentän kehys**: Pikkupilven kotimatka (Kaukamaa, Pilvilinna, maailma 18). Etappien
+  rekisteröinti (`trekRegister`), matkakartta (etapin valinta ja asemalta toiselle kävely), oma tallennus
+  `vt_trek_v1`, piilopuput, lahjat, Pikkupilven piirto (`trekDrawPup`) ja äänet (`trekPupSound`) sekä
+  Pilvilinnan alkuluku. Kehyksen otsakekommentti kuvaa etapin rajapinnan.
+- `js/trek-meadow.js`, `trek-river.js`, `trek-cave.js`, `trek-sky.js`, `trek-party.js` — Pikkupilven kotimatkan
+  viisi etappia (etuliitteet `tkm`, `tkr`, `tkc`, `tks`, `tkp`); `js/hub-theme-cloud.js` — Pilvilinnan sokkeloteema.
+  Kentän `script` voi olla lista, kun pitkä kenttä koostuu useasta tiedostosta.
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -1068,6 +1075,46 @@ helppo kenttä, sitten ystävyyden vartija (ei taistelu).
   kimalletta ja noita lentää luudalla silmukan. Oma sateenkaari korvaa
   juhlan yleisen sateenkaaren (`mwitchEndWorld`). Tökättävät: noita,
   pilvi, yksisarvinen, kellokukat (3.: kimalainen), vuorikauris, kivikasat.
+
+### Kaukamaa: Pilvilinna (maailma 18)
+
+Kaukamaan taivaalla leijuva **bonuspaikka** (15.10.2026, `place.bonus`, `place.sky`): auki heti,
+kun Kaukamaa on auki, ei anna aurinkoon sädettä eikä ole paikkojen polulla. Ainoa huone on pelin
+ensimmäinen **pitkä kenttä**, **Pikkupilven kotimatka** (n. 12–15 min). Eksynyt pikkupilvi saatetaan
+kotiin äidin luo Pilvilinnaan; matka kulkee aamusta yöhön, Pikkupilvi kasvaa matkalla, ja autetut
+ystävät tulevat lopussa juhliin. Koko kentän ydinele on **raahaus**.
+
+Kenttä alkaa **matkakartalta**: reitti niityltä joelle, luolaan, taivaalle ja linnaan. Saavutettu
+asema on auki (napautus aloittaa etapin), tulevat lukossa; läpi pelatulla matkalla kaikki auki.
+Etapin jälkeen tulee +1 tähti, lahja pomppaa asemalle ja nappula kävelee seuraavalle asemalle.
+Edistyminen tallentuu (`vt_trek_v1`), joten kesken jäänyt matka jatkuu. Jokaisessa pelillisessä
+etapissa on **piilopupu** (+1 tähti, tulee juhliin); asemien kulmassa näkyy, mitkä on löydetty.
+Testaus: `VT.play('trek'); trekGo(0..4)`.
+
+- **Kukkaniitty** (aamu, helppo, n. 2,5 min) — sormi raahaa Pikkupilveä, ja se sataa. Sade kasvattaa
+  siemenistä tien: lumpeenlehdet puron yli, sieniportaat, unikeko siili herää, nuupahtanut
+  auringonkukka nousee, pavunvarsi. Vesi loppuu (n. 8 s sadetta): kalpea pilvi juo purosta,
+  lammesta tai kastepisarasta. 12 nuppua kukkii HUD:iin. Piilopupu: tavallinen multakumpu, josta
+  kasvaa jättiporkkana. Lopuksi jättiläislumpeenlehti ja taikakukka (lahja).
+- **Kuplajoki** (päivä, keskitaso, n. 2,8 min) — lehtilautta virrassa; sormi ohjaa lauttaa. Viisi
+  eksynyttä ankanpoikasta jonoon, kuplahelmet, hyppivät kalat, pyörteet. Kaksi koskea: kiveen
+  törmäys kastelee prinsessan ja säikäyttää jonon viimeisen poikasen uimaan edelle. Emon lammella
+  puuttuvat ui itse paikalle. Piilopupu kaislikossa (yksi kolmesta). Lahja: helmisimpukka.
+- **Hohtoluola** (pimeä, keskivaikea, n. 2–3 min) — Pikkupilvi hohtaa, ja yksisarvinen kulkee vain
+  valossa. Varjomöröt hiipivät pimeässä (silmät vilkkuvat ensin); valo muuttaa ne hohtokoiksi.
+  Seinäkristallit syttyvät valosta. Kolme **numerokristallioven** summaa (3–5, 6–8 kahdella,
+  9–10 kolmella); liikaa -> kristallit sammuvat. Lopuksi auringonsäde kasvattaa Pikkupilven isoksi.
+  Lahja: laulava kristalli.
+- **Tähtitaivas** (ilta -> yö, vaikein, n. 3 min) — iso Pikkupilvi kantaa; sormi ohjaa. Viisi
+  sisarpilveä jonoon ja 20 tähteä. Ukkospilvet varoittavat (keltainen kaista, 1,0 s / yöllä
+  0,85 s); osuma säikäyttää jonon viimeisen. Yöllä salamamuuri ja turvarako vaihtavat puolta.
+  Piilopupu: kuuta tökätään kolmesti. Lahja: tähdenlento Pilvilinnan portilla.
+- **Pilvilinna** (yö, palkinto, n. 1–1,5 min) — Pikkupilvi raahataan äidin syliin; neljä lahjaa
+  jalustoille sytyttävät juhlan (kukat, suihkulähde ankkoineen, ikkunat ja musiikki, ilotulitus).
+  Vieraina etappien ystävät ja löydetyt puput. Finaalissa iso sateenkaari ja ilotulitus.
+
+Säädöt ovat kunkin `trek-*.js`-tiedoston alussa (esim. `TKM_SPEED`, `TKR_ROWS1`, `TKC_CREEP`,
+`TKS_TEL`, `TKP_HUG_R`). Kehyksen asemien paikat `TREK_MAP_POS`.
 
 ### Linnan sisustus
 

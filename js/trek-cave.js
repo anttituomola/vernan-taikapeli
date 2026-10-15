@@ -1,8 +1,8 @@
 'use strict';
 
-// HOH-TO-LUO-LA (Pikkupilven kotimatka, luku 3/5). Keskivaikea, n. 3 min.
-// Luola on pimeä. Pikkupilvi joi vesiputouksen kimaltavaa vettä (luku 2) ja
-// hohtaa nyt: luvun alussa se hämmästyy ("vau") ja syttyy loistamaan.
+// HOH-TO-LUO-LA (Pikkupilven kotimatka, etappi 3/5). Keskivaikea, n. 3 min.
+// Luola on pimeä. Pikkupilvi joi vesiputouksen kimaltavaa vettä (etappi 2) ja
+// hohtaa nyt: etapin alussa se hämmästyy ("vau") ja syttyy loistamaan.
 //   Liike: yksisarvinen kävelee itsestään oikealle, mutta VAIN kun polku sen
 //   edessä on valaistu: sormi raahaa Pikkupilveä valona edellä (0..0,35 ×
 //   viewW yksisarvisen edessä eikä liian ylhäällä). Pimeässä yksisarvinen
@@ -25,7 +25,7 @@
 //   lepattavat hiljaa sammuksiin ("hmm") ja yritetään uudestaan.
 //   Ovet 3–5 (1–2 kristallia), 6–8 (tasan kaksi), 9–10 (tasan kolme).
 //   Arvot arvotaan joka kerta. Viimeisen oven takaa leijuu laulava kristalli
-//   (luvun lahja) prinsessalle.
+//   (etapin lahja) prinsessalle.
 //   Piilopupu: yksi kolmesta seinäkolosta (arvotaan), näkyy vain valossa.
 //   Tökättävät: lepakot katossa (3.: sydänmuodostelma), hohtosienet
 //   (5.: itiösade), tippukivet (pisarat soittavat asteikkoa), myyrä-
@@ -2173,7 +2173,7 @@ function tkcDrawGateGlow(c, g) {
   }
 }
 
-// Laulava kristalli (luvun lahja): violetinsininen kolmen särmiön ryhmä
+// Laulava kristalli (etapin lahja): violetinsininen kolmen särmiön ryhmä
 function tkcDrawGift(c, x, y, s, t) {
   var b = Math.sin(t * 2.2) * s * 0.03, col = '#8f9bff';
   tkcGlow(c, x, y, s * 0.75, '#b49cff', 0.5 + Math.sin(t * 3) * 0.1);

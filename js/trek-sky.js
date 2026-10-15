@@ -1,7 +1,7 @@
 'use strict';
 
-// Pikkupilven kotimatka, luku 4: TÄH-TI-TAI-VAS (ilta -> hämärä -> yö). Matkan
-// vaikein luku. Pikkupilvi on kasvanut ISOKSI ja kantaa prinsessaa ja
+// Pikkupilven kotimatka, etappi 4: TÄH-TI-TAI-VAS (ilta -> hämärä -> yö). Matkan
+// vaikein etappi. Pikkupilvi on kasvanut ISOKSI ja kantaa prinsessaa ja
 // yksisarvista selässään. Taivas vierii itsestään oikealle, ja aurinko laskee,
 // tulee hämärä ja lopulta tähtiyö kuineen.
 //   Ohjaus: sormi RAAHAA isoa pilveä (seuraa sormea pehmeästi, enintään

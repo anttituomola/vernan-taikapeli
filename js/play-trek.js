@@ -688,8 +688,10 @@ function trekRenderMap() {
   // Puut ja kukat niityllä
   for (i = 0; i < 5; i++) drawTree(b, w * (0.03 + i * 0.065), h * (0.73 + (i % 2) * 0.03), h * 0.045);
   for (i = 0; i < 22; i++) {
-    x = w * (0.02 + ((i * 0.618 + 0.13) % 1) * 0.55);
-    y = h * (0.83 + ((i * 0.377 + 0.2) % 1) * 0.15);
+    k = Math.sin(i * 12.9898) * 43758.5453;
+    x = w * (0.02 + (k - Math.floor(k)) * 0.55);
+    k = Math.sin(i * 78.233 + 1.7) * 12345.678;
+    y = h * (0.83 + (k - Math.floor(k)) * 0.15);
     drawFlower(b, x, y, h * 0.007, ['#ff7bac', '#ffe27a', '#c9a0ff', '#ffffff'][i % 4]);
   }
   // Taivaan aseman pilvisaari ja Pilvilinna

@@ -1,6 +1,6 @@
 'use strict';
 
-// Kukkaniitty (Pikkupilven kotimatka, luku 1): ruusukultainen aamu, helppo ja
+// Kukkaniitty (Pikkupilven kotimatka, etappi 1): ruusukultainen aamu, helppo ja
 // pitkä. Lapsen ensikosketus pitkään kenttään, joten oppiminen on lempeää.
 //   Alku: yksisarvinen ja prinsessa saapuvat niitylle, jossa Pikkupilvi istuu
 //   surullisena voikukan päällä ja tihkuttaa kyyneliä. Napautus (tai hetken
@@ -21,7 +21,7 @@
 //     kikattaa ja kieri pois), Nuupahtanut auringonkukka (nousee seisomaan ja
 //     hymyilee), Pavunvarsi (kierteinen varsi jyrkänteelle, yksisarvinen kiipeää).
 //     Lopuksi joenranta: jättisiemenestä kasvaa iso lumpeenlehti ja taikakukka;
-//     prinsessa poimii kukan (luvun lahja), lehti lipuu pois -> trekChapterDone.
+//     prinsessa poimii kukan (etapin lahja), lehti lipuu pois -> trekChapterDone.
 //   Keräiltävät: kymmenen nuppua polun varrella; sade avaa nupun ja siitepöly-
 //   kipinä lentää HUD:iin. Kaikki auki -> lopussa kukat kiertyvät seppeleeksi.
 //   Piilopupu: tavallinen multakeko ja pieni lehti yhdessä kolmesta paikasta;
@@ -1792,7 +1792,7 @@ function tkmDrawFinal(c, o) {
     tkmDrawFill(c, t, x, y - s * 0.6, s * 1.1);
   }
 }
-// Jättilumpeenlehti (luvun 2 lautta) ja taikakukka sen keskellä
+// Jättilumpeenlehti (etapin 2 lautta) ja taikakukka sen keskellä
 function tkmDrawBigLeaf(c, x, y, rx, bloom, picked) {
   var ry = rx * 0.24, i, k, a, H = viewH;
   artShadow(c, x, y + ry * 0.6, rx * 1.05, ry * 0.6, 0.2);

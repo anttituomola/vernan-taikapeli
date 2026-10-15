@@ -1,6 +1,6 @@
 'use strict';
 
-// Pikkupilven kotimatka, luku 5: PIL-VI-LIN-NA (yö). Helppo palkintoluku ja
+// Pikkupilven kotimatka, etappi 5: PIL-VI-LIN-NA (yö). Helppo palkintoluku ja
 // koko pitkän matkan tunnehuipennus. Yksi ruutu (camX = 0).
 // Pilvilinnan piha pilvien päällä yöllä: pilvistä tehty linna torneineen ja
 // sateenkaariviireineen, mutta aluksi pimeä ja hiljainen (ikkunat sammuksissa,
@@ -38,8 +38,8 @@
 
 var TKP_MOM_R = 0.17;        // äitipilven säde × viewH
 var TKP_PUP_R = 0.068;       // Pikkupilven tavallinen säde × viewH
-var TKP_BIG_R = 0.15;        // iso Pikkupilvi (luvusta 4) × viewH
-var TKP_ARRIVE = [0.4, 3.0]; // saapumislento alkaa / laskeutuu (s luvun alusta)
+var TKP_BIG_R = 0.15;        // iso Pikkupilvi (etapista 4) × viewH
+var TKP_ARRIVE = [0.4, 3.0]; // saapumislento alkaa / laskeutuu (s etapin alusta)
 var TKP_SHRINK_T = 1.2;      // kutistuminen laskeutumisen jälkeen
 var TKP_HUG_R = 1.35;        // halaus, kun Pikkupilvi on näin lähellä äitiä (× äidin säde)
 var TKP_HUG_T = 3.2;         // halauksen kesto ennen juhlavaihetta
@@ -52,7 +52,7 @@ var TKP_FIN_WAIT = 3.2;      // viimeisten vieraiden saapumisaika ennen loppunä
 var TKP_FIN_T = 7.6;         // loppunäytös ennen kehyksen juhlaa
 var TKP_STEP = 0.21;         // juhlamelodian kahdeksasosa (s)
 var TKP_GIFTS = ['flower', 'shell', 'crystal', 'star'];
-// Lahja -> luku, josta se saatiin (trekGiftDraw / trekBunnyEver)
+// Lahja -> etappi, josta se saatiin (trekGiftDraw / trekBunnyEver)
 var TKP_GIFT_CH = { flower: 'meadow', shell: 'river', crystal: 'cave', star: 'sky' };
 // Jalustan reunuksen väri: auttaa löytämään oikean paikan
 var TKP_GCOL = { flower: '#ff7bac', shell: '#ffa98a', crystal: '#6fd8ff', star: '#ffd24f' };
@@ -428,7 +428,7 @@ function tkpRenderSils() {
 }
 
 // ---------- Lahjat ----------
-// Luvun oma lahjakuva (trekGiftDraw), tai varakuva, jos luvulla ei ole lahjaa
+// Etapin oma lahjakuva (trekGiftDraw), tai varakuva, jos luvulla ei ole lahjaa
 function tkpGiftDraw(id, c, x, y, s, still) {
   var ch = TKP_GIFT_CH[id], i, d;
   for (i = 0; i < TREK_CHAPTERS.length; i++) {
@@ -1262,7 +1262,7 @@ function tkpUpdateFx(dt, L) {
   if (tkp.smallBowT >= 0) tkp.smallBowT += dt;
 }
 // Juhlamelodia soi kristallilahjasta loppuun asti; nuotti kerrallaan, joten
-// se loppuu heti, kun luku (tai kenttä) päättyy
+// se loppuu heti, kun etappi (tai kenttä) päättyy
 function tkpUpdateMelody(dt) {
   var i, f;
   if (!tkp.melOn) return;

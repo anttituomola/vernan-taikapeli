@@ -130,6 +130,21 @@ Myrskynoidan kentässä säde on raahattava hehkuva pallo sateenkaaren värissä
 sateeseen viety säde kasvattaa oman **raitansa** sateenkaareen.
 _Vältä_: pallo yksinään, valo, väri (väri on saarten palautettava sateenkaaren väri)
 
+**Bonuspaikka**:
+Kaukamaan paikka, joka on auki heti eikä kuulu säteiden ketjuun (Pilvilinna).
+
+**Pitkä kenttä**:
+Kenttä, joka koostuu useasta **etapista** ja kestää 10–15 minuuttia (Pikkupilven kotimatka).
+Etappien välissä on **matkakartta**, jolta voi myös valita saavutetun etapin.
+_Vältä_: luku (luku on tarinakirjan kohtaus), taso, osa
+
+**Etappi**:
+Pitkän kentän osa, jolla on oma pelimekaniikkansa, vuorokaudenaikansa, lahjansa ja **piilopupunsa**.
+
+**Pikkupilvi**:
+Pikkupilven kotimatkan seuralainen: eksynyt pilvenpoikanen, jota raahataan. Se sataa, hohtaa ja
+kasvaa matkan aikana isoksi, ja sen äiti, **Äitipilvi**, odottaa Pilvilinnassa.
+
 ### Pelin käsitteet
 
 **Tehtävä**:

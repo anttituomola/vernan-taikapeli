@@ -1,6 +1,6 @@
 'use strict';
 
-// KUP-LA-JO-KI (Pikkupilven kotimatka, luku 2, keskipäivä): keskitaso, n. 3 min.
+// KUP-LA-JO-KI (Pikkupilven kotimatka, etappi 2, keskipäivä): keskitaso, n. 3 min.
 // Kukkaniityn jättiläislumpeenlehti on nyt lautta: yksisarvinen ja prinsessa
 // seisovat lehdellä, Pikkupilvi istuu ison kukan terälehdillä. Joki virtaa
 // oikealle ja kamera liukuu itsestään (tyynessä hitaasti, koskessa nopeammin).
@@ -27,7 +27,7 @@
 //   (HUD-paikat syttyvät 1..5), poikaset uivat iloisen ympyrän ja emo antaa
 //   helmisimpukan, joka lentää prinsessalle. Joki virtaa kimaltelevan
 //   vesiverhon takaa luolaan: Pikkupilvi juo kimallepärskeitä ja alkaa hohtaa
-//   (luku 3), lautta lipuu sisään ja ruutu pimenee.
+//   (etappi 3), lautta lipuu sisään ja ruutu pimenee.
 //   Piilopupu: kaislikko kaukaisella kaistalla yhdessä kolmesta paikasta;
 //   kaislikon läpi ohjaaminen paljastaa tynnyrillä istuvan pupun. Muut
 //   kaislikot ovat houkutuksia (lintu pyrähtää lentoon).
