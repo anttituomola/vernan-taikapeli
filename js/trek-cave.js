@@ -617,24 +617,28 @@ function tkcTap(px, py) {
     ci = tkcHitNum(g, wx, py);
     if (ci >= 0) { tkcToggle(g, ci); g.idle = 0; return; }
   }
-  // 2. Pikkupilvi: tartutaan siitä, mistä sormi osui
+  // 2. Pikkupilvi, piilopupu (vain valossa) tai koriste: lähin voittaa;
+  // suoraan Pikkupilveen osunut napautus tarttuu aina siihen
   d = Math.hypot(wx - p.x, py - p.y);
+  b = tkcBunnyPos();
+  b.d = !trekBunnyFoundNow() && tkcLitAmount(b.x, b.y) > 0.25 ? Math.hypot(wx - b.x, py - b.y) : 1e9;
+  ci = tkcPropDist(wx, py);
+  if (d > tkcPupR() * 1.1) {
+    if (b.d < viewH * 0.075 && b.d < d) {
+      trekBunnyFound(b.x - camX, b.y);
+      tkcSay('wow', 1.4);
+      return;
+    }
+    if (ci < d && propsTap(wx, py)) return;
+  }
   if (d < tkcPupR() * 1.9) {
     tkc.grab = 'pup';
     tkc.offX = p.x - wx;
     tkc.offY = p.y - py;
     return;
   }
-  // 3. Piilopupu (vain valossa)
-  b = tkcBunnyPos();
-  if (!trekBunnyFoundNow() && tkcLitAmount(b.x, b.y) > 0.25 && Math.hypot(wx - b.x, py - b.y) < viewH * 0.075) {
-    trekBunnyFound(b.x - camX, b.y);
-    tkcSay('wow', 1.4);
-    return;
-  }
-  // 4. Koristeet
-  if (propsTap(wx, py)) return;
-  // 5. Yksisarvinen hirnahtaa iloisesti
+  if (ci < 1e9 && propsTap(wx, py)) return;
+  // 3. Yksisarvinen hirnahtaa iloisesti
   x = tkc.ux; y = tkcFloorY(x);
   if (Math.abs(wx - x) < us * 45 && py > y - us * 110 && py < y + us * 4) {
     if (tkc.happyNeighT <= 0) {
@@ -646,10 +650,20 @@ function tkcTap(px, py) {
     }
     return;
   }
-  // 6. Muualle: Pikkupilvi lentää sormen luo (vähän sormen yläpuolelle)
+  // 4. Muualle: Pikkupilvi lentää sormen luo (vähän sormen yläpuolelle)
   tkc.grab = 'fly';
   tkc.offX = 0;
   tkc.offY = -viewH * 0.05;
+}
+
+// Lähimmän osutun koristeen etäisyys (1e9 = ei osumaa)
+function tkcPropDist(wx, wy) {
+  var i, d, best = 1e9;
+  for (i = 0; i < props.length; i++) {
+    d = Math.hypot(wx - props[i].x, wy - propHitY(props[i]));
+    if (d < props[i].r && d < best) best = d;
+  }
+  return best;
 }
 
 // ---------- Päivitys ----------
@@ -2101,13 +2115,22 @@ function tkcDrawNumCrystal(c, g, i) {
   c.save();
   c.translate(x, y);
   c.scale(sc, sc);
-  if (on) tkcGlow(c, 0, -h * 0.5, h * 1.0, col, 0.55);
-  tkcPrism(c, 0, 0, w, h, on ? artMix(col, '#ffffff', 0.15) : artMix(col, '#3a3070', 0.5), 0);
+  if (on) {
+    // Sytytetty: kirkas hehku ja valopylväs ylöspäin
+    tkcGlow(c, 0, -h * 0.5, h * 1.2, col, 0.85);
+    c.fillStyle = artRGBA(col, 0.22 + Math.sin(globalT * 4 + cr.ph) * 0.06);
+    c.beginPath();
+    c.moveTo(-w * 0.3, -h * 0.9); c.lineTo(w * 0.3, -h * 0.9); c.lineTo(w * 0.7, -h * 2.4); c.lineTo(-w * 0.7, -h * 2.4);
+    c.closePath();
+    c.fill();
+    artBlob(c, 0, 0, w * 0.9, w * 0.22, '#ffffff', { line: false, flat: true, alpha: 0.35 });
+  }
+  tkcPrism(c, 0, 0, w, h, on ? artMix(col, '#ffffff', 0.3) : artMix(col, '#2e2660', 0.62), 0);
   // Pisteet
   cy = -h * 0.42;
   for (j = 0; j < TKC_PIPS[cr.v].length; j++) {
     pp = TKC_PIPS[cr.v][j];
-    artCircle(c, pp[0] * w * 0.24, cy + pp[1] * w * 0.3, pr, on ? '#ffffff' : '#c8c0e8', { lineColor: on ? artShade(col, -0.5) : '#3a3070', line: Math.max(1, pr * 0.35) });
+    artCircle(c, pp[0] * w * 0.24, cy + pp[1] * w * 0.3, pr, on ? '#ffffff' : '#b0a8d8', { lineColor: on ? artShade(col, -0.5) : '#2a2260', line: Math.max(1, pr * 0.35) });
   }
   // Numero kivessä
   artCircle(c, 0, viewH * 0.028, viewH * 0.026, on ? '#6a5ab8' : '#4a3d8e', { lineColor: '#241a58' });
@@ -2186,7 +2209,7 @@ function tkcDrawHint(c) {
     g = tkc.gates[tkc.gi];
     if (g.state === 'puzzle' && !g.over && g.idle > 5 && g.flights.length === 0) {
       sp = tkcNumPos(g, tkcGateHint(g));
-      tap = { x: sp.x - camX, y: sp.y - viewH * 0.06 };
+      tap = { x: sp.x - camX, y: sp.y - viewH * 0.13 };
     }
   } else if (tkc.state === 'sun' && tkc.idleT > 2) {
     from = { x: p.x - camX, y: p.y };
