@@ -43,7 +43,7 @@ var TKS_VMAX = 1.0;          // pilven enimmäisnopeus × viewH / s
 var TKS_FOLLOW = 7;          // sormen seurannan jousi (1 / s)
 var TKS_XMIN = 0.12;         // pilven x-alue × viewW
 var TKS_XMAX = 0.6;
-var TKS_XSPAN = 0.7;         // alueen enimmäisleveys × viewH
+var TKS_XSPAN = 0.66;        // alueen enimmäisleveys × viewH
 var TKS_XMAX_CASTLE = 0.8;   // linnalla saa lentää portille asti
 var TKS_YMIN = 0.24;         // pilven y-alue × viewH (yksisarvinen mahtuu ruutuun)
 var TKS_YMAX = 0.84;
@@ -59,7 +59,7 @@ var TKS_HIT_K = 0.85;        // ison pilven puolileveys osumassa × TKS_R
 var TKS_INV = 1.4;           // osuman jälkeinen suoja-aika
 var TKS_TRACK = 0.4;         // ukkospilven seurantanopeus × viewW / s
 var TKS_LEAD = 0.3;          // ukkospilvi tähtää liikkeen eteen (s)
-var TKS_SAFE = [0.065, 0.11];  // turvaraon puolileveys × viewH (arvotaan: leveämpi rako = lyhyempi pyrähdys)
+var TKS_SAFE = [0.06, 0.1];    // turvaraon puolileveys × viewH (arvotaan: leveämpi rako = lyhyempi pyrähdys)
 // Ukkosvyöhykkeet (kamera × viewW): single = yksi pilvi, alt = kaksi vuorotellen,
 // double = tuplaisku turvarakoineen; rest = tauko iskujen välissä (s)
 var TKS_STORMS = [
@@ -87,7 +87,7 @@ var tks = {
   starN: 0, tclouds: [], storm: -1, stormT: 0, hitN: 0, invT: 0, shiverT: 0, hitT: 0, flashT: 0, boltFlash: 0,
   wowT: 0, giggleT: 0, wiggleT: 0, idleT: 0, everDrag: false, pokeHold: false, pupTap: false,
   shoots: [], shootT: 4, wishN: 0, gift: null, moonN: 0, moonT: 0, bunny: null, gateT: 0, endT: 0, done: false,
-  flyers: [], hudBump: 0, sibBump: 0, puffs: [], windT: 0, rumbleT: 0, castleT: 0, homeT: 0
+  flyers: [], hudBump: 0, sibBump: 0, puffs: [], inWind: false, rumbleT: 0, castleT: 0, homeT: 0
 };
 
 // ---------- Apu ----------
@@ -177,6 +177,7 @@ function tksInit() {
   tks.rumbleT = 0;
   tks.castleT = 0;
   tks.homeT = 0;
+  tks.inWind = false;
   // Sisarpilvet: värit sekoitetaan, korkeudet arvotaan
   order = [0, 1, 2, 3, 4];
   for (i = order.length - 1; i > 0; i--) { j = Math.floor(Math.random() * (i + 1)); n = order[i]; order[i] = order[j]; order[j] = n; }
@@ -214,8 +215,8 @@ function tksInit() {
 // joten koon muutos ei vaadi uudelleenrakennusta.
 function tksSetupProps() {
   propsReset();
-  tksAddBalloon(1.75, 0.2);
-  tksAddBirds(2.9, 0.15);
+  tksAddBalloon(0.8, 0.2);
+  tksAddBirds(1.7, 0.14);
   tksAddOwl(12.95, 0.7);
 }
 function tksPropPos(p) {
@@ -256,7 +257,7 @@ function tksAddBalloon(u, v) {
       }
     },
     draw: function (c, p) {
-      var s = viewH * 0.055, i, k, hx, hy, wv;
+      var s = viewH * 0.065, i, k, hx, hy, wv;
       // Sydänilmapallot nousevat
       for (i = 0; i < p.hearts.length; i++) {
         k = p.hearts[i].t;
@@ -274,8 +275,8 @@ function tksAddBalloon(u, v) {
       c.strokeStyle = '#8a5a3a';
       c.lineWidth = Math.max(1, s * 0.04);
       c.beginPath();
-      c.moveTo(-s * 0.62, s * 0.55); c.lineTo(-s * 0.32, s * 1.25);
-      c.moveTo(s * 0.62, s * 0.55); c.lineTo(s * 0.32, s * 1.25);
+      c.moveTo(-s * 0.62, s * 0.55); c.lineTo(-s * 0.34, s * 1.4);
+      c.moveTo(s * 0.62, s * 0.55); c.lineTo(s * 0.34, s * 1.4);
       c.stroke();
       // Kuori: raidat
       c.save();
@@ -301,18 +302,19 @@ function tksAddBalloon(u, v) {
       }
       // Nalle korissa
       wv = p.waveT > 0 ? Math.sin(globalT * 14) * 0.6 : Math.sin(globalT * 1.5) * 0.15;
-      artCircle(c, -s * 0.12, s * 1.14, s * 0.24, '#c8905a', { lineColor: '#6a4628' });
-      artCircle(c, -s * 0.3, s * 0.95, s * 0.09, '#c8905a', { lineColor: '#6a4628' });
-      artCircle(c, s * 0.06, s * 0.95, s * 0.09, '#c8905a', { lineColor: '#6a4628' });
-      artEye(c, -s * 0.2, s * 1.12, s * 0.045, 0.3, (globalT % 3.1) < 0.12);
-      artEye(c, -s * 0.04, s * 1.12, s * 0.045, 0.3, (globalT % 3.1) < 0.12);
-      artCircle(c, -s * 0.12, s * 1.21, s * 0.07, '#f0d0a8', { line: false });
-      artLimb(c, s * 0.08, s * 1.2, s * 0.08 + Math.sin(wv) * s * 0.35, s * 1.2 - Math.cos(wv) * s * 0.35, s * 0.1, '#c8905a', '#6a4628');
+      artCircle(c, -s * 0.3, s * 1.06, s * 0.09, '#c8905a', { lineColor: '#6a4628' });
+      artCircle(c, s * 0.1, s * 1.06, s * 0.09, '#c8905a', { lineColor: '#6a4628' });
+      artCircle(c, -s * 0.1, s * 1.24, s * 0.23, '#c8905a', { lineColor: '#6a4628', hi: 0.25 });
+      artEye(c, -s * 0.18, s * 1.2, s * 0.045, 0.3, (globalT % 3.1) < 0.12);
+      artEye(c, -s * 0.02, s * 1.2, s * 0.045, 0.3, (globalT % 3.1) < 0.12);
+      artCircle(c, -s * 0.1, s * 1.31, s * 0.075, '#f0d0a8', { line: false });
+      artCircle(c, -s * 0.1, s * 1.29, s * 0.03, '#4a2a18', { line: false });
+      artLimb(c, s * 0.12, s * 1.38, s * 0.12 + Math.sin(wv) * s * 0.35, s * 1.38 - Math.cos(wv) * s * 0.35, s * 0.1, '#c8905a', '#6a4628');
       // Kori
-      artRoundRect(c, -s * 0.36, s * 1.22, s * 0.72, s * 0.36, s * 0.07, '#d8a060', { lineColor: '#7a5028' });
+      artRoundRect(c, -s * 0.38, s * 1.4, s * 0.76, s * 0.36, s * 0.07, '#d8a060', { lineColor: '#7a5028' });
       c.strokeStyle = 'rgba(122,80,40,0.5)';
       c.lineWidth = Math.max(1, s * 0.03);
-      c.beginPath(); c.moveTo(-s * 0.36, s * 1.38); c.lineTo(s * 0.36, s * 1.38); c.stroke();
+      c.beginPath(); c.moveTo(-s * 0.38, s * 1.56); c.lineTo(s * 0.38, s * 1.56); c.stroke();
     }
   });
 }
@@ -377,7 +379,7 @@ function tksDrawBird(c, x, y, s, flap) {
 // Unelias pöllö pikkupilvellä: huhuilee; kolmas tökkäys pukee yömyssyn
 function tksAddOwl(u, v) {
   propAdd({
-    u: u, v: v, rs: 0.07, hys: 0.045, color: '#ffe6a8', note: 392, amp: 0.1, cap: false, awakeT: 0, blink: 0,
+    u: u, v: v, rs: 0.08, hys: 0.05, color: '#ffe6a8', note: 392, amp: 0.1, cap: false, awakeT: 0, blink: 0,
     update: function (p, dt) {
       tksPropPos(p);
       if (p.awakeT > 0) p.awakeT -= dt;
@@ -396,7 +398,7 @@ function tksAddOwl(u, v) {
       }
     },
     draw: function (c, p) {
-      var s = viewH * 0.03, awake = p.awakeT > 0, k, i;
+      var s = viewH * 0.038, awake = p.awakeT > 0, k, i;
       // Pikkupilvi
       var col = tksPuffCol(tks.cam + (p.x - camX) / viewW);
       c.fillStyle = col.rim;
@@ -601,6 +603,12 @@ function tksUpdateCloud(dt) {
   }
   push = tks.state === 'end' ? 0 : tksWindAt(tksWX());
   vy += push * TKS_WIND * viewH;
+  // Tuulen humahdus vyöhykkeeseen tultaessa
+  if (push !== 0 && !tks.inWind) {
+    tks.inWind = true;
+    playNote(push < 0 ? 330 : 440, 0, 0.35, 'sine', 0.08);
+    playNote(push < 0 ? 440 : 330, 0.15, 0.4, 'sine', 0.08);
+  } else if (push === 0) tks.inWind = false;
   x += vx * dt;
   y += vy * dt;
   if (tks.state !== 'end') {
@@ -1347,39 +1355,33 @@ function tksDrawSea(c, par, y0, sz, amp, seed, alpha) {
   }
   c.globalAlpha = 1;
 }
-// Tuulivyöhyke: kiehkurat kulkevat tuulen suuntaan
+// Tuulivyöhyke: virtaviivat ja pienet kimallukset kulkevat tuulen suuntaan
 function tksDrawWinds(c) {
-  var i, j, w, x0, x1, x, y, k, dir, a, s = viewH * 0.022;
+  var i, j, w, x0, x1, x, y, k, dir, a, len = viewH * 0.09, fade, wob;
   c.lineCap = 'round';
   for (i = 0; i < TKS_WINDS.length; i++) {
     w = TKS_WINDS[i];
     x0 = w[0] * viewW - camX; x1 = w[1] * viewW - camX;
-    if (x1 < -s * 3 || x0 > viewW + s * 3) continue;
+    if (x1 < -len || x0 > viewW + len) continue;
     dir = w[2];
-    // Haalea vyö
-    c.fillStyle = 'rgba(255,255,255,0.06)';
-    c.fillRect(x0, 0, x1 - x0, viewH);
-    for (j = 0; j < 14; j++) {
-      k = ((tksHash(j * 3.3 + i) + dir * globalT * 0.32) % 1 + 1) % 1;
-      x = x0 + (x1 - x0) * (0.1 + 0.8 * tksHash(j * 1.7 + i * 5));
-      y = viewH * (0.08 + k * 0.86);
-      a = Math.sin(k * Math.PI) * 0.55;
+    for (j = 0; j < 16; j++) {
+      k = ((tksHash(j * 3.3 + i) + dir * globalT * 0.35) % 1 + 1) % 1;
+      x = x0 + (x1 - x0) * (0.08 + 0.84 * tksHash(j * 1.7 + i * 5));
+      y = viewH * (0.04 + k * 0.92);
+      // Reunoilla haalea: vyön alku ja loppu sulautuvat taivaaseen
+      fade = Math.min(1, (x - x0) / (viewH * 0.06), (x1 - x) / (viewH * 0.06));
+      a = Math.sin(k * Math.PI) * 0.6 * Math.max(0, fade);
+      if (a < 0.03) continue;
+      wob = Math.sin(globalT * 3 + j) * viewH * 0.008;
       c.strokeStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')';
       c.lineWidth = Math.max(1.5, viewH * 0.004);
       c.beginPath();
-      c.arc(x, y, s * 0.6, dir < 0 ? 0 : Math.PI, dir < 0 ? Math.PI * 1.5 : Math.PI * 2.5);
-      c.lineTo(x + (dir < 0 ? s * 0.6 : -s * 0.6), y - dir * s * 1.8);
+      c.moveTo(x, y);
+      c.quadraticCurveTo(x + wob, y - dir * len * 0.5, x - wob * 0.5, y - dir * len);
       c.stroke();
-    }
-    // Nuolet vyön ylä- ja alaosassa kertovat suunnan
-    for (j = 0; j < 2; j++) {
-      x = (x0 + x1) / 2;
-      y = viewH * (0.3 + j * 0.4) + Math.sin(globalT * 3) * s * 0.3 * dir;
-      c.strokeStyle = 'rgba(255,255,255,0.35)';
-      c.lineWidth = Math.max(2, viewH * 0.006);
-      c.beginPath();
-      c.moveTo(x - s, y - dir * s * 0.1); c.lineTo(x, y + dir * s * 0.9); c.lineTo(x + s, y - dir * s * 0.1);
-      c.stroke();
+      // Pää: pieni kimallus liikkeen suunnassa
+      if (j % 3 === 0) tksSparkle(c, x, y, viewH * 0.006, a, '#ffffff');
+      else { c.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')'; c.beginPath(); c.arc(x, y, viewH * 0.004, 0, Math.PI * 2); c.fill(); }
     }
   }
 }
@@ -1584,8 +1586,8 @@ function tksDrawShiver(c, hx, hy, us) {
   c.globalAlpha = 1;
 }
 // Putoava tähti kimalluspyrstöineen: pää (x, y), pyrstö kohti suuntaa ang
-function tksDrawFalling(c, x, y, r, ang, t, face) {
-  var i, k, tx, ty, L = r * 3.6;
+function tksDrawFalling(c, x, y, r, ang, t, face, tl) {
+  var i, k, tx, ty, L = r * (tl || 3.6);
   c.lineCap = 'round';
   for (i = 0; i < 3; i++) {
     c.strokeStyle = ['rgba(255,236,140,0.35)', 'rgba(255,190,220,0.45)', 'rgba(255,255,240,0.8)'][i];
@@ -1842,7 +1844,7 @@ function tksDrawHud(c) {
 
 // ---------- Lahja ja kuvake ----------
 function tksGiftDraw(c, x, y, s) {
-  tksDrawFalling(c, x - s * 0.14, y + s * 0.14, s * 0.24, -Math.PI * 0.25, globalT, true);
+  tksDrawFalling(c, x - s * 0.13, y + s * 0.13, s * 0.25, -Math.PI * 0.25, globalT, true, 2.2);
 }
 // Aseman kuva: yötaivas, iso pilvi yksisarvinen selässään ja tähtiä
 function tksIcon(c, x, y, s) {
@@ -1857,7 +1859,7 @@ function tksIcon(c, x, y, s) {
   drawStar(c, x - s * 0.26, y - s * 0.2, s * 0.06, 0.2, 0.6);
   trekDrawPup(c, x, y + s * 0.17 + b, s * 0.2, { mood: 'happy', t: globalT, look: 0.6 });
   drawUnicorn(c, x - s * 0.01, y + s * 0.05 + b, s * 0.0023, 1, 0, false, globalT);
-  for (i = 0; i < 3; i++) artCircle(c, x + (-0.08 + i * 0.06) * s, y + s * 0.06 + b, s * 0.035, '#ffffff', { lineColor: '#8592cf' });
+  for (i = 0; i < 3; i++) artCircle(c, x + (-0.08 + i * 0.07) * s, y + s * 0.07 + b, s * 0.04, '#ffffff', { line: false, shadeTo: '#eef0fc' });
 }
 
 trekRegister({
