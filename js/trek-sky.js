@@ -1866,7 +1866,7 @@ function tksIcon(c, x, y, s) {
 
 trekRegister({
   id: 'sky', order: 4, name: 'TÄH-TI-TAI-VAS', color: '#5a5cb8',
-  ambient: 'stars', light: tksLight, bunny: true,
+  ambient: null, light: tksLight, bunny: true,
   gift: { draw: tksGiftDraw },
   init: tksInit,
   update: tksUpdate,
