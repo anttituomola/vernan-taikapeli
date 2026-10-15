@@ -35,7 +35,7 @@
 //   lautalle kyytiin), sudenkorento (3.: istuu Pikkupilven päähän), haikara
 //   rannalla (kalastaa; 5.: nappaa saappaan), saukko suvannossa (kuperkeikka
 //   ja taputus; 3.: heittää kuplahelmen), emo (kvaak). Pikkupilvi kikattaa.
-// Oma koordinaatisto: u = matka × viewW (joki on yli 19 ruutua pitkä), v = korkeus × viewH.
+// Oma koordinaatisto: u = matka (yksi u = viewH × 4/3, joki on yli 19 u pitkä), v = korkeus × viewH.
 
 var TKR_WATER = 0.47;        // joen yläreuna (kaukainen ranta) × viewH
 var TKR_V_TOP = 0.585;       // lautan vesiraja ylimmillään × viewH
@@ -46,14 +46,13 @@ var TKR_X0 = 0.33;           // lähtöpaikka × viewW
 var TKR_FOLLOW = 10;         // lautan pehmennys (1/s): suuri = suora
 var TKR_VMAX_Y = 0.8;        // pystynopeus enintään × viewH / s
 var TKR_VMAX_X = 0.6;        // vaakanopeus enintään × viewW / s
-// Joen osuudet: [alku (kameran u), laji, virran nopeus × viewW / s]
+// Joen osuudet: [alku (kameran u), laji, virran nopeus u / s]
 var TKR_SECTIONS = [[0, 'calm', 0.10], [5.0, 'rapids', 0.185], [9.6, 'pool', 0.09], [12.6, 'rapids', 0.19], [15.2, 'calm', 0.10]];
-var TKR_RAMP = 0.5;          // nopeuden vaihtumismatka osuuksien rajalla × viewW
-var TKR_CAM_STOP = 18.0;     // kamera pysähtyy emon lammelle
+var TKR_RAMP = 0.5;          // nopeuden vaihtumismatka osuuksien rajalla (u)
 var TKR_MOM_U = 18.72;       // emo lammella
 var TKR_MOM_V = 0.7;
-var TKR_CAVE_U = 19.05;      // luolakallion vasen reuna
-var TKR_CURTAIN_U = 19.42;   // kimalteleva vesiverho luolan suulla
+var TKR_CAVE_U = 18.94;      // luolakallion vasen reuna (näkyy lammelta)
+var TKR_CURTAIN_U = 19.34;   // kimalteleva vesiverho luolan suulla
 var TKR_FALL_U = 14.8;       // pieni putousporras koski 2:n lopussa
 var TKR_CAVE_SPEED = 0.13;   // lautta lipuu luolaan
 var TKR_RAFT_SC = 0.8;       // lautan ja yksisarvisen skaala × trekUS()
@@ -61,15 +60,15 @@ var TKR_RW = 0.095;          // lautan törmäysalueen puolileveys × viewH
 var TKR_RH = 0.022;          // ... syvyyssuunnassa × viewH
 var TKR_GAP = 0.105;         // kivirivin aukko: lähimmät kivet aukon keskeltä × viewH
 var TKR_GAPS = [0.63, 0.7, 0.77, 0.84, 0.88];   // aukkojen keskikohdat × viewH
-var TKR_ROWS1 = [0.44, 0.34, 0.31, 0.4, 0.31, 0.33, 0.42, 0.31, 0.33, 0.4];   // koski 1: rivien välit × viewW
+var TKR_ROWS1 = [0.44, 0.34, 0.31, 0.4, 0.31, 0.33, 0.42, 0.31, 0.33, 0.4];   // koski 1: rivien välit (u)
 var TKR_ROWS2 = [0.33, 0.31, 0.33, 0.31];                                     // koski 2
 var TKR_BUMP_INV = 1.2;      // törmäyksen jälkeinen suoja (s)
 var TKR_WET_T = 1.6;         // prinsessan hytinä (s)
 var TKR_SPIN_T = 1.5;        // pyörteen kierros (s)
 var TKR_SPIN_SLOW = 0.45;    // virta pyörähdyksen aikana × nopeus
 var TKR_DUCK_SP = 0.052;     // poikasten väli jonossa × viewH
-var TKR_FLEE_AHEAD = 0.6;    // pelästynyt poikanen ui näin paljon lautan edelle × viewW
-var TKR_FISH_D = 0.26;       // kala hyppää, kun lautta on näin lähellä × viewW
+var TKR_FLEE_AHEAD = 0.6;    // pelästynyt poikanen ui näin paljon lautan edelle (u)
+var TKR_FISH_D = 0.26;       // kala hyppää, kun lautta on näin lähellä (u)
 var TKR_HINT_IDLE = 4.5;     // vihjekäsi tämän joutilaisuuden jälkeen (s)
 var TKR_PUP_R = 0.04;        // Pikkupilven säde × viewH
 var TKR_REED_U = [2.05, 10.75, 16.85];  // kaislikoiden paikat (yhdessä pupu)
@@ -82,6 +81,8 @@ var tkr = {
   countIdx: 0, countNext: 0, gift: null, giftHeld: false, darkT: 0, spray: false, done: false,
   fallDone: false, frogRide: false, quackT: 2, momHop: 0, momT: 0, key: '', waterGrad: null, tw: 0
 };
+// Keskipäivän valo (säteet hiipuvat luolan suulla)
+var TKR_LIGHT = { rays: true, raysColor: '#fff6d0', raysAlpha: 0.75, tint: ['rgba(255,250,220,0.06)', 'rgba(110,200,255,0.05)'], vignette: 0.22 };
 var tkrFarCv = document.createElement('canvas');
 var tkrBankCv = [document.createElement('canvas'), document.createElement('canvas')];
 var tkrNearCv = document.createElement('canvas');
@@ -90,7 +91,7 @@ var tkrList = [];
 trekRegister({
   id: 'river', order: 2, name: 'KUP-LA-JO-KI', color: '#6cc8f0',
   ambient: null,
-  light: { rays: true, raysColor: '#fff6d0', raysAlpha: 0.75, tint: ['rgba(255,250,220,0.06)', 'rgba(110,200,255,0.05)'], vignette: 0.22 },
+  light: TKR_LIGHT,
   bunny: true,
   gift: { draw: function (c, x, y, s) { tkrDrawShell(c, x, y, s); } },
   init: function () { tkrInit(); },
@@ -108,8 +109,14 @@ function tkrHash(n) {
   var s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
   return s - Math.floor(s);
 }
-function tkrX(u) { return (u - tkr.camU) * viewW; }
-function tkrRU() { return tkr.camU + tkr.r.sx; }
+// Matkayksikkö u = viewH × 4/3 pikseliä (4:3-ruudun leveys), joten vaikeus ja
+// kesto ovat samat kaikilla kuvasuhteilla; leveällä ruudulla näkyy pidemmälle.
+function tkrUW() { return viewH * 4 / 3; }
+function tkrSW() { return viewW / tkrUW(); }
+function tkrX(u) { return (u - tkr.camU) * tkrUW(); }
+function tkrRU() { return tkr.camU + tkr.r.sx * tkrSW(); }
+// Kamera pysähtyy niin, että emo on ruudun oikealla puolella
+function tkrCamStop() { return TKR_MOM_U - 0.72 * tkrSW(); }
 // Syvyysskaala: kaukainen vesi (ylempänä) pienempi, lähin isompi
 function tkrK(v) { return 0.86 + 0.28 * tkrClamp((v - TKR_V_TOP) / (TKR_V_BOT - TKR_V_TOP), -0.4, 1.2); }
 function tkrActive() { return tkr.state === 'river' || tkr.state === 'pool'; }
@@ -195,7 +202,7 @@ function tkrResize() {
   for (i = 0; i < props.length; i++) if (props[i].u !== undefined) tkrPropXY(props[i]);
   tkr.drops = [];
   tkr.key = '';
-  camX = tkr.camU * viewW;
+  camX = tkr.camU * tkrUW();
 }
 
 // ---------- Joen rakennus ----------
@@ -316,7 +323,7 @@ function tkrSafeV(u) {
 
 // ---------- Tökättävät koristeet (kaukaisella rannalla ja rantavedessä) ----------
 function tkrPropXY(p) {
-  p.x = p.u * viewW;
+  p.x = p.u * tkrUW();
   p.y = p.v * viewH;
   p.r = viewH * p.hr;
   p.hy = viewH * p.hh;
@@ -409,7 +416,8 @@ function tkrAddHeron(u) {
       }
     },
     poke: function (p) {
-      if (p.dipT > 0 || p.boot > 0) return;
+      if (p.boot > 0) return;
+      if (p.dipT > 0 && p.n % 5 !== 0) return;
       p.dipT = 0.9;
       playNote(220, 0, 0.12, 'sawtooth', 0.06);
       playNote(196, 0.12, 0.14, 'sawtooth', 0.06);
@@ -446,6 +454,10 @@ function tkrAddOtter(u) {
       }
     },
     poke: function (p) {
+      if (p.n % 3 === 0 && p.gifts < 2) {
+        p.gifts++;
+        tkr.flyers.push({ kind: 'pearl', x0: p.x - camX, y0: p.y - viewH * 0.06, t: 0, dur: 1.0 });
+      }
       if (p.flipT > 0) return;
       p.flipT = 0.8;
       p.clapT = 0;
@@ -453,10 +465,6 @@ function tkrAddOtter(u) {
       playNote(523, 0, 0.08, 'triangle', 0.18);
       playNote(784, 0.1, 0.08, 'triangle', 0.18);
       playNote(1047, 0.2, 0.12, 'triangle', 0.18);
-      if (p.n % 3 === 0 && p.gifts < 2) {
-        p.gifts++;
-        tkr.flyers.push({ kind: 'pearl', x0: p.x - camX, y0: p.y - viewH * 0.06, t: 0, dur: 1.0 });
-      }
     },
     draw: function (c, p) { tkrDrawOtter(c, 0, 0, viewH * p.sz, p); }
   });
@@ -486,7 +494,7 @@ function tkrTap(px, py) {
   if (Math.hypot(px - x, py - (y - viewH * 0.05)) < viewH * 0.08) {
     tkrQuack();
     tkr.momHop = 0.5;
-    spawnSparkles(TKR_MOM_U * viewW, y - viewH * 0.06, 6, '#ffffff');
+    spawnSparkles(TKR_MOM_U * tkrUW(), y - viewH * 0.06, 6, '#ffffff');
     tkr.noSteer = true;
     return;
   }
@@ -528,13 +536,13 @@ function tkrUpdate(dt) {
   tkrUpdateDucks(dt);
   tkrUpdateEnding(dt);
   tkrUpdateFx(dt);
-  camX = tkr.camU * viewW;
+  camX = tkr.camU * tkrUW();
 }
 function tkrUpdateCamera(dt) {
   var target, r = tkr.r;
   if (tkr.state === 'river') {
     target = tkrSecSpeed(tkr.camU + 0.4);
-    target = Math.min(target, 0.03 + Math.max(0, TKR_CAM_STOP - tkr.camU) * 0.35);
+    target = Math.min(target, 0.03 + Math.max(0, tkrCamStop() - tkr.camU) * 0.35);
   } else if (tkr.state === 'cave') {
     target = TKR_CAVE_SPEED;
   } else {
@@ -543,8 +551,8 @@ function tkrUpdateCamera(dt) {
   if (r.spinT >= 0) target *= TKR_SPIN_SLOW;
   tkr.speed += (target - tkr.speed) * Math.min(1, dt * 1.6);
   tkr.camU += tkr.speed * dt;
-  if (tkr.state === 'river' && tkr.camU >= TKR_CAM_STOP) {
-    tkr.camU = TKR_CAM_STOP;
+  if (tkr.state === 'river' && tkr.camU >= tkrCamStop()) {
+    tkr.camU = tkrCamStop();
     tkr.speed = 0;
     tkrStartPool();
   }
@@ -557,7 +565,7 @@ function tkrUpdateRaft(dt) {
     r.wetT -= dt;
     if (r.wetT <= 0) {
       // Prinsessa ravistelee vedet pois
-      spawnSparkles(tkrRU() * viewW, r.v * viewH - viewH * 0.15, 8, '#a8d8ff');
+      spawnSparkles(tkrRU() * tkrUW(), r.v * viewH - viewH * 0.15, 8, '#a8d8ff');
       playNote(880, 0, 0.06, 'sine', 0.12);
       playNote(988, 0.06, 0.06, 'sine', 0.12);
       playNote(1175, 0.12, 0.1, 'sine', 0.12);
@@ -574,9 +582,9 @@ function tkrUpdateRaft(dt) {
     r.spinT += dt;
     w = r.whirl;
     k = 1 - Math.exp(-dt * 6);
-    r.sx += (tkrClamp(w.u - tkr.camU, 0.05, 0.95) - r.sx) * k;
+    r.sx += (tkrClamp((w.u - tkr.camU) / tkrSW(), 0.05, 0.95) - r.sx) * k;
     r.v += (w.v - r.v) * k;
-    if (Math.random() < dt * 14) spawnSparkles(w.u * viewW + trekRnd(-1, 1) * viewH * 0.06, w.v * viewH, 1, '#ffffff');
+    if (Math.random() < dt * 14) spawnSparkles(w.u * tkrUW() + trekRnd(-1, 1) * viewH * 0.06, w.v * viewH, 1, '#ffffff');
     if (r.spinT >= TKR_SPIN_T) {
       r.spinT = -1;
       w.cool = 2.5;
@@ -615,8 +623,8 @@ function tkrUpdateRaft(dt) {
     var prevHop = r.hopT;
     r.hopT += dt;
     if (prevHop < 0.3 && r.hopT >= 0.3) {
-      tkrSplash(tkrRU() * viewW, r.v * viewH, 22);
-      artPop(tkrRU() * viewW, r.v * viewH, viewH * 0.09, '#ffffff', 'ring');
+      tkrSplash(tkrRU() * tkrUW(), r.v * viewH, 22);
+      artPop(tkrRU() * tkrUW(), r.v * viewH, viewH * 0.09, '#ffffff', 'ring');
       artShakeStart(viewH * 0.005, 0.3);
       tkrSplashSound();
     }
@@ -624,7 +632,7 @@ function tkrUpdateRaft(dt) {
       trekPupSound('slurp');
       r.pupSTo = 1.18;
       tkrPupMood('wow', 1.8);
-      spawnSparkles(tkrRU() * viewW - 50 * trekUS() * TKR_RAFT_SC, r.v * viewH - viewH * 0.08, 14, '#bfe8ff');
+      spawnSparkles(tkrRU() * tkrUW() - 50 * trekUS() * TKR_RAFT_SC, r.v * viewH - viewH * 0.08, 14, '#bfe8ff');
     }
     if (prevHop < 1.0 && r.hopT >= 1.0) trekPupSound('wow');
     if (r.hopT >= 1.2) r.hopT = -1;
@@ -666,7 +674,7 @@ function tkrCollide(dt) {
       r.wobT = 0.5;
       playNote(147, 0, 0.1, 'triangle', 0.2);
       playNote(196, 0.06, 0.1, 'triangle', 0.14);
-      tkrSplash(o.u * viewW, o.v * viewH, 6);
+      tkrSplash(o.u * tkrUW(), o.v * viewH, 6);
       trekPupSound('hmm');
     }
   }
@@ -681,7 +689,7 @@ function tkrCollide(dt) {
       tkrPupMood('wow', TKR_SPIN_T);
       trekPupSound('wow');
       for (s = 0; s < 6; s++) playNote(392 * Math.pow(1.122, s * 1.5), s * 0.09, 0.12, 'sine', 0.13);
-      artPop(o.u * viewW, o.v * viewH, viewH * 0.08, '#ffffff', 'ring');
+      artPop(o.u * tkrUW(), o.v * viewH, viewH * 0.08, '#ffffff', 'ring');
     }
   }
   for (i = 0; i < tkr.pads.length; i++) {
@@ -712,7 +720,7 @@ function tkrCollide(dt) {
 }
 // Kivitörmäys: tömähdys ja roiske, ei sydämiä. Viimeinen poikanen pelästyy.
 function tkrBump(o) {
-  var r = tkr.r, wx = (tkrRU() + (o.u - tkrRU()) * 0.5) * viewW, wy = (r.v + o.v) * 0.5 * viewH;
+  var r = tkr.r, wx = (tkrRU() + (o.u - tkrRU()) * 0.5) * tkrUW(), wy = (r.v + o.v) * 0.5 * viewH;
   r.invT = TKR_BUMP_INV;
   r.wetT = TKR_WET_T;
   r.wobT = 0.9;
@@ -735,7 +743,7 @@ function tkrScareLast() {
   d = tkr.chain.pop();
   d.state = 'flee';
   d.fleeT = 0;
-  d.tu = Math.min(tkrRU() + TKR_FLEE_AHEAD, TKR_CAM_STOP + 0.62);
+  d.tu = Math.min(tkrRU() + TKR_FLEE_AHEAD, TKR_MOM_U - 0.1);
   d.tv = tkrSafeV(d.tu);
   d.dir = 1;
   tkr.slotBump[tkr.chain.length] = -0.5;
@@ -752,8 +760,8 @@ function tkrFishCatch(f) {
   f.state = 'caught';
   f.t = 0;
   tkrPearlFly(x, y);
-  spawnSparkles(f.cu * viewW, y, 10, '#ffb8d8');
-  artPop(f.cu * viewW, y, viewH * 0.05, '#ffffff', 'burst');
+  spawnSparkles(f.cu * tkrUW(), y, 10, '#ffb8d8');
+  artPop(f.cu * tkrUW(), y, viewH * 0.05, '#ffffff', 'burst');
   tkrPupMood('wow', 1.2);
   trekPupSound('wow');
 }
@@ -788,13 +796,13 @@ function tkrUpdateThings(dt) {
     o = tkr.fish[i];
     sx = tkrX(o.u);
     if (o.state === 'wait') {
-      if (tkr.state === 'river' && sx < r.sx * viewW + viewW * TKR_FISH_D && sx > r.sx * viewW) { o.state = 'warn'; o.t = 0; }
+      if (tkr.state === 'river' && sx < r.sx * viewW + tkrUW() * TKR_FISH_D && sx > r.sx * viewW) { o.state = 'warn'; o.t = 0; }
     } else if (o.state === 'warn') {
       o.t += dt;
       if (o.t > 0.9) {
         o.state = 'leap';
         o.t = 0;
-        tkrSplash(o.u * viewW, o.v * viewH, 6);
+        tkrSplash(o.u * tkrUW(), o.v * viewH, 6);
         playNote(659, 0, 0.08, 'sine', 0.14);
         playNote(988, 0.08, 0.1, 'sine', 0.14);
       }
@@ -804,7 +812,7 @@ function tkrUpdateThings(dt) {
       o.cu = o.u - 0.14 * k;
       if (k >= 1) {
         o.state = 'gone';
-        tkrSplash(o.cu * viewW, o.v * viewH, 8);
+        tkrSplash(o.cu * tkrUW(), o.v * viewH, 8);
         playNote(523, 0, 0.06, 'sine', 0.1);
       }
     } else if (o.state === 'caught') {
@@ -862,13 +870,13 @@ function tkrJoin(d) {
   trekPupSound('yay');
   tkrPupMood('happy', 0.8);
   tkr.r.wigT = 0.4;
-  spawnSparkles(d.u * viewW, d.v * viewH - viewH * 0.03, 10, '#ffe27a');
-  artPop(d.u * viewW, d.v * viewH - viewH * 0.03, viewH * 0.05, '#ffe27a', 'burst');
+  spawnSparkles(d.u * tkrUW(), d.v * viewH - viewH * 0.03, 10, '#ffe27a');
+  artPop(d.u * tkrUW(), d.v * viewH - viewH * 0.03, viewH * 0.05, '#ffe27a', 'burst');
 }
 // Poikanen jäi ruudun vasemmalle: se ui myöhemmin vastaan edestä
 function tkrDuckReturn(d) {
-  d.u = tkr.camU + 1.08;
-  d.tu = tkr.camU + 0.74 + Math.random() * 0.1 + (d.id % 3) * 0.06;
+  d.u = tkr.camU + tkrSW() * 1.08;
+  d.tu = tkr.camU + tkrSW() * (0.74 + Math.random() * 0.1 + (d.id % 3) * 0.06);
   d.tv = tkrSafeV(d.tu);
   d.v = d.tv;
   d.state = 'swimIn';
@@ -922,11 +930,11 @@ function tkrUpdateDucks(dt) {
         d.state = 'mom';
         tkr.count++;
         tkr.slotBump[tkr.count - 1] = 0.5;
-        tkr.nums.push({ u: d.u, v: d.v - 0.07, n: tkr.count, t: 0 });
+        tkr.nums.push({ u: d.u, v: d.v - 0.1, n: tkr.count, t: 0 });
         if (tkr.count >= tkr.ducks.length) tkr.countNext = 0;
         playNote(523 * Math.pow(1.122, tkr.count * 2), 0, 0.18, 'triangle', 0.24);
         tkrPeep(1);
-        spawnSparkles(d.u * viewW, d.v * viewH - viewH * 0.03, 8, '#ffe27a');
+        spawnSparkles(d.u * tkrUW(), d.v * viewH - viewH * 0.03, 8, '#ffe27a');
       } else {
         d.u += du / dist * sp;
         d.v += dv / dist * sp;
@@ -944,16 +952,16 @@ function tkrUpdateDucks(dt) {
   }
   // Jono: jokainen poikanen seuraa edellistä (köysi), ensimmäinen lautan perää
   rs = trekUS() * TKR_RAFT_SC * tkrK(r.v);
-  lead = { u: ru - 60 * rs / viewW, v: r.v + 0.006 };
+  lead = { u: ru - 78 * rs / tkrUW(), v: r.v + 0.006 };
   for (i = 0; i < tkr.chain.length; i++) {
     d = tkr.chain[i];
-    dxp = (lead.u - d.u) * viewW;
+    dxp = (lead.u - d.u) * tkrUW();
     dyp = (lead.v - d.v) * viewH;
     dist = Math.hypot(dxp, dyp);
     sp = TKR_DUCK_SP * viewH * (i === 0 ? 0.9 : 1);
     if (dist > sp) {
       k = (dist - sp) / dist * Math.min(1, dt * 9);
-      d.u += dxp * k / viewW;
+      d.u += dxp * k / tkrUW();
       d.v += dyp * k / viewH;
     }
     a = (lead.u - d.u);
@@ -974,7 +982,7 @@ function tkrStartPool() {
     d.delay = n * 0.8 + 0.3;
     n++;
     if (tkrX(d.u) < -viewW * 0.02 || tkrX(d.u) > viewW * 1.02) {
-      d.u = tkr.camU + 1.06;
+      d.u = tkr.camU + tkrSW() * 1.06;
       d.v = 0.62 + Math.random() * 0.26;
     }
   }
@@ -982,6 +990,8 @@ function tkrStartPool() {
 }
 function tkrUpdateEnding(dt) {
   var i, d, prev, gx, gy, rg;
+  // Auringon säteet hiipuvat, kun luolakallio peittää taivaan
+  TKR_LIGHT.raysAlpha = 0.75 * (1 - 0.9 * tkrClamp((viewW - tkrX(TKR_CAVE_U)) / (viewW * 0.7), 0, 1));
   if (tkr.momHop > 0) tkr.momHop -= dt;
   tkr.momT += dt;
   // Emo kutsuu poikasiaan, kun se näkyy ruudulla
@@ -1015,18 +1025,20 @@ function tkrUpdateEnding(dt) {
         tkr.momHop = 0.6;
         trekPupSound('yay');
         tkrPupMood('happy', 3);
-        for (i = 0; i < 10; i++) tkr.hearts.push({ x: TKR_MOM_U * viewW + trekRnd(-1, 1) * viewH * 0.1, y: TKR_MOM_V * viewH - viewH * trekRnd(0.04, 0.12), vy: -viewH * trekRnd(0.06, 0.12), t: -i * 0.12, life: 1.8, s: trekRnd(0.6, 1.1) });
-        artPop(TKR_MOM_U * viewW, TKR_MOM_V * viewH - viewH * 0.06, viewH * 0.14, '#ff7bac', 'burst');
+        for (i = 0; i < 10; i++) tkr.hearts.push({ x: TKR_MOM_U * tkrUW() + trekRnd(-1, 1) * viewH * 0.1, y: TKR_MOM_V * viewH - viewH * trekRnd(0.04, 0.12), vy: -viewH * trekRnd(0.06, 0.12), t: -i * 0.12, life: 1.8, s: trekRnd(0.6, 1.1) });
+        artPop(TKR_MOM_U * tkrUW(), TKR_MOM_V * viewH - viewH * 0.06, viewH * 0.14, '#ff7bac', 'burst');
       }
     }
   } else if (tkr.state === 'hug') {
     prev = tkr.stT - dt;
     if (prev < 1.3 && tkr.stT >= 1.3) { tkrQuack(); tkr.momHop = 0.5; }
-    if (Math.random() < dt * 4) tkr.hearts.push({ x: TKR_MOM_U * viewW + trekRnd(-1, 1) * viewH * 0.12, y: TKR_MOM_V * viewH - viewH * 0.05, vy: -viewH * 0.08, t: 0, life: 1.6, s: trekRnd(0.5, 0.9) });
+    if (Math.random() < dt * 4) tkr.hearts.push({ x: TKR_MOM_U * tkrUW() + trekRnd(-1, 1) * viewH * 0.12, y: TKR_MOM_V * viewH - viewH * 0.05, vy: -viewH * 0.08, t: 0, life: 1.6, s: trekRnd(0.5, 0.9) });
     if (tkr.stT > 2.6) {
       tkr.state = 'gift';
       tkr.stT = 0;
       tkr.gift = { t: 0 };
+      tkr.momHop = 0.5;
+      tkrSplash(TKR_MOM_U * tkrUW(), TKR_MOM_V * viewH, 10);
       playNote(784, 0, 0.12, 'triangle', 0.22);
       playNote(988, 0.1, 0.12, 'triangle', 0.22);
       playNote(1319, 0.2, 0.25, 'triangle', 0.22);
@@ -1034,7 +1046,7 @@ function tkrUpdateEnding(dt) {
   } else if (tkr.state === 'gift') {
     prev = tkr.stT - dt;
     tkr.gift.t = tkr.stT;
-    if (prev < 1.7 && tkr.stT >= 1.7) {
+    if (prev < 2.0 && tkr.stT >= 2.0) {
       // Simpukka prinsessan syliin
       tkr.giftHeld = true;
       rg = tkrRaftGeo();
@@ -1046,7 +1058,7 @@ function tkrUpdateEnding(dt) {
       trekPupSound('wow');
       tkrPupMood('wow', 1.4);
     }
-    if (tkr.stT > 2.8) {
+    if (tkr.stT > 3.1) {
       tkr.state = 'cave';
       tkr.stT = 0;
       tkr.gift = null;
@@ -1243,10 +1255,10 @@ function tkrRenderBank(kind) {
   for (x = 0; x <= w; x += 8) b.lineTo(x, tkrBankTop(x, w, h));
   for (x = w; x >= 0; x -= 8) b.lineTo(x, tkrShore(x, w, h));
   b.closePath();
-  artFillPath(b, kind ? '#9fcf86' : '#86d470', h * 0.42, h * 0.48, h * 0.03, { lineColor: kind ? '#5e8a52' : '#4f9a48', line: Math.max(1.2, h * 0.003) });
+  artFillPath(b, '#86d470', h * 0.42, h * 0.48, h * 0.03, { lineColor: '#4f9a48', line: Math.max(1.2, h * 0.003) });
   // Rantavesi: vihreä heijastus
   g = b.createLinearGradient(0, h * TKR_WATER, 0, h * (TKR_WATER + 0.05));
-  g.addColorStop(0, kind ? 'rgba(90,120,110,0.35)' : 'rgba(70,150,90,0.32)');
+  g.addColorStop(0, 'rgba(70,150,90,0.32)');
   g.addColorStop(1, 'rgba(70,150,90,0)');
   b.fillStyle = g;
   b.beginPath();
@@ -1345,20 +1357,14 @@ function tkrBlit(c, cv, speed, y) {
 
 // ---------- Piirto ----------
 function tkrDraw() {
-  var c = ctx, rw, i, o;
+  var c = ctx, i, o;
   if (!beginPlayWorld()) return;
   if (!tkr.built) { endPlayWorld(); return; }
   tkrPrepare();
   tkrDrawClouds(c);
   tkrBlit(c, tkrFarCv, 0.18, 0);
   tkrDrawWater(c);
-  rw = tkrRapidsW(tkr.camU + 0.5);
-  if (rw < 1) tkrBlit(c, tkrBankCv[0], 1, 0);
-  if (rw > 0) {
-    c.globalAlpha = rw;
-    tkrBlit(c, tkrBankCv[1], 1, 0);
-    c.globalAlpha = 1;
-  }
+  tkrDrawBanks(c);
   tkrDrawFall(c);
   tkrDrawCave(c, false);
   tkrDrawNest(c);
@@ -1384,6 +1390,34 @@ function tkrDraw() {
   tkrDrawDark(c);
   tkrDrawHud(c);
 }
+// Ranta vaihtuu niitystä kivikoksi koskien kohdalla: saumakohdassa iso puuryhmä
+var TKR_BANK_SEAMS = [4.45, 9.75, 12.05, 15.4];
+function tkrDrawBanks(c) {
+  var i, a = -1e9, b, k = 0, x0, x1, sx, h = viewH, y;
+  for (i = 0; i <= TKR_BANK_SEAMS.length; i++) {
+    b = i < TKR_BANK_SEAMS.length ? TKR_BANK_SEAMS[i] : 1e9;
+    x0 = Math.max(0, tkrX(a));
+    x1 = Math.min(viewW, tkrX(b));
+    if (x1 > x0) {
+      c.save();
+      c.beginPath(); c.rect(x0, 0, x1 - x0, h * 0.6); c.clip();
+      tkrBlit(c, tkrBankCv[k], 1, 0);
+      c.restore();
+    }
+    a = b;
+    k = 1 - k;
+  }
+  for (i = 0; i < TKR_BANK_SEAMS.length; i++) {
+    sx = tkrX(TKR_BANK_SEAMS[i]);
+    if (sx < -h * 0.3 || sx > viewW + h * 0.3) continue;
+    y = tkrBankTop(sx + camX, tkr.tw, h) + h * 0.01;
+    drawTree(c, sx - h * 0.07, y, h * 0.1);
+    drawPine(c, sx + h * 0.08, y + h * 0.005, h * 0.17, '#4f9a6a', false);
+    drawTree(c, sx + h * 0.01, y + h * 0.012, h * 0.12);
+    artBlob(c, sx + h * 0.05, tkrShore(sx + camX, tkr.tw, h) - h * 0.012, h * 0.045, h * 0.022, '#a69fc4', { lineColor: '#5e5886', hi: 0.25 });
+    drawBush(c, sx - h * 0.06, tkrShore(sx + camX, tkr.tw, h) - h * 0.004, h * 0.03);
+  }
+}
 function tkrDrawClouds(c) {
   var i, x;
   for (i = 0; i < 3; i++) {
@@ -1400,7 +1434,7 @@ function tkrDrawWater(c) {
   cell = 0.055;
   P = tkr.camU * 0.6 + tkr.t * 0.012;
   i0 = Math.floor(P / cell) - 1;
-  i1 = Math.ceil((P + 1) / cell) + 1;
+  i1 = Math.ceil((P + tkrSW()) / cell) + 1;
   c.lineCap = 'round';
   for (a = 0; a < 2; a++) {
     c.strokeStyle = a ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.4)';
@@ -1411,7 +1445,7 @@ function tkrDrawWater(c) {
       uu = i * cell + tkrHash(i) * cell * 0.8;
       v = TKR_WATER + 0.035 + tkrHash(i + 0.5) * (0.98 - TKR_WATER - 0.035);
       k = tkrK(v);
-      x = (uu - P) * viewW;
+      x = (uu - P) * tkrUW();
       y = v * viewH;
       len = viewW * (0.012 + tkrHash(i + 0.25) * 0.02) * k;
       if (Math.sin(tkr.t * 1.7 + i * 1.3) < -0.3) continue;
@@ -1423,7 +1457,7 @@ function tkrDrawWater(c) {
   // Kosken kuohu: maailmaan kiinnitetyt vaahtojuovat (varoittavat koskesta jo ennen kiviä)
   cell = 0.04;
   i0 = Math.floor(tkr.camU / cell) - 1;
-  i1 = Math.ceil((tkr.camU + 1) / cell) + 1;
+  i1 = Math.ceil((tkr.camU + tkrSW()) / cell) + 1;
   c.strokeStyle = 'rgba(255,255,255,0.8)';
   c.lineWidth = Math.max(1.5, viewH * 0.0045);
   c.beginPath();
@@ -1883,7 +1917,7 @@ function tkrDrawRaft(c) {
   jit = r.wetT > 0 ? Math.sin(globalT * 70) * viewH * 0.003 * Math.min(1, r.wetT) : 0;
   drawUnicorn(c, g.ux - g.x + jit, g.uy - g.y, g.rs, g.f, 0, false, globalT);
   if (r.wetT > 0) tkrDrawWet(c, g.ux - g.x + jit - 4 * g.rs * g.f, g.uy - g.y - 93 * g.rs, g.rs, r.wetT);
-  if (tkr.giftHeld) tkrDrawShell(c, g.ux - g.x + 6 * g.rs * g.f, g.uy - g.y - 66 * g.rs, 18 * g.rs);
+  if (tkr.giftHeld) tkrDrawShell(c, g.ux - g.x + 10 * g.rs * g.f, g.uy - g.y - 64 * g.rs, 30 * g.rs);
   // Sammakko kyydissä lehden etureunalla
   if (tkr.frogRide) tkrDrawFrog(c, g.rx * 0.62 * g.f, -g.ry * 0.25 - Math.abs(Math.sin(tkr.t * 1.3)) * g.rs * 2, viewH * 0.02 * g.k, (globalT % 3.7) < 0.12);
   // Iso kukka takaosassa ja Pikkupilvi sen terälehdillä
@@ -2008,6 +2042,7 @@ function tkrDrawHeron(c, x, y, s, p) {
     c.save();
     c.translate(s * 0.55, s * 0.08);
     c.rotate(Math.sin(globalT * 6) * 0.3);
+    c.scale(1.5, 1.5);
     artRoundRect(c, -s * 0.12, 0, s * 0.24, s * 0.42, s * 0.06, '#7a5a3a', { lineColor: '#3a2a1a' });
     artRoundRect(c, -s * 0.12, s * 0.32, s * 0.42, s * 0.16, s * 0.07, '#7a5a3a', { lineColor: '#3a2a1a' });
     c.fillStyle = 'rgba(140,200,255,0.8)';
@@ -2099,26 +2134,42 @@ function tkrDrawFall(c) {
   artBlob(c, x + fw * 0.5, top + viewH * 0.004, viewH * 0.055, viewH * 0.026, '#a59cc8', { lineColor: '#5a5084', hi: 0.3 });
   artBlob(c, x + fw * 0.5, viewH * 0.99, viewH * 0.07, viewH * 0.035, '#a59cc8', { lineColor: '#5a5084', hi: 0.3 });
 }
+// Kallion harja (q = matka kallion reunasta × viewW): jyrkkä seinä, sitten loiva rinne
+function tkrCliffTop(q) {
+  if (q < 0.08) return viewH * (TKR_WATER + 0.03 - (TKR_WATER - 0.15) * Math.sqrt(q / 0.08));
+  return viewH * Math.max(-0.02, 0.18 - (q - 0.08) * 0.38);
+}
 // Luolakallio, suu ja (front = true) kimalteleva vesiverho lautan edessä
 function tkrDrawCave(c, front) {
   var x0 = tkrX(TKR_CAVE_U), mx = tkrX(TKR_CURTAIN_U), top = TKR_WATER * viewH, i, q, x, y, g, mh = viewH * 0.3, cw = viewW * 0.1;
   if (x0 > viewW + 10) return;
   if (!front) {
-    // Kallio
+    // Kallio: kumpuileva vuorenrinne, sammalta ja kukkia harjalla
     c.beginPath();
     c.moveTo(x0, top + viewH * 0.03);
-    c.bezierCurveTo(x0 - viewW * 0.03, viewH * 0.32, x0 + viewW * 0.02, viewH * 0.12, x0 + viewW * 0.12, viewH * 0.08);
-    c.lineTo(Math.max(viewW, x0 + viewW) + 20, viewH * 0.06);
+    for (q = 0; q <= 0.9; q += 0.02) c.lineTo(x0 + q * viewW, tkrCliffTop(q));
+    c.lineTo(Math.max(viewW, x0 + viewW) + 20, tkrCliffTop(0.9));
     c.lineTo(Math.max(viewW, x0 + viewW) + 20, viewH);
     c.lineTo(mx - viewW * 0.02, viewH);
     c.lineTo(mx - viewW * 0.02, top + viewH * 0.01);
     c.quadraticCurveTo((x0 + mx) / 2, top + viewH * 0.02, x0, top + viewH * 0.03);
     c.closePath();
-    artFillPath(c, '#9a8fc4', viewH * 0.06, viewH, viewH * 0.2, { lineColor: '#5a4e88' });
-    artBlob(c, x0 + viewW * 0.1, viewH * 0.09, viewW * 0.08, viewH * 0.025, '#7fcf6a', { lineColor: '#3f8a3a' });
-    artBlob(c, x0 + viewW * 0.3, viewH * 0.075, viewW * 0.12, viewH * 0.025, '#7fcf6a', { lineColor: '#3f8a3a' });
-    for (i = 0; i < 5; i++) drawFlower(c, x0 + viewW * (0.08 + i * 0.07), viewH * (0.07 + (i % 2) * 0.012), viewH * 0.006, ['#ff7bac', '#ffe27a', '#ffffff'][i % 3]);
-    artBlob(c, x0 + viewW * 0.05, viewH * 0.36, viewW * 0.03, viewH * 0.04, '#aea4d4', { lineColor: '#5a4e88', hi: 0.2 });
+    artFillPath(c, '#a497cc', viewH * 0.05, viewH * 0.6, viewH * 0.2, { lineColor: '#5a4e88' });
+    // Halkeamat ja kivikerrokset
+    c.strokeStyle = 'rgba(90,78,136,0.35)';
+    c.lineWidth = Math.max(1.2, viewH * 0.003);
+    c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(x0 + viewW * 0.03, viewH * 0.3); c.quadraticCurveTo(x0 + viewW * 0.12, viewH * 0.27, x0 + viewW * 0.2, viewH * 0.29);
+    c.moveTo(x0 + viewW * 0.2, viewH * 0.2); c.quadraticCurveTo(x0 + viewW * 0.3, viewH * 0.17, x0 + viewW * 0.42, viewH * 0.19);
+    c.moveTo(x0 + viewW * 0.5, viewH * 0.1); c.quadraticCurveTo(x0 + viewW * 0.6, viewH * 0.08, x0 + viewW * 0.72, viewH * 0.11);
+    c.stroke();
+    for (i = 0; i < 6; i++) {
+      x = x0 + viewW * (0.06 + i * 0.1);
+      y = tkrCliffTop(0.06 + i * 0.1) + viewH * 0.006;
+      artBlob(c, x, y, viewW * 0.05, viewH * 0.02, '#7fcf6a', { lineColor: '#3f8a3a', hi: 0.25 });
+      drawFlower(c, x + viewW * 0.015, y - viewH * 0.012, viewH * 0.006, ['#ff7bac', '#ffe27a', '#ffffff'][i % 3]);
+    }
     // Suu: tumma holvi, jonka sisällä tuikkii kristalleja (luolaluku)
     c.beginPath();
     c.moveTo(mx - viewW * 0.02, viewH);
@@ -2168,8 +2219,18 @@ function tkrDrawCave(c, front) {
       drawStar(c, x, y, viewH * 0.008 * (0.5 + q), tkr.t + i, 0.4 * q);
     }
     artGlow(c, mx, viewH * 0.9, viewH * 0.12, '#ffffff', 0.4);
-    // Kallion kieleke verhon yllä
-    artBlob(c, mx + viewW * 0.04, mh, viewW * 0.1, viewH * 0.025, '#9a8fc4', { lineColor: '#5a4e88', hi: 0.25 });
+    // Köynnökset roikkuvat holvin suulla
+    c.strokeStyle = '#5fb050';
+    c.lineWidth = Math.max(1.5, viewH * 0.004);
+    for (i = 0; i < 6; i++) {
+      x = mx - viewW * 0.01 + i * viewW * 0.04;
+      y = (i ? mh : viewH * 0.45) + viewH * (0.05 + tkrHash(i + 600) * 0.06);
+      c.beginPath();
+      c.moveTo(x, i ? mh - viewH * 0.01 : viewH * 0.42);
+      c.quadraticCurveTo(x + Math.sin(tkr.t * 1.3 + i) * viewH * 0.01, (y + mh) / 2, x, y);
+      c.stroke();
+      artBlob(c, x, y, viewH * 0.008, viewH * 0.012, '#7fcf6a', { lineColor: '#3f8a3a', line: 1 });
+    }
   }
 }
 // Luolan pimeys lopussa; Pikkupilven hohde näkyy pimeän läpi
@@ -2228,19 +2289,21 @@ function tkrDrawGiftFly(c) {
   t = tkr.gift.t;
   x0 = tkrX(TKR_MOM_U);
   y0 = TKR_MOM_V * viewH - viewH * 0.16;
-  s = viewH * 0.09;
-  if (t < 0.7) {
-    k = easeOutBack(t / 0.7);
-    artGlow(c, x0, y0, s * 1.5 * k, '#ffe0f0', 0.7);
-    tkrDrawShell(c, x0, y0 + (1 - k) * viewH * 0.06, s * k);
-  } else if (t < 1.7) {
+  s = viewH * 0.12;
+  if (t < 1.0) {
+    // Emo nostaa simpukan lammen pohjasta: se kohoaa ja kimaltaa
+    k = easeOutBack(Math.min(1, t / 0.6));
+    artGlow(c, x0, y0, s * 1.6 * k, '#ffe0f0', 0.75);
+    tkrDrawShell(c, x0, y0 + (1 - k) * viewH * 0.08 + Math.sin(t * 6) * viewH * 0.004, s * k);
+    if (Math.random() < 0.4) spawnSparkles(x0 + camX + trekRnd(-1, 1) * s * 0.5, y0, 1, '#ffd0ec');
+  } else if (t < 2.0) {
     g = tkrRaftGeo();
-    x1 = g.ux + 6 * g.rs; y1 = g.uy - 66 * g.rs;
-    k = easeInOutSine((t - 0.7) / 1.0);
+    x1 = g.ux + 10 * g.rs; y1 = g.uy - 64 * g.rs;
+    k = easeInOutSine(t - 1.0);
     x = x0 + (x1 - x0) * k;
-    y = y0 + (y1 - y0) * k - Math.sin(k * Math.PI) * viewH * 0.12;
+    y = y0 + (y1 - y0) * k - Math.sin(k * Math.PI) * viewH * 0.14;
     artGlow(c, x, y, s * 1.3, '#ffe0f0', 0.6);
-    tkrDrawShell(c, x, y, s + (18 * g.rs - s) * k);
+    tkrDrawShell(c, x, y, s + (30 * g.rs - s) * k * k);
     if (Math.random() < 0.5) spawnSparkles(x + camX, y, 1, '#ffd0ec');
   }
 }
@@ -2378,13 +2441,13 @@ function tkrDrawHud(c) {
   for (j = 0; j < TKR_SECTIONS.length; j++) {
     if (TKR_SECTIONS[j][1] !== 'rapids') continue;
     c.beginPath();
-    c.moveTo(x0 + (x1 - x0) * TKR_SECTIONS[j][0] / TKR_CAM_STOP, y);
-    c.lineTo(x0 + (x1 - x0) * TKR_SECTIONS[j + 1][0] / TKR_CAM_STOP, y);
+    c.moveTo(x0 + (x1 - x0) * TKR_SECTIONS[j][0] / tkrCamStop(), y);
+    c.lineTo(x0 + (x1 - x0) * TKR_SECTIONS[j + 1][0] / tkrCamStop(), y);
     c.stroke();
   }
   c.setLineDash([]);
   tkrDrawDuck(c, x1 + hs * 0.2, y + hs * 0.6, hs * 0.7, -1, TKR_MOTHER, { bow: true, dry: true });
-  k = Math.min(1, tkr.camU / TKR_CAM_STOP);
+  k = Math.min(1, tkr.camU / tkrCamStop());
   artBlob(c, x0 + (x1 - x0) * k, y + hs * 0.1, hs * 0.75, hs * 0.32, '#7fd468', { lineColor: '#2f7a3a' });
   trekDrawPup(c, x0 + (x1 - x0) * k, y - hs * 0.35, hs * 0.45, { mood: 'happy', t: globalT });
 }
