@@ -365,7 +365,7 @@ function trekDrawMedal(c, x, y, r, def, open, big) {
 // HUD-nauha oikeassa yläkulmassa (ääninapin vasemmalla puolella): matkan asemat,
 // nykyinen asema isompana ja Pikkupilvi sen päällä; löydetyt piilopuput asemien yllä
 function trekStripLayout() {
-  var hs = viewH * 0.022, n = TREK_CHAPTERS.length, x1 = viewW - viewH * 0.135, w = Math.min(viewW * 0.3, hs * 3.4 * n + hs * 2);
+  var hs = viewH * 0.022, n = TREK_CHAPTERS.length, x1 = viewW - viewH * 0.135, w = Math.min(viewW * 0.27, hs * 3.4 * n + hs * 2);
   return { x0: x1 - w, x1: x1, y: hs * 0.7 + hs * 1.7, hs: hs, step: (w - hs * 3) / Math.max(1, n - 1) };
 }
 function trekStripPos(i) {
@@ -374,7 +374,7 @@ function trekStripPos(i) {
 }
 function trekDrawStrip(c) {
   var L = trekStripLayout(), i, p, def, r, cur, bump;
-  if (L.x0 < viewW * 0.6) return;
+  if (L.x0 < viewW * 0.58) return;
   drawHudPanel(c, L.x0, L.hs * 0.7, L.x1 - L.x0, L.hs * 3.4, L.hs);
   c.strokeStyle = 'rgba(255,255,255,0.85)';
   c.lineWidth = L.hs * 0.22;
