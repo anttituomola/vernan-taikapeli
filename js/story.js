@@ -907,7 +907,7 @@ function landFinalPlace() {
 }
 function landRayPlaces() {
   var out = [], i;
-  for (i = 0; i < LAND_PLACES.length; i++) if (!LAND_PLACES[i].final) out.push(LAND_PLACES[i]);
+  for (i = 0; i < LAND_PLACES.length; i++) if (!LAND_PLACES[i].final && !LAND_PLACES[i].bonus) out.push(LAND_PLACES[i]);
   return out;
 }
 function landRaysEarned() {

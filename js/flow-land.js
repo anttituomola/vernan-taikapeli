@@ -143,8 +143,13 @@ function placeIndex(pl) {
   for (i = 0; i < LAND_PLACES.length; i++) if (LAND_PLACES[i] === pl) return i;
   return -1;
 }
+// Bonuspaikka (place.bonus, esim. Pilvilinna) on auki heti, kun Kaukamaa on auki;
+// muut aukeavat järjestyksessä edellisen tavallisen paikan vartijasta
 function placeUnlocked(i) {
-  return i === 0 || islandDone(LAND_PLACES[i - 1]);
+  var j = i - 1;
+  if (LAND_PLACES[i] && LAND_PLACES[i].bonus) return landUnlocked();
+  while (j >= 0 && LAND_PLACES[j].bonus) j--;
+  return j < 0 || islandDone(LAND_PLACES[j]);
 }
 // Onko paikassa jo pelattu jotain (vanha tallennus tai suora linkki)
 function placeStarted(pl) {
@@ -418,8 +423,16 @@ function drawLandPlace(c, pl, p, unlocked) {
   var hub = HUB_WORLDS[pl.world];
   if (hub && hub.order.length) room = hub.rooms[hubRoomChar(hub, hub.order[0])];
   col = unlocked && room ? room.color : '#b9c6d6';
-  artBlob(c, p.x, p.y + p.r * 0.25, p.r * 1.35, p.r * 0.55, unlocked ? '#e8c27a' : '#c4ccd8', { line: false, alpha: 0.55 });
-  artBlob(c, p.x, p.y + p.r * 0.1, p.r * 1.15, p.r * 0.5, unlocked ? '#f4d99a' : '#d4dae4', { lineColor: unlocked ? '#c49a52' : '#a8b2c0', hi: 0.2 });
+  if (pl.sky) {
+    // Taivaalla leijuva paikka: pullea pilvi laakson värilaikun tilalla
+    k = Math.sin(globalT * 1.3) * p.r * 0.04;
+    c.fillStyle = 'rgba(150,170,230,0.35)';
+    cloudShape(c, p.x, p.y + p.r * 0.38 + k, p.r * 0.62);
+    drawCloud(c, p.x, p.y + p.r * 0.28 + k, p.r * 0.55);
+  } else {
+    artBlob(c, p.x, p.y + p.r * 0.25, p.r * 1.35, p.r * 0.55, unlocked ? '#e8c27a' : '#c4ccd8', { line: false, alpha: 0.55 });
+    artBlob(c, p.x, p.y + p.r * 0.1, p.r * 1.15, p.r * 0.5, unlocked ? '#f4d99a' : '#d4dae4', { lineColor: unlocked ? '#c49a52' : '#a8b2c0', hi: 0.2 });
+  }
   artCircle(c, p.x, p.y - p.r * 0.25, p.r * 0.7, col, { lineColor: artShade(col, -0.4), hi: 0.35 });
   if (!unlocked) return;
   if (pl.deco && pl.deco.length) {
@@ -602,7 +615,7 @@ function renderLandBg() {
 
   // Polku: satamasta paikkoihin, sitten haaleana usvaan
   var pts = [{ x: hb.x + hb.r * 0.9, y: hb.y - hb.r * 0.35 }], p;
-  for (i = 0; i < LAND_PLACES.length; i++) pts.push(landPawnSpot(LAND_PLACES[i]));
+  for (i = 0; i < LAND_PLACES.length; i++) if (!LAND_PLACES[i].bonus) pts.push(landPawnSpot(LAND_PLACES[i]));
   for (i = 0; i + 1 < pts.length; i++) drawSeaRoute(b, pts[i], pts[i + 1], 0.85);
   if (LAND_FOG.length > 0) {
     p = landPlacePos(LAND_FOG[0]);

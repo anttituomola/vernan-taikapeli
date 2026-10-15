@@ -1603,6 +1603,39 @@ var WORLDS = [
         respawn: function () { respawnMwitch(); }
       }
     ]
+  },
+  {
+    // Pilvilinna: Kaukamaan taivaalla leijuva bonuspaikka (place.bonus: auki heti,
+    // kun Kaukamaa on auki, eikä se anna aurinkoon sädettä). Pelin ensimmäinen
+    // pitkä kenttä, Pikkupilven kotimatka: viisi lukua yhdessä kentässä
+    // (play-trek.js kehys + trek-*.js luvut).
+    id: 18, name: 'Pilvilinna', region: 'land', band: 'cloud',
+    place: { fx: 0.53, fy: 0.165, size: 0.72, finaleKind: 'trek', deco: ['trek'], bonus: true, sky: true },
+    map: [
+      '#########',
+      '#B......#',
+      '#######.#',
+      '#P......#',
+      '#########'
+    ],
+    levels: [
+      {
+        kind: 'trek', room: 'P', name: 'Pikkupilven kotimatka', color: '#8fc8ff',
+        script: ['play-trek', 'trek-meadow', 'trek-river', 'trek-cave', 'trek-sky', 'trek-party', 'hub-theme-cloud'],
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 9000,
+        bgColor: '#cfe9ff', ambient: null, fg: null,
+        init: function () { initTrek(); },
+        update: function (dt) { updateTrek(dt); },
+        draw: function () { drawTrek(); },
+        tap: function (x, y) { handleTrekTap(x, y); },
+        resize: function () { resizeTrek(); },
+        renderBg: function (b, w, h) { renderTrekBg(b, w, h); },
+        renderBgLayers: function () { return trekLayers(); },
+        // Valo vaihtuu luvun mukaan (trekStartChapter kirjoittaa PHASES.trek.light)
+        light: null,
+        respawn: function () { respawnTrek(); }
+      }
+    ]
   }
 ];
 
@@ -1671,7 +1704,8 @@ var WORLD_INFO = {};    // id -> { name, region, band }
       LAND_PLACES.push({
         world: w.id, name: w.name,
         fx: w.place.fx, fy: w.place.fy, size: w.place.size,
-        finaleKind: w.place.finaleKind, deco: w.place.deco, final: !!w.place.final
+        finaleKind: w.place.finaleKind, deco: w.place.deco, final: !!w.place.final,
+        bonus: !!w.place.bonus, sky: !!w.place.sky
       });
     }
   }
@@ -1686,13 +1720,16 @@ function scriptManifest() {
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north', 'tasks-write',
     'platformer', 'pen-core'
   ];
-  var seen = {}, wi, li, s;
+  var seen = {}, wi, li, ni, s;
   for (wi = 0; wi < WORLDS.length; wi++) {
     for (li = 0; li < WORLDS[wi].levels.length; li++) {
-      s = WORLDS[wi].levels[li].script;
-      if (s && !seen[s]) {
-        seen[s] = true;
-        files.push(s);
+      // script voi olla myös lista (pitkä kenttä useasta tiedostosta)
+      s = [].concat(WORLDS[wi].levels[li].script || []);
+      for (ni = 0; ni < s.length; ni++) {
+        if (!seen[s[ni]]) {
+          seen[s[ni]] = true;
+          files.push(s[ni]);
+        }
       }
     }
   }
