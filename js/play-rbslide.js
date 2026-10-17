@@ -52,12 +52,12 @@ var RBS_PITCH = 0.047;       // raidan leveys × viewH
 var RBS_FOLLOW = 14;         // raahauksen pehmennys (1/s): suuri = suora
 var RBS_VMAX = 9;            // raidanvaihto enintään raitaa / s
 var RBS_RIDER_SC = 0.68;     // ratsastajan skaala × trekUS()
-var RBS_HOP_T = 0.62;        // hypyn ilma-aika (s)
+var RBS_HOP_T = 0.75;        // hypyn ilma-aika (s)
 var RBS_HOP_H = 0.11;        // hypyn korkeus × viewH
 var RBS_HOP_BUF = 0.15;      // liian aikainen hyppypainallus muistetaan (s)
 var RBS_HOP_LOW = 0.07;      // matala este ylittyy, kun hypystä on kulunut ja jäljellä vähintään tämä (s)
-var RBS_HIT_U = 0.035;       // ratsastajan osuma-alueen puolipituus (u)
-var RBS_HIT_V = 0.55;        // osuma, kun raitaero on alle tämän
+var RBS_HIT_U = 0.028;       // ratsastajan osuma-alueen puolipituus (u)
+var RBS_HIT_V = 0.45;        // osuma, kun raitaero on alle tämän
 var RBS_HIT_SLOW = 0.55;     // vauhti osuman jälkeen × normaali
 var RBS_HIT_REC = 1.2;       // vauhdin palautuminen osumasta (s)
 var RBS_TUMBLE_T = 0.9;      // kuperkeikka ja pyörryksen tähdet (s)
@@ -83,11 +83,14 @@ var RBS_HINT_IDLE = 5;       // vihjekäsi tämän joutilaisuuden jälkeen (s)
 // raidanvaihto rivien välillä enintään (raitaa), estelajien painot,
 // helmet (värin indeksi 0 = punainen), salaman varoitus (s) ja leveys (raitaa)
 var RBS_SECTIONS = [
-  { len: 14, speed: 0.46, dt: [1.45, 1.8], gapMax: 2, shift: 3, kinds: { cloud: 2, ice: 3, gap: 3 }, pearls: [0, 1] },
-  { len: 17, speed: 0.52, dt: [1.2, 1.5], gapMax: 3, shift: 3, kinds: { gap: 3, ice: 2, cloud: 2, ball: 3, wall: 1 }, pearls: [2] },
-  { len: 18, speed: 0.56, dt: [1.1, 1.35], gapMax: 3, shift: 4, kinds: { bolt: 3, cloud: 3, gap: 2, ice: 2, wall: 1 }, pearls: [3, 4], tel: 0.9, boltW: [1, 2] },
-  { len: 20, speed: 0.62, dt: [0.95, 1.2], gapMax: 4, shift: 4, kinds: { bird: 3, ball: 2, gap: 3, wall: 2, cloud: 1 }, pearls: [5] },
-  { len: 21, speed: 0.68, dt: [0.82, 1.05], gapMax: 4, shift: 4, kinds: { bolt: 2, bird: 2, ball: 2, gap: 2, wall: 2, cloud: 2, ice: 1 }, pearls: [6], tel: 0.75, boltW: [2, 3] }
+  // Kevennetty 17.10. (aikuinenkaan ei päässyt loppua läpi): vauhti nousee
+  // vain vähän, rivien välit pysyvät väljinä, salama varoittaa pitkään eikä
+  // loppupäässä ole aukko + palikka -muureja
+  { len: 11, speed: 0.42, dt: [1.7, 2.1], gapMax: 2, shift: 3, kinds: { cloud: 2, ice: 3, gap: 3 }, pearls: [0, 1] },
+  { len: 12, speed: 0.44, dt: [1.6, 2.0], gapMax: 2, shift: 3, kinds: { gap: 3, ice: 2, cloud: 2, ball: 2 }, pearls: [2] },
+  { len: 12, speed: 0.46, dt: [1.55, 1.9], gapMax: 2, shift: 3, kinds: { bolt: 2, cloud: 3, gap: 2, ice: 2 }, pearls: [3, 4], tel: 1.25, boltW: [1, 1] },
+  { len: 12, speed: 0.48, dt: [1.5, 1.85], gapMax: 3, shift: 3, kinds: { bird: 2, ball: 2, gap: 3, cloud: 2, ice: 1 }, pearls: [5] },
+  { len: 12, speed: 0.5, dt: [1.45, 1.8], gapMax: 3, shift: 3, kinds: { bolt: 1, bird: 2, ball: 1, gap: 2, cloud: 2, ice: 2 }, pearls: [6], tel: 1.15, boltW: [1, 2] }
 ];
 // Taivaan värit matkan osuuden mukaan (0 = linna, 1 = lampi)
 var RBS_SKY_TOP = [[0, '#f493c4'], [0.14, '#c6a4ee'], [0.3, '#a99bd8'], [0.36, '#4f4a82'], [0.5, '#4f4a82'], [0.56, '#78b4f0'], [1, '#86c8ff']];
@@ -423,7 +426,7 @@ function rbsRow(k, kind, u, s, ns, pearlIdx) {
   } else if (kind === 'bolt') {
     w = rbsInt(S.boltW[0], S.boltW[1]);
     rbs.bolts.push({ u: u, w: w, tel: S.tel, state: 'wait', t: 0, l0: 0, l1: 0, sec: k, ph: Math.random() * 6, pts: [] });
-    if (k >= 4 && Math.random() < 0.5) {
+    if (k >= 5 && Math.random() < 0.5) {
       // Lopussa salaman lisäksi jääpalikka kauempana
       lanes = rbsLanesExcept(s, 1);
       if (Math.abs(lanes[0] - s) >= 3) rbsAddObs(k, 'ice', u + 0.25, lanes[0], lanes[0]);
