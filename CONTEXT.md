@@ -220,7 +220,7 @@ _Vältä_: paha noita, konna, vihollinen (lapselle hän on äreä, ei paha)
 ## Tarina
 
 Tarina kerrotaan **kuvakirjan sivuina** (`js/story.js`): lyhyt iso
-**tavutettu** teksti (kuten lukutehtävissä) ja animoitu kuva, napautus kääntää
+**tavutettu** teksti (kuten lukutehtävissä) ja animoitu kuva, nuolinapit kääntävät
 sivua. Luvut kertovat, **mitä on edessä**, eivät mitä jo tapahtui (palaute
 15.10.2026: jälkikäteen kerrotut luvut hämmensivät). Tallennus muistaa
 näytetyt luvut; ne voi lukea uudestaan linnan **tarinakirjasta**.

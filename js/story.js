@@ -3,13 +3,14 @@
 // Tarina: kuvakirjan luvut (CONTEXT.md, "Tarina"). Luku näytetään kerran, kun
 // sen ehto täyttyy ja pelaaja palaa kartalle (showSea/showLand kysyvät
 // storyMaybe-funktiolta). Sivulla on animoitu kuva kortissa ja lyhyt iso
-// teksti; napautus kääntää sivua, ⏩-nappi ohittaa luvun. Eteneminen päätellään
+// teksti; nuolet kääntävät sivua eteen ja taakse, ⏩-nappi ohittaa luvun. Eteneminen päätellään
 // läpäistyistä vartijoista, tallennus muistaa vain näytetyt luvut (storySeen).
 // Linnan tarinakirja (storyBookOpen) näyttää kaikki jo nähdyt luvut uudestaan.
 
 var storySeen = {};        // { lukuId: true }
 var story = null;          // { ch, page, t, then, book }
 var storyBook = null;      // { scroll } kun tarinakirjan luettelo on auki
+var STORY_ARROW_T = 0.6;     // sivun alusta kuluva aika ennen kuin nuolet reagoivat
 var STORY_SPEAK = true;    // lue sivun teksti ääneen, jos laitteessa on suomenkielinen ääni
 
 // Maailman vartija läpäisty (nimi kuten rekisterissä)
@@ -191,7 +192,7 @@ function storyShow(id, then, book) {
   holding = false;
   celebrating = false;
   hubOffer = null;
-  story = { ch: ch, page: 0, t: 0, then: then || null, book: !!book };
+  story = { ch: ch, page: 0, t: 0, nudge: 0, then: then || null, book: !!book };
   fadeStart();
   document.getElementById('hubChrome').style.display = 'none';
   for (i = 0; i < STORY_HIDE_BTNS.length; i++) document.getElementById(STORY_HIDE_BTNS[i]).style.display = 'none';
@@ -249,7 +250,8 @@ function storyLayout() {
     card: { x: cx, y: cy, w: cw, h: ch },
     textY: cy + ch + viewH * 0.12,
     skip: { x: viewH * 0.1, y: viewH - viewH * 0.08, r: viewH * 0.05 },
-    next: { x: viewW / 2, y: viewH - viewH * 0.07, r: r * 0.5 }
+    next: { x: viewW - viewH * 0.1, y: viewH - viewH * 0.07, r: r * 0.5 },
+    back: { x: viewW - viewH * 0.27, y: viewH - viewH * 0.07, r: r * 0.5 }
   };
 }
 
@@ -263,8 +265,22 @@ function handleStoryTap(px, py) {
     storyEnd();
     return;
   }
-  // Napautus heti sivun vaihduttua ei ohita sivua vahingossa
-  if (story.t < 0.35) return;
+  // Sivua käännetään vain nuolista (palaute 17.10.: napautus mihin tahansa
+  // käänsi sivun vahingossa, eikä takaisin päässyt). Heti sivun vaihduttua
+  // nuolet eivät vielä reagoi.
+  if (story.t < STORY_ARROW_T) return;
+  if (story.page > 0 && Math.hypot(px - lay.back.x, py - lay.back.y) < viewH * 0.085) {
+    story.page--;
+    story.t = 0;
+    playNote(523 + story.page * 40, 0, 0.14, 'triangle', 0.25);
+    storySpeak();
+    return;
+  }
+  if (Math.hypot(px - lay.next.x, py - lay.next.y) > viewH * 0.085) {
+    // Muualle napautus: nuoli hypähtää vihjeeksi
+    story.nudge = 0.4;
+    return;
+  }
   if (story.page < story.ch.pages.length - 1) {
     story.page++;
     story.t = 0;
@@ -278,7 +294,10 @@ function handleStoryTap(px, py) {
 
 function updateStory(dt) {
   globalT += dt;
-  if (story) story.t += dt;
+  if (story) {
+    story.t += dt;
+    if (story.nudge > 0) story.nudge -= dt;
+  }
   updateParticles(dt);
 }
 
@@ -315,9 +334,18 @@ function drawStory() {
     c.arc(viewW / 2 + (i - (n - 1) / 2) * dr * 3.4, lay.next.y + viewH * 0.035, dr, 0, Math.PI * 2);
     c.fill();
   }
-  if (story.t > 1.2) {
-    var bob = Math.sin(globalT * 4) * viewH * 0.008;
-    storyArrow(c, viewW - viewH * 0.1 + bob, lay.next.y, viewH * 0.045, story.page === n - 1);
+  if (story.t > STORY_ARROW_T) {
+    var bob = Math.sin(globalT * 4) * viewH * 0.008, nz = story.nudge > 0 ? 1 + Math.sin(story.nudge / 0.4 * Math.PI) * 0.35 : 1;
+    artCircle(c, lay.next.x, lay.next.y, viewH * 0.065, '#ffffff', { lineColor: '#c9a0ff' });
+    storyArrow(c, lay.next.x - viewH * 0.005 + bob, lay.next.y, viewH * 0.042 * nz, story.page === n - 1);
+    if (story.page > 0) {
+      artCircle(c, lay.back.x, lay.back.y, viewH * 0.055, '#ffffff', { lineColor: '#c9a0ff' });
+      c.save();
+      c.translate(lay.back.x * 2, 0);
+      c.scale(-1, 1);
+      storyArrow(c, lay.back.x + viewH * 0.005, lay.back.y, viewH * 0.034, false);
+      c.restore();
+    }
   }
   // Ohitus
   var sk = lay.skip;
