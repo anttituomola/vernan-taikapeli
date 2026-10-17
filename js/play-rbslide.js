@@ -284,6 +284,8 @@ function respawnRbslide() {
 function resizeRbslide() {
   if (!rbs.built) return;
   rbsSnapCam();
+  // Koristeiden koot ja osuma-alueet riippuvat ruudun korkeudesta
+  rbsSetupProps();
   rbsPlaceProps();
 }
 
@@ -2132,10 +2134,10 @@ function rbsDrawPearl(c, x, y, r, idx) {
 }
 // Salainen pilvipentu pikkupilvellä kaukaisen raidan yllä
 function rbsDrawSecret(c) {
-  var g = rbsSecretXY(), s = viewH * 0.04;
+  var g = rbsSecretXY(), s = viewH * 0.05;
   if (g.x < -s * 3 || g.x > viewW + s * 3) return;
   rbsCloudBody(c, g.x, g.y + s * 0.6, s * 1.1, '#ffffff', '#e2daf6', '#a49ad8');
-  trekDrawPup(c, g.x, g.y - s * 0.15, s * 0.5, { mood: 'happy', t: globalT, wave: true, tint: '#ffe0f0', seed: 2, look: -0.6 });
+  trekDrawPup(c, g.x, g.y - s * 0.2, s * 0.6, { mood: 'happy', t: globalT, wave: true, tint: '#ffe0f0', seed: 2, look: -0.6 });
   rbsTwinkle(c, g.x + s * 0.9, g.y - s * 0.7, s * 0.2 * (0.6 + 0.4 * Math.sin(globalT * 6)), '#fff6c0');
 }
 function rbsDrawRider(c) {
@@ -2154,7 +2156,7 @@ function rbsDrawRider(c) {
   if (r.landT > 0) artSquash(c, -Math.sin(r.landT / 0.25 * Math.PI) * 0.08);
   rbsDrawSled(c, rs, false, gold);
   drawUnicorn(c, 0, -rs * 10, rs, 1, 0, false, globalT);
-  if (rbs.secretFound) trekDrawPup(c, -rs * 46, -rs * 26, rs * 11, { mood: 'happy', t: globalT, wave: rbs.state === 'finish', tint: '#ffe0f0', seed: 2, look: 1 });
+  if (rbs.secretFound) trekDrawPup(c, -rs * 44, -rs * 34, rs * 16, { mood: 'happy', t: globalT, wave: rbs.state === 'finish', tint: '#ffe0f0', seed: 2, look: 1 });
   rbsDrawSled(c, rs, true, gold);
   c.restore();
   c.globalAlpha = 1;
@@ -2504,7 +2506,7 @@ function rbsDrawCount(c) {
   if (rbs.state === 'respawn') {
     k = Math.min(1, rbs.stT / 0.3) * Math.min(1, (RBS_RESPAWN_T - rbs.stT) / 0.3);
     c.globalAlpha = Math.max(0, k);
-    for (i = 0; i < 3; i++) drawHeartShape(c, x + (i - 1) * r * 0.9, y + Math.sin(globalT * 6 + i) * r * 0.06, r * 0.35, true);
+    for (i = 0; i < 3; i++) drawHeartShape(c, x + (i - 1) * r * 1.4, y + Math.sin(globalT * 6 + i) * r * 0.08, r * 0.6, true);
     c.globalAlpha = 1;
     return;
   }
@@ -2578,10 +2580,10 @@ HUB_ICONS.rbslide = function (c, x, y, s) {
   rbsCloudBody(c, cx - R + bw * 3, cy, s * 0.09, '#ffffff', '#e2d8f6', '#a49ad8');
   rbsCloudBody(c, cx + R - bw * 3, cy, s * 0.09, '#ffffff', '#e2d8f6', '#a49ad8');
   // Ratsastaja liukuu kaaren oikeaa puolta alas
-  a = Math.PI * 1.68 + Math.sin(globalT * 1.2) * 0.06;
+  a = Math.PI * 1.72 + Math.sin(globalT * 1.2) * 0.05;
   px = cx + Math.cos(a) * (R - bw * 3.5);
   py = cy + Math.sin(a) * (R - bw * 3.5);
-  us = s * 0.0024;
+  us = s * 0.0021;
   c.save();
   c.translate(px, py - bw * 1.2);
   c.rotate(a + Math.PI / 2);
