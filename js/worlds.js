@@ -1610,12 +1610,14 @@ var WORLDS = [
     // pitkä kenttä, Pikkupilven kotimatka: viisi lukua yhdessä kentässä
     // (play-trek.js kehys + trek-*.js luvut).
     id: 18, name: 'Pilvilinna', region: 'land', band: 'cloud',
-    place: { fx: 0.53, fy: 0.165, size: 0.72, finaleKind: 'trek', deco: ['trek'], bonus: true, sky: true },
+    place: { fx: 0.53, fy: 0.165, size: 0.72, finaleKind: 'trek', deco: ['rbslide', 'trek', 'lettu'], bonus: true, sky: true },
     map: [
       '#########',
-      '#B......#',
+      '#B.....P#',
       '#######.#',
-      '#P......#',
+      '#S......#',
+      '#.#######',
+      '#......K#',
       '#########'
     ],
     levels: [
@@ -1634,6 +1636,35 @@ var WORLDS = [
         // Valo vaihtuu luvun mukaan (trekStartChapter kirjoittaa PHASES.trek.light)
         light: null,
         respawn: function () { respawnTrek(); }
+      },
+      {
+        // Vernan toive 17.10.: sateenkaarta pitkin alas ja väistellään
+        kind: 'rbslide', room: 'S', name: 'Sateenkaariliuku', color: '#ff8fb8', script: 'play-rbslide',
+        control: 'tap', usesJump: true, usesWand: false, usesHearts: true, celebrateMs: 6000,
+        bgColor: '#bfe4ff', ambient: 'sparkle', fg: null,
+        init: function () { initRbslide(); },
+        update: function (dt) { updateRbslide(dt); },
+        draw: function () { drawRbslide(); },
+        tap: function (x, y) { handleRbslideTap(x, y); },
+        resize: function () { resizeRbslide(); },
+        renderBg: function (b, w, h) { renderRbslideBg(b, w, h); },
+        renderBgLayers: function () { return rbslideLayers(); },
+        light: { rays: true, raysColor: '#fff4d0', raysAlpha: 0.35, tint: ['rgba(255,230,240,0.05)', 'rgba(150,170,255,0.05)'], vignette: 0.22 },
+        respawn: function () { respawnRbslide(); }
+      },
+      {
+        // Leipomon logiikka vaikeampana: monta pannua ja monta asiakasta yhtä aikaa
+        kind: 'lettu', room: 'K', name: 'Lettukahvila', color: '#ffb35c', script: 'play-lettu',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#ffe9cf', ambient: 'sparkle', fg: null,
+        init: function () { initLettu(); },
+        update: function (dt) { updateLettu(dt); },
+        draw: function () { drawLettu(); },
+        tap: function (x, y) { handleLettuTap(x, y); },
+        resize: function () { resizeLettu(); },
+        renderBg: function (b, w, h) { renderLettuBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff0d0', raysAlpha: 0.3, tint: ['rgba(255,230,190,0.06)', 'rgba(200,140,90,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnLettu(); }
       }
     ]
   }
