@@ -59,7 +59,7 @@ var LKF_SPOTS = [1, 2, 2];            // asiakkaita tiskillä yhtä aikaa
 var LKF_COOK1 = 2.6;                  // ensimmäinen puoli raa'asta kultaiseksi (s)
 var LKF_COOK2 = 2.0;                  // toinen puoli (s)
 var LKF_GOLD = [1.5, 1.25, 1.0];       // kääntöikkuna vaiheittain (s)
-var LKF_GOLD2 = [1.8, 1.5, 1.25];      // ottoikkuna toiselle puolelle (s)
+var LKF_GOLD2 = [2.0, 1.7, 1.4];       // ottoikkuna toiselle puolelle (s)
 var LKF_CHAR = 2.2;                   // vähän palaneesta hiiltyneeksi (s)
 var LKF_FLIP_T = 0.42;                // käännön animaatio (s)
 var LKF_PATIENCE = [0, 24, 28];       // kärsivällisyyden pohja (s) vaiheittain
@@ -1088,6 +1088,13 @@ function lkfNextStep() {
           pl = lkf.plates[A[j].pl];
           if (lkfCompatible(pl, A[j].cu.o) && !pl.tops.length && pl.items.length < A[j].cu.o.n) { tgt = A[j].pl; break; }
         }
+        // Kukaan ei juuri nyt tarvitse: varastoon vapaalle lautaselle
+        if (tgt === null && !A.length) {
+          for (j = 0; j < LKF_PLATES[lkf.ph]; j++) {
+            pl = lkf.plates[j];
+            if (pl.where === 'home' && !pl.tops.length && pl.items.length < 2) { tgt = j; break; }
+          }
+        }
       }
       if (tgt === null) return { kind: 'bin', from: { x: L.pans[i].x, y: L.pans[i].y }, to: { x: L.bin.x, y: L.bin.y - viewH * 0.06 }, pan: i };
       return { kind: 'take', from: { x: L.pans[i].x, y: L.pans[i].y }, to: { x: L.plates[tgt].x, y: lkfPlateTopY(tgt, lkf.plates[tgt].items.length) }, pan: i };
@@ -1185,7 +1192,7 @@ function lkfSetupProps() {
     draw: function (c, p) { lkfDrawCocoa(c, H, p); },
     poke: function (p) {
       var big = p.n % 5 === 0;
-      lkfPuff(p.x, p.y - H * 0.13, big ? 8 : 3, '#ffd0e0', { heart: true, up: 0.12, r: big ? 0.02 : 0.014, life: 1.6, spread: big ? 0.08 : 0.03 });
+      lkfPuff(p.x, p.y - H * 0.13, big ? 8 : 3, '#ff8fb8', { heart: true, up: 0.12, r: big ? 0.02 : 0.014, life: 1.6, spread: big ? 0.08 : 0.03 });
       playNote(330, 0, 0.3, 'sine', 0.12);
       playNote(392, 0.15, 0.3, 'sine', 0.1);
       if (p.n % 3 === 0) {
@@ -1249,7 +1256,7 @@ function lkfSetupProps() {
       for (i = 0; i < n; i++) {
         big = p.n % 5 === 0 && i === 0;
         propDrop({
-          x: p.x, y: p.y - H * 0.05, vx: H * (0.08 + Math.random() * 0.2) * (Math.random() < 0.5 ? -1 : 1), vy: -H * (0.5 + Math.random() * 0.35),
+          x: p.x, y: p.y - H * 0.05, vx: H * (0.08 + Math.random() * 0.2) * (Math.random() < 0.5 ? -1 : 1), vy: -H * (0.35 + Math.random() * 0.25),
           ground: L.counterY - H * 0.005, life: 2, big: big,
           draw: function (c, d) {
             if (d.big) { drawStar(c, 0, 0, H * 0.02, 0, 0.6); return; }
@@ -2288,7 +2295,7 @@ function lkfDrawTrophy(c) {
   artGlow(c, 0, -H * 0.06, H * 0.2, gold ? '#ffe27a' : '#ffd0e0', 0.6);
   for (i = 0; i < 8; i++) drawStar(c, Math.cos(globalT + i * Math.PI / 4) * H * 0.14, -H * 0.06 + Math.sin(globalT + i * Math.PI / 4) * H * 0.1, H * 0.012, globalT * 2, 0.4);
   for (i = 0; i < 5; i++) items.push({ q: 'gold', seed: i + 2 });
-  tops = [{ type: 'jamS', slot: 0 }, { type: 'cream', slot: 5 }, { type: 'berry', slot: 1 }, { type: 'berry', slot: 2 }, { type: 'star', slot: 6 }];
+  tops = [{ type: 'jamS', slot: 5 }, { type: 'jamB', slot: 6 }, { type: 'berry', slot: 1 }, { type: 'berry', slot: 2 }, { type: 'cream', slot: 0 }, { type: 'star', slot: 3 }, { type: 'star', slot: 4 }];
   lkfDrawStack(c, 0, 0, items, tops, 1, {});
   if (gold) {
     lkfDrawSpatula(c, -H * 0.12, -H * 0.02, H * 0.07, true, -0.5 + Math.sin(globalT * 3) * 0.1);
@@ -2300,21 +2307,22 @@ function lkfDrawTrophy(c) {
 // ---------- Kartan kuvake ----------
 // Lettupino hillolla ja kermalla sekä höyryävä pannu
 HUB_ICONS.lettu = function (c, x, y, s) {
-  var r = s * 0.15, i, py = y + r * 0.9, H = r;
-  // Pannu takana vasemmalla
-  artLimb(c, x - r * 2.5, py - r * 0.2, x - r * 3.0, py + r * 0.5, r * 0.22, '#ff9ec6', '#9a4a6a');
-  lkfEll(c, x - r * 1.5, py - r * 0.35, r * 1.05, r * 0.45);
-  artFillPath(c, '#6a6488', py - r * 0.8, py + r * 0.1, r, { lineColor: '#3a3458' });
-  lkfDrawLettu(c, x - r * 1.5, py - r * 0.45, r * 0.75, r * 0.3, LKF_COLS.gold, LKF_COLS.gold, { seed: 4 });
+  var r = s * 0.13, i, py = y + r * 1.25, px = x - r * 1.45, pY = y - r * 0.15;
+  // Pannu takana vasemmalla, höyryää
+  artLimb(c, px - r * 0.8, pY + r * 0.3, px - r * 1.55, pY - r * 0.35, r * 0.24, '#ff9ec6', '#9a4a6a');
+  lkfEll(c, px, pY + r * 0.06, r * 1.0, r * 0.46);
+  artFillPath(c, '#6a6488', pY - r * 0.45, pY + r * 0.5, r, { lineColor: '#3a3458' });
+  lkfDrawLettu(c, px, pY - r * 0.05, r * 0.72, r * 0.3, LKF_COLS.gold, LKF_COLS.gold, { seed: 4 });
   for (i = 0; i < 3; i++) {
-    c.globalAlpha = 0.7;
-    artCircle(c, x - r * 1.8 + i * r * 0.3, py - r * (1.2 + i * 0.45) - Math.sin(globalT * 2 + i) * r * 0.1, r * (0.18 + i * 0.05), '#ffffff', { line: false });
+    c.globalAlpha = 0.75;
+    artCircle(c, px - r * 0.2 + i * r * 0.25, pY - r * (0.75 + i * 0.5) - Math.sin(globalT * 2 + i) * r * 0.08, r * (0.17 + i * 0.05), '#ffffff', { line: false });
     c.globalAlpha = 1;
   }
-  // Pino lautasella
-  lkfEll(c, x + r * 0.5, py, r * 1.35, r * 0.42);
-  artFillPath(c, '#ffffff', py - r * 0.4, py + r * 0.4, r, { lineColor: '#b8a8d8', shadeTo: '#ece6fa' });
-  for (i = 0; i < 3; i++) lkfDrawLettu(c, x + r * 0.5, py - r * 0.25 - i * r * 0.3, r * 0.95, r * 0.36, LKF_COLS.gold, artShade(LKF_COLS.gold, -0.12), { seed: i + 1 });
-  lkfDrawTop(c, 'jamS', x + r * 0.2, py - r * 0.75, r * 0.6);
-  lkfDrawTop(c, 'cream', x + r * 0.75, py - r * 0.8, r * 0.7);
+  // Pino lautasella: hilloa ja kermaa
+  lkfEll(c, x + r * 0.7, py, r * 1.45, r * 0.45);
+  artFillPath(c, '#ffffff', py - r * 0.45, py + r * 0.45, r, { lineColor: '#b8a8d8', shadeTo: '#ece6fa' });
+  for (i = 0; i < 4; i++) lkfDrawLettu(c, x + r * 0.7, py - r * 0.3 - i * r * 0.36, r * 1.05, r * 0.4, LKF_COLS.gold, artShade(LKF_COLS.gold, -0.12), { seed: i + 1 });
+  lkfDrawTop(c, 'jamS', x + r * 0.35, py - r * 1.4, r * 0.7);
+  lkfDrawTop(c, 'cream', x + r * 1.0, py - r * 1.45, r * 0.85);
+  lkfDrawTop(c, 'berry', x + r * 0.7, py - r * 1.15, r * 0.6);
 };
