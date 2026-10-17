@@ -1962,8 +1962,10 @@ function lkfDrawBubble(c, cu) {
     }
     if (o.pics) lkfMiniStack(c, sx, sy, o.n, 1);
     else {
-      lkfMiniStack(c, sx + H * 0.018, sy, 2, 0.8);
-      lkfText(c, String(o.n), sx - H * 0.03, B.y - H * 0.015, H * 0.06, '#6a3a8a', '#ffffff');
+      // Numero + yksi lettu (kuten täytteissä "2 + mansikka"): kahden letun
+      // kuvake luettiin palautteen 17.10. mukaan "4 × 2 lettua"
+      lkfMiniStack(c, sx + H * 0.03, B.y + H * 0.012, 1, 0.75);
+      lkfText(c, String(o.n), sx - H * 0.035, B.y, H * 0.06, '#6a3a8a', '#ffffff');
     }
     // Täyterivit
     rows = o.tops.length;
