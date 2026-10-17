@@ -93,15 +93,15 @@ var RBS_SECTIONS = [
   { len: 12, speed: 0.5, dt: [1.45, 1.8], gapMax: 3, shift: 3, kinds: { bolt: 1, bird: 2, ball: 1, gap: 2, cloud: 2, ice: 2 }, pearls: [6], tel: 1.15, boltW: [1, 2] }
 ];
 // Taivaan värit matkan osuuden mukaan (0 = linna, 1 = lampi)
-var RBS_SKY_TOP = [[0, '#f493c4'], [0.14, '#c6a4ee'], [0.3, '#a99bd8'], [0.36, '#4f4a82'], [0.5, '#4f4a82'], [0.56, '#78b4f0'], [1, '#86c8ff']];
-var RBS_SKY_BOT = [[0, '#ffd8a8'], [0.14, '#ffe3f1'], [0.3, '#e6dcf6'], [0.36, '#9890c2'], [0.5, '#9890c2'], [0.56, '#d4ecff'], [1, '#eef9ff']];
-var RBS_SEA_TOP = [[0, 0.76], [0.12, 0.62], [0.19, 0.12], [0.3, -0.8]];      // pilvimeren yläreuna × viewH
-var RBS_FOG = [[0.13, 0], [0.18, 0.6], [0.26, 0.6], [0.31, 0]];             // pilvisumu
-var RBS_STORM = [[0.31, 0], [0.36, 1], [0.5, 1], [0.55, 0]];                // myrskykerros
-var RBS_STORM_Y = [[0.3, -0.3], [0.36, 0.2], [0.5, 0.22], [0.56, -0.4]];    // myrskykaton alareuna × viewH
-var RBS_LAND_TOP = [[0.42, 1.25], [0.6, 0.95], [1, 0.5]];                   // Kaukamaan maat
-var RBS_HILL_TOP = [[0.72, 1.3], [1, 0.66]];                                // lähemmät kukkulat
-var RBS_SUN_Y = [[0, 0.27], [0.3, 0.32], [0.55, 0.17], [1, 0.14]];
+var RBS_SKY_TOP = [[0, '#f493c4'], [0.17, '#c6a4ee'], [0.35, '#a99bd8'], [0.41, '#4f4a82'], [0.54, '#4f4a82'], [0.6, '#78b4f0'], [1, '#86c8ff']];
+var RBS_SKY_BOT = [[0, '#ffd8a8'], [0.17, '#ffe3f1'], [0.35, '#e6dcf6'], [0.41, '#9890c2'], [0.54, '#9890c2'], [0.6, '#d4ecff'], [1, '#eef9ff']];
+var RBS_SEA_TOP = [[0, 0.76], [0.13, 0.62], [0.22, 0.12], [0.34, -0.8]];      // pilvimeren yläreuna × viewH
+var RBS_FOG = [[0.16, 0], [0.21, 0.6], [0.31, 0.6], [0.36, 0]];             // pilvisumu
+var RBS_STORM = [[0.36, 0], [0.41, 1], [0.54, 1], [0.59, 0]];                // myrskykerros
+var RBS_STORM_Y = [[0.35, -0.3], [0.41, 0.2], [0.54, 0.22], [0.6, -0.4]];    // myrskykaton alareuna × viewH
+var RBS_LAND_TOP = [[0.48, 1.25], [0.64, 0.95], [1, 0.5]];                   // Kaukamaan maat
+var RBS_HILL_TOP = [[0.76, 1.3], [1, 0.66]];                                // lähemmät kukkulat
+var RBS_SUN_Y = [[0, 0.27], [0.34, 0.32], [0.6, 0.17], [1, 0.14]];
 
 var rbs = {
   built: false, state: 'count', t: 0, stT: 0, key: '',
@@ -397,11 +397,11 @@ function rbsRow(k, kind, u, s, ns, pearlIdx) {
       if (l0 >= 0 && l0 + size - 1 <= 6 && (ns < l0 || ns > l0 + size - 1)) rbsAddGap(k, u + rbsRnd(-0.04, 0.04), l0, l0 + size - 1, rbsRnd(0.12, 0.16));
     }
   } else if (kind === 'ice') {
-    n = rbsInt(2, k >= 3 ? 4 : 3);
+    n = k === 0 ? rbsInt(1, 2) : rbsInt(2, 3);
     lanes = rbsLanesExcept(ns, n, s);
     for (i = 0; i < lanes.length; i++) rbsAddObs(k, Math.random() < 0.5 ? 'ice' : 'crystal', u + rbsRnd(-0.06, 0.06), lanes[i], lanes[i]);
   } else if (kind === 'cloud') {
-    n = 1 + (k >= 2 ? 1 : 0) + (k >= 4 && Math.random() < 0.5 ? 1 : 0);
+    n = 1 + (k >= 2 && Math.random() < 0.6 ? 1 : 0);
     for (i = 0; i < n; i++) {
       size = k >= 1 && Math.random() < 0.4 ? 2 : 1;
       l0 = rbsBlock(size, ns, i === 0 ? s : rbsInt(0, 6));
@@ -409,18 +409,19 @@ function rbsRow(k, kind, u, s, ns, pearlIdx) {
       if (l0 >= 0 && !rbsLaneBusy(u, l0, l0 + size - 1)) rbsAddObs(k, 'cloud', u + rbsRnd(-0.05, 0.05), l0, l0 + size - 1);
     }
   } else if (kind === 'ball' || kind === 'bird') {
-    n = kind === 'bird' ? rbsInt(1, 2) : rbsInt(1, k >= 3 ? 2 : 1);
+    n = 1;
     for (i = 0; i < n; i++) {
       // Saapumisraita (missä pallo/lintu on, kun ratsastaja tulee kohdalle)
       lanes = rbsLanesExcept(ns, 7, s);
       m = -1;
-      for (d = 0; d < lanes.length; d++) if (Math.abs(lanes[d] - ns) >= 1.3) { m = lanes[d]; break; }
+      for (d = 0; d < lanes.length; d++) if (Math.abs(lanes[d] - ns) >= 2 && Math.abs(lanes[d] - s) >= 1) { m = lanes[d]; break; }
       if (m < 0) continue;
-      // Ovela: pallo on kulkenut turvaraidan kautta
-      w = Math.random() < 0.6 ? (m > ns ? 1 : -1) : (Math.random() < 0.5 ? 1 : -1);
+      // Pallo tulee turvaraidasta poispäin olevalta puolelta eikä koskaan
+      // kulje turvaraidan kautta (näkyvä polku ja laskeutumisrengas)
+      w = m > ns ? -1 : 1;
       rbs.movers.push({
         type: kind === 'bird' ? 'bird' : (k >= 3 ? 'beach' : 'snow'), u: u + i * 0.1, vEnd: m, dir: w,
-        rate: kind === 'bird' ? 3.2 : (k >= 3 ? 3.0 : 2.6), done: false, sec: k, ph: Math.random() * 6
+        rate: kind === 'bird' ? 2.2 : (k >= 3 ? 2.0 : 1.8), done: false, sec: k, ph: Math.random() * 6
       });
     }
   } else if (kind === 'bolt') {
@@ -1567,6 +1568,7 @@ function drawRbslide() {
   rbsDrawGates(c, false);
   rbsDrawRoad(c);
   rbsDrawBoltBands(c);
+  rbsDrawMoverMarks(c);
   rbsDrawBand(c);
   rbsDrawGates(c, true);
   rbsDrawRoadStart(c);
@@ -1622,7 +1624,7 @@ function rbsDrawBack(c, p) {
     drawCloud(c, x, y, H * (0.035 + (i % 3) * 0.01), (1 - storm * 0.7) * 0.85);
   }
   // Kaukaiset kuumailmapallot ja lintuparvet (lintuosuus)
-  if (p > 0.5 && p < 0.92) rbsDrawFarDecor(c, Math.min(1, (p - 0.5) / 0.05, (0.92 - p) / 0.05));
+  if (p > 0.56 && p < 0.94) rbsDrawFarDecor(c, Math.min(1, (p - 0.56) / 0.05, (0.94 - p) / 0.05));
   // Myrsky: tummuus ja katto
   if (storm > 0) {
     c.fillStyle = 'rgba(40,30,80,' + (0.3 * storm) + ')';
@@ -2061,6 +2063,30 @@ function rbsDrawObs(c, o) {
     rbsTwinkle(c, x + s * 0.4, y - s * 1.6 + Math.sin(globalT * 4 + o.ph) * s * 0.1, s * 0.25 * (0.6 + 0.4 * Math.sin(globalT * 7 + o.ph)), '#ffffff');
   }
 }
+// Pallon / linnun polku ja laskeutumisrengas: näyttää etukäteen, millä raidalla
+// se on, kun ratsastaja saapuu kohdalle
+function rbsDrawMoverMarks(c) {
+  var i, m, v, x, y0, y1, P = RBS_PITCH * viewH, a, col;
+  for (i = 0; i < rbs.movers.length; i++) {
+    m = rbs.movers[i];
+    if (m.done || m.u < rbs.r.u - 0.02) continue;
+    x = rbsSX(m.u);
+    if (x < -viewH * 0.1 || x > viewW + viewH * 0.1) continue;
+    v = rbsClamp(rbsMoverV(m), -0.5, 6.5);
+    col = m.type === 'bird' ? '90,168,240' : '255,255,255';
+    y0 = rbsLaneY(m.u, v);
+    y1 = rbsLaneY(m.u, m.vEnd);
+    a = 0.55 + 0.3 * Math.sin(globalT * 8 + m.ph);
+    c.strokeStyle = 'rgba(' + col + ',0.6)';
+    c.lineWidth = Math.max(2, P * 0.12);
+    c.setLineDash([P * 0.2, P * 0.18]);
+    c.beginPath(); c.moveTo(x, y0); c.lineTo(x, y1); c.stroke();
+    c.setLineDash([]);
+    c.strokeStyle = 'rgba(' + col + ',' + a.toFixed(2) + ')';
+    c.lineWidth = Math.max(2, P * 0.14);
+    c.beginPath(); c.ellipse(x, y1, P * 1.0, P * 0.42, 0, 0, Math.PI * 2); c.stroke();
+  }
+}
 function rbsDrawMover(c, m, v) {
   var x = rbsSX(m.u), y = rbsLaneY(m.u, rbsClamp(v, -0.5, 6.5)), k = rbsK(v), s, b, rot, i, P = RBS_PITCH * viewH;
   if (x < -viewH * 0.2 || x > viewW + viewH * 0.2) return;
@@ -2072,7 +2098,7 @@ function rbsDrawMover(c, m, v) {
     rbsDrawBirdBody(c, x, y, s, globalT * 9 + m.ph, -1, '#5aa8f0');
     return;
   }
-  s = viewH * (m.type === 'beach' ? 0.026 : 0.024) * k;
+  s = viewH * (m.type === 'beach' ? 0.032 : 0.03) * k;
   rot = (rbs.r.u - m.u) * m.rate * m.dir * 2.4;
   b = m.type === 'beach' ? Math.abs(Math.sin((rbs.r.u - m.u) * m.rate * Math.PI)) * viewH * 0.035 : 0;
   artShadow(c, x, y + P * 0.15, s * (1 - b / (viewH * 0.1)), s * 0.3, 0.22);
