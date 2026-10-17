@@ -92,6 +92,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/trek-meadow.js`, `trek-river.js`, `trek-cave.js`, `trek-sky.js`, `trek-party.js` — Pikkupilven kotimatkan
   viisi etappia (etuliitteet `tkm`, `tkr`, `tkc`, `tks`, `tkp`); `js/hub-theme-cloud.js` — Pilvilinnan sokkeloteema.
   Kentän `script` voi olla lista, kun pitkä kenttä koostuu useasta tiedostosta.
+- `js/play-rbslide.js`, `play-lettu.js` — Pilvilinnan Sateenkaariliuku ja Lettukahvila (17.10.2026)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -1112,6 +1113,21 @@ Testaus: `VT.play('trek'); trekGo(0..4)`.
 - **Pilvilinna** (yö, palkinto, n. 1–1,5 min) — Pikkupilvi raahataan äidin syliin; neljä lahjaa
   jalustoille sytyttävät juhlan (kukat, suihkulähde ankkoineen, ikkunat ja musiikki, ilotulitus).
   Vieraina etappien ystävät ja löydetyt puput. Finaalissa iso sateenkaari ja ilotulitus.
+
+Pilvilinnan muut huoneet (17.10.2026, palaute: Kotimatka oli liian helppo, Verna rakastaa leipomoa):
+
+- **Sateenkaariliuku** ♥ (Vernan toive) — pilvikelkalla jättisateenkaarta alas Pilvilinnasta lammelle.
+  Sateenkaaren seitsemän raitaa ovat syvyyskaistoja: sormi vaihtaa raitaa, hyppynappi (tai toinen
+  sormi) hyppää. Aukot, kiukkuiset sadepilvet, jääpalat ja kristallit, poikki vierivät pallot,
+  linnut ja raitaan lukittuvat salamat (keltainen kaista 0,9 / 0,75 s). Viisi osuutta kiihtyvällä
+  vauhdilla, pilvirengasportit tarkistuspisteinä, sydämet. Seitsemän sateenkaarihelmeä = kultainen
+  kelkka (+1 tähti); salainen pikkupilvi punaisen raidan yllä (hyppy, +1 tähti). Säädöt `RBS_SECTIONS`.
+  Botti 0,3 s: 2,6 sydäntä / kierros, osuus uusiksi 5/40; 0,45 s: 14/40.
+- **Lettukahvila** — leipomon logiikka vaikeampana: taivaan asiakkaat tilaavat lettupinon kuvalla.
+  Kannu raahataan pannulle, letun napautus kääntää sen kultaisella hetkellä (myöhään = vähän palanut,
+  hiiltynyt roskiin), valmis lettu lautaselle, täytteet lukumäärin, lautanen asiakkaalle. Aamu: 2 pannua,
+  yksi asiakas; päivä: 3 pannua, kaksi asiakasta kärsivällisyyssydämin; ilta: numerot, laskut, "sama
+  kuin tuolla" ja muistikupla. Kultainen lasta (+1 tähti). Säädöt `LKF_GOLD`, `LKF_PATIENCE`, `LKF_PLAN`.
 
 Säädöt ovat kunkin `trek-*.js`-tiedoston alussa (esim. `TKM_SPEED`, `TKR_ROWS1`, `TKC_CREEP`,
 `TKS_TEL`, `TKP_HUG_R`). Kehyksen asemien paikat `TREK_MAP_POS`.
