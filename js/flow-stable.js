@@ -102,7 +102,7 @@ function stabSaveData() {
   var i, p, out = [];
   for (i = 0; i < stabPonies.length; i++) {
     p = stabPonies[i];
-    out.push({ k: p.k, c: p.c, m: p.m, u: p.u ? 1 : 0, fx: Math.round(p.fx * 1000) / 1000, fy: Math.round(p.fy * 1000) / 1000, born: p.born, bd: p.bd, r: p.r, md: p.md, mud: p.mud, bow: p.bow });
+    out.push({ k: p.k, c: p.c, m: p.m, u: p.u ? 1 : 0, fx: Math.round(p.fx * 1000) / 1000, fy: Math.round(p.fy * 1000) / 1000, born: p.born, bd: p.bd, r: p.r, md: p.md, mud: p.mud, bow: p.bow, cr: p.cr });
   }
   return { p: out, b: stabBoard, s: stabStall, sg: stabStallG, f: stabFed, w: stabWat, t: stabTrick, i: stabInit ? 1 : 0, n: stabTotal };
 }
@@ -130,6 +130,7 @@ function stabLoadData(d) {
       if (src.bd !== undefined) p.bd = src.bd | 0;
       if (src.r !== undefined) p.r = src.r | 0;
       if (src.md !== undefined) p.md = src.md | 0;
+      if (src.cr !== undefined && src.cr !== null) p.cr = src.cr | 0;
       p.mud = Math.max(0, Math.min(STAB_MUD, src.mud | 0));
       p.bow = src.bow === undefined || src.bow === null ? -1 : Math.max(-1, Math.min(HOME_BOWS.length - 1, src.bow | 0));
       stabPonies.push(p);
@@ -158,6 +159,7 @@ function stabShiftDays(n) {
     if (p.bd !== undefined) p.bd -= n;
     if (p.r !== undefined) p.r -= n;
     if (p.md !== undefined) p.md -= n;
+    if (p.cr !== undefined) p.cr -= n;
   }
   saveProgress();
 }
@@ -926,13 +928,9 @@ function stabBuy(def, it) {
   return true;
 }
 
-function stabOnEnter() {
+// Aamu: aloitusponi, varsojen kasvu ja laitumen muta (talli ja laidun)
+function stabMorning() {
   var i, d = stabDay(), p;
-  for (i = 0; i < HOME_ITEMS.length; i++) if (HOME_ITEMS[i].id === 'pony') break;
-  homeShopPage = Math.floor(i / HOME_SHOP_PAGE);
-  stabLeavers = [];
-  stabRide = null;
-  stabGalloper = null;
   if (!stabInit) {
     // Aloitusponi: valkoinen, vaaleanpunainen harja
     stabInit = true;
@@ -952,6 +950,19 @@ function stabOnEnter() {
       p.md = d;
       p.mud = p.k === 'pony' ? STAB_MUD : 2;
     }
+  }
+}
+
+function stabOnEnter() {
+  var i, d = stabDay(), p;
+  for (i = 0; i < HOME_ITEMS.length; i++) if (HOME_ITEMS[i].id === 'pony') break;
+  homeShopPage = Math.floor(i / HOME_SHOP_PAGE);
+  stabLeavers = [];
+  stabRide = null;
+  stabGalloper = null;
+  stabMorning();
+  for (i = 0; i < stabPonies.length; i++) {
+    p = stabPonies[i];
     stabGroundClamp(p);
     p.z = 0;
     p.state = 'idle';

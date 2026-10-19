@@ -346,6 +346,8 @@ window.VT = {
   stable: function () { return { ponies: stabPonies, board: stabBoard, stall: stabStall, fed: stabFed, wat: stabWat, hay: stabHay, water: stabWater, galloper: stabGalloper, ride: stabRide, day: stabDay(), spots: stabSpots(), tool: stabTool, total: stabTotal }; },
   // Kelaa tallin kelloa n päivää eteenpäin (päiväleimat taaksepäin)
   stableSkip: function (days) { stabShiftDays(days); },
+  pasture: function () { return { cam: pasCam, prin: pasPrin, rider: pasRider, round: pasRound, ghost: pasGhostRun, record: pasRecord, recPath: pasGhost, course: pasCourse, apples: pasApples, ponies: stabPonies, cloud: pasCloud, worldW: pasWorldW(), obs: function (i) { return pasObs(i); }, demoTotal: pasPathTotal(pasGhostPath()), day: stabDay(), board: stabBoard }; },
+  pastureSkip: function (days) { pasShiftDays(days); },
   yard: function () { return { weeds: yardWeeds, treats: yardTreats, drops: yardDrops, sun: yardSunPos(), day: yardDay() }; },
   pen: function () { return { strokes: penStrokes, bubbles: penBubbles, ink: penInk, inkMax: penInkMax, wait: penWait, dir: penDir, mode: penMode, bottles: penBottles, frame: penFrame }; },
   penStart: penStart,

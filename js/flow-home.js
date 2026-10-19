@@ -97,9 +97,10 @@ var HOME_ITEMS = [
 // saliin, vasemmalla puutarhaan), 3 = pankkiholvi (ovi vasemmalla saliin),
 // 4 = puutarha (portti oikealla keittiöön, vasemmalla kanatarhaan),
 // 5 = kanatarha (portti oikealla puutarhaan ja sen vieressä talliin),
-// 6 = ponitalli (portti oikealla kanatarhaan). Huoneisiin mennään myös suoraan
-// linnakartalta (flow-castle.js).
-var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }, { id: 'kitchen' }, { id: 'vault' }, { id: 'yard' }, { id: 'coop' }, { id: 'stable' }];
+// 6 = ponitalli (portti oikealla kanatarhaan ja sen vieressä laitumelle),
+// 7 = hevoslaidun (oma vieritettävä näkymä, flow-pasture.js; portti talliin).
+// Huoneisiin mennään myös suoraan linnakartalta (flow-castle.js).
+var HOME_ROOMS = [{ id: 'hall' }, { id: 'tower' }, { id: 'kitchen' }, { id: 'vault' }, { id: 'yard' }, { id: 'coop' }, { id: 'stable' }, { id: 'pasture' }];
 var HOME_SHOP_PAGE = 10;
 // Maalit: purkki raahataan seinälle (wall-liuku) tai lattialle (floor-liuku). Ilmaisia.
 var HOME_PAINTS = [
@@ -112,7 +113,7 @@ var HOME_PAINTS = [
   { id: 'wood', pot: '#a9743f', wall: ['#f7ead2', '#e6cfa8'], floor: ['#c98b4a', '#8a5a30'] }
 ];
 var HOME_BOWS = ['#ff7bac', '#5fa8ff', '#ffd24f'];
-function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 }, 2: { wall: 4, floor: 6 }, 3: { wall: 4, floor: 5 }, 4: { wall: 6, floor: 4 }, 5: { wall: 6, floor: 4 }, 6: { wall: 0, floor: 4 } }; }
+function homeDecorDefault() { return { 0: { wall: 0, floor: 0 }, 1: { wall: 5, floor: 5 }, 2: { wall: 4, floor: 6 }, 3: { wall: 4, floor: 5 }, 4: { wall: 6, floor: 4 }, 5: { wall: 6, floor: 4 }, 6: { wall: 0, floor: 4 }, 7: { wall: 0, floor: 4 } }; }
 // Onko #rrggbb-väri vaalea (tapettikuvion sävyn valintaan)
 function homeColorIsLight(hex) {
   var n = parseInt(hex.slice(1), 16);
@@ -167,6 +168,7 @@ function homeItemSize() {
 // keittiössä oikealla saliin ja vasemmalla puutarhaan; puutarhassa oikealla
 // keittiöön ja vasemmalla kanatarhaan; kanatarhassa oikealla puutarhaan ja
 // sen vieressä talliin (vasemmalla on kanatalo); tallissa oikealla kanatarhaan
+// ja sen vieressä laitumelle; laitumen portti (flow-pasture.js) vie talliin
 function homeDoorsOf(roomIdx) {
   var room = homeRoom(), h = viewH;
   var right = { x: room.x1 - h * 0.13, y: room.floorY - h * 0.3, w: h * 0.12, h: h * 0.3, side: 1 };
@@ -180,13 +182,14 @@ function homeDoorsOf(roomIdx) {
     right.to = YARD_ROOM;
     return [right, { x: room.x1 - h * 0.27, y: right.y, w: right.w, h: right.h, side: 1, to: STABLE_ROOM }];
   }
+  if (roomIdx === PASTURE_ROOM) { left.to = STABLE_ROOM; return [left]; }
   right.to = COOP_ROOM;
-  return [right];
+  return [right, { x: room.x1 - h * 0.29, y: right.y, w: right.w, h: right.h, side: 1, to: PASTURE_ROOM }];
 }
 // Ulkoalueiden väliset kulut ovat aidan portteja (kind 'gate'), muut ovia.
 // Lukittuun huoneeseen (linna kasvaa tarinan mukana) johtava ovi on lukossa.
 function homeOutdoor(idx) {
-  return idx === YARD_ROOM || idx === COOP_ROOM || idx === STABLE_ROOM;
+  return idx === YARD_ROOM || idx === COOP_ROOM || idx === STABLE_ROOM || idx === PASTURE_ROOM;
 }
 function homeDoors() {
   var ds = homeDoorsOf(homeRoomIdx), i;
@@ -242,6 +245,7 @@ function showHome(roomIdx) {
   if (homeRoomIdx === YARD_ROOM) yardOnEnter();
   if (homeRoomIdx === COOP_ROOM) coopOnEnter();
   if (homeRoomIdx === STABLE_ROOM) stabOnEnter();
+  if (homeRoomIdx === PASTURE_ROOM) pasOnEnter();
   playNote(523, 0, 0.15, 'triangle', 0.3);
   playNote(659, 0.1, 0.2, 'triangle', 0.3);
 }
@@ -266,8 +270,10 @@ function homeGoRoom(idx) {
   if (idx === YARD_ROOM) yardOnEnter();
   else if (idx === COOP_ROOM) coopOnEnter();
   else if (idx === STABLE_ROOM) stabOnEnter();
-  else if (from === YARD_ROOM || from === COOP_ROOM || from === STABLE_ROOM) homeShopPage = 0;
+  else if (idx === PASTURE_ROOM) pasOnEnter();
+  else if (from === YARD_ROOM || from === COOP_ROOM || from === STABLE_ROOM || from === PASTURE_ROOM) homeShopPage = 0;
   if (from === STABLE_ROOM) stabRideEnd();
+  if (from === PASTURE_ROOM) pasOnLeave();
   playNote(392, 0, 0.1, 'triangle', 0.25);
   playNote(523, 0.1, 0.15, 'triangle', 0.25);
 }
@@ -459,6 +465,8 @@ function handleHomeTap(px, py) {
   var i, cells, c, r, ar, dx, dy;
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  // Laidun on oma vieritettävä näkymä ilman kauppaa
+  if (homeRoomIdx === PASTURE_ROOM) { pasTap(px, py); return; }
   var shop = homeShopBox();
   if (px >= shop.x) {
     ar = homeShopArrows();
@@ -538,6 +546,7 @@ function homeMove(px, py) {
   if (Math.abs(px - homeDrag.sx) + Math.abs(py - homeDrag.sy) > 12) homeDrag.moved = true;
   if (homeDrag.coop) { coopDragMove(px, py); return; }
   if (homeDrag.stab) { stabDragMove(px, py); return; }
+  if (homeDrag.pas) { pasMove(px, py); return; }
   if (homeDrag.paint !== undefined || homeDrag.bow !== undefined) {
     homeDrag.gx = px;
     homeDrag.gy = py;
@@ -563,6 +572,7 @@ function homeUp() {
   if (!homeDrag) return;
   if (homeDrag.coop) { coopDrop(); return; }
   if (homeDrag.stab) { stabDrop(); return; }
+  if (homeDrag.pas) { pasUp(); return; }
   var it = homeDrag.item;
   var moved = homeDrag.moved;
   var inShop = homeGhostInShop(), onDoor = homeDragOnDoor(), def = homeDrag.def;
@@ -705,6 +715,7 @@ function homeItemTap(it) {
 function updateHome(dt) {
   var i, it, b, room = homeRoom();
   globalT += dt;
+  if (homeRoomIdx === PASTURE_ROOM) { updatePasture(dt); updateParticles(dt); return; }
   if (homeShake.t > 0) homeShake.t -= dt;
   if (homeDoorShake.t > 0) homeDoorShake.t -= dt;
   for (i = 0; i < homeItems.length; i++) {
@@ -823,6 +834,7 @@ function updateHome(dt) {
 function drawHome() {
   var i, it;
   if (!viewW || !viewH) return;
+  if (homeRoomIdx === PASTURE_ROOM) { drawPasture(); return; }
   renderHomeBg();
   ctx.clearRect(0, 0, viewW, viewH);
   ctx.drawImage(homeBgCanvas, 0, 0, homeBgCanvas.width, homeBgCanvas.height, 0, 0, viewW, viewH);
@@ -2016,7 +2028,8 @@ function renderHomeGate(b, h, dr) {
 }
 
 // Huoneen kyltti (ovien yllä ja linnakartalla): portaat = torni, sydän = sali,
-// kattila = keittiö, tähti = holvi, kukka = puutarha, tipu = kanatarha, hevosenkenkä = talli. (x, y) keskikohta, sh kyltin korkeus.
+// kattila = keittiö, tähti = holvi, kukka = puutarha, tipu = kanatarha, hevosenkenkä = talli,
+// aidattu niitty = laidun. (x, y) keskikohta, sh kyltin korkeus.
 function homeRoomSign(b, idx, x, y, sh) {
   var i, sw = sh * 1.9;
   b.fillStyle = '#fff6d8';
@@ -2033,6 +2046,8 @@ function homeRoomSign(b, idx, x, y, sh) {
     coopSign(b, x, y, sh);
   } else if (idx === STABLE_ROOM) {
     stabSign(b, x, y, sh);
+  } else if (idx === PASTURE_ROOM) {
+    pasSign(b, x, y, sh);
   } else if (idx === YARD_ROOM) {
     b.fillStyle = '#4fb356';
     b.fillRect(x - sh * 0.03, y, sh * 0.06, sh * 0.35);

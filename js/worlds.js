@@ -1747,7 +1747,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
 function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient', 'props',
-    'flow-hub', 'hub-themes', 'hub-theme-linna', 'hub-theme-saaret1', 'hub-theme-saaret2', 'hub-theme-pohjoinen', 'hub-theme-manner', 'hub-theme-storm', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-yard', 'flow-coop', 'flow-stable', 'flow-castle', 'story',
+    'flow-hub', 'hub-themes', 'hub-theme-linna', 'hub-theme-saaret1', 'hub-theme-saaret2', 'hub-theme-pohjoinen', 'hub-theme-manner', 'hub-theme-storm', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-yard', 'flow-coop', 'flow-stable', 'flow-pasture', 'flow-castle', 'story',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north', 'tasks-write',
     'platformer', 'pen-core'
   ];

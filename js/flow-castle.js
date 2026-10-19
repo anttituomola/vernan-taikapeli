@@ -5,7 +5,8 @@
 // tasalla ja pankkiholvi kukkulan sisällä maan alla. Vasemmalla linnan piha
 // jatkuu samassa järjestyksessä kuin huoneiden ovet: keittiön ovesta
 // puutarhaan, puutarhan portista kanatarhaan ja kanatarhan takaportista
-// kukkulan ponitalliin. Ulkoalueet piirretään suoraan niitylle ilman omaa
+// kukkulan ponitalliin; tallin takaa polku vie kaukaisen kukkulan hevoslaitumelle
+// (ponit laukkaavat siellä pienoiskuvassa). Ulkoalueet piirretään suoraan niitylle ilman omaa
 // taivasta. Huoneen napautus vie huoneeseen (showHome).
 //
 // Linna kasvaa seikkailun mukana (CONTEXT.md, "Linna kasvaa"): huone aukeaa,
@@ -19,7 +20,7 @@ var castleNew = [];          // juuri auenneet huoneet: { idx, t }
 var castleShake = { idx: -1, t: 0 };
 
 // Huoneen avaava maailma (HOME_ROOMS-indeksin mukaan)
-var CASTLE_UNLOCK = ['Linnasaari', 'Kuutamosaari', 'Karkkisaari', 'Vuorisaari', 'Hoivasaari', 'Maalaiskylä', 'Tivolisaari'];
+var CASTLE_UNLOCK = ['Linnasaari', 'Kuutamosaari', 'Karkkisaari', 'Vuorisaari', 'Hoivasaari', 'Maalaiskylä', 'Tivolisaari', 'Tivolisaari'];
 
 function castleRoomOpen(idx) {
   return castleAllOpen || storyWorldDone(CASTLE_UNLOCK[idx]);
@@ -98,6 +99,8 @@ function castleLayout() {
   // Ponitalli kukkulalla kanatarhan ja puutarhan takana, hieman pienempänä
   var sw = ow * 0.78, sh = sw / asp, hillY = gy - u * 0.16;
   var stX = coopX + ow * 0.42;
+  // Hevoslaidun kaukaisella kukkulalla puutarhan takana
+  var pw2 = ow * 0.78, ph2 = pw2 / asp, pasGy = gy - u * 0.175, paX = Math.max(stX + sw + u * 0.01, yardX + ow * 0.05);
   return {
     u: u, gy: gy, m: m, cx: cx, castleL: castleL, castleR: castleR, floorTop: floorTop,
     fyRel: fyRel, hillY: hillY,
@@ -108,8 +111,10 @@ function castleLayout() {
       { idx: 3, x: cx - vw / 2, y: gy + u * 0.06, w: vw, h: vh },
       { idx: 4, x: yardX, y: outY, w: ow, h: oh, out: true },
       { idx: 5, x: coopX, y: outY, w: ow, h: oh, out: true },
-      { idx: 6, x: stX, y: hillY - sh * fyRel, w: sw, h: sh, out: true }
+      { idx: 6, x: stX, y: hillY - sh * fyRel, w: sw, h: sh, out: true },
+      { idx: 7, x: paX, y: pasGy - ph2 * fyRel, w: pw2, h: ph2, out: true }
     ],
+    pasGy: pasGy,
     book: { x: castleL - u * 0.005, y: gy + u * 0.2, s: u * 0.06 },
     pawn: { x: coopX + ow * 0.62, y: gy + u * 0.23 }
   };
@@ -123,6 +128,10 @@ function castleRoomRect(lay, idx) {
 // Napautusalue: ulkoalueilla vain maa ja rakennukset (ei yläreunan taivasta)
 function castleHit(r, px, py, lay) {
   var pad = viewH * 0.015;
+  if (r.idx === PASTURE_ROOM) {
+    // Laidun: vain kukkulan niittykaista (puutarha on edessä)
+    return px >= r.x && px <= r.x + r.w && py >= lay.pasGy - lay.u * 0.09 && py <= lay.pasGy + lay.u * 0.045;
+  }
   if (r.out) {
     var top = r.y + r.h * lay.fyRel * 0.35;
     return px >= r.x && px <= r.x + r.w && py >= top && py <= r.y + r.h * 0.92;
@@ -131,7 +140,7 @@ function castleHit(r, px, py, lay) {
 }
 
 function handleCastleTap(px, py) {
-  var lay = castleLayout(), i, r, order = [3, 0, 2, 1, 4, 5, 6];
+  var lay = castleLayout(), i, r, order = [3, 0, 2, 1, 7, 4, 5, 6];
   initAudio();
   if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   var sun = castleSunPos();
@@ -209,6 +218,21 @@ function renderCastleBg() {
   b.bezierCurveTo(hx + hw * 0.4, lay.hillY, hx + hw * 0.7, lay.hillY - u * 0.01, hx + hw * 1.1, gy + 2);
   b.closePath();
   artFillPath(b, '#a8dc8c', lay.hillY, gy, u * 0.2, { line: false });
+  // Laitumen kukkula (kauempana, vaaleampi) ja polku tallilta
+  var pa = castleRoomRect(lay, 7), pcx = pa.x + pa.w * 0.5, pcw = pa.w * 0.75;
+  b.beginPath();
+  b.moveTo(pcx - pcw * 1.15, gy + 2);
+  b.bezierCurveTo(pcx - pcw * 0.75, lay.pasGy - u * 0.005, pcx - pcw * 0.4, lay.pasGy - u * 0.012, pcx, lay.pasGy - u * 0.012);
+  b.bezierCurveTo(pcx + pcw * 0.4, lay.pasGy - u * 0.012, pcx + pcw * 0.75, lay.pasGy - u * 0.005, pcx + pcw * 1.15, gy + 2);
+  b.closePath();
+  artFillPath(b, '#b6e29a', lay.pasGy, gy, u * 0.2, { line: false });
+  b.strokeStyle = '#ecd6a4';
+  b.lineCap = 'round';
+  b.lineWidth = u * 0.012;
+  b.beginPath();
+  b.moveTo(st.x + st.w * 0.85, lay.hillY + u * 0.01);
+  b.quadraticCurveTo(pa.x, lay.hillY - u * 0.02, pa.x + pa.w * 0.12, lay.pasGy + u * 0.005);
+  b.stroke();
   // Niitty
   var mg = b.createLinearGradient(0, gy, 0, h);
   mg.addColorStop(0, '#9ee07f');
@@ -461,12 +485,13 @@ function drawCastleMap() {
   var u = lay.u;
   drawMapSun(ctx);
   // Ulkoalueet kaukaisimmasta lähimpään: talli kukkulalla, kanatarha, puutarha
-  var outOrder = [6, 5, 4];
+  var outOrder = [7, 6, 5, 4];
   for (i = 0; i < outOrder.length; i++) {
     r = castleRoomRect(lay, outOrder[i]);
     shake = castleShake.idx === r.idx ? castleShake.t : 0;
     if (castleRoomOpen(r.idx)) {
-      drawCastleRoomThumb(ctx, r.idx, r.x, r.y, r.w, r.h, true);
+      if (r.idx === PASTURE_ROOM) pasCastleThumb(ctx, r, lay);
+      else drawCastleRoomThumb(ctx, r.idx, r.x, r.y, r.w, r.h, true);
     } else {
       drawCastleSignpost(ctx, r, lay);
       drawCastleLockBadge(ctx, r.x + r.w / 2, r.y + r.h * lay.fyRel - u * 0.13, u * 0.05, castleUnlockKind(r.idx), shake);
@@ -488,7 +513,8 @@ function drawCastleMap() {
   for (i = 0; i < lay.rooms.length; i++) {
     r = lay.rooms[i];
     if (!castleRoomOpen(r.idx)) continue;
-    if (r.out) homeRoomSign(ctx, r.idx, r.x + r.w * 0.5, r.y + r.h * lay.fyRel + u * 0.035, u * 0.045);
+    if (r.idx === PASTURE_ROOM) homeRoomSign(ctx, r.idx, r.x + r.w * 0.3, lay.pasGy - u * 0.085, u * 0.045);
+    else if (r.out) homeRoomSign(ctx, r.idx, r.x + r.w * 0.5, r.y + r.h * lay.fyRel + u * 0.035, u * 0.045);
     else homeRoomSign(ctx, r.idx, r.x + r.w / 2, r.y - u * 0.004, u * 0.045);
   }
   // Juuri aukeava huone: hehku ja tähtirengas
