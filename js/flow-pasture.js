@@ -45,6 +45,7 @@ var PAS_FLAG = ['#ff5a5a', '#ff9f3a', '#ffd23a', '#5fd36b', '#4aa8ff'];
 // Esteet: 0 = lähtö- ja maalikaari, 1..5 numeroidut esteet
 var PAS_KINDS = ['arch', 'rail', 'flower', 'water', 'log', 'oxer'];
 var PAS_COURSE_DEFAULT = [[1.55, 0.5], [2.25, 0.26], [3.0, 0.3], [3.8, 0.5], [3.2, 0.8], [2.4, 0.78]];
+var PAS_MELODY = [784, 659, 784, 880, 784, 659, 523, 659, 587, 659, 784, 659, 587, 523, 587, 392];
 var PAS_CLOVERS = [[0.28, 0.48], [1.3, 0.94], [1.95, 0.6], [2.75, 0.96], [3.45, 0.12], [4.05, 0.95], [2.78, 0.54]];
 
 // Tallennettava tila
@@ -57,6 +58,7 @@ var pasApplesN = 0;          // omenoita pudotettu tänään
 var pasGoldApple = -1;       // päivä, jona kultainen omena löytyi
 var pasCloverDay = -1;       // päivä, jona nelilehtinen löytyi
 var pasRode = false;         // on ratsastettu (vihjenuoli pois)
+var pasDemoV = PAS_GHOST_V;  // esimerkkikierroksen vauhti: hidastuu huomaamatta häviöistä
 
 // Ajonaikainen tila
 var pasCam = 0;              // kameran x (maailman pikseleinä)
@@ -98,6 +100,7 @@ var pasSky = null;
 var pasHerdSlow = 0;
 var pasFollowN = 0;
 var pasLastCam = 0;
+var pasIdleT = 0;            // aika viimeisestä ohjauksesta (ohjausvihje)
 
 // ---------- Mitat ----------
 function pasWorldW() {
@@ -171,7 +174,7 @@ function pasSaveData() {
     g = [];
     for (i = 0; i < pasGhost.length; i++) g.push(Math.round(pasGhost[i] * 200) / 200);
   }
-  return { o: o, r: Math.round(pasRecord * 10) / 10, g: g, gd: pasGoldDay, ad: pasAppleDay, an: pasApplesN, ga: pasGoldApple, cd: pasCloverDay, rode: pasRode ? 1 : 0 };
+  return { o: o, r: Math.round(pasRecord * 10) / 10, g: g, dv: Math.round(pasDemoV * 100) / 100, gd: pasGoldDay, ad: pasAppleDay, an: pasApplesN, ga: pasGoldApple, cd: pasCloverDay, rode: pasRode ? 1 : 0 };
 }
 function pasLoadData(d) {
   var i, src;
@@ -183,7 +186,9 @@ function pasLoadData(d) {
   pasGoldDay = pasAppleDay = pasGoldApple = pasCloverDay = -1;
   pasApplesN = 0;
   pasRode = false;
+  pasDemoV = PAS_GHOST_V;
   if (!d || typeof d !== 'object') return;
+  if (+d.dv >= 0.28 && +d.dv <= PAS_GHOST_V) pasDemoV = +d.dv;
   if (d.o && d.o.length === PAS_COURSE_DEFAULT.length) {
     for (i = 0; i < d.o.length; i++) {
       src = d.o[i];
@@ -246,7 +251,7 @@ function pasMakeDemo() {
   }
   sm.push(pts[pts.length - 1]);
   // Tasavälinen näytteistys vauhdilla PAS_GHOST_V (syvyyssuunta hitaampi kuten ratsastaessa)
-  var out = [], step = PAS_GHOST_V * h * PAS_SAMPLE, acc = 0, cx = sm[0].x, cy = sm[0].y, j = 1, dx, dy, dl;
+  var out = [], step = pasDemoV * h * PAS_SAMPLE, acc = 0, cx = sm[0].x, cy = sm[0].y, j = 1, dx, dy, dl;
   out.push(cx / h, pasTofY(cy));
   while (j < sm.length && out.length < PAS_GHOST_MAX * 2) {
     dx = sm[j].x - cx; dy = (sm[j].y - cy) / 0.75;
@@ -381,6 +386,11 @@ function pasGait(p, dt, loud) {
   var onScreen = p.qx > pasCam - viewH * 0.2 && p.qx < pasCam + viewW + viewH * 0.2;
   if (!onScreen) return;
   var vol = loud ? 0.05 : 0.025;
+  if (loud && v > 0.42) {
+    // Ratsastajan laukka soittaa iloista ratsastuslaulua askel kerrallaan
+    p.qmel = ((p.qmel || 0) + 1) % PAS_MELODY.length;
+    playNote(PAS_MELODY[p.qmel], 0, 0.16, 'triangle', 0.07);
+  }
   if (v > 0.42) { for (k = 0; k < 3; k++) playNote(200 + k * 30 + Math.random() * 30, k * 0.06, 0.03, 'square', vol); }
   else if (v > 0.24) { playNote(240 + Math.random() * 40, 0, 0.03, 'square', vol); playNote(300 + Math.random() * 40, 0.05, 0.03, 'square', vol * 0.8); }
   else if (loud || Math.random() < 0.5) playNote(220 + Math.random() * 60, 0, 0.03, 'square', vol * 0.7);
@@ -414,7 +424,16 @@ function pasCrossCheck(p, x0, y0, isRider) {
   }
 }
 function pasCrossed(p, ob, isRider) {
-  var o = pasCourse[ob.n], i;
+  var o = pasCourse[ob.n], i, gr = pasGhostRun;
+  if (p.qst === 'ghost' && gr && gr.solo && ob.n === gr.next) {
+    // Näytöskierros: Tähtiponin ylittämä este välähtää numeronsa värissä
+    gr.next++;
+    o.wig = 0.6;
+    if (ob.n) {
+      spawnSparkles(ob.x - ob.L, ob.y + ob.d - viewH * 0.12 * ob.k, 12, PAS_FLAG[ob.n - 1]);
+      playNote([523, 587, 659, 784, 880][ob.n - 1], 0.05, 0.12, 'sine', 0.14);
+    }
+  }
   if (ob.n === 0) {
     if (isRider) pasArchCross();
     return;
@@ -585,6 +604,7 @@ function pasRoundFinish() {
     if (gr) { gr.done = true; gr.wait = 3; gr.lost = true; }
   } else {
     pasBanner = { kind: 'lose', t: 0, time: t, ghost: gr ? gr.total : 0 };
+    if (!pasGhost) { pasDemoV = Math.max(0.3, pasDemoV - 0.03); pasDemo = null; }
     var mel = [659, 784, 880, 784, 1047];
     for (i = 0; i < mel.length; i++) playNote(mel[i], i * 0.14, 0.16, 'triangle', 0.18);
     pasFireworks(2);
@@ -881,6 +901,7 @@ function updatePasture(dt) {
     stabNeigh(p, 0);
   }
   pasHerd(dt);
+  if (pasRider && !(homeDrag && homeDrag.pas === 'steer')) pasIdleT += dt; else pasIdleT = 0;
   for (i = 0; i < stabPonies.length; i++) pasUpdatePony(stabPonies[i], dt);
   pasUpdatePrincess(dt);
   // Kierros ja Tähtiponi
@@ -903,8 +924,9 @@ function updatePasture(dt) {
       gp.qz = Math.max(0, Math.sin(Math.PI * (1 - Math.max(0, gp.qjump) / gp.qjumpD))) * gp.qjumpH;
       if (gp.qjump <= 0) gp.qz = 0;
     }
-    if (!gr.done && pasRound) {
-      var pos = pasPathAt(gr.path, pasRound.t);
+    if (gr.solo && !gr.done) gr.t += dt;
+    if (!gr.done && (pasRound || (gr.solo && gr.t >= 0))) {
+      var pos = pasPathAt(gr.path, gr.solo ? gr.t : pasRound.t);
       gp.qx = pos.x; gp.qy = pos.y;
       var mv = Math.sqrt((gp.qx - x0) * (gp.qx - x0) + (gp.qy - y0) * (gp.qy - y0));
       gp.qsp += ((mv / Math.max(dt, 0.001)) / h - gp.qsp) * Math.min(1, dt * 6);
@@ -920,7 +942,7 @@ function updatePasture(dt) {
         stabNeigh(gp, 0);
         spawnSparkles(gp.qx, gp.qy - h * 0.12, 16, '#fff2a0');
       }
-    } else {
+    } else if (gr.done) {
       gp.qsp = Math.max(0, gp.qsp - dt * 2);
       if (gr.lost) gr.wait -= dt;
       else if (!pasRound) gr.wait -= dt;
@@ -968,7 +990,13 @@ function pasUpdatePony(p, dt) {
   if (p.qjump > 0) {
     p.qjump -= dt;
     p.qz = Math.max(0, Math.sin(Math.PI * (1 - Math.max(0, p.qjump) / p.qjumpD))) * p.qjumpH;
-    if (p.qjump <= 0) p.qz = 0;
+    if (p.qjump <= 0) {
+      p.qz = 0;
+      if (p.qx > pasCam - h * 0.2 && p.qx < pasCam + viewW + h * 0.2) {
+        spawnDust(p.qx, p.qy, p === pasRider ? 6 : 3, 0);
+        stabClop(0, p !== pasRider);
+      }
+    }
   } else if (p.qz > 0) {
     p.qz = Math.max(0, p.qz - h * 0.6 * dt);
   }
@@ -1261,6 +1289,9 @@ function pasUpdateCam(dt) {
     else if (d.gx > viewW * 0.92) pasCam += viewH * 0.6 * dt;
   } else if (d && d.pas === 'pan') {
     // pasMove hoitaa
+  } else if (pasGhostRun && pasGhostRun.solo && !pasGhostRun.done && !d && pasCamGoal < 0) {
+    goal = pasGhostRun.g.qx - viewW * 0.5;
+    pasCam += (goal - pasCam) * Math.min(1, dt * 3);
   } else if (pasCamGoal >= 0) {
     pasCam += (pasCamGoal - pasCam) * Math.min(1, dt * 3);
     if (Math.abs(pasCamGoal - pasCam) < 2) pasCamGoal = -1;
@@ -1277,9 +1308,10 @@ function pasPonyHit(p, wx, py) {
   var s = pasPonySize(p, p.qy), y = p.qy - p.qz;
   return Math.abs(wx - p.qx - p.qdir * s * 0.15) < s * 0.95 && py < y + s * 0.15 && py > y - s * 1.8;
 }
+// Ratsastajan osuma: vain prinsessa (ponista painaminen ohjaa, ei pudota selästä)
 function pasRiderHit(wx, py) {
-  var p = pasRider, s = pasPonySize(p, p.qy), y = p.qy - p.qz;
-  return Math.abs(wx - p.qx) < s * 0.9 && py < y + s * 0.1 && py > y - s * 2.5;
+  var seat = pasRiderSeat(pasRider), s = seat.s;
+  return Math.abs(wx - seat.x) < s * 0.42 && py > seat.y - s * 1.2 && py < seat.y + s * 0.05;
 }
 function pasPrinHit(wx, py) {
   var pr = pasPrin, k = pasK(pr.y);
@@ -1326,7 +1358,12 @@ function pasTap(px, py) {
   var base = { gx: px, gy: py, sx: px, sy: py, moved: false, t0: globalT };
   if (pasRider && pasRiderHit(wx, py)) { base.pas = 'rider'; homeDrag = base; return; }
   var tap = pasSceneryAt(wx, py, px);
-  if (pasRider) { base.pas = 'steer'; base.tap = tap; homeDrag = base; return; }
+  if (pasRider) {
+    if (pasPonyHit(pasRider, wx, py)) tap = pasRiderTap;
+    base.pas = 'steer'; base.tap = tap; homeDrag = base;
+    pasIdleT = 0;
+    return;
+  }
   if (pasPrinHit(wx, py)) { base.pas = 'prin'; homeDrag = base; playNote(988, 0, 0.05, 'sine', 0.15); return; }
   for (i = pasApples.length - 1; i >= 0; i--) {
     var ap = pasApples[i];
@@ -1411,7 +1448,7 @@ function pasMove(px, py) {
     d.lt = now;
   } else if (d.pas === 'rider') {
     var dx = px - d.sx, dy = py - d.sy;
-    if (dx * dx + dy * dy > viewH * viewH * 0.008) {
+    if (dx * dx + dy * dy > viewH * viewH * 0.012) {
       // Raahaus ratsastajasta: prinsessa nousee pois ja kulkee sormessa
       pasDismount(px + pasCam, py + viewH * 0.1);
       pasPrin.mode = 'held';
@@ -1704,9 +1741,18 @@ function pasMudTap(wx, py) {
   playNote(160, 0.1, 0.1, 'triangle', 0.12);
   spawnSparkles(wx, py - viewH * 0.01, 5, '#8a6038');
 }
+// Tähtiponin napautus: se ratsastaa radan yksin näytökseksi (liput syttyvät järjestyksessä)
 function pasStarPonyTap() {
-  var sp = pasStarPonyIdlePos();
+  var sp = pasStarPonyIdlePos(), path = pasGhostPath(), g = { k: 'pony', c: 0, m: 0, u: 1, ph: 0 };
   pasInviteT = 0;
+  if (!pasRound && !pasGhostRun) {
+    var p0 = pasPathAt(path, 0);
+    pasPonyInit(g, p0.x, p0.y);
+    g.qdir = sp.dir;
+    g.qst = 'ghost';
+    pasGhostRun = { path: path, total: pasPathTotal(path), g: g, done: false, wait: 0, solo: true, t: -0.6, next: 1 };
+    stabNeigh(g, 0.1);
+  }
   spawnSparkles(sp.x, sp.y - viewH * 0.1, 14, '#fff2a0');
   playNote(1319, 0, 0.1, 'sine', 0.18);
   playNote(1760, 0.1, 0.1, 'sine', 0.18);
@@ -1893,6 +1939,7 @@ function drawPasture() {
   pasDrawCloud(c);
   for (i = 0; i < pasButterflies.length; i++) pasDrawButterfly(c, pasButterflies[i]);
   pasDrawFxWorld(c);
+  if (pasRider && pasIdleT > 3 && !pasRound && !pasRecord) pasDrawSteerHint(c);
   // Sormessa kulkevat: poni, prinsessa, omena
   var d = homeDrag;
   if (d && d.pas === 'pony') pasDrawPony(c, d.pony);
@@ -2208,14 +2255,20 @@ function pasDrawArch(c, ob, bx, by, fx, fy, kb, kf) {
   if (finish) artGlow(c, ob.x, ob.y - h * 0.1, h * 0.3, '#fff2a0', 0.45 + Math.sin(globalT * 6) * 0.2);
   // Ennätystaulu takapylvään vieressä
   pasDrawRecordBoard(c, bx + h * 0.1, by - h * 0.005, kb);
-  // Kaari: sateenkaaren värit takapylväältä etupylväälle
-  var mx = (bx + fx) / 2 + h * 0.02, my = Math.min(by - hb, fy - hf) - h * 0.1;
-  c.lineCap = 'round';
-  for (i = 0; i < 5; i++) {
-    c.strokeStyle = PAS_FLAG[i];
-    c.lineWidth = h * 0.011;
-    var off = (i - 2) * h * 0.01;
-    c.beginPath(); c.moveTo(bx + off * 0.5, by - hb + off); c.quadraticCurveTo(mx + off, my + off, fx + off * 0.5, fy - hf + off); c.stroke();
+  // Lippunauha pylväiden latvojen välillä (riippuu perspektiivissä)
+  var tx0 = bx, ty0 = by - hb, tx1 = fx, ty1 = fy - hf, mx = (tx0 + tx1) / 2, my = (ty0 + ty1) / 2 + h * 0.035;
+  c.strokeStyle = '#8a7a9a';
+  c.lineWidth = Math.max(1.5, h * 0.003);
+  c.beginPath(); c.moveTo(tx0, ty0); c.quadraticCurveTo(mx, my, tx1, ty1); c.stroke();
+  var np = 7, sway = Math.sin(globalT * 3) * h * 0.003;
+  for (i = 0; i < np; i++) {
+    var ta = (i + 0.15) / np, tb2 = (i + 0.85) / np, tm = (ta + tb2) / 2;
+    var ax = (1 - ta) * (1 - ta) * tx0 + 2 * (1 - ta) * ta * mx + ta * ta * tx1, ay = (1 - ta) * (1 - ta) * ty0 + 2 * (1 - ta) * ta * my + ta * ta * ty1;
+    var bxp = (1 - tb2) * (1 - tb2) * tx0 + 2 * (1 - tb2) * tb2 * mx + tb2 * tb2 * tx1, byp = (1 - tb2) * (1 - tb2) * ty0 + 2 * (1 - tb2) * tb2 * my + tb2 * tb2 * ty1;
+    var cxp = (1 - tm) * (1 - tm) * tx0 + 2 * (1 - tm) * tm * mx + tm * tm * tx1, cyp = (1 - tm) * (1 - tm) * ty0 + 2 * (1 - tm) * tm * my + tm * tm * ty1;
+    var pl = h * 0.03 * pasK(cyp + h * 0.1);
+    c.fillStyle = PAS_FLAG[i % PAS_FLAG.length];
+    c.beginPath(); c.moveTo(ax, ay); c.lineTo(bxp, byp); c.lineTo(cxp + sway, cyp + pl); c.closePath(); c.fill();
   }
   // Ilmapallopylväät
   var cols = ['#ff7bac', '#ffd24f', '#5fa8ff', '#6fd66f', '#c9a0ff'];
@@ -2237,7 +2290,7 @@ function pasDrawArch(c, ob, bx, by, fx, fy, kb, kf) {
     }
   }
   // Vihje: kaaren läpi alkaa kierros (ratsastaessa ennen ensimmäistä kierrosta)
-  if (pasRider && !pasRound && !pasRecord) drawHintArrow(c, mx, my - h * 0.04);
+  if (pasRider && !pasRound && !pasRecord) drawHintArrow(c, (bx + fx) / 2, Math.min(ty0, ty1) - h * 0.1);
 }
 function pasDrawRecordBoard(c, x, y, k) {
   var h = viewH, w = h * 0.11 * k, bh = h * 0.07 * k, top = y - h * 0.09 * k - bh;
@@ -2414,6 +2467,7 @@ function pasDrawPrinFoot(c) {
   if (!pasRode) {
     artGlow(c, pr.x, pr.y - viewH * 0.09 * k, viewH * 0.12, '#fff2a0', 0.3 + Math.sin(globalT * 4) * 0.12);
     drawHintArrow(c, pr.x, pr.y - viewH * 0.26 * k);
+    pasDrawMountHint(c);
   }
   drawPrincessFree(c, pr.x, pr.y, s, pr.dir, 0, false, globalT);
   if (pr.waveT > 0) {
@@ -2422,6 +2476,48 @@ function pasDrawPrinFoot(c) {
     drawNote(c, { x: pr.x + pr.dir * s * 14, y: pr.y - s * 40, age: 0, life: 1, c: 1 });
     c.globalAlpha = 1;
   }
+}
+// Ensikertalaisen vihje: katkoviivakaari prinsessasta lähimmän ponin selkään
+function pasDrawMountHint(c) {
+  var pr = pasPrin, i, p, best = null, bd = 1e9, h = viewH;
+  if (homeDrag) return;
+  for (i = 0; i < stabPonies.length; i++) {
+    p = stabPonies[i];
+    if (p.k !== 'pony' || p.qst === 'wait' || p.qst === 'roll') continue;
+    var dd = Math.abs(p.qx - pr.x) + Math.abs(p.qy - pr.y);
+    if (dd < bd) { bd = dd; best = p; }
+  }
+  if (!best || bd > viewW) return;
+  var s = pasPonySize(best, best.qy), x0 = pr.x, y0 = pr.y - h * 0.12 * pasK(pr.y), x1 = best.qx, y1 = best.qy - best.qz - s * 1.15;
+  var mx = (x0 + x1) / 2, my = Math.min(y0, y1) - h * 0.12, ph = (globalT * 0.8) % 1;
+  c.save();
+  c.strokeStyle = 'rgba(255,255,255,0.85)';
+  c.lineWidth = Math.max(2, h * 0.006);
+  c.lineCap = 'round';
+  if (c.setLineDash) { c.setLineDash([h * 0.012, h * 0.016]); c.lineDashOffset = -globalT * h * 0.05; }
+  c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo(mx, my, x1, y1); c.stroke();
+  if (c.setLineDash) c.setLineDash([]);
+  c.restore();
+  // Kulkeva pikkukruunu kaarella ja satula perillä
+  var t = ph, qx = (1 - t) * (1 - t) * x0 + 2 * (1 - t) * t * mx + t * t * x1, qy = (1 - t) * (1 - t) * y0 + 2 * (1 - t) * t * my + t * t * y1;
+  artCircle(c, qx, qy, h * 0.012, '#ffd24f', { lineColor: '#d98a00', line: 1 });
+  artGlow(c, x1, y1, s * 0.5, '#fff2a0', 0.5 + Math.sin(globalT * 6) * 0.2);
+}
+// Ohjausvihje: ratsastaja seisoo, eikä kierrosta ole ajettu — sormi ja renkaat kaaren suuntaan
+function pasDrawSteerHint(c) {
+  var r = pasRider, a = pasObs(0), h = viewH, dir = a.x >= r.qx ? 1 : -1;
+  var x = r.qx + dir * h * 0.42, y = pasClampY(r.qy + (a.y - r.qy) * 0.4), k = (globalT * 1.2) % 1, i;
+  for (i = 0; i < 2; i++) {
+    var kk = (k + i * 0.5) % 1;
+    c.strokeStyle = 'rgba(255,255,255,' + (0.8 * (1 - kk)) + ')';
+    c.lineWidth = Math.max(2, h * 0.005);
+    c.beginPath();
+    if (c.ellipse) c.ellipse(x, y, h * (0.02 + kk * 0.06), h * (0.008 + kk * 0.024), 0, 0, Math.PI * 2); else c.arc(x, y, h * 0.04 * kk, 0, Math.PI * 2);
+    c.stroke();
+  }
+  // Painava käsi (sormet alaspäin renkaiden keskelle)
+  var hs = h * 0.032, press = Math.abs(Math.sin(globalT * 3)) * h * 0.012;
+  drawHand(c, x, y - hs * 0.95 - h * 0.012 + press, hs);
 }
 function pasDrawPrinHeld(c) {
   var pr = pasPrin, k = pasK(pasClampY(pr.y)), s = viewH * 0.0029 * k;
