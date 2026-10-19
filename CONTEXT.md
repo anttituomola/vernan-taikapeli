@@ -199,6 +199,26 @@ kasvaa poniksi kolmessa päivässä; kultaisesta ruusukkeesta syntyy
 yksisarvisvarsa. Ponit ovat eläimiä, eivät tavaroita.
 _Vältä_: hevostalli, karsina (= olkipesä tallin sisällä), ruusukkeet valuuttana
 
+**Laidun**:
+Ponitallin takaportin takana oleva leveä niitty, jota vieritetään. Tallin ponit
+ovat samoja eläimiä: ne laukkaavat portista laitumelle. Prinsessa raahataan
+ponin selkään, ja **ratsastus** ohjataan sormella (käynti, ravi, laukka
+etäisyyden mukaan); laukka kokoaa **lauman** perään. Laitumella on **esterata**.
+_Vältä_: hevoslaidun yksinään kenttänä, niitty (= taustan ruoho), tarha
+
+**Esterata**:
+Laitumen lähtö- ja maalikaari sekä viisi numeroitua estettä sateenkaaren
+väreissä. **Kierros** alkaa kaaren läpi, esteet hypätään järjestyksessä 1–5
+ja palataan kaaren läpi. Kierroksesta poni saa ruusukkeen suitsiinsa ja
+tallin ruusuketaululle. Esteitä voi raahata uusiin paikkoihin (uusi rata).
+_Vältä_: kilparata, rata yksinään (rata = esteiden asettelu)
+
+**Tähtiponi**:
+Hohtava haamuponi, joka ratsastaa kierroksen samaan aikaan kuin ratsastaja:
+ennen ensimmäistä voittoa rauhallisen esimerkkikierroksen, sen jälkeen
+**ennätyksen** reitin. Tähtiponin voittaminen on uusi ennätys.
+_Vältä_: haamu, kummitus, vastustaja
+
 ### Hahmot
 
 **Prinsessa**:
@@ -257,6 +277,6 @@ Kaari:
 
 **Linna kasvaa**: maailmojen vartijat avaavat linnaan huoneita. Sali aukeaa
 Linnasaaresta, keittiö Karkkisaaresta, torni Kuutamosaaresta, puutarha
-Hoivasaaresta, pankkiholvi Vuorisaaresta, ponitalli Tivolisaaresta ja
+Hoivasaaresta, pankkiholvi Vuorisaaresta, ponitalli ja laidun Tivolisaaresta ja
 kanatarha Maalaiskylästä. Vanha tallennus (ennen tarinaa) pitää kaikki
 huoneet auki.

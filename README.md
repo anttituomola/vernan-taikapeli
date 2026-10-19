@@ -47,6 +47,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/flow-yard.js` — linnan puutarha (kasvit, kastelu, sato, rikkaruohot, puutarhan tavarat)
 - `js/flow-coop.js` — linnan kanatarha (kanat, ruokinta, vesi, munat, hautomo, tiput, kanatarhan tavarat)
 - `js/flow-stable.js` — linnan ponitalli (ponit, heinä, vesi, harjaus, ruusukkeet, karsina, varsat, tallin tavarat)
+- `js/flow-pasture.js` — linnan hevoslaidun (vieritettävä niitty, ratsastus, lauma, esterata ja Tähtiponi, omenapuu, lampi, muta, apilat, sadepilvi)
 - `js/play-forest.js` — metsä + tehtäväkaarten perusrunko
 - `js/tasks-extra.js` — uudet tehtävätyypit (vähennys, kuvio, vertailu, rytmi)
 - `js/play-garden.js` … `play-sky.js` — vaiheet 2–5
@@ -1278,6 +1279,66 @@ naukuu), tallikello (ponit ravaavat kellon luo) ja pokaali (fanfaari; laatassa
 ruusukkeiden kokonaismäärä). Tallennus progress.js:n `stable`-kentässä.
 Testaus: `VT.stable()` näyttää tilan ja `VT.stableSkip(n)` kelaa tallin
 kelloa n päivää eteenpäin.
+
+**Hevoslaidun:** linnan kahdeksas huone (`js/flow-pasture.js`,
+`PASTURE_ROOM = 7`) on tallin toisen portin (aidattu niitty -kyltti) takana ja
+avautuu tallin kanssa (Tivolisaari). Linnakartalla laidun on kaukaisella
+kukkulalla tallin ja linnan välissä, ja sen pienoiskuvassa tallin ponit
+laukkaavat. Laidun on oma kolmen ruudun levyinen näkymä ilman kauppaa:
+niittyä vieritetään raahaamalla (heitto liukuu), ja kantaessa ruudun reuna
+vierittää. Tausta on kolmessa kerroksessa (vuoret ja oma linna 0,25×,
+puurivi ja talli 0,6×, niittylaatta 1×). **Sisääntulo:** tallin ponit
+laukkaavat portista laitumelle yksi kerrallaan ja potkivat ilosta; aamun muta
+ja varsojen kasvu lasketaan kuten tallissa (`stabMorning`). **Ratsastus:**
+prinsessa seisoo portin luona (ensimmäisellä kerralla nuoli ja katkoviivakaari
+lähimmän ponin selkään). Prinsessa raahataan ponin päälle (ponit hehkuvat
+kohteina) tai poni raahataan prinsessan viereen, ja prinsessa hyppää selkään.
+Selässä sormi pohjassa niityllä ohjaa: poni menee sormea kohti, lähellä
+käynnissä, kauempana ravissa ja kaukana laukassa (kamera seuraa ja katsoo
+eteenpäin). Laukka soittaa ratsastuslaulua askel kerrallaan, ja vapaat ponit
+liittyvät **laumaksi** perään ja hyppäävät esteet mukana; hidastus hajottaa
+lauman. Ponista painaminen ohjaa; vain prinsessasta raahaaminen nostaa hänet
+selästä. Prinsessan napautus selässä vilkuttaa (viisi nopeaa: poni nousee
+takajaloilleen), jalan napautus vihellyttää ponit luokse. Lampi hidastaa
+kahlaukseen, mutalammikko raviin ja likaa ponin. **Esterata:** lähtökaari
+(ilmapallopylväät, lippunauha, ruutuviiva, ennätystaulu) ja esteet 1–5
+sateenkaaren väreissä: puomi, kukkalaatikko, vesioja, tukki ja kaksoispuomi.
+Esteet ovat syvyyssuuntaisia viivoja, jotka ylitetään vasemmalta oikealle tai
+päinvastoin; vauhdissa (ravi tai laukka) poni hyppää itsestään, käynnissä
+puomi putoaa ja poni kompastuu (vesiojassa se kahlaa). Kaaren läpi
+ratsastaminen aloittaa **kierroksen**: ylhäällä kello ja esteiden järjestys,
+seuraava numero hehkuu ja pomppii (näkymän ulkopuolella reunanuoli numerolla),
+väärä este pomppaa pehmeästi. Kaikkien esteiden jälkeen kaari hehkuu ja
+maalilippu heiluu; kaaren läpi = maali. **Tähtiponi** (läpikuultava
+yksisarvinen) ratsastaa samaan aikaan: ennen ensimmäistä voittoa
+esimerkkikierroksen (radasta laskettu pehmeä reitti, 0,42 viewH/s; jokainen
+häviö hidastaa sitä huomaamatta 0,03:lla, vähintään 0,30), voiton jälkeen
+oman ennätyksen reitin (näyte 0,1 s välein, `pasGhost`). Voitto: ilotulitus,
+pokaalikortti ajan kanssa ja uusi ennätys; häviö: kortti, jossa oma aika ja
+Tähtiponin aika rinnakkain. Kierroksesta poni saa **ruusukkeen suitsiinsa**
+(kerran päivässä ponia kohden, `p.cr`), ja ruusuke menee tallin
+ruusuketaululle; ennätys antaa kerran päivässä kultaisen (tähti). Kun kukaan
+ei ratsasta, esteitä raahataan uusiin paikkoihin (uusi rata nollaa ennätyksen),
+esteen napautus kilisee numeronsa verran ja sytyttää yhtä monta pistettä, ja
+Tähtiponin napautus käynnistää sen näytöskierroksen (kamera seuraa, liput
+välähtävät järjestyksessä). Ensimmäisellä ratsastuskerralla kaaren yllä on
+nuoli, ja jos ratsastaja seisoo, käsi ja renkaat näyttävät suunnan.
+**Niityllä:** omenapuu (napautus ravistaa 1–2 omenaa, 8 päivässä; ponit
+ravaavat syömään, omenan voi raahata ponin suulle; kerran päivässä kultainen
+omena = tähti; tyhjästä puusta pyrähtää lintu), lampi (renkaat, joka kolmas
+napautus sammakko hyppää lumpeelta toiselle, kala hyppää itsestään; ponit
+juovat rannalla), mutalammikko (blubb; ponit käyvät kieriskelemässä selällään
+jalat sätkien ja tulevat mutaisiksi tallin harjattaviksi; poni voi pudottaa
+mutaan), apilat (yksi päivän nelilehtinen = tähti), sadepilvi kasvoineen
+(napautus: sade ja sen jälkeen sateenkaari), perhoset (pakenevat poneja,
+varsat jahtaavat, napautus = silmukka) ja tammi (pöllö avaa silmänsä, joka
+kolmas napautus lentää kierroksen). Ponin voi nostaa (sydämiä) ja laskea
+pupun viereen (pupu ratsastaa), prinsessan viereen (ratsastus) tai mutaan;
+lähin selkään hyppääjä voittaa. Puput seuraavat prinsessaa. Portin
+napautus vie talliin. Tallennus progress.js:n `pasture`-kentässä (rata,
+ennätys ja reitti, esimerkkivauhti, päiväleimat); ponien suitsiruusukkeen
+päivä tallin `stable`-tiedoissa. Testaus: `VT.pasture()` näyttää tilan ja
+`VT.pastureSkip(n)` kelaa laitumen ja tallin kelloa.
 Oikean reunan kaupasta ostetaan huonekaluja tähdillä (hinta tähtinä kortissa)
 **raahaamalla**: tartu korttiin, vedä tavara huoneen puolelle ja päästä irti
 haluamaasi kohtaan, niin tähdet veloitetaan. Kaupan päälle palautettu tavara
