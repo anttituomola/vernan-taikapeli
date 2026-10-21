@@ -58,7 +58,7 @@ var PZZ_CHAR = 4.0;                    // vähän palaneesta hiiltyneeksi (s)
 var PZZ_SLOW = 0.45;                   // hiipuneen tulen paistonopeus
 var PZZ_FUEL_LIFE = [0, 30, 26];       // täydestä tulesta hiipuneeseen (s); 0 = ei hiivu
 var PZZ_FUEL_LOW = 0.25;               // tämän alla liekit ovat sinisiä ja pieniä
-var PZZ_PATIENCE = [0, 23, 26];        // kärsivällisyyden pohja (s) vaiheittain
+var PZZ_PATIENCE = [0, 25, 28];        // kärsivällisyyden pohja (s) vaiheittain
 var PZZ_PAT_PER = 2.0;                 // + s per täyte ja syöjäpari
 var PZZ_ARRIVE_GAP = [1.2, 2.4, 2.0];  // seuraava seurue lähdön jälkeen (s)
 var PZZ_SECOND_GAP = [0, 5, 4];        // toinen seurue ensimmäisen jälkeen (s)
@@ -649,7 +649,7 @@ function pzzPizzaPos(P) {
   if (P.where === 'oven') { s = pzzSlotPos(P.si); return { x: s.x, y: s.y }; }
   return { x: L.boards[P.bi].x, y: L.boards[P.bi].y };
 }
-function pzzDoughR(P) { return 0.34 + 0.66 * Math.min(1, P.size); }
+function pzzDoughR(P) { return 0.42 + 0.58 * Math.min(1, P.size); }
 function pzzTopR() { return pzz.L.R * 0.2; }
 function pzzSlotHit(s, px, py) {
   var p = pzzSlotPos(s), L = pzz.L;
@@ -1892,7 +1892,8 @@ function pzzDrawPizza(c, P, x, y, R, o) {
     }
     r = R * pzzDoughR(P);
     if (P.rollT > 0) c.scale(1.06, 0.94);
-    artCircle(c, 0, 0, r, PZZ_DOUGH, { lineColor: '#c8a06a', hi: Math.max(0.15, 0.5 - P.size * 0.35) });
+    artShadow(c, 0, r * 0.25, r * 1.1, r * 0.5, 0.2);
+    artCircle(c, 0, 0, r, '#fbe4b4', { lineColor: '#b0844a', hi: Math.max(0.15, 0.55 - P.size * 0.35) });
     c.fillStyle = 'rgba(255,255,255,0.7)';
     for (i = 0; i < 6; i++) { a = P.seed + i * 1.3; c.beginPath(); c.arc(Math.cos(a) * r * 0.55, Math.sin(a) * r * 0.5, r * 0.06, 0, Math.PI * 2); c.fill(); }
     c.restore();
@@ -1917,6 +1918,19 @@ function pzzDrawPizza(c, P, x, y, R, o) {
   crust = pzzCrustCol(P);
   artCircle(c, 0, 0, R, crust, { lineColor: artShade(crust, -0.45) });
   artCircle(c, 0, 0, R * 0.86, artMix(PZZ_DOUGH, crust, 0.35), { line: false, flat: true });
+  // Kastikkeen ja juuston edistyminen: kaari täyttyy pizzan ympärillä
+  if (!o.mini && P.where === 'board' && !pzzBaked(P) && (!P.sauced || !P.cheesed)) {
+    k = P.sauced ? P.cCov / PZZ_CHEESE_FULL : P.sCov / PZZ_SAUCE_FULL;
+    if (k > 0) {
+      c.lineCap = 'round';
+      c.strokeStyle = 'rgba(255,255,255,0.6)';
+      c.lineWidth = Math.max(2, R * 0.07);
+      c.beginPath(); c.arc(0, 0, R * 1.12, 0, Math.PI * 2); c.stroke();
+      c.strokeStyle = P.sauced ? '#ffc830' : '#e0442e';
+      c.lineWidth = Math.max(2, R * 0.06);
+      c.beginPath(); c.arc(0, 0, R * 1.12, -Math.PI / 2, -Math.PI / 2 + Math.min(1, k) * Math.PI * 2); c.stroke();
+    }
+  }
   if (P.ringT > 0) {
     c.strokeStyle = 'rgba(255,255,255,' + (P.ringT / 0.6) + ')';
     c.lineWidth = R * 0.08;
@@ -2722,8 +2736,13 @@ function pzzDrawTables(c) {
   }
 }
 function pzzDrawDog(c) {
-  var D = pzz.dog, L = pzz.L, u = L.u, s = u * 0.032, x, y, t = D.t, run = D.state === 'run' || D.state === 'back', wag, j, lie = D.state === 'lie' && D.trick <= 0, leg, f = D.face, roll = D.roll > 0;
+  var D = pzz.dog, L = pzz.L, u = L.u, s = u * 0.032, x, y, t, run, wag, j, lie, leg, f, roll;
   if (!D) return;
+  t = D.t;
+  run = D.state === 'run' || D.state === 'back';
+  lie = D.state === 'lie' && D.trick <= 0;
+  f = D.face;
+  roll = D.roll > 0;
   x = D.x;
   y = D.y;
   j = D.state === 'leap' ? Math.sin(Math.min(1, D.leapT / 0.8) * Math.PI) * D.leapH : 0;
@@ -3375,7 +3394,7 @@ function pzzDrawHint(c) {
   p = pzzHintPos(st, k);
   a = Math.min(1, (pzz.hintT - 0.4) * 3);
   if (p.press > 0.3) {
-    c.globalAlpha = 0.55 * a * p.press;
+    c.globalAlpha = 0.75 * a * p.press;
     if (st.kind === 'top' || st.kind === 'topOff') pzzDrawTop(c, st.type, p.x, p.y, pzzTopR(), 0);
     else if (st.kind === 'dough') artCircle(c, p.x, p.y, u * 0.03, PZZ_DOUGH, { lineColor: '#c8a06a' });
     else if (st.kind === 'log') pzzDrawLog(c, p.x, p.y, u * 0.035, 0.3);
