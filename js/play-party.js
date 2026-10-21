@@ -471,6 +471,11 @@ function prtUnits() {
 }
 function prtStProg() { return prt.st > 2 ? 1 : prtUnits() / PRT_ST_UNITS[prt.st]; }
 function prtGlobalProg() { return prtClamp((Math.min(prt.st, 3) + (prt.st > 2 ? 0 : prtStProg())) / 3, 0, 1); }
+function prtSeatedCount() {
+  var i, n = 0;
+  for (i = 0; i < prt.guests.length; i++) if (prt.guests[i].st === 'seated') n++;
+  return n;
+}
 function prtSeatedAll() {
   var i;
   for (i = 0; i < prt.guests.length; i++) if (prt.guests[i].st !== 'seated') return false;
@@ -691,6 +696,24 @@ function prtDecorTap(px, py) {
         return true;
       }
     }
+  }
+  // Tolppien tähdet pyörähtävät ja kilahtavat
+  for (i = 0; i < 2; i++) {
+    sp = i ? L.poleR : L.poleL;
+    if (Math.abs(px - sp) < H * 0.035 && py > L.barY - H * 0.05 && py < L.ground) {
+      prt.poleSpin = prt.poleSpin || [0, 0];
+      prt.poleSpin[i] = 1;
+      playNote(1568, 0, 0.12, 'sine', 0.18); playNote(2093, 0.1, 0.2, 'sine', 0.14);
+      spawnSparkles(sp, L.barY - H * 0.022, 10, '#ffe27a');
+      return true;
+    }
+  }
+  // Pöytäliina: pehmeä tömähdys ja kimallus
+  if (px > L.tableX0 && px < L.tableX1 && py > L.tableY - H * 0.01 && py < L.tableY + H * 0.11) {
+    playNote(196, 0, 0.12, 'sine', 0.2); playNote(392, 0.06, 0.1, 'triangle', 0.08);
+    spawnSparkles(px, py, 6, '#ff9ec6');
+    prt.cake.squash = 0.25;
+    return true;
   }
   return false;
 }
@@ -1155,6 +1178,7 @@ function prtUpdateLight(dt) {
   if (!Lg) return;
   Lg.t += dt;
   gs = prtGuestsBySeat();
+  if (Lg.n > ck.candles.length) { ck.light = null; return; }
   while (Lg.i < Lg.n && Lg.t >= 0.35 + Lg.i * 0.5) {
     i = Lg.i;
     ck.candles[i].lit = 1;
@@ -1314,7 +1338,7 @@ function prtUpdateGuests(dt) {
     if (g.st !== 'drag') {
       k = hideAll ? 1 : 0;
       if (g.hid < k) { if (g.hid === 0) g.hidFrom = prtGuestHome(g); g.hid = Math.min(1, g.hid + dt * 2.8); }
-      else if (g.hid > k) { if (g.hid >= 1 && !(prt.fin && prt.fin.ph === 'boom')) { g.poke = 0.5; if (i === 0) prtSfx('hihi'); } g.hid = Math.max(0, g.hid - dt * 2.4); }
+      else if (g.hid > k) { if (g.hid >= 1 && !(prt.fin && prt.fin.ph === 'boom')) { g.poke = 0.5; } g.hid = Math.max(0, g.hid - dt * 2.4); }
     }
     if (g.hid > 0) continue;
     if (g.st === 'arrive') {
@@ -1385,6 +1409,7 @@ function prtUpdateCurtain(dt) {
     artShakeStart(viewH * 0.004, 0.2);
     prtPuff(L.cx, L.curBot, 8, '#e8e0f0', { spread: 0.6, vy: -0.03, r: 0.016 });
   }
+  if (C.k <= 0.3 && k0 > 0.3 && prtWaitingCount() + prtSeatedCount() > 0) prtSfx('hihi');
   if (C.k <= 0.005 && k0 > 0.005) { playNote(660, 0, 0.08, 'triangle', 0.15); playNote(880, 0.08, 0.12, 'triangle', 0.15); }
 }
 
@@ -1498,7 +1523,7 @@ function prtPickDamage() {
   if (prt.st > 2) return null;
   if (prt.st === 0) return pen();
   if (prt.st === 1) return bal();
-  if (prt.sub === 'spark') return { kind: 'blowout', x: L.cakeX, y: prtCakeTopY() - H * 0.03 };
+  if (prt.sub === 'spark' || ck.light) return { kind: 'blowout', x: L.cakeX, y: prtCakeTopY() - H * 0.03 };
   if (prt.sub === 'candles' && ck.candles.length) return { kind: 'candle', x: L.cakeX, y: prtCakeTopY() - H * 0.03 };
   if (ck.cream > 0.3) return { kind: 'cream', x: L.cakeX, y: prtCakeTopY() };
   if (ck.layers.length) return { kind: 'layer', x: L.cakeX, y: prtCakeTopY() };
@@ -1527,6 +1552,7 @@ function prtApplyDamage(d) {
     for (i = 0; i < ck.candles.length; i++) { ck.candles[i].lit = 0; p = prtCandlePos(i, ck.candles.length); prtPuff(p.x, p.y - H * 0.05, 2, '#d8d0e8', { r: 0.008, vy: -0.08 }); }
     for (i = 0; i < prt.guests.length; i++) prt.guests[i].num = 0;
     prt.sub = 'candles';
+    ck.light = null;
     playNote(330, 0, 0.2, 'sine', 0.15);
   } else if (d.kind === 'candle') {
     c = ck.candles.length - 1;
@@ -1693,6 +1719,7 @@ function updateParty(dt) {
     }
   }
   if (prt.cake.squash > 0) prt.cake.squash -= dt;
+  if (prt.poleSpin) { prt.poleSpin[0] = Math.max(0, prt.poleSpin[0] - dt); prt.poleSpin[1] = Math.max(0, prt.poleSpin[1] - dt); }
   for (i = 0; i < prt.cake.candles.length; i++) if (prt.cake.candles[i].pop > 0) prt.cake.candles[i].pop -= dt;
   for (i = 0; i < 7; i++) if (prt.cake.rack[i].wob > 0) prt.cake.rack[i].wob -= dt;
   if (prt.cake.glow > 0) prt.cake.glow -= dt;
@@ -2660,6 +2687,8 @@ function prtDrawStrings(c) {
     c.beginPath(); c.moveTo(x0, s.y - H * 0.005); c.quadraticCurveTo(L.cx, s.y + s.sag * 2.1, x1, s.y - H * 0.005); c.stroke();
     if (S.demoT < 0) continue;
     open = prtStringOpen(si);
+    ghostT = -1;
+    for (j = S.shown; j < S.n; j++) if (S.hooks[j].type < 0) { ghostT = j; break; }
     for (j = 0; j < S.n; j++) {
       h = S.hooks[j];
       p = prtHookPos(si, j);
@@ -2685,8 +2714,9 @@ function prtDrawStrings(c) {
         prtDrawPennant(c, 0, 0, L.penW, L.penH, h.type, rot);
         c.restore();
       } else if (open) {
-        // Tyhjä koukku: haalea ääriviiva
-        c.globalAlpha = 0.5 + Math.sin(globalT * 3 + j) * 0.12;
+        // Tyhjä koukku: haalea ääriviiva, seuraava vapaa hehkuu
+        c.globalAlpha = j === ghostT ? 0.75 + Math.sin(globalT * 5) * 0.25 : 0.4;
+        if (j === ghostT) artGlow(c, p.x, p.y + L.penH * 0.4, L.penW * 0.9, '#ffffff', 0.35);
         c.setLineDash([H * 0.008, H * 0.006]);
         c.strokeStyle = '#ffffff';
         c.lineWidth = Math.max(1.2, H * 0.003);
@@ -3149,7 +3179,7 @@ function prtDrawPoles(c) {
     c.strokeStyle = '#ff9ec6';
     c.lineWidth = Math.max(1.5, H * 0.004);
     for (j = 0; j < 9; j++) { c.beginPath(); c.moveTo(x - H * 0.007, L.barY + H * 0.03 + j * H * 0.062); c.lineTo(x + H * 0.007, L.barY + H * 0.05 + j * H * 0.062); c.stroke(); }
-    drawStar(c, x, L.barY - H * 0.022, H * 0.014, Math.sin(globalT + i) * 0.2, 0.2);
+    drawStar(c, x, L.barY - H * 0.022, H * 0.014 * (1 + (prt.poleSpin && prt.poleSpin[i] > 0 ? prt.poleSpin[i] * 0.4 : 0)), Math.sin(globalT + i) * 0.2 + (prt.poleSpin && prt.poleSpin[i] > 0 ? (1 - prt.poleSpin[i]) * Math.PI * 2 : 0), 0.2);
   }
 }
 function prtDrawRope(c) {
