@@ -512,8 +512,8 @@ function cstFigUpdate(fig, dt) {
     g = L.gal[fig.gi];
     k = easeInOutSine(Math.min(1, fig.paradeT / 1.2));
     m = fig.sh.move(fig.paradeT, k);
-    fig.x = g.x + (sl.x - g.x) * k + m.x * H * 0.7;
-    fig.y = g.y + (sl.y - g.y) * k + m.y * H * 0.7;
+    fig.x = g.x + (sl.x - g.x) * k + m.x * H * 0.35;
+    fig.y = g.y + (sl.y - g.y) * k + m.y * H * 0.5;
     fig.rot = m.rot * 0.8;
     fig.sc = (L.galS + (sl.S - L.galS) * k) / fig.S;
     fig.k = 1;
@@ -542,7 +542,7 @@ function cstStage() {
 }
 function cstParadeSpot(i) {
   var W = viewW, H = viewH, n = Math.max(1, cst.gallery.length);
-  var x0 = Math.max(W * 0.3, H * 0.42), x1 = W - H * 0.17;
+  var x0 = Math.max(W * 0.3, H * 0.45), x1 = W - H * 0.22;
   return { x: x0 + (x1 - x0) * (n === 1 ? 0.5 : i / (n - 1)), y: H * (i % 2 ? 0.47 : 0.3), S: H * 0.12 };
 }
 // Pisteen i paikallinen sijainti (normalisoitu, animaatio mukana)
