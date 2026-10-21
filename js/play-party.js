@@ -46,7 +46,7 @@
 var PRT_WARN = [1.8, 1.3];           // varoitus (s): kentän alussa -> lopussa
 var PRT_WARN_FIRST = 2.8;            // ensimmäinen kurkistus: hidas, haamukäsi näyttää narun
 var PRT_GRACE = 0.2;                 // silmät aukeavat ennen kuin pilvi näkee (s)
-var PRT_LOOK = 2.6;                  // tuijotus (s)
+var PRT_LOOK = 3.0;                  // tuijotus (s)
 var PRT_MUTTER = 1.0;                // mutina, katsoo yhä (s)
 var PRT_SINK = 0.9;                  // laskeutuminen (s)
 var PRT_PEEKS = [2, 3];              // kurkistuksia asemaa kohden
@@ -55,12 +55,12 @@ var PRT_PEEK_TO = 0.9;               // ... (osuus aseman tehtävistä)
 var PRT_PEEK_DELAY = [0.6, 3.2];     // viive kynnyksen ylityksestä (s)
 var PRT_PEEK_GAP = 6;                // vähimmäisväli kurkistusten välillä (s)
 var PRT_COVER = 0.96;                // verho lasketaan alhaalla olevaksi
-var PRT_PUMP_T = 3.0;                // tyhjästä poksahdukseen jatkuvalla pumppauksella (s)
+var PRT_PUMP_T = 3.4;                // tyhjästä poksahdukseen jatkuvalla pumppauksella (s)
 var PRT_PUMP_WIN = 0.5;              // oikean koon ikkuna (s)
 var PRT_PUMP_EXP = 1.6;              // kasvun kiihtyminen (säde ~ p^1,6)
 var PRT_LEAK = 0.2;                  // vuoto, kun ei pumpata (p/s)
 var PRT_BAL_R = [0.03, 0.043, 0.056];   // ilmapallojen koot (× viewH)
-var PRT_CREAM_LEN = 2.6;             // kerman hankausmatka (× viewH)
+var PRT_CREAM_LEN = 3.2;             // kerman hankausmatka (× viewH)
 var PRT_GUESTS = [4, 6];             // vieraita (arvotaan)
 var PRT_HOOKS = 8;                   // tyhjiä koukkuja narua kohden
 var PRT_HINT_IDLE = 7;               // vihjekäsi toimettomuuden jälkeen (s)
@@ -181,16 +181,16 @@ function prtLayout() {
   L.str = [{ y: H * 0.338, sag: H * 0.024 }, { y: H * 0.41, sag: H * 0.024 }];
   L.strX0 = L.poleL + H * 0.045;
   L.strX1 = L.poleR - H * 0.045;
-  L.penH = H * 0.05;
-  L.penW = Math.min(H * 0.056, (L.strX1 - L.strX0) / 14 * 0.78);
+  L.penH = H * 0.058;
+  L.penW = Math.min(H * 0.064, (L.strX1 - L.strX0) / 14 * 0.8);
   L.tableY = H * 0.705;
   L.tableX0 = Math.max(H * 0.16, L.cx - H * 0.47);
   L.tableX1 = Math.min(L.poleR - H * 0.06, L.cx + H * 0.47);
   L.cakeX = L.cx;
   L.standY = L.tableY - H * 0.03;
-  L.layerW = H * 0.15;
-  L.layerH = H * 0.018;
-  L.guestR = H * 0.034;
+  L.layerW = H * 0.17;
+  L.layerH = H * 0.02;
+  L.guestR = H * 0.041;
   // Ilmapallotolpat: keskimmäinen korkea (pallo kakun yllä)
   sp = Math.min(H * 0.25, (L.poleR - L.poleL) * 0.2);
   L.posts = [];
@@ -224,8 +224,8 @@ function prtLayout() {
     { x: W - H * 0.21, w: H * 0.24, top: H * 0.885 }
   ];
   L.prin = { x: H * 0.09, y: H * 0.985 };
-  L.cannon = { x: L.cx - H * 0.12, y: H * 0.985 };
-  L.witchLand = { x: Math.min(L.cx + H * 0.33, L.poleR - H * 0.14), y: H * 0.6 };
+  L.cannon = { x: (L.rocks[0].x + L.rocks[0].w * 0.5 + L.rocks[1].x - L.rocks[1].w * 0.5) / 2, y: H * 0.985 };
+  L.witchLand = { x: L.cx + H * 0.015, y: H * 0.47 };
   L.summit = { x: W * 0.8, y: H * 0.08 };
   // Harjanteen ääriviiva (pilvi kurkkii sen takaa)
   L.ridge = [];
@@ -253,8 +253,8 @@ function prtSeatPos(i) {
   else off = prtSeat0() + (i - nl) * prtSeatSp();
   return { x: L.cx + off * viewH, y: L.tableY + viewH * 0.018 };
 }
-function prtSeat0() { return 0.15; }
-function prtSeatSp() { return prt.seats.length >= 6 ? 0.112 : 0.13; }
+function prtSeat0() { return 0.165; }
+function prtSeatSp() { return prt.seats.length >= 6 ? 0.125 : 0.14; }
 function prtCakeTopY(n) { return prt.L.standY - (n === undefined ? prt.cake.layers.length : n) * prt.L.layerH; }
 
 // ---------- Alustus ----------
@@ -497,7 +497,7 @@ function handlePartyTap(px, py) {
   if (!running || celebrating || !L) return;
   prtAct();
   if (prt.drag) return;
-  if (prt.st === 3) { prtFinTap(px, py); return; }
+  if (prt.st === 3 && prt.fin && prt.fin.ph !== 'wait') { prtFinTap(px, py); return; }
   if (prtRopeHit(px, py) && !prtCloudBusy()) {
     prt.drag = { kind: 'rope', x: px, y: py, y0: py, k0: prt.cur.k, moved: 0 };
     prtSfx('grab');
@@ -752,18 +752,26 @@ function prtUpdateDrag(dt) {
       return;
     }
     tx = lastPX;
-    ty = lastPY;
-    if (d.kind === 'pen') ty -= H * 0.035;
-    if (d.kind === 'guest') ty += H * 0.03;
-    if (d.kind === 'layer') { ty += H * 0.01; d.sc += (prtLayerScaleAt(tx, ty) - d.sc) * Math.min(1, dt * 10); }
-    if (d.kind === 'match' || d.kind === 'spark') ty -= H * 0.02;
+    ty = lastPY + prtDragOffY(d);
+    if (d.kind === 'layer') d.sc += (prtLayerScaleAt(tx, ty) - d.sc) * Math.min(1, dt * 10);
     d.x += (tx - d.x) * k;
     d.y += (ty - d.y) * k;
     if (d.lx !== undefined) { d.moved += Math.hypot(lastPX - d.lx, lastPY - d.ly); d.lx = lastPX; d.ly = lastPY; }
     return;
   }
   prt.drag = null;
+  // Pudotus sormen viimeiseen kohtaan (nopea heilautus ei jää jälkeen)
+  if (d.lx !== undefined) d.moved += Math.hypot(lastPX - d.lx, lastPY - d.ly);
+  if (d.kind !== 'rope' && d.kind !== 'pump' && d.kind !== 'rub' && !(d.kind === 'guest' && d.moved < viewH * 0.02)) { d.x = lastPX; d.y = lastPY + prtDragOffY(d); }
   prtDrop(d, lastPX, lastPY);
+}
+function prtDragOffY(d) {
+  var H = viewH;
+  if (d.kind === 'pen') return -H * 0.035;
+  if (d.kind === 'guest') return H * 0.03;
+  if (d.kind === 'layer') return H * 0.01;
+  if (d.kind === 'match' || d.kind === 'spark') return -H * 0.02;
+  return 0;
 }
 function prtLayerScaleAt(x, y) {
   var L = prt.L, dd = Math.hypot(x - L.cakeX, y - prtCakeTopY());
@@ -792,8 +800,10 @@ function prtOverCake(px, py) {
 function prtDrop(d, px, py) {
   var L = prt.L, H = viewH, i, j, S, best, bd, dd, p, ck = prt.cake, g;
   if (d.kind === 'rope') {
-    if (d.k0 > 0.5) prt.cur.goal = prt.cur.k < 0.8 ? 0 : 1;
-    else prt.cur.goal = prt.cur.k > 0.2 ? 1 : 0;
+    prt.cur.kd = prtClamp(d.k0 + (py - d.y0) / (L.handDown - L.handUp), 0, 1);
+    d.moved = Math.max(d.moved, Math.abs(py - d.y0));
+    if (d.k0 > 0.5) prt.cur.goal = prt.cur.kd < 0.8 ? 0 : 1;
+    else prt.cur.goal = prt.cur.kd > 0.2 ? 1 : 0;
     if (d.moved < H * 0.01) {
       // Pelkkä napautus: naru nykäisee (ei vaihda tilaa)
       prt.cur.thump = 0.25;
@@ -1236,9 +1246,9 @@ function prtSpawnGuest() {
   for (i = 0; i < prt.guests.length; i++) {
     g = prt.guests[i];
     if (g.st !== 'off') continue;
+    g.q = prtQueueFree(0) ? 0 : 1;
     g.st = 'arrive';
     g.t = 0;
-    g.q = prtWaitingCount() > 1 ? 1 : (prtQueueFree(0) ? 0 : 1);
     g.ax = L.W + H * 0.12;
     g.ay = g.kind === 'eagle' || g.kind === 'owl' ? H * 0.4 : L.wait[g.q].y;
     g.x = g.ax;
@@ -1457,6 +1467,7 @@ function prtPickDamage() {
     p = prtPostBalloon(i);
     return { kind: 'bal', i: i, x: p.x, y: p.y };
   }
+  if (prt.st > 2) return null;
   if (prt.st === 0) return pen();
   if (prt.st === 1) return bal();
   if (prt.sub === 'spark') return { kind: 'blowout', x: L.cakeX, y: prtCakeTopY() - H * 0.03 };
@@ -1514,7 +1525,7 @@ function prtApplyDamage(d) {
 function prtFinTap(px, py) {
   var F = prt.fin, L = prt.L, H = viewH, w;
   if (!F) return;
-  if (F.ph === 'ready' && Math.hypot(px - L.cannon.x, py - (L.cannon.y - H * 0.07)) < H * 0.1) { prtBoom(); return; }
+  if (F.ph === 'ready' && Math.hypot(px - L.cannon.x, py - (L.cannon.y - H * 0.09)) < H * 0.13) { prtBoom(); return; }
   w = prtWitchPos();
   if (w && Math.hypot(px - w.x, py - w.y) < H * 0.09) {
     F.wPoke = 0.8;
@@ -1538,10 +1549,10 @@ function prtBoom() {
   playNote(131, 0, 0.3, 'sawtooth', 0.12);
   for (i = 0; i < 3; i++) playNote([523, 659, 784][i], 0.15 + i * 0.32, 0.28, 'triangle', 0.3);
   for (i = 0; i < 3; i++) playNote([1047, 1319, 1568][i], 0.15 + i * 0.32, 0.22, 'sine', 0.14);
-  prtBits(L.cannon.x + H * 0.04, L.cannon.y - H * 0.15, 90, { a0: -1.2, spread: 1.4, sp: 1.6, s: 0.014 });
-  prtBits(L.cannon.x + H * 0.04, L.cannon.y - H * 0.15, 30, { a0: -1.2, spread: 1.0, sp: 1.4, star: true, cols: ['#ffe27a', '#fff6c0'] });
+  prtBits(L.cannon.x + H * 0.1, L.cannon.y - H * 0.2, 90, { a0: -1.2, spread: 1.4, sp: 1.6, s: 0.014 });
+  prtBits(L.cannon.x + H * 0.1, L.cannon.y - H * 0.2, 30, { a0: -1.2, spread: 1.0, sp: 1.4, star: true, cols: ['#ffe27a', '#fff6c0'] });
   artShakeStart(H * 0.01, 0.35);
-  artPop(L.cannon.x + H * 0.05, L.cannon.y - H * 0.15, H * 0.1, '#ffffff', 'burst');
+  artPop(L.cannon.x + H * 0.1, L.cannon.y - H * 0.2, H * 0.12, '#ffffff', 'burst');
 }
 function prtWitchPos() {
   var F = prt.fin, L = prt.L, H = viewH, k, x, y, s0;
@@ -1570,7 +1581,7 @@ function prtUpdateFin(dt) {
   if (F.wPoke > 0) F.wPoke -= dt;
   if (F.ph === 'wait') {
     // Odotetaan, että siirtymä on ohi ja verho ylhäällä
-    if (prt.trans <= 0 && prt.cur.k <= 0.01 && !prt.drag) { F.ph = 'hide'; F.t = 0; F.hide = true; playNote(659, 0, 0.12, 'triangle', 0.18); playNote(523, 0.15, 0.2, 'triangle', 0.18); }
+    if (prt.trans <= 0 && prt.cur.k <= 0.01 && !prt.drag && prt.cloud.st === 'off') { F.ph = 'hide'; F.t = 0; F.hide = true; playNote(659, 0, 0.12, 'triangle', 0.18); playNote(523, 0.15, 0.2, 'triangle', 0.18); }
   } else if (F.ph === 'hide') {
     if (F.t > 1.4) { F.ph = 'fly'; F.t = 0; prtSfx('whoosh'); }
   } else if (F.ph === 'fly') {
@@ -1735,14 +1746,14 @@ function prtUpdateFx(dt) {
 function prtNextStep() {
   var L = prt.L, H = viewH, cl = prt.cloud, h, i, g, S, si, j, t, types, b, p, ck = prt.cake, pu = prt.pump, n, G;
   if (!L || celebrating) return null;
-  if (prt.st === 3) {
-    if (prt.fin && prt.fin.ph === 'ready') return { kind: 'cannon', from: { x: L.cannon.x, y: L.cannon.y - H * 0.08 } };
-    return null;
-  }
   h = prtHandPos();
   if ((cl.st === 'warn' || prtWatching()) && !prtCovered()) return { kind: 'ropeDown', from: { x: h.x, y: h.y }, to: { x: L.ropeX, y: L.handDown + H * 0.02 } };
   if (prt.cur.k > 0.03) {
     if (cl.st === 'off' || cl.st === 'sink') return { kind: 'ropeUp', from: { x: h.x, y: h.y }, to: { x: L.ropeX, y: L.handUp - H * 0.04 } };
+    return null;
+  }
+  if (prt.st === 3) {
+    if (prt.fin && prt.fin.ph === 'ready') return { kind: 'cannon', from: { x: L.cannon.x, y: L.cannon.y - H * 0.1 } };
     return null;
   }
   if (prtCloudBusy() || prt.trans > 0 || ck.light) return null;
@@ -1884,9 +1895,9 @@ function prtSetupProps() {
       for (i = 0; i < 6; i++) playNote(1047 - i * 90, i * 0.2, 0.08, 'sine', 0.08);
     }
   });
-  x = R[0].x + R[0].w * 0.5 + H * 0.055;
+  x = R[0].x - R[0].w * 0.12;
   propAdd({
-    x: x, y: H * 0.985, r: H * 0.045, hy: H * 0.03, color: '#f0c070', note: 784, amp: 0.1, lid: 0, mouse: 0, layer: 1,
+    x: x, y: H * 0.995, r: H * 0.045, hy: H * 0.03, color: '#f0c070', note: 784, amp: 0.1, lid: 0, mouse: 0, layer: 1,
     update: function (p, dt) { if (p.lid > 0) p.lid -= dt; if (p.mouse > 0) p.mouse -= dt; },
     draw: function (c, p) { prtDrawPicnic(c, H, p); },
     poke: function (p) {
@@ -1896,9 +1907,9 @@ function prtSetupProps() {
       prtPropToss(p.x, p.y - H * 0.04, p.n % 5 === 0 ? 'cupcake' : (p.n % 2 ? 'apple' : 'sandwich'), H);
     }
   });
-  x = R[1].x - R[1].w * 0.5 - H * 0.06;
+  x = R[1].x - R[1].w * 0.18;
   propAdd({
-    x: x, y: H * 0.99, r: H * 0.05, hy: H * 0.03, color: '#c8a070', note: 2349, amp: 0.04, up: 0, flower: 0, sibs: 0, layer: 1,
+    x: x, y: H * 0.998, r: H * 0.05, hy: H * 0.03, color: '#c8a070', note: 2349, amp: 0.04, up: 0, flower: 0, sibs: 0, layer: 1,
     update: function (p, dt) { if (p.up > 0) p.up -= dt; },
     draw: function (c, p) { prtDrawBurrow(c, H, p); },
     poke: function (p) {
@@ -2839,16 +2850,23 @@ function prtDrawTools(c) {
       r = prtBalR(pu.p);
       // Oikean koon rengas: hehkuu, kun pallon reuna on renkaassa
       hb = pu.p >= B.p0 && pu.p <= B.p1;
-      c.strokeStyle = artRGBA(col, hb ? 0.5 : 0.22);
+      x = (prtBalR(B.p0) + prtBalR(B.p1)) / 2;
+      c.strokeStyle = hb ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,' + (0.38 + Math.sin(globalT * 5) * 0.08) + ')';
       c.lineWidth = prtBalR(B.p1) - prtBalR(B.p0);
-      prtEll(c, L.balC.x, L.balC.y, (prtBalR(B.p0) + prtBalR(B.p1)) / 2, (prtBalR(B.p0) + prtBalR(B.p1)) / 2 * 1.12);
+      prtEll(c, L.balC.x, L.balC.y, x, x * 1.12);
+      c.stroke();
+      c.strokeStyle = artRGBA(col, hb ? 0.55 : 0.3);
       c.stroke();
       c.setLineDash([H * 0.008, H * 0.006]);
-      c.strokeStyle = hb ? '#ffffff' : artRGBA(col, 0.9);
+      c.lineDashOffset = -globalT * H * 0.03;
+      c.strokeStyle = hb ? '#ffffff' : artShade(col, -0.25);
       c.lineWidth = Math.max(1.5, H * 0.004);
       prtEll(c, L.balC.x, L.balC.y, prtBalR(B.p1), prtBalR(B.p1) * 1.12);
       c.stroke();
+      prtEll(c, L.balC.x, L.balC.y, prtBalR(B.p0), prtBalR(B.p0) * 1.12);
+      c.stroke();
       c.setLineDash([]);
+      c.lineDashOffset = 0;
       if (hb) artGlow(c, L.balC.x, L.balC.y, prtBalR(B.p1) * 1.5, '#ffffff', 0.3);
       // Pallo suuttimessa
       k = pu.newT > 0 ? easeOutBack(1 - pu.newT / 0.35) : 1;
@@ -3118,8 +3136,8 @@ function prtDrawCannon(c) {
   if (F.ph === 'boom') rec = Math.max(0, 1 - F.t * 3) * H * 0.02;
   c.save();
   c.translate(x, y);
-  c.scale(k, k);
-  if (F.ph === 'ready') artGlow(c, H * 0.03, -H * 0.08, H * 0.12, '#fff2a0', 0.45 + Math.sin(globalT * 6) * 0.2);
+  c.scale(k * 1.35, k * 1.35 * (F.ph === 'ready' ? 1 + Math.sin(globalT * 6) * 0.03 : 1));
+  if (F.ph === 'ready') artGlow(c, H * 0.03, -H * 0.08, H * 0.13, '#fff2a0', 0.6 + Math.sin(globalT * 6) * 0.25);
   artShadow(c, 0, 0, H * 0.07, H * 0.012, 0.2);
   c.save();
   c.translate(-rec, rec * 0.6);
@@ -3391,9 +3409,9 @@ function drawParty() {
   prtDrawStrings(c);
   prtDrawPosts(c);
   for (i = 0; i < prt.guests.length; i++) prtDrawGuestAt(c, prt.guests[i], 'seat');
+  if (prt.fin && prt.fin.ph !== 'fly') prtDrawWitch(c);
   prtDrawTable(c);
   prtDrawCake(c);
-  if (prt.fin && prt.fin.ph !== 'fly') prtDrawWitch(c);
   prtDrawTools(c);
   for (i = 0; i < prt.guests.length; i++) prtDrawGuestAt(c, prt.guests[i], 'ground');
   prtDrawCurtain(c);
