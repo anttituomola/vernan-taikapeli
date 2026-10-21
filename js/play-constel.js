@@ -55,9 +55,9 @@ var CST_RETURN = 2.4;        // pilviin pudonnut tähti palaa koriin (s)
 var CST_GOLD_MISS = 8;       // kultainen kaukoputki: enintään näin monta hutia koko kentässä
 var CST_CLOUD_PER = 5.5;     // syöjäpilven edestakainen jakso (s)
 var CST_CLOUD_AMP = 0.15;    // ja liikelaajuus (× viewH)
-var CST_MOVE_AMP = 0.07;     // kierroksen 4 kuvio lipuu sivuttain (× viewH)
-var CST_MOVE_PER = 12;       // lipumisen jakso (s)
-var CST_ROT_AMP = 0.2;       // ja kääntyy (rad)
+var CST_MOVE_AMP = 0.055;    // kierroksen 4 kuvio lipuu sivuttain (× viewH)
+var CST_MOVE_PER = 14;       // lipumisen jakso (s)
+var CST_ROT_AMP = 0.16;      // ja kääntyy (rad)
 var CST_SHOOT_GAP = [20, 32]; // tähdenlento kiitää taivaan poikki näin usein (s)
 var CST_SHOOT_DUR = 2.4;     // tähdenlennon kesto (s)
 var CST_WISH_R = 0.055;      // tähdenlennon osumasäde (× viewH)
@@ -95,7 +95,7 @@ var CST_SHAPES = {
     move: function (t, e) { return { x: Math.sin(t * 0.95) * 0.19 * e, y: (-Math.sin(t * 1.9) * 0.12 - 0.05) * e, rot: Math.cos(t * 0.95) * 0.2 * e }; }
   },
   heart: {
-    pts: [[0, -0.35], [0.75, -0.75], [0, 0.85], [-0.75, -0.75]], close: true, extra: [],
+    pts: [[0, -0.2], [0.62, -0.62], [0, 0.78], [-0.62, -0.62]], close: true, extra: [],
     col: '#ff8fb8', tune: [523, 659, 784, 1047, 784, 659, 784, 1047],
     anim: function (t, i, b) {
       var k = Math.pow(Math.max(0, Math.sin(t * 7)), 4) * 0.15;
@@ -190,7 +190,7 @@ var cst = {
   hintT: 0, hintSol: null, hintKey: '', hintAge: 0, trail: [], trailT: 0, puffs: [], streaks: [],
   wind: 0, cloud: null, moveT: 0, shoot: null, shootT: 20, wished: false, wishFly: null,
   goldLostT: 0, taskIdx: 0, celT: 0, auroraK: 0, auroraPink: 0, auroraDance: 0, tw: [], flies: [],
-  peek: null, cheer: [], starsGiven: false
+  peek: null, cheer: [], starsGiven: false, nextFlash: 0
 };
 
 // ---------- Asettelu ----------
@@ -207,7 +207,7 @@ function cstLayout() {
   L.clock = { x: H * 0.1, y: H * 0.49 };
   L.lant1 = { x: H * 0.215, y: H * 0.37 };
   L.lant2 = { x: L.terrEnd - H * 0.065, y: L.floorY + H * 0.005 };
-  L.sleeper = { x: L.terrEnd + H * 0.13, y: H * 0.905 };
+  L.sleeper = { x: L.terrEnd + H * 0.14, y: H * 0.9 };
   L.moon = { x: W - H * 0.09, y: H * 0.12 };
   L.cloudY = H * 0.9;
   // Taivaalle asettuneiden kuvioiden paikat yläreunassa
@@ -357,6 +357,7 @@ function initConstel() {
   cst.wished = false;
   cst.wishFly = null;
   cst.goldLostT = 0;
+  cst.nextFlash = 0;
   cst.taskIdx = 0;
   cst.celT = 0;
   cst.auroraK = 0;
@@ -696,6 +697,15 @@ function handleConstelTap(px, py) {
     spawnSparkles(px, py, 12, fig.sh.col);
     hit = true;
   }
+  // Tähdenlento vilkuttaa napautuksesta (toivomus vain osumalla tähdellä)
+  if (cst.shoot && !cst.shoot.hit) {
+    p = cstShootPos(cst.shoot);
+    if (Math.hypot(px - p.x, py - p.y) < viewH * 0.08) {
+      spawnSparkles(p.x, p.y, 10, '#fff2a8');
+      playNote(2093, 0, 0.1, 'sine', 0.12);
+      playNote(2637, 0.08, 0.15, 'sine', 0.1);
+    }
+  }
   // Pilvi kikattaa
   if (cst.cloud && cstInCloud(px, py, cst.cloud.y) && cst.cloud.pokeT <= 0) {
     cst.cloud.pokeT = 0.8;
@@ -992,7 +1002,7 @@ function cstBounce(s, j, p) {
   spawnSparkles(p.x, p.y, 5, '#b8c8ff');
   artPop(p.x, p.y, viewH * 0.04, '#b8c8ff', 'ring');
   // Oikea numero välähtää vihjeeksi
-  if (fig.next < fig.N) fig.wob[fig.next] = 0.01;
+  cst.nextFlash = 1;
 }
 function cstUpdateCloud(dt) {
   var c = cst.cloud;
@@ -1188,7 +1198,7 @@ function cstUpdateHint(dt) {
   cst.hintT += dt;
   cst.hintAge += dt;
   key = cst.round + ':' + fig.next;
-  if (!cst.hintSol || cst.hintKey !== key || (cstRoundDef(cst.round).move && cst.hintAge > 1.2)) {
+  if (!cst.hintSol || cst.hintKey !== key || (cstRoundDef(cst.round).move && cst.hintAge > 3.2)) {
     cst.hintSol = cstSolve(fig.next, { cloud: true });
     cst.hintKey = key;
     cst.hintAge = 0;
@@ -1208,6 +1218,7 @@ function cstUpdateFx(dt) {
     if (p.t > p.life) cst.puffs.splice(i, 1);
   }
   if (cst.goldLostT > 0) cst.goldLostT -= dt;
+  if (cst.nextFlash > 0) cst.nextFlash -= dt;
   if (cst.auroraK > 0) cst.auroraK = Math.max(0, cst.auroraK - dt * 0.5);
   if (cst.auroraDance > 0) cst.auroraDance -= dt;
   if (cst.peek) { cst.peek.t += dt; if (cst.peek.t > 2.8) cst.peek = null; }
@@ -1346,7 +1357,7 @@ function cstSetupProps() {
     }
   });
   propAdd({
-    x: L.sleeper.x, y: L.sleeper.y, r: H * 0.065, hy: H * 0.05, color: '#ffffff', note: 659, amp: 0.05, layer: 1, awake: 0, bow: 0,
+    x: L.sleeper.x, y: L.sleeper.y, r: H * 0.07, hy: H * 0.06, color: '#ffffff', note: 659, amp: 0.05, layer: 2, awake: 0, bow: 0,
     update: function (p, dt) { if (p.awake > 0) p.awake -= dt; if (p.bow > 0) p.bow -= dt; },
     draw: function (c, p) { cstDrawSleeper(c, H, p); },
     poke: function (p) {
@@ -1622,8 +1633,8 @@ function cstDrawMusicBox(c, H, p) {
   artLimb(c, w / 2, -h * 0.5, w / 2 + H * 0.012, -h * 0.5 + Math.sin(globalT * (k > 0 ? 8 : 0)) * H * 0.01, H * 0.005, '#ffe27a', '#a07010');
 }
 function cstDrawSleeper(c, H, p) {
-  var s = H * 0.03, aw = p.awake > 0 ? 1 : 0, snore = (Math.sin(globalT * 1.6) + 1) / 2;
-  htCloudPuff(c, 0, -s * 0.2, s * 2.4, '#c8c0f0');
+  var s = H * 0.036, aw = p.awake > 0 ? 1 : 0, snore = (Math.sin(globalT * 1.6) + 1) / 2;
+  htCloudPuff(c, 0, -s * 0.2, s * 2.6, '#e6e0ff');
   if (p.bow > 0) htMannerPokeRainbow(c, 0, -s * 1.3, s * 1.7, Math.min(1, p.bow));
   trekDrawPup(c, 0, -s * 1.1 - aw * s * 0.3, s, { mood: aw ? 'wow' : 'sleepy', t: globalT, tint: '#e6dcff', squash: aw ? 0 : (snore - 0.5) * 0.08, rain: aw ? 0 : snore * 0.8 });
   if (!aw) cstText(c, 'Z', s * 1.1, -s * 2.0 - (globalT % 1.6) * s * 0.4, s * 0.6, '#d8d0ff', '#3a2e6a');
@@ -1721,8 +1732,8 @@ function cstDrawArt(c, fig, P, S, open) {
     return;
   }
   if (k === 'heart') {
-    a = Math.abs(P[1].x - P[3].x) / 1.5;
-    cstHeartPath(c, (P[1].x + P[3].x) / 2, (P[0].y + P[2].y) / 2 + S * 0.02, a * 1.18);
+    a = Math.abs(P[1].x - P[3].x) * 0.98;
+    cstHeartPath(c, (P[1].x + P[3].x) / 2, P[0].y + a * 0.25, a);
     cstPaint(c, col, S);
     cstEye(c, -S * 0.25, -S * 0.12, S * 0.09, open);
     cstEye(c, S * 0.25, -S * 0.12, S * 0.09, open);
@@ -2011,6 +2022,11 @@ function cstDrawFig(c, fig) {
     r = H * (nx ? 0.03 : 0.022) * k * pulse;
     if (nx) {
       artGlow(c, p.x, p.y, r * 2.4, '#fff2a8', 0.45 + Math.sin(globalT * 5) * 0.15);
+      if (cst.nextFlash > 0) {
+        c.strokeStyle = 'rgba(255,240,160,' + cst.nextFlash + ')';
+        c.lineWidth = Math.max(2, H * 0.006);
+        c.beginPath(); c.arc(p.x, p.y, r * (1.3 + (1 - cst.nextFlash) * 1.5), 0, Math.PI * 2); c.stroke();
+      }
       c.strokeStyle = 'rgba(255,240,160,0.9)';
       c.lineWidth = Math.max(2, H * 0.005);
       c.beginPath(); c.arc(p.x + j, p.y, r, 0, Math.PI * 2); c.stroke();
@@ -2178,6 +2194,11 @@ function cstDrawShots(c) {
       // Tuikkii pilvissä ennen paluuta
       c.globalAlpha = 0.5 + Math.sin(globalT * 10) * 0.3;
       drawStar(c, s.x, s.y + H * 0.01, H * 0.012, 0, 0.4);
+      c.globalAlpha = 1;
+    } else if (s.state === 'eaten') {
+      // Pilven poskessa kimaltaa nielaistu tähti
+      c.globalAlpha = 0.6 + Math.sin(globalT * 14) * 0.3;
+      drawStar(c, s.x + H * 0.03, s.y + H * 0.01, H * 0.011, globalT * 3, 0.5);
       c.globalAlpha = 1;
     } else if (s.state === 'ground') {
       drawStar(c, s.x, s.y - H * 0.012, H * 0.016, s.rot, 0.2);
@@ -2360,6 +2381,7 @@ function drawConstel() {
   cstDrawSling(c);
   cstDrawShots(c);
   cstDrawFront(c);
+  propsDraw(c, 2);
   cstDrawPuffs(c);
   cstDrawCheer(c);
   cstDrawAim(c);
