@@ -83,7 +83,7 @@ var CST_SHAPES = {
       if (i === 1) return [0, Math.sin(t * 9 + 1.2) * 0.04];
       return [0, 0];
     },
-    move: function (t, e) { return { x: Math.sin(t * 1.15) * 0.22 * e, y: Math.sin(t * 2.3) * 0.06 * e, rot: Math.cos(t * 1.15) * 0.25 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 1.15) * 0.19 * e, y: Math.sin(t * 2.3) * 0.06 * e, rot: Math.cos(t * 1.15) * 0.25 * e }; }
   },
   bird: {
     pts: [[0.95, -0.2], [0.05, -0.85], [-0.95, 0.05], [0.05, 0.45]], close: true, extra: [],
@@ -92,7 +92,7 @@ var CST_SHAPES = {
       if (i === 1) return [Math.sin(t * 11) * 0.05, (1 - Math.cos(t * 11)) * 0.45];
       return [0, 0];
     },
-    move: function (t, e) { return { x: Math.sin(t * 0.95) * 0.3 * e, y: (-Math.sin(t * 1.9) * 0.12 - 0.05) * e, rot: Math.cos(t * 0.95) * 0.2 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 0.95) * 0.19 * e, y: (-Math.sin(t * 1.9) * 0.12 - 0.05) * e, rot: Math.cos(t * 0.95) * 0.2 * e }; }
   },
   heart: {
     pts: [[0, -0.35], [0.75, -0.75], [0, 0.85], [-0.75, -0.75]], close: true, extra: [],
@@ -111,7 +111,7 @@ var CST_SHAPES = {
       if (i === 4 || i === 5) return [0, -Math.abs(Math.sin(t * 4.5)) * 0.08];
       return [0, 0];
     },
-    move: function (t, e) { return { x: Math.sin(t * 0.8) * 0.28 * e, y: -Math.abs(Math.sin(t * 4.5)) * 0.14 * e, rot: -Math.abs(Math.sin(t * 4.5)) * 0.12 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 0.8) * 0.19 * e, y: -Math.abs(Math.sin(t * 4.5)) * 0.14 * e, rot: -Math.abs(Math.sin(t * 4.5)) * 0.12 * e }; }
   },
   whale: {
     pts: [[-1.0, -0.55], [-0.65, 0.0], [0.0, -0.42], [0.9, -0.1], [0.6, 0.4], [-0.2, 0.4]], close: false, extra: [[5, 1]],
@@ -121,7 +121,7 @@ var CST_SHAPES = {
       if (i === 1) return [0, Math.sin(t * 3 - 0.6) * 0.04];
       return [0, 0];
     },
-    move: function (t, e) { return { x: Math.sin(t * 0.7) * 0.25 * e, y: Math.sin(t * 1.4) * 0.05 * e, rot: Math.sin(t * 1.4) * 0.08 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 0.7) * 0.19 * e, y: Math.sin(t * 1.4) * 0.05 * e, rot: Math.sin(t * 1.4) * 0.08 * e }; }
   },
   star5: {
     pts: [[0, -1], [0.59, 0.81], [-0.95, -0.31], [0.95, -0.31], [-0.59, 0.81]], close: true, extra: [],
@@ -136,7 +136,7 @@ var CST_SHAPES = {
     pts: [[0.95, -0.35], [0.55, -0.95], [0.15, -0.2], [-0.95, -0.25], [-0.55, 0.85], [0.0, 0.25], [0.45, 0.85]], close: false, extra: [[0, 2]],
     col: '#ffc49a', tune: [659, 587, 523, 587, 659, 659, 784, 1047],
     anim: function (t, i) { return cstGallop(t, i, 4, 6, 3); },
-    move: function (t, e) { return { x: Math.sin(t * 0.75) * 0.3 * e, y: -Math.abs(Math.sin(t * 6)) * 0.05 * e, rot: Math.sin(t * 6) * 0.05 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 0.75) * 0.19 * e, y: -Math.abs(Math.sin(t * 6)) * 0.05 * e, rot: Math.sin(t * 6) * 0.05 * e }; }
   },
   castle: {
     pts: [[-0.8, 0.8], [-0.8, -0.45], [-0.3, -0.1], [0, -0.95], [0.3, -0.1], [0.8, -0.45], [0.8, 0.8]], close: false, extra: [[6, 0]],
@@ -154,13 +154,13 @@ var CST_SHAPES = {
       var k = Math.sin(t * 40) * 0.012;
       return [k, 0];
     },
-    move: function (t, e) { return { x: Math.sin(t * 1.2) * 0.26 * e, y: (-0.22 - Math.sin(t * 1.6) * 0.08) * e, rot: Math.cos(t * 1.2) * 0.4 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 1.2) * 0.19 * e, y: (-0.12 - Math.sin(t * 1.6) * 0.06) * e, rot: Math.cos(t * 1.2) * 0.4 * e }; }
   },
   unicorn: {
     pts: [[1.0, -0.3], [0.9, -1.05], [0.45, -0.7], [0.1, -0.15], [-0.95, -0.3], [-0.55, 0.85], [0.0, 0.3], [0.5, 0.85]], close: false, extra: [[0, 2]],
     col: '#ffffff', tune: [784, 988, 1175, 1568, 1319, 1175, 988, 1568],
     anim: function (t, i) { return cstGallop(t, i, 5, 7, 4); },
-    move: function (t, e) { return { x: Math.sin(t * 0.8) * 0.3 * e, y: (-Math.abs(Math.sin(t * 6)) * 0.05 - Math.sin(t * 1.6) * 0.05) * e, rot: Math.sin(t * 6) * 0.05 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 0.8) * 0.19 * e, y: (-Math.abs(Math.sin(t * 6)) * 0.05 - Math.sin(t * 1.6) * 0.05) * e, rot: Math.sin(t * 6) * 0.05 * e }; }
   },
   dragon: {
     pts: [[0.95, -0.45], [0.55, -0.1], [0.15, -1.0], [-0.2, -0.15], [-0.6, 0.15], [-1.0, -0.2], [-0.25, 0.7], [0.35, 0.6]], close: false, extra: [[7, 1]],
@@ -171,7 +171,7 @@ var CST_SHAPES = {
       if (i === 4) return [0, Math.sin(t * 4 + 1) * 0.05];
       return [0, 0];
     },
-    move: function (t, e) { return { x: Math.sin(t * 0.8) * 0.3 * e, y: (-0.05 + Math.sin(t * 1.6) * 0.07) * e, rot: Math.cos(t * 0.8) * 0.15 * e }; }
+    move: function (t, e) { return { x: Math.sin(t * 0.8) * 0.19 * e, y: (-0.05 + Math.sin(t * 1.6) * 0.07) * e, rot: Math.cos(t * 0.8) * 0.15 * e }; }
   }
 };
 // Laukka: takajalka, etujalka ja häntä heiluvat
@@ -395,7 +395,7 @@ function cstStartRound(r) {
   fig = {
     key: key, sh: sh, r: r, N: sh.pts.length, next: 0, placed: [], pop: [], wob: [], lineT: [],
     state: 'play', x: 0, y: 0, rot: 0, sc: 1, k: 0, at: 0, aliveT: 0, settleT: 0, gi: -1,
-    trickT: 0, wake: 0, px: 0, py: 0, prot: 0, seed: Math.random() * 10, introT: 0, paradeT: 0, gx: 0, gy: 0
+    trickT: 0, wake: 0, fx: 1, px: 0, py: 0, prot: 0, seed: Math.random() * 10, introT: 0, paradeT: 0, gx: 0, gy: 0
   };
   for (i = 0; i < fig.N; i++) { fig.placed.push(false); fig.pop.push(0); fig.wob.push(0); fig.lineT.push(0); }
   h = cstFigHome(fig);
@@ -439,6 +439,9 @@ function cstFigUpdate(fig, dt) {
   }
   if (fig.trickT > 0) fig.trickT -= dt;
   fig.introT += dt;
+  // Suunnalliset kuviot kääntyvät kulkusuuntaan
+  k = cstFigDir(fig);
+  fig.fx += Math.max(-dt * 6, Math.min(dt * 6, k - fig.fx));
   if (fig.state === 'play') {
     h = cstFigHome(fig);
     fig.S = h.S;
@@ -460,8 +463,11 @@ function cstFigUpdate(fig, dt) {
     fig.at = fig.aliveT;
     e = easeInOutSine(Math.min(1, fig.aliveT / 0.9, (T - fig.aliveT) / 0.9));
     m = fig.sh.move(fig.aliveT, e);
-    fig.x = fig.px + m.x * H;
-    fig.y = fig.py + m.y * H;
+    // Esitys taivaan keskellä: kuvio liukuu ensin näyttämölle
+    k = easeInOutSine(Math.min(1, fig.aliveT / 1.0));
+    g = cstStage();
+    fig.x = fig.px + (g.x - fig.px) * k + m.x * H;
+    fig.y = fig.py + (g.y - fig.py) * k + m.y * H;
     fig.rot = fig.prot * Math.max(0, 1 - fig.aliveT / 0.9) + m.rot;
     fig.sc = 1 + 0.1 * e;
     fig.k = Math.min(1, fig.aliveT / 0.6);
@@ -518,9 +524,25 @@ function cstFigUpdate(fig, dt) {
     }
   }
 }
+var CST_DIRECTIONAL = { fish: 1, bird: 1, bunny: 1, whale: 1, pony: 1, unicorn: 1, dragon: 1 };
+function cstFigDir(fig) {
+  var t, a, b;
+  if (!CST_DIRECTIONAL[fig.key]) return 1;
+  if (fig.state === 'alive') { t = fig.aliveT; if (t < 1.0 || t > CST_ALIVE - 0.8) return 1; }
+  else if (fig.state === 'parade') t = fig.paradeT;
+  else return 1;
+  a = fig.sh.move(t, 1).x;
+  b = fig.sh.move(t - 0.08, 1).x;
+  return a >= b - 1e-4 ? 1 : -1;
+}
+function cstStage() {
+  var L = cst.L, H = viewH;
+  return { x: Math.max(L.fork.x + H * 0.5, L.W * 0.56), y: H * 0.43 };
+}
 function cstParadeSpot(i) {
   var W = viewW, H = viewH, n = Math.max(1, cst.gallery.length);
-  return { x: W * (0.16 + 0.72 * (n === 1 ? 0.5 : i / (n - 1))), y: H * (i % 2 ? 0.48 : 0.32), S: H * 0.12 };
+  var x0 = Math.max(W * 0.3, H * 0.42), x1 = W - H * 0.17;
+  return { x: x0 + (x1 - x0) * (n === 1 ? 0.5 : i / (n - 1)), y: H * (i % 2 ? 0.47 : 0.3), S: H * 0.12 };
 }
 // Pisteen i paikallinen sijainti (normalisoitu, animaatio mukana)
 function cstLocal(fig, i) {
@@ -532,6 +554,7 @@ function cstLocal(fig, i) {
 // Pisteen i maailmakoordinaatit
 function cstWorld(fig, i) {
   var p = cstLocal(fig, i), s = fig.S * fig.sc, cr = Math.cos(fig.rot), sr = Math.sin(fig.rot);
+  p[0] *= fig.fx;
   return { x: fig.x + (p[0] * cr - p[1] * sr) * s, y: fig.y + (p[0] * sr + p[1] * cr) * s };
 }
 // Kuvion paikat tietyllä lipumisajalla (botti ja vihje: ennakointi)
@@ -590,6 +613,7 @@ function cstPreview(vx, vy, dur) {
 function cstSolve(target, opt) {
   var L = cst.L, H = viewH, fig = cst.fig, best = null, bc = 1e9, a, p, res, i, j, a0, p0, wind, da, dp;
   opt = opt || {};
+  if (!fig || target < 0 || target >= fig.N) return null;
   wind = opt.wind === undefined ? cst.wind : opt.wind;
   // Paikat valmiiksi (liikkuva kuvio lasketaan joka askeleella)
   var stat = [], moving = opt.moveT !== undefined, kk, lim = moving ? H * 0.2 : CST_WRONG_R * H * 1.6;
@@ -1112,10 +1136,10 @@ function cstAliveFx(fig, dt) {
   var t = fig.aliveT, S = fig.S * fig.sc, p, r = Math.random();
   if (fig.key === 'whale' && r < dt * 10) {
     p = cstWorld(fig, 2);
-    cstPuff(p.x + S * 0.25, p.y - S * 0.1, 1, '#bfe8ff', { up: 0.25 + Math.random() * 0.1, vx: 0.15, r: 0.008, life: 0.8, kind: 'drop' });
+    cstPuff(p.x + S * 0.25 * fig.fx, p.y - S * 0.1, 1, '#bfe8ff', { up: 0.25 + Math.random() * 0.1, vx: 0.15, r: 0.008, life: 0.8, kind: 'drop' });
   } else if (fig.key === 'dragon' && (t % 1.6) < dt) {
     p = cstWorld(fig, 0);
-    spawnSparkles(p.x + S * 0.15, p.y, 10, '#ffb050');
+    spawnSparkles(p.x + S * 0.15 * fig.fx, p.y, 10, '#ffb050');
     playNote(330, 0, 0.12, 'sawtooth', 0.04);
   } else if (fig.key === 'rocket' && r < dt * 20) {
     p = cstWorld(fig, 3);
@@ -1126,7 +1150,7 @@ function cstAliveFx(fig, dt) {
   } else if ((fig.key === 'heart' || fig.key === 'fish') && r < dt * 4) {
     cstPuff(fig.x + (Math.random() - 0.5) * S, fig.y - S * 0.3, 1, fig.key === 'heart' ? '#ff8fb8' : '#bfe8ff', { up: 0.08, r: 0.012, life: 1.2, kind: fig.key === 'heart' ? 'heart' : 'bubble' });
   } else if ((fig.key === 'unicorn' || fig.key === 'star5') && r < dt * 14) {
-    cstPuff(fig.x - S * 0.8, fig.y + (Math.random() - 0.3) * S * 0.6, 1, RAINBOW_COLORS[randInt(RAINBOW_COLORS.length)], { up: 0.01, vx: 0.05, r: 0.01, life: 0.9 });
+    cstPuff(fig.x - S * 0.8 * fig.fx, fig.y + (Math.random() - 0.3) * S * 0.6, 1, RAINBOW_COLORS[randInt(RAINBOW_COLORS.length)], { up: 0.01, vx: 0.05, r: 0.01, life: 0.9 });
   }
 }
 // ---------- Loppuparaati ja Pikkupilvi-ystävät ----------
@@ -1935,7 +1959,7 @@ function cstDrawFig(c, fig) {
     c.save();
     c.translate(fig.x, fig.y);
     c.rotate(fig.rot);
-    c.scale(sc, sc);
+    c.scale(sc * fig.fx, sc);
     c.globalAlpha = a;
     cstDrawArt(c, fig, P, S, open);
     c.restore();
@@ -2088,8 +2112,8 @@ function cstDrawWind(c) {
     c.fillStyle = 'rgba(255,240,170,' + (1 - a) + ')';
     c.beginPath(); c.arc(ax - dir * H * 0.06 + dir * a * H * 0.14, ay, H * 0.006, 0, Math.PI * 2); c.fill();
   }
-  // Kuunsirpin kasvot puhaltavat (pieni pilvi nuolen takana)
-  htCloudPuff(c, ax - dir * H * 0.11, ay, H * 0.05, '#e8e4ff');
+  // Tuulipilvi puhaltaa nuolen suuntaan (pullistelee poskiaan)
+  trekDrawPup(c, ax - dir * H * 0.12, ay, H * 0.026, { mood: 'wow', t: globalT, tint: '#eef0ff', flip: dir < 0, look: 1, squash: Math.sin(globalT * 5) * 0.06 });
 }
 function cstDrawTrail(c) {
   var i, n = cst.trail.length, p, a, H = viewH, fade = cst.shots.length ? 1 : Math.max(0, 1 - cst.trailT / 12);
