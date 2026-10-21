@@ -101,11 +101,11 @@ function pzzLayout() {
   L.garlic = { x: u * 0.27, y: H * 0.0 };
   // Pöydät oikealla
   L.tz = W - u * 0.53;
-  L.tables = [{ x: L.tz + u * 0.27, y: H * 0.5 }, { x: L.tz + u * 0.27, y: H * 0.88 }];
+  L.tables = [{ x: L.tz + u * 0.27, y: H * 0.47 }, { x: L.tz + u * 0.27, y: H * 0.9 }];
   L.tableW = u * 0.5;
   L.reg = { x: W - u * 0.065, y: H * 0.33 };
   L.lamps = [{ x: L.tz + u * 0.1, y: H * 0.0 }, { x: L.tz + u * 0.44, y: H * 0.0 }];
-  L.dog = { x: L.tables[1].x - u * 0.15, y: H * 0.99 };
+  L.dog = { x: L.tables[1].x - L.tableW / 2 + u * 0.025, y: H * 0.978 };
   // Työalue keskellä
   L.zx0 = u * 0.42;
   L.zx1 = L.tz - u * 0.01;
@@ -138,7 +138,7 @@ function pzzSlotPos(s) {
 function pzzMouth() { var L = pzz.L; return { x: L.ovenX, y: L.ovenY - L.mouthH * 0.45 }; }
 function pzzBubblePos(ti) {
   var L = pzz.L, T = L.tables[ti];
-  return { x: Math.min(T.x, L.W - L.u * 0.16), y: T.y - L.u * 0.275, w: L.u * 0.3, h: L.u * 0.17 };
+  return { x: Math.min(T.x, L.W - L.u * 0.16), y: T.y - L.u * 0.255, w: L.u * 0.3, h: L.u * 0.155 };
 }
 function pzzSeatX(ti, n, i) {
   var L = pzz.L, sp = Math.min(L.u * 0.06, L.tableW * 0.94 / n);
@@ -1518,6 +1518,18 @@ function pzzUpdateDog(dt) {
     if (D.munch <= 0) { D.state = sn ? 'run' : 'back'; }
     return;
   }
+  if (D.state === 'leap') {
+    // Loikka pöydälle: nappaa palan korkeimmalla kohdalla
+    D.leapT += dt;
+    if (D.leapSn && D.leapT >= 0.4) {
+      D.leapSn.P.left[D.leapSn.si] = false;
+      pzzPuff(D.x, D.y - D.leapH, 4, '#ffd060', { up: 0.05 });
+      playNote(1047, 0, 0.08, 'triangle', 0.18);
+      D.leapSn = null;
+    }
+    if (D.leapT >= 0.8) { D.state = 'eat'; D.munch = 0.8; D.wag = 1.4; pzzPuff(D.x, D.y - L.u * 0.06, 2, '#ff8fb8', { heart: true, up: 0.1, life: 1.2 }); for (i = 0; i < 3; i++) playNote(330 + i * 40, 0.05 + i * 0.14, 0.06, 'square', 0.04); }
+    return;
+  }
   if (sn && D.state !== 'run') { D.state = 'run'; playNote(784, 0, 0.06, 'square', 0.04); playNote(988, 0.08, 0.06, 'square', 0.04); }
   if (D.state === 'run') {
     if (!sn) { D.state = 'back'; return; }
@@ -1527,8 +1539,15 @@ function pzzUpdateDog(dt) {
     if (Math.abs(dx) < L.u * 0.01) {
       // Perillä: nappaa
       pzz.snacks.splice(pzz.snacks.indexOf(sn), 1);
-      if (sn.kind === 'floor') sn.f.eaten = true;
-      else { sn.P.left[sn.si] = false; D.jump = 0.5; }
+      if (sn.kind !== 'floor') {
+        D.state = 'leap';
+        D.leapT = 0;
+        D.leapH = Math.max(L.u * 0.04, D.y - sn.y + L.u * 0.02);
+        D.leapSn = sn;
+        pzzGlide(300, 900, 0, 0.3, 'triangle', 0.15);
+        return;
+      }
+      sn.f.eaten = true;
       D.state = 'eat';
       D.munch = 0.8;
       D.wag = 1.4;
@@ -1563,6 +1582,7 @@ function pzzUpdateStreet(dt) {
 }
 function pzzAddPasser(dir, wave) {
   var W = pzz.L.win, kinds = ['pup', 'pup', 'balloon', 'bike', 'pup'];
+  if (pzz.passers.length > 5) pzz.passers.shift();
   pzz.passers.push({
     x: dir > 0 ? W.x0 - pzz.L.u * 0.06 : W.x1 + pzz.L.u * 0.06, dir: dir, sp: pzz.L.u * (0.07 + Math.random() * 0.05), t: Math.random() * 5,
     tint: PZZ_TINTS[randInt(PZZ_TINTS.length)], kind: kinds[randInt(kinds.length)], wave: wave ? 1.2 : 0, col: ['#ff8fb8', '#8fd0ff', '#ffe27a', '#b8f0a0'][randInt(4)]
@@ -1598,8 +1618,9 @@ function pzzAssign() {
     best = null; bs = -1;
     for (j = 0; j < Ps.length; j++) {
       P = Ps[j];
-      if (taken[P.id] || pzzPieces(P) > g.n) continue;
-      sc = pzzProgress(P) + (pzzCompatible(P, g.o) ? 100 : 0);
+      if (taken[P.id]) continue;
+      // Liikaa leikattu kelpaa vielä (koira saa ylimääräisen), mutta sopiva ensin
+      sc = pzzProgress(P) + (pzzCompatible(P, g.o) ? 100 : 0) + (pzzPieces(P) <= g.n ? 50 : 0);
       if (sc > bs) { bs = sc; best = P; }
     }
     if (best) taken[best.id] = true;
@@ -2637,7 +2658,7 @@ function pzzDrawGroupBack(c, g, leaving) {
   }
 }
 function pzzDrawGroupFront(c, g) {
-  var L = pzz.L, u = L.u, T = L.tables[g.ti], i, p, P = g.P, k, x, y;
+  var L = pzz.L, u = L.u, T = L.tables[g.ti], i, p, P = g.P, k, x, y, d, n;
   // Lautaset syöjien edessä
   for (i = 0; i < g.pups.length; i++) {
     p = g.pups[i];
@@ -2651,6 +2672,19 @@ function pzzDrawGroupFront(c, g) {
     c.stroke();
     if (p.got && P) pzzDrawSlice(c, P, x, T.y + u * 0.001, u * 0.03, Math.PI, 1 - Math.max(0, p.munch) / 1.9);
     if (p.sad > 0) pzzText(c, '?', x, T.y - u * 0.01 - Math.sin(p.sad * 6) * u * 0.004, u * 0.03, '#6a8ac8', '#ffffff');
+  }
+  // Pizzaa kannetaan pöydän yllä: haamupalat näyttävät, riittävätkö palat
+  d = pzz.drag;
+  if (d && d.kind === 'pizza' && pzzBaked(d.P) && g.state === 'wait' && pzzGroupAt(d.x, d.y) === g) {
+    n = pzzPieces(d.P);
+    c.globalAlpha = 0.55 + Math.sin(globalT * 8) * 0.2;
+    for (i = 0; i < g.pups.length; i++) {
+      p = g.pups[i];
+      if (i < n) pzzDrawSlice(c, d.P, p.tx, T.y + u * 0.001, u * 0.03, Math.PI, 0);
+      else pzzText(c, '?', p.tx, T.y - u * 0.012, u * 0.032, '#6a8ac8', '#ffffff');
+    }
+    for (i = g.n; i < n; i++) pzzDrawSlice(c, d.P, T.x + L.tableW * 0.5 + u * 0.01 - (i - g.n) * u * 0.028, T.y + u * 0.045, u * 0.026, Math.PI * 0.8, 0);
+    c.globalAlpha = 1;
   }
   if (P && g.state === 'eat') {
     k = easeOutCubic(Math.min(1, P.fly.t / 0.3));
@@ -2671,6 +2705,8 @@ function pzzDrawTables(c) {
     g = pzz.groups[i];
     if (g) pzzDrawGroupBack(c, g, false);
     k = !open ? 1 : (i === 1 && pzz.tablesK < 1 ? easeOutBack(pzz.tablesK) : 1);
+    // Koira torkkuu pöydän alla: liina peittää vartalon, pää pilkistää
+    if (i === 1 && pzz.dog && pzz.dog.state === 'lie') pzzDrawDog(c);
     // Jalat
     artLimb(c, T.x - L.tableW * 0.4, T.y + u * 0.05, T.x - L.tableW * 0.4, T.y + u * 0.1, u * 0.014, '#a8683a', '#5a3014');
     artLimb(c, T.x + L.tableW * 0.4, T.y + u * 0.05, T.x + L.tableW * 0.4, T.y + u * 0.1, u * 0.014, '#a8683a', '#5a3014');
@@ -2690,7 +2726,7 @@ function pzzDrawDog(c) {
   if (!D) return;
   x = D.x;
   y = D.y;
-  j = D.jump > 0 ? Math.sin(D.jump / 0.5 * Math.PI) * u * 0.06 : 0;
+  j = D.state === 'leap' ? Math.sin(Math.min(1, D.leapT / 0.8) * Math.PI) * D.leapH : 0;
   if (run) y -= Math.abs(Math.sin(t * 16)) * u * 0.008;
   if (D.trick > 0) j = Math.sin(Math.min(1, D.trick / 1.5) * Math.PI) * u * 0.03;
   wag = Math.sin(t * (D.wag > 0 || run ? 22 : 3)) * (D.wag > 0 || run ? 0.6 : 0.15);
@@ -2794,7 +2830,7 @@ function pzzDrawWindow(c) {
   if (v) {
     k = v.leave >= 0 ? easeInOutSine((v.t - v.leave) / 1.8) : 1 - easeOutCubic(Math.min(1, v.t / 1.6));
     x = (W.x0 + W.x1) / 2 + (v.leave >= 0 ? -k : k) * (W.x1 - W.x0) * 0.75;
-    pzzDrawVespa(c, x, st + u * 0.02, u * 0.04, v.leave >= 0 || v.t < 1.6);
+    c.save(); c.translate(x, 0); c.scale(-1, 1); pzzDrawVespa(c, 0, st + u * 0.022, u * 0.05, v.leave >= 0 || v.t < 1.6); c.restore();
   }
   // Ohikulkijat
   for (i = 0; i < pzz.passers.length; i++) pzzDrawPasser(c, pzz.passers[i], st + u * 0.022);
@@ -2865,7 +2901,7 @@ function pzzDrawVespa(c, x, y, s, moving) {
   artCircle(c, x + s * 1.0, y - s * 1.2, s * 0.12, '#fff6a0', { lineColor: '#a09020', flat: true });
   // Jauhosäkki takana ja kuski
   artRoundRect(c, x - s * 1.25, y - s * 1.6 + b, s * 0.6, s * 0.65, s * 0.15, '#fff8ec', { lineColor: '#a08050', flat: true });
-  pzzText(c, '1', x - s * 0.95, y - s * 1.27 + b, s * 0.4, '#c08040');
+  drawStar(c, x - s * 0.95, y - s * 1.27 + b, s * 0.16, 0, 0);
   pzzDrawEater(c, x - s * 0.1, y - s * 1.6 + b, s * 0.4, { t: globalT, mood: 'happy', tint: '#fff3c4', acc: 2, squint: false, look: -0.5 });
   for (i = 0; i < 2; i++) if (moving) { c.globalAlpha = 0.4; artCircle(c, x - s * (1.6 + i * 0.4), y - s * 0.4, s * (0.15 + i * 0.08), '#ffffff', { line: false, flat: true }); c.globalAlpha = 1; }
 }
@@ -3445,7 +3481,7 @@ function drawPizza() {
   }
   pzzDrawTools(c);
   pzzDrawTables(c);
-  pzzDrawDog(c);
+  if (pzz.dog.state !== 'lie') pzzDrawDog(c);
   // Lattialle pudonneet täytteet
   for (i = 0; i < pzz.floor.length; i++) { f = pzz.floor[i]; pzzDrawTop(c, f.type, f.x, f.y - pzzTopR() * 0.5, pzzTopR(), f.rot); }
   // Lentävät
@@ -3508,12 +3544,17 @@ function drawPizza() {
   drawTaskOverlay(c);
 }
 function pzzDrawDragged(c, d) {
-  var L = pzz.L, u = L.u, P, tilt;
+  var L = pzz.L, u = L.u, P, tilt, k, sc, y;
   if (d.kind === 'pizza') {
     P = d.P;
-    artShadow(c, d.x, d.y + u * 0.05, L.R * 1.05, L.R * 0.4, 0.18);
-    pzzDrawPeel(c, d.x - L.R * 0.2, d.y + L.R * 1.1, L.R * 0.9, false, 0.2);
-    pzzDrawPizza(c, P, d.x, d.y, L.R * 1.04, { noRing: true });
+    // Pöydän yllä pizza pienenee ja nousee, jotta lautaset ja haamupalat näkyvät
+    k = pzzGroupAt(d.x, d.y) ? 1 : 0;
+    d.over = (d.over || 0) + (k - (d.over || 0)) * 0.25;
+    sc = 1.04 - d.over * 0.4;
+    y = d.y - d.over * u * 0.07;
+    artShadow(c, d.x, y + u * 0.05, L.R * sc, L.R * 0.4 * sc, 0.18);
+    pzzDrawPeel(c, d.x - L.R * 0.2 * sc, y + L.R * 1.1 * sc, L.R * 0.9 * sc, false, 0.2);
+    pzzDrawPizza(c, P, d.x, y, L.R * sc, { noRing: true });
   } else if (d.kind === 'ball') artCircle(c, d.x, d.y, u * 0.032, PZZ_DOUGH, { lineColor: '#c8a06a', hi: 0.45 });
   else if (d.kind === 'pin') pzzDrawPin(c, d.x, d.y, u * 0.06, Math.sin(d.moved * 0.02) * 0.1);
   else if (d.kind === 'ladle') pzzDrawLadle(c, d.x, d.y, u * 0.06, true);
