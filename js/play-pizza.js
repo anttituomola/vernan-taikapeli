@@ -46,21 +46,22 @@ var PZZ_PHASE_END = [3, 7, 11];        // vaihe loppuu, kun näin monta on palve
 var PZZ_SLOTS = [1, 2, 2];             // uunipaikkoja vaiheittain
 var PZZ_TABLES = [1, 2, 2];            // pöytiä vaiheittain
 var PZZ_BOWLS = [3, 6, 6];             // täytekulhoja auki vaiheittain
-var PZZ_ROLL_NEED = 4.2;               // kaulimen matka (pizzan säteinä) täyteen kokoon
-var PZZ_BRUSH = 0.34;                  // kauhan ja pussin jälki (pizzan säteinä)
+var PZZ_ROLL_NEED = 9;                 // kaulimen matka (pizzan säteinä) täyteen kokoon
+var PZZ_BRUSH = 0.25;                  // kauhan jälki (pizzan säteinä)
+var PZZ_BAG_R = 0.34;                  // juustopussin raastesateen säde (pizzan säteinä)
 var PZZ_SAUCE_FULL = 0.8;              // kastikepeitto, jolla pinta valmistuu
 var PZZ_CHEESE_FULL = 0.8;             // juustopeitto, jolla pinta valmistuu
-var PZZ_CHEESE_RATE = 3.2;             // raastetta solua kohti per s pussin alla
+var PZZ_CHEESE_RATE = 6;               // raastetta solua kohti per s pussin alla
 var PZZ_BAKE = 7.0;                    // raa'asta kultaiseksi täydellä tulella (s)
-var PZZ_GOLD = [3.6, 3.0, 2.6];        // kultainen ikkuna vaiheittain (s)
+var PZZ_GOLD = [3.0, 2.5, 2.1];        // kultainen ikkuna vaiheittain (s)
 var PZZ_CHAR = 4.0;                    // vähän palaneesta hiiltyneeksi (s)
 var PZZ_SLOW = 0.45;                   // hiipuneen tulen paistonopeus
 var PZZ_FUEL_LIFE = [0, 30, 26];       // täydestä tulesta hiipuneeseen (s); 0 = ei hiivu
 var PZZ_FUEL_LOW = 0.25;               // tämän alla liekit ovat sinisiä ja pieniä
-var PZZ_PATIENCE = [0, 50, 56];        // kärsivällisyyden pohja (s) vaiheittain
-var PZZ_PAT_PER = 2.5;                 // + s per täyte ja syöjäpari
+var PZZ_PATIENCE = [0, 23, 26];        // kärsivällisyyden pohja (s) vaiheittain
+var PZZ_PAT_PER = 2.0;                 // + s per täyte ja syöjäpari
 var PZZ_ARRIVE_GAP = [1.2, 2.4, 2.0];  // seuraava seurue lähdön jälkeen (s)
-var PZZ_SECOND_GAP = [0, 9, 6];        // toinen seurue ensimmäisen jälkeen (s)
+var PZZ_SECOND_GAP = [0, 5, 4];        // toinen seurue ensimmäisen jälkeen (s)
 var PZZ_CUT_MAX = 4;                   // viiltoja enintään (8 palaa)
 var PZZ_CUT_LEN = 1.2;                 // pyyhkäisyn pituus pizzan päällä (säteinä)
 var PZZ_TOP_MAX = 14;                  // täytteitä yhdellä pizzalla enintään
@@ -97,7 +98,7 @@ function pzzLayout() {
   L.pile = { x: u * 0.12, y: H * 0.955 };
   L.cat = { x: u * 0.3, y: H * 0.965 };
   L.chef = { x: L.ovenX + u * 0.125, y: L.ovenY - L.ovenR * 0.62 };
-  L.garlic = { x: u * 0.07, y: H * 0.0 };
+  L.garlic = { x: u * 0.27, y: H * 0.0 };
   // Pöydät oikealla
   L.tz = W - u * 0.53;
   L.tables = [{ x: L.tz + u * 0.27, y: H * 0.5 }, { x: L.tz + u * 0.27, y: H * 0.88 }];
@@ -137,7 +138,7 @@ function pzzSlotPos(s) {
 function pzzMouth() { var L = pzz.L; return { x: L.ovenX, y: L.ovenY - L.mouthH * 0.45 }; }
 function pzzBubblePos(ti) {
   var L = pzz.L, T = L.tables[ti];
-  return { x: Math.min(T.x, L.W - L.u * 0.155), y: T.y - L.u * 0.265, w: L.u * 0.29, h: L.u * 0.155 };
+  return { x: Math.min(T.x, L.W - L.u * 0.16), y: T.y - L.u * 0.275, w: L.u * 0.3, h: L.u * 0.17 };
 }
 function pzzSeatX(ti, n, i) {
   var L = pzz.L, sp = Math.min(L.u * 0.06, L.tableW * 0.94 / n);
@@ -938,7 +939,7 @@ function pzzToolWork(d, dt, mv) {
       c = C[i];
       du = c.u - hit.u;
       dv = c.v - hit.v;
-      if (du * du + dv * dv < rb * rb) P.cheese[c.k] = Math.min(1, P.cheese[c.k] + dt * PZZ_CHEESE_RATE);
+      if (du * du + dv * dv < PZZ_BAG_R * PZZ_BAG_R) P.cheese[c.k] = Math.min(1, P.cheese[c.k] + dt * PZZ_CHEESE_RATE);
     }
     P.cCov = pzzCoverage(P.cheese);
     if (P.cCov >= PZZ_CHEESE_FULL) {
@@ -1954,8 +1955,8 @@ function pzzDrawPizza(c, P, x, y, R, o) {
       }
     }
   } else {
-    c.strokeStyle = '#ffe270';
-    c.lineWidth = Math.max(1, R * 0.04);
+    c.strokeStyle = '#ffd84a';
+    c.lineWidth = Math.max(1.5, R * 0.055);
     c.lineCap = 'round';
     c.beginPath();
     n = 0;
@@ -2048,9 +2049,36 @@ function pzzDrawSlice(c, P, x, y, r, rot, eaten) {
   for (i = 0; i < types.length; i++) pzzDrawTop(c, types[i], (i ? r * 0.18 : -r * 0.12), (i ? -r * 0.32 : r * 0.08), r * 0.24, 0);
   c.restore();
 }
+// Kuplan täytepaikat (pizzan säteinä): ei päällekkäin, jotta ne voi laskea
+function pzzOrderSpots(o) {
+  var out = [], all = [], i, j, e, n, a, a0, a1, sc;
+  if (o.kind === 'half') {
+    for (i = 0; i < o.tops.length; i++) {
+      e = o.tops[i];
+      a0 = e.side < 0 ? Math.PI * 0.62 : -Math.PI * 0.38;
+      a1 = e.side < 0 ? Math.PI * 1.38 : Math.PI * 0.38;
+      for (j = 0; j < e.n; j++) {
+        a = e.n === 1 ? (a0 + a1) / 2 : a0 + (a1 - a0) * j / (e.n - 1);
+        out.push({ type: e.type, x: Math.cos(a) * (e.n === 1 ? 0.4 : 0.52), y: Math.sin(a) * (e.n === 1 ? 0.4 : 0.52), s: 1 });
+      }
+    }
+    return out;
+  }
+  // Lajit vuorotellen renkaalle
+  for (i = 0; i < o.tops.length; i++) for (j = 0; j < o.tops[i].n; j++) all.push({ type: o.tops[i].type, k: j * o.tops.length + i });
+  all.sort(function (p, q) { return p.k - q.k; });
+  n = all.length;
+  sc = n >= 5 ? 0.86 : 1;
+  for (i = 0; i < n; i++) {
+    if (n === 1) { out.push({ type: all[i].type, x: 0, y: 0, s: 1.2 }); continue; }
+    a = -Math.PI / 2 + i / n * Math.PI * 2;
+    out.push({ type: all[i].type, x: Math.cos(a) * 0.52, y: Math.sin(a) * 0.52, s: sc });
+  }
+  return out;
+}
 // Kuplan tilauspizza: täytteet kuvina (pics) tai yksi kuva per laji
 function pzzDrawOrderPizza(c, o, x, y, r, m, pulse) {
-  var i, j, e, list, spots, k, sx, side, cnt, rr = r * 0.24;
+  var i, j, e, spots = null, side, rr = r * 0.3;
   artCircle(c, x, y, r, PZZ_COLS.gold, { lineColor: '#9a5a1a', flat: true });
   artCircle(c, x, y, r * 0.84, '#d23a28', { line: false, flat: true });
   pzzBlobPath(c, r * 0.78, 1, 14);
@@ -2081,21 +2109,10 @@ function pzzDrawOrderPizza(c, o, x, y, r, m, pulse) {
       else pzzDrawTop(c, e.type, x + (o.tops.length > 1 ? (i ? 1 : -1) * r * 0.38 : 0), y, rr * 1.5, 0);
       continue;
     }
-    spots = [];
-    for (j = 0; j < PZZ_SPOTS.length; j++) {
-      sx = PZZ_SPOTS[j][0];
-      if (e.side && sx * e.side < 0.2) continue;
-      spots.push(PZZ_SPOTS[j]);
-    }
-    // Kaksi lajia ilman puolia: vuorotellen eri paikoista
-    cnt = 0;
-    for (j = 0; j < spots.length && cnt < e.n; j++) {
-      if (!e.side && o.tops.length > 1 && (j % 2) !== i) continue;
-      k = spots[j];
-      pzzDrawTop(c, e.type, x + k[0] * r, y + k[1] * r, rr, 0);
-      cnt++;
-    }
+    // Kuvina: kaikki täytteet tasavälein renkaalle (puolikkaissa omalle puolelleen)
+    if (!spots) spots = pzzOrderSpots(o);
   }
+  if (spots) for (j = 0; j < spots.length; j++) pzzDrawTop(c, spots[j].type, x + spots[j].x * r, y + spots[j].y * r, rr * spots[j].s, 0);
 }
 
 // ---------- Piirto: työkalut ----------
@@ -2443,7 +2460,7 @@ function pzzDrawTools(c) {
     p = pzzToolPos('pin', L.pin);
     w = pzzWig('pin');
     if (w) artGlow(c, p.x, p.y, u * 0.08, '#ffffff', 0.5);
-    pzzDrawPin(c, p.x, p.y, u * 0.05, -0.15 + w);
+    pzzDrawPin(c, p.x, p.y, u * 0.055, -0.15 + w);
   }
   // Kastikekulho ja kauha
   p = L.sauce;
@@ -2452,7 +2469,7 @@ function pzzDrawTools(c) {
     p = pzzToolPos('ladle', { x: L.sauce.x, y: L.sauce.y - u * 0.035 });
     w = pzzWig('ladle');
     if (w) artGlow(c, p.x, p.y - u * 0.02, u * 0.08, '#ffffff', 0.5);
-    c.save(); c.translate(p.x, p.y); c.rotate(w); pzzDrawLadle(c, 0, 0, s, true); c.restore();
+    c.save(); c.translate(p.x, p.y); c.rotate(w); pzzDrawLadle(c, 0, 0, u * 0.055, true); c.restore();
   }
   // Juustopussi
   if (!(d && d.kind === 'bag')) {
@@ -2460,7 +2477,7 @@ function pzzDrawTools(c) {
     w = pzzWig('bag');
     if (w) artGlow(c, p.x, p.y - u * 0.04, u * 0.08, '#ffffff', 0.5);
     artShadow(c, p.x, p.y, u * 0.035, u * 0.01, 0.18);
-    pzzDrawBag(c, p.x, p.y, u * 0.052, w, false);
+    pzzDrawBag(c, p.x, p.y, u * 0.058, w, false);
   }
   // Leikkuri
   if (!(d && d.kind === 'cutter')) {
@@ -2595,7 +2612,7 @@ function pzzDrawEater(c, x, y, s, o) {
 }
 // Seurue pöydän takana: tuolit, syöjät, sitten pöytä, lautaset ja pizza
 function pzzDrawGroupBack(c, g, leaving) {
-  var L = pzz.L, u = L.u, T = L.tables[g.ti], i, p, x, y, s = u * 0.024, mood, hop, k, sh;
+  var L = pzz.L, u = L.u, T = L.tables[g.ti], i, p, x, y, s = u * 0.028, mood, hop, k, sh;
   sh = g.shakeT > 0 ? Math.sin(g.shakeT * 30) * u * 0.006 : 0;
   for (i = 0; i < g.pups.length; i++) {
     p = g.pups[i];
@@ -2604,13 +2621,14 @@ function pzzDrawGroupBack(c, g, leaving) {
     hop = p.hop > 0 ? Math.sin(p.hop / 0.45 * Math.PI) * u * 0.02 : 0;
     // Hyppii paikalleen tai pois
     if ((g.state === 'enter' && Math.abs(p.x - p.tx) > 1) || leaving) hop += Math.abs(Math.sin((g.t + p.seed) * 9)) * u * 0.03;
-    y = T.y - u * 0.045 - hop + Math.sin(g.t * 2 + p.seed) * u * 0.002;
+    y = T.y - u * 0.058 - hop + Math.sin(g.t * 2 + p.seed) * u * 0.002;
     if (g.sits && g.state === 'wait') y += u * 0.008;
     mood = 'happy';
     if (p.sad > 0 || (g.sits && g.state === 'wait') || g.shakeT > 0) mood = 'sad';
     else if (p.munch > 0) mood = 'munch';
     else if (g.state === 'eat' && !p.got) mood = 'wow';
-    if (!leaving && Math.abs(p.x - p.tx) < 2) artRoundRect(c, p.tx - u * 0.022, T.y - u * 0.085, u * 0.044, u * 0.09, u * 0.018, '#c88a4a', { lineColor: '#6a3a14', flat: true });
+    if (!leaving && Math.abs(p.x - p.tx) < 2) artRoundRect(c, p.tx - u * 0.024, T.y - u * 0.1, u * 0.048, u * 0.1, u * 0.02, '#c88a4a', { lineColor: '#6a3a14', flat: true });
+    artBlob(c, x, y + s * 1.25, s * 0.85, s * 0.6, p.tint || '#ffffff', { lineColor: p.tint ? artShade(p.tint, -0.4) : BUNNY_LINE, flat: true });
     pzzDrawEater(c, x, y, s, { t: g.t + p.seed, mood: mood, tint: p.tint, acc: p.acc, squint: g.joyT > 0 || p.wave > 0, look: g.state === 'wait' ? -0.4 : 0 });
     if (p.wave > 0 || (g.joyT > 0 && i % 2 === 0)) {
       k = Math.sin((g.t + i) * 14) * 0.4;
@@ -2625,13 +2643,13 @@ function pzzDrawGroupFront(c, g) {
     p = g.pups[i];
     if (Math.abs(p.x - p.tx) > 2) continue;
     x = p.tx + (p.sad > 0 ? Math.sin(p.sad * 25) * u * 0.003 : 0);
-    pzzEll(c, x, T.y + u * 0.006, u * 0.024, u * 0.009);
+    pzzEll(c, x, T.y + u * 0.007, u * 0.027, u * 0.01);
     c.fillStyle = '#ffffff';
     c.fill();
     c.strokeStyle = '#c8b8d0';
     c.lineWidth = Math.max(1, u * 0.002);
     c.stroke();
-    if (p.got && P) pzzDrawSlice(c, P, x, T.y + u * 0.002, u * 0.022, Math.PI, 1 - Math.max(0, p.munch) / 1.9);
+    if (p.got && P) pzzDrawSlice(c, P, x, T.y + u * 0.001, u * 0.03, Math.PI, 1 - Math.max(0, p.munch) / 1.9);
     if (p.sad > 0) pzzText(c, '?', x, T.y - u * 0.01 - Math.sin(p.sad * 6) * u * 0.004, u * 0.03, '#6a8ac8', '#ffffff');
   }
   if (P && g.state === 'eat') {
@@ -2855,7 +2873,7 @@ function pzzDrawVespa(c, x, y, s, moving) {
 // ---------- Kupla ----------
 function pzzDrawBubble(c, g) {
   var o = g.o, L = pzz.L, u = L.u, B = pzzBubblePos(g.ti), T = L.tables[g.ti], pop = g.pop > 0 ? 1 + Math.sin(g.pop / 0.4 * Math.PI) * 0.08 : 1, m = g.miss, pulse = m ? 0.5 + Math.sin(globalT * 10) * 0.5 : 0;
-  var w = o.pics ? u * 0.17 : B.w, h = B.h, x = o.pics ? B.x : B.x, px, i, e, ry, txt, rows, sx;
+  var w = o.pics ? u * 0.19 : B.w, h = B.h, x = o.pics ? B.x : B.x, px, i, e, ry, txt, rows, sx;
   c.save();
   c.translate(B.x, B.y);
   c.scale(pop, pop);
@@ -2871,7 +2889,7 @@ function pzzDrawBubble(c, g) {
     c.fillStyle = 'rgba(255,150,60,' + (0.2 + pulse * 0.35) + ')';
     c.beginPath(); c.arc(px, B.y, u * 0.068, 0, Math.PI * 2); c.fill();
   }
-  pzzDrawOrderPizza(c, o, px, B.y, u * 0.058, m, pulse);
+  pzzDrawOrderPizza(c, o, px, B.y, u * 0.066, m, pulse);
   if (m && m.part === 'raw') {
     // Raaka: pieni liekki muistuttaa uunista
     pzzFlame(c, px + u * 0.05, B.y + u * 0.055, u * 0.016, u * 0.04 * (1 + pulse * 0.2), '#ff7a2a', '#ffe27a');
@@ -3072,12 +3090,13 @@ function pzzSetupProps() {
 function pzzDrawChef(c, u, p) {
   var s = u * 0.065, t = globalT, k = p.toss > 0 ? Math.sin((1 - p.toss) * Math.PI) : 0, dy, sp, w, hat = p.hatT > 0;
   // Tassut ylhäällä pyörittämässä
-  dy = -s * 2.45 - k * u * 0.14;
-  if (!hat) {
-    artCircle(c, -s * 0.42, -s * 1.85, s * 0.16, '#ffffff', { lineColor: BUNNY_LINE, flat: true });
-    artCircle(c, s * 0.42, -s * 1.85, s * 0.16, '#ffffff', { lineColor: BUNNY_LINE, flat: true });
-  }
+  dy = -s * 2.25 - k * u * 0.14;
   drawBunny(c, 0, 0, s, 0, t * 2, false);
+  if (!hat) {
+    // Kädet ylhäällä pyörittämässä (heittäessä kurottavat)
+    artLimb(c, -s * 0.38, -s * 0.95, -s * 0.5, -s * 2.0 - k * s * 0.3, s * 0.2, '#ffffff', BUNNY_LINE);
+    artLimb(c, s * 0.38, -s * 0.95, s * 0.5, -s * 2.0 - k * s * 0.3, s * 0.2, '#ffffff', BUNNY_LINE);
+  }
   // Kokinhattu (tai taikinahattu)
   if (hat) {
     artBlob(c, 0, -s * 1.42, s * 0.6, s * 0.2, PZZ_DOUGH, { lineColor: '#c8a06a', flat: true });
@@ -3453,7 +3472,7 @@ function drawPizza() {
     if (f.kind === 'top') pzzDrawTop(c, f.o.type, x, y, pzzTopR(), 0);
     else if (f.kind === 'coin') artCircle(c, x, y, u * 0.012, '#ffd24f', { lineColor: '#a07010', hi: 0.5 });
     else if (f.kind === 'star') drawStar(c, x, y, H * 0.022 * (1 + Math.sin(k * Math.PI) * 0.6), k * 6, f.o.gold ? 0.8 : 0);
-    else if (f.kind === 'slice') pzzDrawSlice(c, f.o.P, x, y, u * 0.024, Math.PI + k * 0.3, 0);
+    else if (f.kind === 'slice') pzzDrawSlice(c, f.o.P, x, y, u * 0.03, Math.PI + k * 0.3, 0);
   }
   // Paikalleen palaavat pizzat
   for (i = 0; i < 4; i++) {
@@ -3468,8 +3487,8 @@ function drawPizza() {
   }
   // Juustoraaste
   if (pzz.shreds.length) {
-    c.strokeStyle = '#ffe270';
-    c.lineWidth = Math.max(1, u * 0.004);
+    c.strokeStyle = '#ffd84a';
+    c.lineWidth = Math.max(1.5, u * 0.006);
     c.lineCap = 'round';
     c.beginPath();
     for (i = 0; i < pzz.shreds.length; i++) { f = pzz.shreds[i]; c.moveTo(f.x, f.y); c.lineTo(f.x + Math.cos(f.rot) * u * 0.008, f.y + Math.sin(f.rot) * u * 0.008); }
@@ -3496,10 +3515,10 @@ function pzzDrawDragged(c, d) {
     pzzDrawPeel(c, d.x - L.R * 0.2, d.y + L.R * 1.1, L.R * 0.9, false, 0.2);
     pzzDrawPizza(c, P, d.x, d.y, L.R * 1.04, { noRing: true });
   } else if (d.kind === 'ball') artCircle(c, d.x, d.y, u * 0.032, PZZ_DOUGH, { lineColor: '#c8a06a', hi: 0.45 });
-  else if (d.kind === 'pin') pzzDrawPin(c, d.x, d.y, u * 0.055, Math.sin(d.moved * 0.02) * 0.1);
-  else if (d.kind === 'ladle') pzzDrawLadle(c, d.x, d.y, u * 0.048, true);
-  else if (d.kind === 'bag') { tilt = Math.sin(globalT * 14) * 0.08; pzzDrawBag(c, d.x, d.y, u * 0.055, tilt, true); }
-  else if (d.kind === 'cutter') pzzDrawCutter(c, d.x, d.y, u * 0.05, d.moved * 0.05);
+  else if (d.kind === 'pin') pzzDrawPin(c, d.x, d.y, u * 0.06, Math.sin(d.moved * 0.02) * 0.1);
+  else if (d.kind === 'ladle') pzzDrawLadle(c, d.x, d.y, u * 0.06, true);
+  else if (d.kind === 'bag') { tilt = Math.sin(globalT * 14) * 0.08; pzzDrawBag(c, d.x, d.y, u * 0.062, tilt, true); }
+  else if (d.kind === 'cutter') pzzDrawCutter(c, d.x, d.y, u * 0.058, d.moved * 0.05);
   else if (d.kind === 'log') pzzDrawLog(c, d.x, d.y, u * 0.04, 0.3 + Math.sin(globalT * 6) * 0.05);
   else if (d.kind === 'top') pzzDrawTop(c, d.type, d.x, d.y, pzzTopR() * 1.2, 0);
 }
