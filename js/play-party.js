@@ -86,7 +86,7 @@ var prt = {
   peekPlan: [], peekDelay: -1, peekGap: 0, peekN: 0, seenN: 0, firstPeek: true, hatLostT: 0,
   strings: [], basket: [], posts: [], bags: [], pump: null, cake: null, guests: [], seats: [], arrivals: [],
   drag: null, flies: [], puffs: [], bits: [], shown: {}, hintStep: null, hintT: 0,
-  fin: null, celT: 0, prin: null, cv: {}, pops: 0, wrongs: 0, starsGiven: false, toolK: {}, banner: null
+  fin: null, celT: 0, prin: null, cv: {}, spr: {}, cakeSpr: null, hudSpr: null, pops: 0, wrongs: 0, starsGiven: false, toolK: {}, banner: null
 };
 
 // ---------- Pienet apurit ----------
@@ -1838,7 +1838,7 @@ function prtSetupProps() {
   propAdd({
     x: x, y: prtRidgeAt(x) + H * 0.012, r: H * 0.075, hy: H * 0.03, color: '#ffd39a', note: 196, amp: 0.05, echo: 0, goat: 0,
     update: function (p, dt) { if (p.echo > 0) p.echo -= dt; if (p.goat > 0) p.goat -= dt; },
-    draw: function (c, p) { prtDrawAlphorn(c, H, p); },
+    draw: function (c, p) { prtPropDraw(c, p, 'alp', H * 0.22, H * 0.1, H * 0.11, H * 0.075, p.echo <= 0 && p.goat <= 0, function (b) { prtDrawAlphorn(b, H, p); }); },
     poke: function (p) {
       var i;
       playNote(147, 0, 0.8, 'triangle', 0.3);
@@ -1857,7 +1857,7 @@ function prtSetupProps() {
   propAdd({
     x: x, y: prtRidgeAt(x) + H * 0.01, r: H * 0.05, hy: H * 0.045, color: '#ffffff', note: 880, amp: 0.08, hat: 0, sneeze: 0, wave: 0,
     update: function (p, dt) { if (p.hat > 0) p.hat -= dt; if (p.sneeze > 0) p.sneeze -= dt; if (p.wave > 0) p.wave -= dt; },
-    draw: function (c, p) { prtDrawSnowman(c, H, p); },
+    draw: function (c, p) { prtPropDraw(c, p, 'snm', H * 0.12, H * 0.16, H * 0.06, H * 0.145, p.hat <= 0 && p.sneeze <= 0 && p.wave <= 0, function (b) { prtDrawSnowman(b, H, p); }); },
     poke: function (p) {
       p.hat = 1.0;
       playNote(659, 0, 0.08, 'triangle', 0.2);
@@ -1869,7 +1869,7 @@ function prtSetupProps() {
   propAdd({
     x: H * 0.065, y: H * 0.205, r: H * 0.05, hy: H * 0.015, color: '#ffe27a', note: 1568, amp: 0.06, beak: 0, mama: 0, feather: 0,
     update: function (p, dt) { if (p.beak > 0) p.beak -= dt; if (p.mama > 0) p.mama -= dt; if (p.feather > 0) p.feather -= dt; },
-    draw: function (c, p) { prtDrawNest(c, H, p); },
+    draw: function (c, p) { prtPropDraw(c, p, 'nst', H * 0.09, H * 0.05, H * 0.045, H * 0.035, p.beak <= 0 && p.mama <= 0 && p.feather <= 0, function (b) { prtDrawNest(b, H, p); }); },
     poke: function (p) {
       var i;
       p.beak = 1.0;
@@ -1899,7 +1899,7 @@ function prtSetupProps() {
   propAdd({
     x: x, y: H * 0.995, r: H * 0.045, hy: H * 0.03, color: '#f0c070', note: 784, amp: 0.1, lid: 0, mouse: 0, layer: 1,
     update: function (p, dt) { if (p.lid > 0) p.lid -= dt; if (p.mouse > 0) p.mouse -= dt; },
-    draw: function (c, p) { prtDrawPicnic(c, H, p); },
+    draw: function (c, p) { prtPropDraw(c, p, 'pic', H * 0.11, H * 0.08, H * 0.055, H * 0.07, p.lid <= 0 && p.mouse <= 0, function (b) { prtDrawPicnic(b, H, p); }); },
     poke: function (p) {
       p.lid = 0.8;
       playNote(523, 0, 0.08, 'square', 0.05);
@@ -1911,7 +1911,7 @@ function prtSetupProps() {
   propAdd({
     x: x, y: H * 0.998, r: H * 0.05, hy: H * 0.03, color: '#c8a070', note: 2349, amp: 0.04, up: 0, flower: 0, sibs: 0, layer: 1,
     update: function (p, dt) { if (p.up > 0) p.up -= dt; },
-    draw: function (c, p) { prtDrawBurrow(c, H, p); },
+    draw: function (c, p) { prtPropDraw(c, p, 'bur', H * 0.11, H * 0.04, H * 0.055, H * 0.03, p.up <= 0, function (b) { prtDrawBurrow(b, H, p); }); },
     poke: function (p) {
       p.up = 1.6;
       p.flower = p.n % 3 === 0 ? 1 : 0;
@@ -1925,7 +1925,7 @@ function prtSetupProps() {
   propAdd({
     x: x, y: H * 0.99, r: H * 0.045, hy: H * 0.045, color: '#8fb8ff', note: 1760, amp: 0.14, ring: 0, bee: 0, layer: 1,
     update: function (p, dt) { if (p.ring > 0) p.ring -= dt; if (p.bee > 0) p.bee -= dt; },
-    draw: function (c, p) { prtDrawBells(c, H, p); },
+    draw: function (c, p) { prtPropDraw(c, p, 'bel', H * 0.08, H * 0.08, H * 0.04, H * 0.075, p.ring <= 0 && p.bee <= 0, function (b) { prtDrawBells(b, H, p); }); },
     poke: function (p) {
       var i, mel = [1319, 1175, 1047, 1175, 1319, 1319, 1319];
       p.ring = 1.2;
@@ -2078,8 +2078,41 @@ function prtCanvas(name, w, h) {
   b.clearRect(0, 0, w, h);
   return b;
 }
+// Valmiiksi piirretyt pikkukuvat (vanha tabletti): avain -> canvas. Tyhjennetään,
+// kun ruudun koko muuttuu. Lepotilassa olevat hahmot ja koristeet piirretään
+// näistä; liikkuessaan ne piirretään suoraan.
+function prtSprite(key, w, h, ox, oy, fn) {
+  var cv = prt.spr[key];
+  if (cv) return cv;
+  cv = prtMakeSprite(w, h, ox, oy, fn);
+  prt.spr[key] = cv;
+  return cv;
+}
+function prtMakeSprite(w, h, ox, oy, fn) {
+  var cv = document.createElement('canvas'), b;
+  cv.width = Math.max(1, Math.ceil(w * DPR));
+  cv.height = Math.max(1, Math.ceil(h * DPR));
+  cv.sw = w;
+  cv.sh = h;
+  cv.ox = ox;
+  cv.oy = oy;
+  b = cv.getContext('2d');
+  b.setTransform(DPR, 0, 0, DPR, 0, 0);
+  b.translate(ox, oy);
+  fn(b);
+  return cv;
+}
+function prtBlit(c, cv, x, y) { c.drawImage(cv, x - cv.ox, y - cv.oy, cv.sw, cv.sh); }
+// Koriste piirretään levossa valmiista kuvasta
+function prtPropDraw(c, p, key, w, h, ox, oy, idle, fn) {
+  if (idle && p.t < 0) prtBlit(c, prtSprite(key, w, h, ox, oy, fn), 0, 0);
+  else fn(c);
+}
 function prtRenderLayers() {
   var L = prt.L, H = viewH;
+  prt.spr = {};
+  prt.cakeSpr = null;
+  prt.hudSpr = null;
   if (!L || !L.W || !L.H) return;
   prtRenderCurtain(prtCanvas('cur', L.poleR - L.poleL, L.curBot - L.curTop), L.poleR - L.poleL, L.curBot - L.curTop);
   prtRenderTable(prtCanvas('table', L.tableX1 - L.tableX0 + H * 0.04, H * 0.13));
@@ -2157,6 +2190,17 @@ function prtRenderTable(b) {
   b.strokeStyle = '#ff9ec6';
   b.lineWidth = Math.max(1.5, H * 0.004);
   b.beginPath(); b.moveTo(x0, y0 + H * 0.03); b.lineTo(x0 + w, y0 + H * 0.03); b.stroke();
+  // Paikkakortit eläinten kuvin
+  b.save();
+  b.translate(-(L.tableX0 - H * 0.02), -(L.tableY - H * 0.008));
+  for (i = 0; i < prt.seats.length; i++) prtDrawCard(b, i);
+  b.restore();
+}
+function prtDrawCard(c, i) {
+  var L = prt.L, H = viewH, p = prtSeatPos(i), s = prt.seats[i];
+  c.beginPath(); c.moveTo(p.x - H * 0.024, L.tableY + H * 0.03); c.lineTo(p.x - H * 0.02, L.tableY - H * 0.006); c.lineTo(p.x + H * 0.02, L.tableY - H * 0.006); c.lineTo(p.x + H * 0.024, L.tableY + H * 0.03); c.closePath();
+  artFillPath(c, '#ffffff', L.tableY - H * 0.01, L.tableY + H * 0.03, H * 0.02, { lineColor: '#d8a0c0', shadeTo: '#f4eaf6' });
+  prtDrawHead(c, s.kind, p.x, L.tableY + H * 0.016, H * 0.0105, { mood: 'happy' });
 }
 function prtRenderFront(b) {
   var L = prt.L, H = viewH, y0 = H * 0.83, i, R, rnd = prtSeeded(53), x, y, g;
@@ -2412,6 +2456,10 @@ function prtDrawGuestAt(c, g, layer) {
   o = prtGuestDrawOpts(g, seated);
   x = g.x;
   y = g.y;
+  if (o.mood === 'happy' && !o.blink && !o.wave && !o.sq && !o.ear && !o.strum && !o.squeeze && g.cheer <= 0 && g.shake <= 0 && g.wet <= 0 && g.mark <= 0 && !(g.num > 0 && prt.cake.light)) {
+    prtBlit(c, prtSprite('g' + g.kind + (o.feet ? 'f' : '') + (o.guitar ? 'G' : '') + (o.accordion ? 'A' : '') + Math.round(r), r * 3.6, r * 4.6, r * 1.8, r * 3.6, function (b) { prtDrawGuest(b, g.kind, 0, 0, r, o); }), x, y);
+    return;
+  }
   if (g.cheer > 0) hop = Math.abs(Math.sin(g.cheer * 7)) * H * 0.02;
   if (g.shake > 0) sh = Math.sin(g.shake * 40) * H * 0.006;
   if (g.wet > 0) sh += Math.sin(globalT * 50) * H * 0.0015;
@@ -2542,10 +2590,24 @@ function prtSym(c, sym, x, y, r, line) {
 }
 // Viiri: (x, y) = yläreunan keskikohta
 function prtDrawPennant(c, x, y, w, h, type, rot, ghost) {
-  var P = PRT_PEN[type], line = artShade(P.col, -0.45);
+  var cv;
+  if (!ghost && prt.spr) {
+    cv = prtSprite('pen' + type + '_' + Math.round(w) + '_' + Math.round(h), w * 1.3, h * 1.3, w * 0.65, h * 0.12, function (b) { prtPennantRaw(b, w, h, type, ghost); });
+    c.save();
+    c.translate(x, y);
+    c.rotate(rot || 0);
+    prtBlit(c, cv, 0, 0);
+    c.restore();
+    return;
+  }
   c.save();
   c.translate(x, y);
   c.rotate(rot || 0);
+  prtPennantRaw(c, w, h, type, ghost);
+  c.restore();
+}
+function prtPennantRaw(c, w, h, type, ghost) {
+  var P = PRT_PEN[type], line = artShade(P.col, -0.45);
   c.beginPath();
   c.moveTo(-w / 2, 0);
   c.lineTo(w / 2, 0);
@@ -2558,7 +2620,6 @@ function prtDrawPennant(c, x, y, w, h, type, rot, ghost) {
     c.fillRect(-w / 2 + w * 0.06, h * 0.04, w * 0.88, h * 0.07);
     prtSym(c, P.sym, 0, h * 0.33, w * 0.2, line);
   }
-  c.restore();
 }
 function prtDrawStrings(c) {
   var L = prt.L, H = viewH, si, S, s, j, h, p, rot, show, x0 = L.poleL + H * 0.012, x1 = L.poleR - H * 0.012, open, wv, dk, ghostT, k;
@@ -2621,8 +2682,12 @@ function prtPostBalloon(i) {
   return { x: P.x + Math.sin(globalT * 1.3 + b.bob) * H * 0.004, y: P.y + Math.sin(globalT * 1.7 + b.bob) * H * 0.006, r: PRT_BAL_R[b.size] * H };
 }
 function prtDrawBalloon(c, x, y, r, col, o) {
-  var ry = r * 1.12;
+  var ry = r * 1.12, bl;
   o = o || {};
+  if (o.face && !o.raw && o.alpha === undefined) {
+    bl = ((globalT * 0.7 + x) % 3.3) < 0.12;
+    if (!bl) { prtBlit(c, prtSprite('bal' + col + Math.round(r), r * 2.4, r * 2.8, r * 1.2, r * 1.3, function (b) { prtDrawBalloon(b, 0, 0, r, col, { face: true, raw: true, open: true }); }), x, y); return; }
+  }
   c.beginPath();
   if (c.ellipse) c.ellipse(x, y, r, ry, 0, 0, Math.PI * 2); else c.arc(x, y, r, 0, Math.PI * 2);
   artFillPath(c, col, y - ry, y + ry, r, { lineColor: artShade(col, -0.4), alpha: o.alpha });
@@ -2631,8 +2696,9 @@ function prtDrawBalloon(c, x, y, r, col, o) {
   c.fillStyle = artShade(col, -0.2);
   c.fill();
   if (o.face) {
-    artEye(c, x - r * 0.25, y - r * 0.05, r * 0.11, 0, ((globalT * 0.7 + x) % 3.3) < 0.12);
-    artEye(c, x + r * 0.25, y - r * 0.05, r * 0.11, 0, ((globalT * 0.7 + x) % 3.3) < 0.12);
+    bl = !o.open && ((globalT * 0.7 + x) % 3.3) < 0.12;
+    artEye(c, x - r * 0.25, y - r * 0.05, r * 0.11, 0, bl);
+    artEye(c, x + r * 0.25, y - r * 0.05, r * 0.11, 0, bl);
     c.strokeStyle = artShade(col, -0.5); c.lineWidth = Math.max(1, r * 0.06); c.lineCap = 'round';
     c.beginPath(); c.arc(x, y + r * 0.12, r * 0.18, 0.2 * Math.PI, 0.8 * Math.PI); c.stroke();
   }
@@ -2695,12 +2761,11 @@ function prtDrawTable(c) {
   if (cv) c.drawImage(cv, L.tableX0 - H * 0.02, L.tableY - H * 0.008, cv.cw, cv.ch);
   // Paikkakortit
   for (i = 0; i < prt.seats.length; i++) {
-    p = prtSeatPos(i);
     s = prt.seats[i];
-    if (s.glow > 0) artGlow(c, p.x, L.tableY + H * 0.012, H * 0.04, '#ffe27a', Math.min(0.8, s.glow));
-    c.beginPath(); c.moveTo(p.x - H * 0.024, L.tableY + H * 0.03); c.lineTo(p.x - H * 0.02, L.tableY - H * 0.006); c.lineTo(p.x + H * 0.02, L.tableY - H * 0.006); c.lineTo(p.x + H * 0.024, L.tableY + H * 0.03); c.closePath();
-    artFillPath(c, '#ffffff', L.tableY - H * 0.01, L.tableY + H * 0.03, H * 0.02, { lineColor: '#d8a0c0', shadeTo: '#f4eaf6' });
-    prtDrawHead(c, s.kind, p.x, L.tableY + H * 0.016, H * 0.0105, { mood: 'happy' });
+    if (s.glow <= 0) continue;
+    p = prtSeatPos(i);
+    artGlow(c, p.x, L.tableY + H * 0.012, H * 0.045, '#ffe27a', Math.min(0.9, s.glow));
+    prtDrawCard(c, i);
   }
 }
 // Kakkukerros: (x, y) = yläpinnan keskikohta
@@ -2717,7 +2782,7 @@ function prtDrawLayer(c, x, y, w, h, col, k) {
   c.fill();
 }
 function prtDrawCake(c) {
-  var L = prt.L, H = viewH, ck = prt.cake, i, n = ck.layers.length, x = L.cakeX, y, top, sq = ck.squash > 0 ? Math.sin(ck.squash / 0.4 * Math.PI) * 0.06 : 0, p, d, f;
+  var L = prt.L, H = viewH, ck = prt.cake, i, n = ck.layers.length, x = L.cakeX, y, top, k, sq = ck.squash > 0 ? Math.sin(ck.squash / 0.4 * Math.PI) * 0.06 : 0, p, d, f;
   // Kakkuvati
   artLimb(c, x, L.tableY + H * 0.002, x, L.standY + H * 0.01, H * 0.016, '#ffffff', '#b8a8d8');
   artBlob(c, x, L.tableY + H * 0.002, H * 0.04, H * 0.008, '#ffffff', { lineColor: '#b8a8d8' });
@@ -2728,6 +2793,31 @@ function prtDrawCake(c) {
   c.translate(x, L.standY);
   c.scale(1 + sq, 1 - sq);
   c.translate(-x, -L.standY);
+  if (prt.drag && prt.drag.kind === 'rub') prtCakeBody(c);
+  else {
+    k = ck.layers.join('') + '|' + ck.dollops.join(',') + '|' + Math.round(ck.cream * 40) + '|' + Math.round(ck.drips * 10);
+    if (!prt.cakeSpr || prt.cakeSpr.key !== k) {
+      prt.cakeSpr = prtMakeSprite(L.layerW * 1.3, L.layerH * 7 + H * 0.14, L.layerW * 0.65 - x, L.layerH * 7 + H * 0.05 - L.standY, prtCakeBody);
+      prt.cakeSpr.key = k;
+      prt.cakeSpr.ox += x;
+      prt.cakeSpr.oy += L.standY;
+    }
+    prtBlit(c, prt.cakeSpr, x, L.standY);
+  }
+  c.restore();
+  // Kynttilät
+  for (i = 0; i < ck.candles.length; i++) {
+    p = prtCandlePos(i, ck.candles.length);
+    prtDrawCandle(c, p.x, p.y, H, ck.candles[i], ck.candles[i].pop > 0 ? ck.candles[i].pop : 0);
+  }
+  if (ck.spark > 0) prtDrawSparkler(c, x, top + H * 0.005, H, true);
+  if (ck.numPop) {
+    d = ck.numPop.t;
+    prtText(c, String(ck.numPop.n), x + L.layerW * 0.62, top - H * 0.06 - d * H * 0.03, H * 0.045 * easeOutBack(Math.min(1, d * 4)), '#ffffff', '#a0508a');
+  }
+}
+function prtCakeBody(c) {
+  var L = prt.L, H = viewH, ck = prt.cake, i, n = ck.layers.length, x = L.cakeX, top, p, d, f;
   for (i = 0; i < n; i++) prtDrawLayer(c, x, L.standY - (i + 1) * L.layerH, L.layerW, L.layerH, ck.layers[i]);
   top = prtCakeTopY();
   if (ck.cream > 0 && n) {
@@ -2756,17 +2846,6 @@ function prtDrawCake(c) {
       artBlob(c, p, top + H * 0.05 + (i % 2) * H * 0.02, H * 0.007, H * 0.035, '#e8f0ff', { lineColor: '#a8b8e0', line: 1 });
     }
     c.globalAlpha = 1;
-  }
-  c.restore();
-  // Kynttilät
-  for (i = 0; i < ck.candles.length; i++) {
-    p = prtCandlePos(i, ck.candles.length);
-    prtDrawCandle(c, p.x, p.y, H, ck.candles[i], ck.candles[i].pop > 0 ? ck.candles[i].pop : 0);
-  }
-  if (ck.spark > 0) prtDrawSparkler(c, x, top + H * 0.005, H, true);
-  if (ck.numPop) {
-    d = ck.numPop.t;
-    prtText(c, String(ck.numPop.n), x + L.layerW * 0.62, top - H * 0.06 - d * H * 0.03, H * 0.045 * easeOutBack(Math.min(1, d * 4)), '#ffffff', '#a0508a');
   }
 }
 function prtDrawCandle(c, x, y, H, cd, pop) {
@@ -3337,26 +3416,35 @@ function prtDrawHint(c) {
 // ---------- HUD ja juhla ----------
 function prtHudSlot(i) { return { x: hudX() + viewH * 0.05 + i * viewH * 0.075, y: viewH * 0.063 }; }
 function prtDrawHud(c) {
-  var H = viewH, i, sl, done, cur, k, gold = prtGolden(), last = prtHudSlot(4), sh;
+  var H = viewH, gold = prtGolden(), last = prtHudSlot(4), sh, key, fd = prt.fin && (prt.fin.ph === 'boom' || prt.fin.ph === 'cel'), w = last.x + H * 0.05 - hudX();
+  key = prt.st + '|' + (fd ? 1 : 0);
+  if (!prt.hudSpr || prt.hudSpr.key !== key) {
+    prt.hudSpr = prtMakeSprite(w + H * 0.04, H * 0.13, 0, 0, function (b) { prtHudRaw(b, fd); });
+    prt.hudSpr.key = key;
+  }
+  c.drawImage(prt.hudSpr, hudX() - H * 0.02, 0, prt.hudSpr.sw, prt.hudSpr.sh);
+  sh = prt.hatLostT > 0 ? Math.sin(prt.hatLostT * 30) * 0.25 : 0;
+  c.globalAlpha = gold ? 1 : 0.4;
+  prtDrawHat(c, last.x, last.y + H * 0.022, H * 0.05, gold, sh);
+  c.globalAlpha = 1;
+}
+function prtHudRaw(c, fd) {
+  var H = viewH, i, sl, done, cur, last = prtHudSlot(4);
+  c.translate(-(hudX() - H * 0.02), 0);
   drawHudPanel(c, hudX(), H * 0.018, last.x + H * 0.05 - hudX(), H * 0.09, H * 0.025);
   for (i = 0; i < 4; i++) {
     sl = prtHudSlot(i);
-    done = prt.st > i || (i === 3 && prt.fin && (prt.fin.ph === 'boom' || prt.fin.ph === 'cel'));
+    done = prt.st > i || (i === 3 && fd);
     cur = prt.st === i && !done;
-    k = cur ? 1 + Math.sin(globalT * 4) * 0.06 : 1;
     c.globalAlpha = done || cur ? 1 : 0.35;
     c.save();
     c.translate(sl.x, sl.y);
-    c.scale(k, k);
+    if (cur) c.scale(1.12, 1.12);
     prtHudIcon(c, i, H);
     c.restore();
     c.globalAlpha = 1;
     if (done) drawStar(c, sl.x + H * 0.022, sl.y + H * 0.02, H * 0.01, 0, 0);
   }
-  sh = prt.hatLostT > 0 ? Math.sin(prt.hatLostT * 30) * 0.25 : 0;
-  c.globalAlpha = gold ? 1 : 0.4;
-  prtDrawHat(c, last.x, last.y + H * 0.022, H * 0.05, gold, sh);
-  c.globalAlpha = 1;
 }
 function prtHudIcon(c, i, H) {
   if (i === 0) { prtDrawPennant(c, -H * 0.012, -H * 0.02, H * 0.026, H * 0.034, 0, -0.1); prtDrawPennant(c, H * 0.014, -H * 0.018, H * 0.026, H * 0.034, 1, 0.1); }
