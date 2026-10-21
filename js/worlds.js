@@ -1507,7 +1507,9 @@ var WORLDS = [
       '#.#######',
       '#......J#',
       '#######.#',
-      '#R......#',
+      '#Z......#',
+      '#.#######',
+      '#......R#',
       '#########'
     ],
     levels: [
@@ -1551,6 +1553,20 @@ var WORLDS = [
         respawn: function () { respawnFestival(); }
       },
       {
+        // Leipomon logiikka pykälää vaikeampana: puu-uuni, kaksi pöytää ja paloiksi jako
+        kind: 'pizza', room: 'Z', name: 'Pupujen pizzeria', color: '#ff7a4a', script: 'play-pizza',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#ffe6cc', ambient: 'sparkle', fg: null,
+        init: function () { initPizza(); },
+        update: function (dt) { updatePizza(dt); },
+        draw: function () { drawPizza(); },
+        tap: function (x, y) { handlePizzaTap(x, y); },
+        resize: function () { resizePizza(); },
+        renderBg: function (b, w, h) { renderPizzaBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff0d0', raysAlpha: 0.3, tint: ['rgba(255,220,180,0.06)', 'rgba(200,120,80,0.04)'], vignette: 0.22 },
+        respawn: function () { respawnPizza(); }
+      },
+      {
         kind: 'traffic', room: 'R', name: 'Liikennevalot', color: '#5fd36b', script: 'play-traffic',
         control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 5500,
         bgColor: '#dff2ff', ambient: 'sparkle', fg: null,
@@ -1566,12 +1582,14 @@ var WORLDS = [
   },
   {
     id: 17, name: 'Myrskyvuori', region: 'land', band: 'storm',
-    place: { fx: 0.27, fy: 0.21, size: 0.85, finaleKind: 'witch', deco: ['umbrella', 'witch'], final: true },
+    place: { fx: 0.27, fy: 0.21, size: 0.85, finaleKind: 'witch', deco: ['umbrella', 'party', 'witch'], final: true },
     map: [
       '#########',
       '#B.....V#',
       '#######.#',
-      '#N......#',
+      '#J......#',
+      '#.#######',
+      '#......N#',
       '#########'
     ],
     levels: [
@@ -1588,6 +1606,20 @@ var WORLDS = [
         renderBgLayers: function () { return umbrellaLayers(); },
         light: { rays: true, raysColor: '#fff4d0', raysAlpha: 0.3, tint: ['rgba(150,130,220,0.08)', 'rgba(80,60,140,0.06)'], vignette: 0.28 },
         respawn: function () { respawnUmbrella(); }
+      },
+      {
+        // Ystävyyden alku: salaiset juhlat noidalle, jonka pilvi kurkkii harjanteen takaa
+        kind: 'party', room: 'J', name: 'Yllätysjuhlat', color: '#ff9fd8', script: 'play-party',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#d8ecff', ambient: 'sparkle', fg: null,
+        init: function () { initParty(); },
+        update: function (dt) { updateParty(dt); },
+        draw: function () { drawParty(); },
+        tap: function (x, y) { handlePartyTap(x, y); },
+        resize: function () { resizeParty(); },
+        renderBg: function (b, w, h) { renderPartyBg(b, w, h); },
+        light: { rays: true, raysColor: '#fff4d0', raysAlpha: 0.32, tint: ['rgba(255,230,240,0.05)', 'rgba(120,110,190,0.05)'], vignette: 0.24 },
+        respawn: function () { respawnParty(); }
       },
       {
         kind: 'witch', room: 'N', name: 'Myrskynoita', color: '#7a5cc8', script: 'play-witch',
@@ -1618,6 +1650,8 @@ var WORLDS = [
       '#S......#',
       '#.#######',
       '#......K#',
+      '#######.#',
+      '#T......#',
       '#########'
     ],
     levels: [
@@ -1665,6 +1699,20 @@ var WORLDS = [
         renderBg: function (b, w, h) { renderLettuBg(b, w, h); },
         light: { rays: true, raysColor: '#fff0d0', raysAlpha: 0.3, tint: ['rgba(255,230,190,0.06)', 'rgba(200,140,90,0.04)'], vignette: 0.22 },
         respawn: function () { respawnLettu(); }
+      },
+      {
+        // Tähtitorni: ritsalla tähdet numerojärjestyksessä taivaalle, valmis kuvio herää eloon
+        kind: 'constel', room: 'T', name: 'Tähtikuviot', color: '#8a7cff', script: 'play-constel',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#1c1a4a', ambient: null, fg: null,
+        init: function () { initConstel(); },
+        update: function (dt) { updateConstel(dt); },
+        draw: function () { drawConstel(); },
+        tap: function (x, y) { handleConstelTap(x, y); },
+        resize: function () { resizeConstel(); },
+        renderBg: function (b, w, h) { renderConstelBg(b, w, h); },
+        light: { vignette: 0.3 },
+        respawn: function () { respawnConstel(); }
       }
     ]
   }

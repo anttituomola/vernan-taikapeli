@@ -84,7 +84,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-bcode.js`, `play-prism.js`, `play-bloop.js`, `play-mole.js`, `play-duo.js` — Kaukamaa, Porkkanakumpu (maailma 13): Pupupolku (ohjelmointi), Värisäde (värilasit), Loitsupolku (aliohjelma, myyrät, odotus), vartija Myyräkuningas ja bonushuone Yhteispolku (yhteispeli kahdelle)
 - `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js`, `play-clockwork.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut), Käkikello (viisarit kellonaikaan) ja vartija Kellokoneisto (vesi, rattaat ja viisarit yhdessä koneessa), sokkelon maasto `HUB_TILE_DECOR.clock`
 - `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js`, `play-hideseek.js`, `play-twin.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät), vartija Postireitti (ohjelmointi) sekä bonushuoneet Kanojen piilosleikki (tökättävä kylä) ja Pupuparin piha (reaaliaikainen yhteispeli kahdelle), sokkelon maasto `HUB_TILE_DECOR.farm`
-- `js/play-umbrella.js`, `play-witch.js` — Kaukamaa, Myrskyvuori (maailma 17, viimeinen paikka `place.final`): Sateenvarjo (pitkä helppo kenttä, varjon raahaus sateessa) ja ystävyyden vartija Myrskynoita (auringonsäteet sateeseen -> sateenkaari)
+- `js/play-umbrella.js`, `play-witch.js` — Kaukamaa, Myrskyvuori (maailma 17, viimeinen paikka `place.final`): Sateenvarjo (pitkä helppo kenttä, varjon raahaus sateessa), Yllätysjuhlat (`play-party.js`, salaiset juhlat noidalle, 21.10.2026) ja ystävyyden vartija Myrskynoita (auringonsäteet sateeseen -> sateenkaari)
 - `js/hub-theme-storm.js` — Myrskyvuoren sokkeloteema `HUB_THEMES.storm` (laventelikalliot, sadepilvet, lätäköt, kurkkivat sateenkaaret; käyttää hub-theme-manner.js:n yhteisiä paloja)
 - `js/play-trek.js` — **pitkän kentän kehys**: Pikkupilven kotimatka (Kaukamaa, Pilvilinna, maailma 18). Etappien
   rekisteröinti (`trekRegister`), matkakartta (etapin valinta ja asemalta toiselle kävely), oma tallennus
@@ -94,6 +94,8 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
   viisi etappia (etuliitteet `tkm`, `tkr`, `tkc`, `tks`, `tkp`); `js/hub-theme-cloud.js` — Pilvilinnan sokkeloteema.
   Kentän `script` voi olla lista, kun pitkä kenttä koostuu useasta tiedostosta.
 - `js/play-rbslide.js`, `play-lettu.js` — Pilvilinnan Sateenkaariliuku ja Lettukahvila (17.10.2026)
+- `js/play-constel.js` — Pilvilinnan Tähtikuviot (ritsa, tähtikuviot heräävät eloon, 21.10.2026)
+- `js/play-pizza.js` — Pupulan Pupujen pizzeria (leipomologiikka, puu-uuni, palat syöjien määrän mukaan, 21.10.2026)
 - `js/pen-core.js` — Taikakynän ydin: viivat, muste, kynätila, pintoja seuraava kävely, muodontunnistus
 - `js/play-pen.js`, `play-rain.js`, `play-bunnybridge.js`, `play-orchard.js`, `play-scribble.js` — maailma 4
 - `js/update-draw.js` + `js/main.js` — silmukka ja syöte
@@ -1037,6 +1039,22 @@ suunnittelusta.
 - **Lyhtyjuhla** (js/play-festival.js) — rauhallinen ilta: lyhdyt raahataan
   taloille, joiden kyltissä on väri ja määrä; valmis talo syttyy ja perhe
   vilkuttaa. Lopuksi ilotulitus (taivaan napautus laukaisee lisää).
+- **Pupujen pizzeria** (js/play-pizza.js, huone Z ennen vartijaa, 21.10.2026) — Pupulan ainoa
+  vaikeahko kenttä: leipomon tilaus-ja-kokoa-logiikka uusin elein ja jakamisella. Taikinapallo
+  kulhosta laudalle, kaulin edestakaisin (taikina kasvaa katkoviivarenkaaseen), kauha kiertää
+  kastikkeen, juustopussista sataa raastetta, täytteet kulhoista (sieni, pupupepperoni, oliivi,
+  paprika, ananas, basilika) ja pois kulhoon tai lattialle koiralle. Puu-uuniin: rengas ennakoi
+  kultaisen hetken (myöhään = vähän palanut, yskähdys; hiiltynyt roskiin); päivällä tuli hiipuu
+  siniseksi, ja halko puupinosta roihauttaa sen. Leikkurin pyyhkäisy tekee viillon (k pyyhkäisyä =
+  2k yhtä suurta palaa); pöydässä 2/4/6/8 syöjää, ja kannettaessa pöydän yllä haamupalat näyttävät,
+  riittävätkö palat. Liian vähän: joku jää ilman, ja pizza palaa leikattavaksi; liikaa: koira
+  loikkaa nappaamaan ylimääräisen. Aamu: yksi pöytä ja uunipaikka; päivä: kaksi pöytää
+  kärsivällisyyssydämin ja kaksi uunipaikkaa; ilta: numerot, laskut "2+3" ja puolikas-tilaus
+  (vasen ja oikea puoli eri täyte). Jauhovespa kadulla tuo välitehtävät. Kultainen pizzalapio
+  (+1 tähti): ei palanutta, kärsivällisyys ei loppunut, ei ylimääräisiä paloja. Tökättävät:
+  kokkipupu (5.: taikinahattu), kissa jauhosäkillä, valkosipuli- ja chilinauhat, basilika
+  (perhonen), kassakone, harmonikkapupu ja ohikulkijat ikkunan takana, lamput ja koira. Kesto
+  botilla 4–4,5 min.
 - **Liikennevalot** (js/play-traffic.js) — vartija: risteyksessä pupuja
   odottaa suojatien reunalla ja autoja tulee; valon napautus vaihtaa vuoron.
   Ei kolareita: liian pitkään odottava vain mököttää. Kolmannella kierroksella
@@ -1065,6 +1083,27 @@ helppo kenttä, sitten ystävyyden vartija (ei taistelu).
   ilohyppy), kivikasa (5.: murmeli lehtisateenvarjon alla), lätäkön sammakko
   (3.: lumpeenlehti sateenvarjoksi), yksisarvinen. Lopussa noita murjottaa
   pilvellään ja lentää huipulle.
+- **Yllätysjuhlat** (js/play-party.js, huone J, 21.10.2026) — pitkä, vaihteleva ja helpohko–keskitaso
+  ilman sydämiä. Prinsessa ja vuoren eläimet valmistelevat Myrskynoidalle salaiset juhlat huipun
+  alapuolen niitylle; kaikki valmiit koristeet jäävät näkyviin. (1) Kaksi viirinarua: mallikuvio
+  (AB tai ABC, toisessa AAB tai ABBC) soi viiri kerrallaan, ja viirit raahataan korista koukkuihin;
+  väärä heilahtaa ja putoaa koriin. (2) Viisi ilmapallotolppaa omine väreineen ja kokoineen: pussin
+  napautus valitsee värin, pumppua pidetään pohjassa, ja pallon ympärillä hehkuu oikean koon rengas
+  (ikkuna 0,5 s, kasvu kiihtyy). Oikeasta koosta pallo lentää tolppaan, liian iso tekee PAM
+  (konfetti ja nauru), ja liian pieni vuotaa. (3) Sateenkaarikakku: seitsemän kerrosta punaisesta
+  violettiin, kerma hangataan, kynttilöitä yhtä monta kuin vieraita (taikatulitikku sytyttää, ja
+  jokainen kipinä lentää yhdelle vieraalle numerona; väärä määrä sammuu ja korjataan) ja kolme
+  tähtisädetikkua. (4) 4–6 vierasta (vuorikauris, murmeli, kotka, pöllö, kettu, lumijänis) saapuu
+  pitkin kenttää ja raahataan paikkakortin mukaiselle paikalle. (5) YLLÄTYS: eläimet piiloutuvat,
+  noita lentää murjottaen kakun taakse, ja konfettitykin napautus tuo esiin YL-LÄ-TYS!: noita
+  ilahtuu ja hänen pilvensä sataa kimalletta. Jännite: noidan pikkupilvi kurkkii välillä
+  harjanteen takaa (varoitus 1,8 → 1,3 s, ensimmäinen 2,8 s; 2–3 kertaa asemaa kohden). Lapsi vetää
+  kalliolta näyttävän naamioverhon narusta alas (ja ylös), eläimet piiloutuvat kivien taakse ja
+  prinsessa viheltelee. Jos pilvi näkee, lyhyt sadekuuro pilaa yhden valmiin koristeen, joka
+  tehdään uudestaan. Kultainen juhlahattu (+1 tähti), jos pilvi ei nähnyt kertaakaan. Kuviot,
+  värit, koot, vieraat ja kurkistukset arvotaan. Tökättävät: alppitorvi (kaiku; 5.: kauris vastaa),
+  lumiukko, kotkan pesä, lumihuippu, puro, kellokukat, murmelin kolo (3.: kukka), piknikkori ja
+  istuvat vieraat (kettu soittaa kitaraa, kauris harmonikkaa).
 - **Myrskynoita** (vartija) — huipulla surullinen noita ja hänen iso
   sadepilvensä. Korissa seitsemän auringonsädettä palloina
   (`RAINBOW_COLORS`), ja haaleat pisteviivakaaret näyttävät raitojen paikat.
@@ -1129,6 +1168,27 @@ Pilvilinnan muut huoneet (17.10.2026, palaute: Kotimatka oli liian helppo, Verna
   hiiltynyt roskiin), valmis lettu lautaselle, täytteet lukumäärin, lautanen asiakkaalle. Aamu: 2 pannua,
   yksi asiakas; päivä: 3 pannua, kaksi asiakasta kärsivällisyyssydämin; ilta: numerot, laskut, "sama
   kuin tuolla" ja muistikupla. Kultainen lasta (+1 tähti). Säädöt `LKF_GOLD`, `LKF_PATIENCE`, `LKF_PLAN`.
+
+- **Tähtikuviot** (js/play-constel.js, huone T, 21.10.2026) — yö Pilvilinnan tähtitornin
+  terassilla, keskitaso. Kuunsirppiritsalla (paina mihin tahansa, vedä taakse, päästä) ammutaan
+  tähtiä taivaalle numerojärjestyksessä 1..N. Pisteviiva näyttää vain lennon alun (ensimmäisellä
+  kierroksella pidemmän), ja edellisen laukauksen tähtipölyjälki jää taivaalle korjauksen avuksi.
+  Oikea numero: tähti napsahtaa paikalleen kuvion sävelellä ja viiva piirtyy; väärä numero: boing,
+  tähti kimpoaa pilviin, ja oikea numero välähtää. Pilviin pudonnut tähti palaa hetken päästä
+  koriin. Korissa N + 3 tähteä; tyhjästä korista tähtipupu tuo uuden korillisen. Valmis kuvio
+  herää eloon: silmät aukeavat, se esiintyy taivaan keskellä ja soittaa sävelmänsä (kala ui,
+  lintu lentää, pupu hyppii, valas suihkuttaa, poni ja yksisarvinen laukkaavat, linnasta nousee
+  ilotulitus, raketti lentää, lohikäärme puhaltaa kipinöitä) ja asettuu taivaan yläreunaan
+  elämään; napautus saa sen tekemään tempun. Neljä kierrosta, kuviot arvotaan: 1) 4 tähteä
+  lähellä, 2) 5–6 tähteä ja väliin lipuva pilvi, joka syö tähden ja kikattaa, 3) 6–7 tähteä ja
+  tuuli (juovat, kimallus, nuoli), 4) 7–8 tähteä ja hitaasti lipuva ja kääntyvä kuvio. Välitehtävät
+  (laske, kuvio) toisen ja kolmannen kuvion jälkeen. Lopuksi kuviot paraatiin, ja Pikkupilvet
+  hurraavat. Salaisuus: tähdenlento kiitää välillä taivaan poikki; siihen osunut tähti on toivomus
+  (+1 tähti, kerran kentässä). Kultainen kaukoputki (+1 tähti): enintään 12 hutia koko kentässä.
+  Haamukäsi näyttää vedon, joka oikeasti osuisi (ratkaisija `cstSolve`). Tökättävät: kaukoputki
+  (kuupupu, 3.: ufopupu), pöllötähtitieteilijä (5.: lasit putoavat), kuu, tähtikello (tähtikäki),
+  soittorasia (5.: kuviot tekevät tempun), nukkuva Pikkupilvi (kuorsaa sadetta, aivastaa tähtiä),
+  lyhdyt, revontulet, tähtikori ja tähtipupu.
 
 Säädöt ovat kunkin `trek-*.js`-tiedoston alussa (esim. `TKM_SPEED`, `TKR_ROWS1`, `TKC_CREEP`,
 `TKS_TEL`, `TKP_HUG_R`). Kehyksen asemien paikat `TREK_MAP_POS`.
@@ -1594,7 +1654,10 @@ simuloimalla `VT`-kahvalla ennen tabletille viemistä.
 - Värisäde: kierrokset `PRISM_ROUNDS` (ruudukko, reitin peilit ja lasit, kukat, hämäyspeilit `decoys` ja -lasit `dfilters`, kivet, perhoset, auringon laskuaika `time`, kimalaisen väli `bee`), värit `PRISM_COLORS` (bittimaski 1 punainen, 2 keltainen, 4 sininen), säteen kasvu `PRISM_GROW`, hehkuaika `PRISM_HOLD`; arvonta `prismTryGenerate` (n lasia reitillä = enintään n eri kukkaväriä)
 - Myyräkuningas: kierrokset `MOLE_ROUNDS` (ruudukko, reitin peilit, väärin päin `wrong`, lasit, hämäyspeilit, kivet, pensaat, rivi `slots`, pupun reitin pituus `len`, toisto `mult`), askeleen kesto `MOLE_STEP_T`; arvonta `moleTryGenerate`. Keskimäärin pupun reitti 4,4 / 7,7 / 11,4 askelta ja 4,4 / 7,7 / 6,5 käskyä
 - Tulivuoren jätti: kierrokset `GIANT_ROUNDS` (kivien määrä, heittoväli, lentoaika, ikkunan kesto), tulipallon kantama `GIANT_FIRE_RANGE`, puhalluksen väli `GIANT_FIRE_CD`, ikkunoiden paikat `GIANT_WINDOWS`, osuma-alue `w.r = s * 0.2` (giantWindowPos), sydänmenetyksen etäisyys `viewW * 0.14` (giantShatter)
+- Pupujen pizzeria: tilaukset `PZZ_PLAN` (täytelajit `t`, kpl `c`, syöjät `e`), kultainen ikkuna `PZZ_GOLD`, paisto `PZZ_BAKE` / `PZZ_CHAR`, kärsivällisyys `PZZ_PATIENCE` + `PZZ_PAT_PER`, tulen hiipuminen `PZZ_FUEL_LIFE` / `PZZ_SLOW`, kaulinta `PZZ_ROLL_NEED`, kastike `PZZ_BRUSH`, juusto `PZZ_BAG_R` / `PZZ_CHEESE_RATE`, valmistumisraja `PZZ_SAUCE_FULL` / `PZZ_CHEESE_FULL`, pyyhkäisyn pituus `PZZ_CUT_LEN`, seurueiden välit `PZZ_ARRIVE_GAP` / `PZZ_SECOND_GAP`. Botti 0,45 s: 246 s, kultainen 11/12 (kärsivällisyys rajalla); 0,6 s: 265 s, kärsivällisyys loppuu 0,7×/peli, kultainen 6/12. Tiukempi: `PZZ_PATIENCE` [0, 21, 24]
+- Tähtikuviot: `CST_ROUNDS` (pisteviivan pituus `preview`, tuuli `wind`, etäisyys `dist`), osumasäde `CST_SNAP`, `CST_WRONG_R`, kierroksen 4 lipuminen `CST_MOVE_AMP` / `CST_MOVE_PER`, syöjäpilvi `CST_CLOUD_PER` / `CST_CLOUD_AMP`, kultainen kaukoputki `CST_GOLD_MISS`, varatähdet `CST_SPARE`. Botti (tähtäysvirhe kulmassa ja voimassa): tarkka 3–4 hutia, normaali 14–17 (vaihteluväli 5–31), huolimaton ~40; kesto 2,3–4,4 min
 - Sateenvarjo: kävely `UMBR_SPEED`, hytinä `UMBR_WET_T` / `UMBR_WET_SLOW`, varjon koko `UMBR_R` ja varsi `UMBR_HANDLE`, pilven varoitus `UMBR_WARN`, sade `UMBR_POUR` / tauko `UMBR_REST` / raekuurot `UMBR_HAIL` (reitin alku / loppu), kipinöiden väli `UMBR_SPARK_GAP` ja putoaminen `UMBR_SPARK_FALL`, kultainen varjo `UMBR_GOLD_WET`, osuma-alue `UMBR_PRIN_W` / `UMBR_PRIN_H`. Botilla (varjo aina prinsessan yllä sateessa, muuten kipinän alla) n. 64 s ilman tehtäviä, 0–2 kastumista
+- Yllätysjuhlat: pilven varoitus `PRT_WARN` (alku → loppu) ja `PRT_WARN_FIRST`, armonaika `PRT_GRACE`, tuijotus `PRT_LOOK` / `PRT_MUTTER` / `PRT_SINK`, kurkistuksia asemaa kohden `PRT_PEEKS`, kynnykset `PRT_PEEK_FROM` / `PRT_PEEK_TO`, viive `PRT_PEEK_DELAY`, väli `PRT_PEEK_GAP`, verhon raja `PRT_COVER`, pumppu `PRT_PUMP_T` / `PRT_PUMP_WIN` / `PRT_PUMP_EXP` / `PRT_LEAK`, pallojen koot `PRT_BAL_R`, kerma `PRT_CREAM_LEN`, vieraat `PRT_GUESTS`, koukut `PRT_HOOKS`, sädetikut `PRT_SPARKS`. Mitoitus 21.10.2026 reaktioviivebotilla: r 0,3–0,8 s ei jää kiinni, r 1,0 s 12 %:ssa kurkistuksista, r 1,2 s 50 %:ssa; kesto 2,5 min (r 0,3) – 3 min (r 0,6) – 3,7 min (r 1,0)
 - Myrskynoita: pilven lipuminen `MWITCH_DRIFT` (+`MWITCH_DRIFT_UP` per raita), jyrähdysten väli `MWITCH_JUMP_GAP`, varoitus `MWITCH_JUMP_WARN`, hyppy `MWITCH_JUMP_T`, raidan kasvu `MWITCH_GROW_T`, sadealue `mwitchInRain` (pilven leveys `mwitchCloudS`), vihje `MWITCH_HINT_IDLE`
 
 ## Tyyliopas
