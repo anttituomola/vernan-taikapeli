@@ -77,7 +77,8 @@ var PRT_PAT2 = ['AAB', 'ABBC'];
 var PRT_SHOWN = { AB: 4, ABC: 5, AAB: 6, ABBC: 6 };
 var PRT_BAL_COLS = ['#ff5a7a', '#ff9f3a', '#ffd83a', '#5fd36b', '#4aa8ff', '#a07aff', '#ff8fd0'];
 var PRT_KINDS = ['goat', 'marmot', 'eagle', 'owl', 'fox', 'hare'];
-var PRT_ST_UNITS = [16, 5, 11];      // asemien tehtäväyksiköt (kakku: 7 + kerma 2 + kynttilät + sädetikku)
+var PRT_SPARKS = 3;                  // tähtisädetikkuja kakkuun
+var PRT_ST_UNITS = [16, 5, 13];      // asemien tehtäväyksiköt (kakku: 7 + kerma 2 + kynttilät + 3 sädetikkua)
 
 var prt = {
   L: null, t: 0, idleT: 0, st: 0, stT: 0, trans: 0, sub: '', stStarted: false, unitsDone: 0,
@@ -85,7 +86,7 @@ var prt = {
   cloud: { st: 'off', t: 0, x: 0, warn: 2, blush: 0, seen: false, dmg: null, sx: 0, sy: 0, tx: 0, ty: 0, look: 0, hihi: 0 },
   peekPlan: [], peekDelay: -1, peekGap: 0, peekN: 0, seenN: 0, firstPeek: true, hatLostT: 0,
   strings: [], basket: [], posts: [], bags: [], pump: null, cake: null, guests: [], seats: [], arrivals: [],
-  drag: null, flies: [], puffs: [], bits: [], shown: {}, hintStep: null, hintT: 0,
+  drag: null, flies: [], puffs: [], bits: [], texts: [], shown: {}, hintStep: null, hintT: 0,
   fin: null, celT: 0, prin: null, cv: {}, spr: {}, cakeSpr: null, hudSpr: null, pops: 0, wrongs: 0, starsGiven: false, toolK: {}, banner: null
 };
 
@@ -282,6 +283,7 @@ function initParty() {
   prt.flies = [];
   prt.puffs = [];
   prt.bits = [];
+  prt.texts = [];
   prt.shown = {};
   prt.hintStep = null;
   prt.hintT = 0;
@@ -374,7 +376,7 @@ function prtMakeBalloons() {
 }
 function prtMakeCake() {
   var order = shuffleNums([0, 1, 2, 3, 4, 5, 6]), i;
-  prt.cake = { layers: [], rack: [], cream: 0, dollops: [], drips: 0, candles: [], light: null, spark: 0, glow: 0, squash: 0, rubT: 0, numPop: null, done: false };
+  prt.cake = { layers: [], rack: [], cream: 0, dollops: [], drips: 0, candles: [], light: null, spark: 0, sparks: [], glow: 0, squash: 0, rubT: 0, numPop: null, done: false };
   for (i = 0; i < 7; i++) prt.cake.rack.push({ col: order[i], here: true, slide: 0, wob: 0 });
 }
 function prtMakeGuests() {
@@ -463,7 +465,7 @@ function prtUnits() {
   } else if (prt.st === 1) {
     for (i = 0; i < 5; i++) if (prt.posts[i].done) n++;
   } else if (prt.st === 2) {
-    n = ck.layers.length + Math.min(2, Math.floor(ck.cream * 2.001)) + (prt.sub === 'spark' || ck.done ? 1 : 0) + (ck.done ? 1 : 0);
+    n = ck.layers.length + Math.min(2, Math.floor(ck.cream * 2.001)) + (prt.sub === 'spark' || ck.done ? 1 : 0) + ck.sparks.length;
   }
   return n;
 }
@@ -864,6 +866,7 @@ function prtDrop(d, px, py) {
         playNote([523, 587, 659, 698, 784, 880, 988][d.col] * 2, 0.07, 0.16, 'sine', 0.12);
         prt.shown.layer = true;
         prt.stStarted = true;
+        prtCheer(1, L.cakeX);
         prtAct();
         if (ck.layers.length === 7) prtCakeLayersDone();
         return;
@@ -898,15 +901,21 @@ function prtDrop(d, px, py) {
     return;
   }
   if (d.kind === 'spark') {
-    if (prtOverCake(d.x, d.y + H * 0.04) && !prtBlocked()) {
+    if (prtOverCake(d.x, d.y + H * 0.04) && !prtBlocked() && ck.sparks.length < PRT_SPARKS) {
+      ck.sparks.push({ t: 0 });
       ck.spark = 0.001;
-      ck.done = true;
+      p = prtSparkPos(ck.sparks.length - 1);
       playNote(1760, 0, 0.1, 'square', 0.05);
-      for (i = 0; i < 6; i++) playNote([1047, 1319, 1568, 2093, 2637, 3136][i], 0.05 + i * 0.07, 0.15, 'triangle', 0.18);
-      spawnSparkles(L.cakeX, prtCakeTopY() - H * 0.06, 24, '#ffe27a');
+      for (i = 0; i < 3; i++) playNote([1047, 1319, 1568][i] * (1 + ck.sparks.length * 0.25), 0.05 + i * 0.07, 0.15, 'triangle', 0.18);
+      spawnSparkles(p.x, p.y - H * 0.07, 14, '#ffe27a');
       prt.shown.spark = true;
       prtAct();
-      prtStationDone();
+      if (ck.sparks.length >= PRT_SPARKS) {
+        ck.done = true;
+        for (i = 0; i < 6; i++) playNote([1047, 1319, 1568, 2093, 2637, 3136][i], 0.25 + i * 0.07, 0.15, 'triangle', 0.18);
+        spawnSparkles(L.cakeX, prtCakeTopY() - H * 0.06, 24, '#ffe27a');
+        prtStationDone();
+      }
       return;
     }
     prtFly('spark', d.x, d.y, L.jar.x, L.jar.y - H * 0.06, {});
@@ -1107,6 +1116,14 @@ function prtDollopPos(i) {
   if (i < 8) return { x: L.cakeX + Math.cos(Math.PI + i / 7 * Math.PI) * rx * 0.8, y: top + Math.sin(i / 7 * Math.PI) * H * 0.012 - H * 0.004 };
   return { x: L.cakeX + (i - 10.5) * rx * 0.33, y: top + H * 0.035 + ((i % 2) * H * 0.03) };
 }
+function prtSparkPos(i) {
+  var L = prt.L, H = viewH, top = prtCakeTopY(), rx = L.layerW / 2;
+  return { x: L.cakeX + [-0.78, 0.78, 0][i % 3] * rx, y: top + (i < 2 ? H * 0.006 : -H * 0.006) };
+}
+function prtFloatText(x, y, txt, col) {
+  if (prt.texts.length > 12) prt.texts.shift();
+  prt.texts.push({ x: x, y: y, txt: txt, col: col || '#8a6ac8', t: 0 });
+}
 function prtCandlePos(i, n) {
   var L = prt.L, H = viewH, top = prtCakeTopY(), rx = L.layerW / 2 * 0.72, k = n > 1 ? i / (n - 1) : 0.5;
   return { x: L.cakeX + (k - 0.5) * 2 * rx, y: top + (i % 2 ? H * 0.008 : -H * 0.004) };
@@ -1185,9 +1202,18 @@ function prtUpdateLight(dt) {
 }
 
 // ---------- Asemat ----------
+// Istuvat vieraat ilahtuvat onnistumisesta (n = montako, 0 = kaikki)
+function prtCheer(n, x) {
+  var i, g, list = [];
+  for (i = 0; i < prt.guests.length; i++) { g = prt.guests[i]; if (g.st === 'seated' && g.hid <= 0 && g.cheer <= 0) list.push(g); }
+  if (x !== undefined) list.sort(function (a, b) { return Math.abs(prtSeatPos(a.seat).x - x) - Math.abs(prtSeatPos(b.seat).x - x); });
+  for (i = 0; i < list.length && (!n || i < n); i++) list[i].cheer = 0.9 + Math.random() * 0.3;
+}
 function prtStationDone() {
   var left = prt.peekPlan.length;
   prtSfx('fanfare');
+  prtCheer(0);
+  prt.prin.cheer = 1.5;
   prt.trans = 1.5;
   prt.st++;
   prt.stT = 0;
@@ -1288,7 +1314,7 @@ function prtUpdateGuests(dt) {
     if (g.st !== 'drag') {
       k = hideAll ? 1 : 0;
       if (g.hid < k) { if (g.hid === 0) g.hidFrom = prtGuestHome(g); g.hid = Math.min(1, g.hid + dt * 2.8); }
-      else if (g.hid > k) g.hid = Math.max(0, g.hid - dt * 2.4);
+      else if (g.hid > k) { if (g.hid >= 1 && !(prt.fin && prt.fin.ph === 'boom')) { g.poke = 0.5; if (i === 0) prtSfx('hihi'); } g.hid = Math.max(0, g.hid - dt * 2.4); }
     }
     if (g.hid > 0) continue;
     if (g.st === 'arrive') {
@@ -1328,6 +1354,8 @@ function prtUpdateGuests(dt) {
     } else if (g.st === 'wait' || g.st === 'seated') prtGuestSnap(g);
   }
   for (i = 0; i < prt.seats.length; i++) if (prt.seats[i].glow > 0) prt.seats[i].glow -= dt;
+  // Pientä elämää: joku vieraista heiluttaa korviaan silloin tällöin
+  if (Math.random() < dt * 0.25 && prt.guests.length) { g = prt.guests[randInt(prt.guests.length)]; if (g.st === 'seated' && g.hid <= 0 && g.poke <= 0 && g.cheer <= 0) g.poke = 0.5; }
 }
 function prtQueueShift() {
   var i, g;
@@ -1668,9 +1696,8 @@ function updateParty(dt) {
   for (i = 0; i < prt.cake.candles.length; i++) if (prt.cake.candles[i].pop > 0) prt.cake.candles[i].pop -= dt;
   for (i = 0; i < 7; i++) if (prt.cake.rack[i].wob > 0) prt.cake.rack[i].wob -= dt;
   if (prt.cake.glow > 0) prt.cake.glow -= dt;
-  if (prt.cake.spark > 0) {
-    prt.cake.spark += dt;
-    if (Math.random() < dt * 20) spawnSparkles(prt.L.cakeX, prtCakeTopY() - viewH * 0.075, 1, Math.random() < 0.5 ? '#ffe27a' : '#ffffff');
+  for (i = 0; i < prt.cake.sparks.length; i++) {
+    if (Math.random() < dt * 9) { p = prtSparkPos(i); spawnSparkles(p.x, p.y - viewH * 0.072, 1, Math.random() < 0.5 ? '#ffe27a' : '#ffffff'); }
   }
   if (prt.cake.numPop) { prt.cake.numPop.t += dt; if (prt.cake.numPop.t > 1) prt.cake.numPop = null; }
   for (i = 0; i < 5; i++) {
@@ -1712,13 +1739,14 @@ function prtUpdateFx(dt) {
       prt.posts[f.o.post].done = true;
       prt.posts[f.o.post].pop = 0.5;
       p = prtPostBalloon(f.o.post);
+      prtCheer(1, p.x);
       spawnSparkles(p.x, p.y, 12, prt.posts[f.o.post].col);
       artPop(p.x, p.y, p.r * 1.4, '#ffffff', 'ring');
       playNote(prtNoteOfCol(f.o.post) * 2, 0, 0.2, 'triangle', 0.22);
       prt.shown.tie = true;
     }
     if (f.kind === 'ember' && f.o.g) { f.o.g.num = f.o.n; f.o.g.poke = 0.4; playNote(1568, 0, 0.08, 'sine', 0.12); }
-    if (f.kind === 'ember' && !f.o.g) { prtPuff(f.x1, f.y1, 3, '#c8c0d8', { r: 0.008 }); playNote(294, 0, 0.12, 'triangle', 0.15); }
+    if (f.kind === 'ember' && !f.o.g) { prtPuff(f.x1, f.y1, 3, '#c8c0d8', { r: 0.008 }); playNote(294, 0, 0.12, 'triangle', 0.15); prtFloatText(f.x1, f.y1, '?'); }
   }
   for (i = prt.puffs.length - 1; i >= 0; i--) {
     p = prt.puffs[i];
@@ -1728,6 +1756,7 @@ function prtUpdateFx(dt) {
     p.vx *= Math.max(0, 1 - dt * 2);
     if (p.t > p.life) prt.puffs.splice(i, 1);
   }
+  for (i = prt.texts.length - 1; i >= 0; i--) { prt.texts[i].t += dt; if (prt.texts[i].t > 1.8) prt.texts.splice(i, 1); }
   for (i = prt.bits.length - 1; i >= 0; i--) {
     b = prt.bits[i];
     b.t += dt;
@@ -1805,7 +1834,7 @@ function prtNextStep() {
     if (n > G) { p = prtCandlePos(n - 1, n); return { kind: 'candleOff', from: { x: p.x, y: p.y - H * 0.02 }, to: { x: L.candleBox.x, y: L.candleBox.y - H * 0.04 } }; }
     return { kind: 'match', from: { x: L.match.x, y: L.match.y - H * 0.06 }, to: { x: L.cakeX, y: prtCakeTopY() - H * 0.04 } };
   }
-  if (prt.sub === 'spark' && !ck.done) return { kind: 'spark', from: { x: L.jar.x, y: L.jar.y - H * 0.06 }, to: { x: L.cakeX, y: prtCakeTopY() - H * 0.04 } };
+  if (prt.sub === 'spark' && !ck.done) { p = prtSparkPos(ck.sparks.length); return { kind: 'spark', from: { x: L.jar.x, y: L.jar.y - H * 0.06 }, to: { x: p.x, y: p.y - H * 0.04 } }; }
   return null;
 }
 function prtBalFlying(i) {
@@ -2810,7 +2839,7 @@ function prtDrawCake(c) {
     p = prtCandlePos(i, ck.candles.length);
     prtDrawCandle(c, p.x, p.y, H, ck.candles[i], ck.candles[i].pop > 0 ? ck.candles[i].pop : 0);
   }
-  if (ck.spark > 0) prtDrawSparkler(c, x, top + H * 0.005, H, true);
+  for (i = 0; i < ck.sparks.length; i++) { p = prtSparkPos(i); prtDrawSparkler(c, p.x, p.y, H, true); }
   if (ck.numPop) {
     d = ck.numPop.t;
     prtText(c, String(ck.numPop.n), x + L.layerW * 0.62, top - H * 0.06 - d * H * 0.03, H * 0.045 * easeOutBack(Math.min(1, d * 4)), '#ffffff', '#a0508a');
@@ -3087,7 +3116,7 @@ function prtDrawMatch(c, x, y, H, rot, ready) {
 }
 function prtDrawJar(c, x, y, H) {
   var i;
-  for (i = 0; i < 3; i++) prtDrawSparkler(c, x - H * 0.012 + i * H * 0.012, y - H * 0.03, H, false);
+  for (i = 0; i < PRT_SPARKS - prt.cake.sparks.length; i++) prtDrawSparkler(c, x - H * 0.012 + i * H * 0.012, y - H * 0.03, H, false);
   artRoundRect(c, x - H * 0.03, y - H * 0.05, H * 0.06, H * 0.05, H * 0.012, '#eef8ff', { lineColor: '#8aa8c8', alpha: 0.85 });
   artHighlight(c, x - H * 0.018, y - H * 0.035, H * 0.005, H * 0.01, 0.6);
   drawStar(c, x, y - H * 0.022, H * 0.009, 0, 0.4);
@@ -3348,6 +3377,16 @@ function prtDrawPuffs(c) {
   }
   c.globalAlpha = 1;
 }
+function prtDrawTexts(c) {
+  var i, T, k;
+  for (i = 0; i < prt.texts.length; i++) {
+    T = prt.texts[i];
+    k = Math.min(1, T.t * 5);
+    c.globalAlpha = Math.min(1, (1.8 - T.t) * 3);
+    prtText(c, T.txt, T.x, T.y - T.t * viewH * 0.03, viewH * 0.05 * easeOutBack(k), T.col, '#ffffff');
+  }
+  c.globalAlpha = 1;
+}
 function prtDrawBits(c) {
   var i, b, a;
   for (i = 0; i < prt.bits.length; i++) {
@@ -3423,6 +3462,7 @@ function prtDrawHud(c) {
     prt.hudSpr.key = key;
   }
   c.drawImage(prt.hudSpr, hudX() - H * 0.02, 0, prt.hudSpr.sw, prt.hudSpr.sh);
+  if (!fd) { key = prtHudSlot(Math.min(3, prt.st)); artGlow(c, key.x, key.y, H * 0.045, '#fff2a0', 0.25 + Math.sin(globalT * 4) * 0.15); }
   sh = prt.hatLostT > 0 ? Math.sin(prt.hatLostT * 30) * 0.25 : 0;
   c.globalAlpha = gold ? 1 : 0.4;
   prtDrawHat(c, last.x, last.y + H * 0.022, H * 0.05, gold, sh);
@@ -3515,6 +3555,7 @@ function drawParty() {
   prtDrawPeekCloud(c, true);
   prtDrawPuffs(c);
   prtDrawBits(c);
+  prtDrawTexts(c);
   prtDrawHint(c);
   drawParticlesLayer(c);
   prtDrawBanner(c);
