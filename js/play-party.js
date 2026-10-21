@@ -3012,7 +3012,7 @@ function prtDrawTools(c) {
       c.strokeStyle = artShade(col, -0.2);
       c.lineWidth = Math.max(2, H * 0.006);
       c.beginPath(); c.moveTo(L.nozzle.x, L.nozzle.y); c.lineTo(L.balC.x, L.balC.y + r * 1.05 * k); c.stroke();
-      prtDrawBalloon(c, L.balC.x + s, L.balC.y, Math.max(H * 0.004, r * k), col, { face: pu.p > 0.25 });
+      prtDrawBalloon(c, L.balC.x + s, L.balC.y, Math.max(H * 0.004, r * k), col, { face: pu.p > 0.25, raw: true });
       if (pu.p > 0.2 && !pu.hold && pu.p < B.p0) prtPuff(L.nozzle.x, L.nozzle.y - H * 0.005, Math.random() < 0.05 ? 1 : 0, '#ffffff', { r: 0.004, vy: -0.03, life: 0.4 });
     }
     c.restore();
@@ -3345,7 +3345,7 @@ function prtDrawFlies(c) {
       c.strokeStyle = 'rgba(255,255,255,0.8)';
       c.lineWidth = 1;
       c.beginPath(); c.moveTo(x, y + r * 1.1); c.quadraticCurveTo(x - H * 0.02, y + r * 2, x + Math.sin(f.t * 12) * H * 0.01, y + r * 2.6); c.stroke();
-      prtDrawBalloon(c, x, y, r, prt.posts[f.o.post].col, { face: true });
+      prtDrawBalloon(c, x, y, r, prt.posts[f.o.post].col, { face: true, raw: true });
       continue;
     }
     k = easeOutCubic(k);
@@ -3546,15 +3546,17 @@ function prtDrawHat(c, x, y, s, gold, rot) {
   c.restore();
 }
 function prtDrawTrophy(c) {
-  var H = viewH, k = easeOutBack(Math.min(1, prt.celT / 0.8)), gold = prtGolden(), i;
-  if (k <= 0) return;
-  c.save();
-  c.translate(viewW / 2, H * 0.56);
-  c.scale(k, k);
-  artGlow(c, 0, -H * 0.08, H * 0.22, gold ? '#ffe27a' : '#ffd0e0', 0.6);
-  for (i = 0; i < 8; i++) drawStar(c, Math.cos(globalT + i * Math.PI / 4) * H * 0.15, -H * 0.08 + Math.sin(globalT + i * Math.PI / 4) * H * 0.11, H * 0.013, globalT * 2, 0.4);
-  prtDrawHat(c, 0, 0, H * 0.18, gold, Math.sin(globalT * 3) * 0.08);
-  c.restore();
+  // Juhlahattu lentää ruudun keskeltä noidan hatun huippuun (kultainen, jos pilvi ei nähnyt)
+  var H = viewH, gold = prtGolden(), i, w = prtWitchPos(), k = easeInOutSine(Math.min(1, prt.celT / 1.4)), pop = easeOutBack(Math.min(1, prt.celT / 0.5)), x, y, sz, ex, ey;
+  ex = w ? w.x - H * 0.006 : viewW / 2;
+  ey = w ? w.y - H * 0.058 * 2.55 : H * 0.4;
+  x = prtLerp(viewW / 2, ex, k);
+  y = prtLerp(H * 0.5, ey, k) - Math.sin(k * Math.PI) * H * 0.12;
+  sz = prtLerp(H * 0.17, H * 0.075, k) * pop;
+  if (sz <= 0) return;
+  artGlow(c, x, y - sz * 0.5, sz * 1.6, gold ? '#ffe27a' : '#ffd0e0', 0.6);
+  for (i = 0; i < 6; i++) drawStar(c, x + Math.cos(globalT * 1.5 + i * 1.047) * sz * 0.95, y - sz * 0.5 + Math.sin(globalT * 1.5 + i * 1.047) * sz * 0.7, sz * 0.09, globalT * 2, 0.4);
+  prtDrawHat(c, x, y, sz, gold, Math.sin(globalT * 3) * 0.08 * (1 - k) + (k >= 1 ? -0.15 : 0));
 }
 
 // ---------- Piirto: kokonaisuus ----------
@@ -3831,18 +3833,23 @@ function prtDrawBrook(c, H, p) {
 // ---------- Kartan kuvake ----------
 // Sateenkaarikakku kynttilöineen, viirinauha ja ilmapallo
 HUB_ICONS.party = function (c, x, y, s) {
-  var r = s * 0.13, i, k;
+  var r = s * 0.15, i, k, top = y + r * 1.25 - 7 * r * 0.24;
   c.strokeStyle = '#c89a70';
   c.lineWidth = Math.max(1, r * 0.08);
-  c.beginPath(); c.moveTo(x - r * 2.1, y - r * 1.9); c.quadraticCurveTo(x, y - r * 1.2, x + r * 2.1, y - r * 1.9); c.stroke();
+  c.beginPath(); c.moveTo(x - r * 2.2, y - r * 2.0); c.quadraticCurveTo(x, y - r * 1.3, x + r * 2.2, y - r * 2.0); c.stroke();
   for (i = 0; i < 5; i++) {
     k = (i + 0.5) / 5;
-    prtDrawPennant(c, x - r * 2.1 + k * r * 4.2, y - r * 1.9 + Math.sin(k * Math.PI) * r * 0.33, r * 0.55, r * 0.7, i % 5, 0);
+    c.save();
+    c.translate(x - r * 2.2 + k * r * 4.4, y - r * 2.0 + Math.sin(k * Math.PI) * r * 0.35);
+    prtPennantRaw(c, r * 0.6, r * 0.75, i % 5, false);
+    c.restore();
   }
   c.strokeStyle = 'rgba(255,255,255,0.9)';
-  c.lineWidth = 1;
-  c.beginPath(); c.moveTo(x + r * 1.5, y + r * 0.2); c.lineTo(x + r * 1.5, y - r * 0.6); c.stroke();
-  prtDrawBalloon(c, x + r * 1.5, y - r * 1.0, r * 0.45, '#ff5a7a', {});
-  for (i = 0; i < 7; i++) prtDrawLayer(c, x, y + r * 1.3 - i * r * 0.26, r * 2.0, r * 0.26, i);
-  for (i = 0; i < 3; i++) prtDrawCandle(c, x + (i - 1) * r * 0.5, y + r * 1.3 - 7 * r * 0.26 + r * 0.08, r * 2.2, { col: RAINBOW_COLORS[i * 3], lit: 1, seed: i }, 0);
+  c.lineWidth = Math.max(1, r * 0.05);
+  c.beginPath(); c.moveTo(x + r * 1.7, y + r * 0.3); c.lineTo(x + r * 1.7, y - r * 0.5); c.stroke();
+  prtDrawBalloon(c, x + r * 1.7, y - r * 0.95, r * 0.48, '#ff5a7a', {});
+  for (i = 0; i < 7; i++) prtDrawLayer(c, x, y + r * 1.25 - (i + 1) * r * 0.24, r * 2.3, r * 0.24, i);
+  prtEll(c, x, top, r * 1.18, r * 0.28);
+  artFillPath(c, '#fffaf4', top - r * 0.3, top + r * 0.3, r, { lineColor: '#d8c8e0' });
+  for (i = 0; i < 3; i++) prtDrawCandle(c, x + (i - 1) * r * 0.6, top + (i === 1 ? -r * 0.04 : r * 0.04), r * 7, { col: RAINBOW_COLORS[i * 3], lit: 1, seed: i }, 0);
 };
