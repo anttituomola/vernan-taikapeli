@@ -45,9 +45,27 @@ näkymä; alueet ovat siellä paikkoja.
 _Vältä_: manner yksinään, uusi maailma, toinen kartta
 
 **Paikka**:
-Kaukamaan maailma (esim. Lohikäärmelaakso): saaren vastine mantereella, jolla
-on nimi, sokkelo ja vartija. Yksisarvinen kävelee paikkojen välillä polkua.
+Kaukamaan tai Meren valtakunnan maailma (esim. Lohikäärmelaakso, Korallikylä):
+saaren vastine, jolla on nimi, sokkelo ja vartija. Kaukamaalla yksisarvinen
+kävelee paikkojen välillä polkua, meren pohjassa kuplasukellusvene ui.
 _Vältä_: alue, laakso yleisnimenä, saari (mantereella)
+
+**Meren valtakunta**:
+Pelin kolmas ylätason kartta meren pohjassa. Sinne **sukelletaan** Kaukamaan
+länsirannikolta kuplasukellusveneellä, kun Myrskynoita on ystävä; pintapoiju
+nostaa takaisin. Siellä hallitsee **Merikuningatar**, jonka kruunusta valohelmet
+ovat kadoksissa.
+_Vältä_: meri yksinään (meri = saaristokartan vesi), merenpohja (Kuutamosaaren kenttä), uusi maailma
+
+**Kuplasukellusvene**:
+Lasikupuinen sukellusvene, jossa prinsessa ja yksisarvinen matkustavat:
+Kaukamaan kartalla sukelluksen aloittaja ja Meren valtakunnan kartan nappula.
+_Vältä_: sukellusvene yksinään, kupla (kupla on ilmakupla)
+
+**Valohelmi**:
+Meren valtakunnan palautettava aarre: jokaisen paikan vartija palauttaa yhden
+helmen Merikuningattaren kruunuun (vrt. saarten värit ja Kaukamaan säteet).
+_Vältä_: helmi yksinään (Helmipajan helmet ovat koruhelmiä), jalokivi
 
 **Pomppu**:
 Hohtometsän verbi: prinsessa pomppii itsestään sienten hatuilla, ja sormi ohjaa
@@ -105,6 +123,11 @@ Pupuparin pihalla molemmat ohjaavat reaaliajassa omalla puolellaan.
 sen päällä. Pupuparin pihalla lisäksi **luukku** (avaimen ojennus aidan yli)
 ja **STOP-laatta**, joka pysäyttää toisen puolen traktorin.
 _Vältä_: kaksinpeli (ei kilpailla), moninpeli
+
+**Sukellus**:
+Lyhyt siirtymäkohtaus Kaukamaalta Meren valtakuntaan ja takaisin (nousu):
+vesi tummuu, kalat ja kuplat ohittavat, pohja nousee esiin. Napautus ohittaa.
+_Vältä_: välianimaatio, cutscene
 
 **Purjehdus**:
 Lyhyt siirtymäkohtaus saaristosta Kaukamaalle ja takaisin: vene avomerellä,
@@ -274,6 +297,11 @@ Kaari:
    kutsuttu sateenkaarijuhliin; sade ja aurinko yhdessä tekevät
    sateenkaaren, autetaan häntä. **Ystävä** (finaalin jälkeen): noita
    muuttaa linnan torniin, ja juhlitaan kaikkien kanssa.
+8. **Pullopostiä** ('kutsu', Kaukamaan kartalla ystävyyden jälkeen): rantaan
+   ajelehtii pullo, Meren valtakunnassa on pimeää ja valohelmet ovat kadoksissa;
+   kuplasukellusvene odottaa. **Meren valtakunta** ('meri', ensimmäisellä
+   sukelluksella): Merikuningatar ja kruunu, jokainen paikka antaa yhden helmen.
+   Luolan arka mustekala kurkkii kartalla; hänen tarinansa kerrotaan myöhemmin.
 
 **Linna kasvaa**: maailmojen vartijat avaavat linnaan huoneita. Sali aukeaa
 Linnasaaresta, keittiö Karkkisaaresta, torni Kuutamosaaresta, puutarha

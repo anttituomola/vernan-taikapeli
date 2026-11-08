@@ -30,6 +30,10 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/flow-sea.js` — saaristokartta (ylin navigaatio), saaret ja sateenkaari
 - `js/flow-land.js` — **Kaukamaa**: mantereen kartta (toinen ylätason kartta), purjehdus
   saaristosta mantereelle ja takaisin, saaristokartan avomerimerkki ja sokkelon tienviitta
+- `js/flow-deep.js` — **Meren valtakunta**: meren pohjan kartta (kolmas ylätason kartta), sukellus
+  Kaukamaalta ja takaisin, Kaukamaan kuplasukellusvene, pintapoiju, Merikuningattaren kruunun
+  valohelmet ja yhteiset meripiirrot (`drawDeepMermaid`, `drawDeepSub`, `drawDeepFish`, `drawDeepBubble`,
+  `drawDeepPearl`, `drawDeepRays`, `drawDeepStarfish`)
 - `js/flow-hub.js` — saaren karttalabyrintti, vaiheen käynnistys ja kentän elinkaaren
   yhteinen alku (`levelBegin`: tilan nollaus ja nappien ilme rekisterin lipuista; skipTo
   ja uusinta kutsuvat sitä ennen kentän omaa init-koukkua)
@@ -85,6 +89,7 @@ Peli on jaettu osiin, jotta uusia vaiheita on helppo lisätä:
 - `js/play-gear.js`, `play-chute.js`, `play-tune.js`, `play-belt.js`, `play-cuckoo.js`, `play-clockwork.js` — Kaukamaa, Kellopaja (maailma 14): Rataspaja (rattaat kolmiohilassa, suunta ja jumi), Vesikouru (kourupalojen kääntö, vesi myllyihin), Soittorasia (nastat rullaan melodian mukaan), Lelutehdas (vaihteet lajittelevat lelut), Käkikello (viisarit kellonaikaan) ja vartija Kellokoneisto (vesi, rattaat ja viisarit yhdessä koneessa), sokkelon maasto `HUB_TILE_DECOR.clock`
 - `js/play-train.js`, `play-fishing.js`, `play-hotair.js`, `play-post.js`, `play-hideseek.js`, `play-twin.js` — Kaukamaa, Maalaiskylä (maailma 15): Junamatka, Kalastusretki ja Ilmapalloretki (pitkät helpot kentät), vartija Postireitti (ohjelmointi) sekä bonushuoneet Kanojen piilosleikki (tökättävä kylä) ja Pupuparin piha (reaaliaikainen yhteispeli kahdelle), sokkelon maasto `HUB_TILE_DECOR.farm`
 - `js/play-umbrella.js`, `play-witch.js` — Kaukamaa, Myrskyvuori (maailma 17, viimeinen paikka `place.final`): Sateenvarjo (pitkä helppo kenttä, varjon raahaus sateessa), Yllätysjuhlat (`play-party.js`, salaiset juhlat noidalle, 21.10.2026) ja ystävyyden vartija Myrskynoita (auringonsäteet sateeseen -> sateenkaari)
+- `js/play-seahorse.js`, `play-pearlshop.js`, `play-crabking.js` — Meren valtakunta, Korallikylä (maailma 19): Merihevoskyyti (pitkä helpohko, parvi perään), Helmipaja (helminauhatilaukset, leipomon logiikka) ja vartija Rapukuningas (kuoripeli); sokkeloteema `js/hub-theme-meri.js` (`HUB_THEMES.coral`)
 - `js/hub-theme-storm.js` — Myrskyvuoren sokkeloteema `HUB_THEMES.storm` (laventelikalliot, sadepilvet, lätäköt, kurkkivat sateenkaaret; käyttää hub-theme-manner.js:n yhteisiä paloja)
 - `js/play-trek.js` — **pitkän kentän kehys**: Pikkupilven kotimatka (Kaukamaa, Pilvilinna, maailma 18). Etappien
   rekisteröinti (`trekRegister`), matkakartta (etapin valinta ja asemalta toiselle kävely), oma tallennus
@@ -154,6 +159,22 @@ vihjaavat tulevista alueista. Länsirannan vene palauttaa saaristoon (vene
 ilmestyy avomerimerkille eikä avaa saarta itsestään). Mantereen sokkelossa
 lähtöruutu **B** on tienviitta, joka palauttaa mantereen kartalle; vene-nappi
 tekee saman. Peli avautuu sille kartalle, jolla viimeksi oltiin.
+
+**Meren valtakunta** on pelin kolmas ylätason kartta (`js/flow-deep.js`), meren
+pohjassa. Kun Myrskynoita on ystävä, Kaukamaan kartalla näytetään luku
+**Pullopostiä** ('kutsu'), ja länsirannikon meressä kelluu **kuplasukellusvene**.
+Sen napautus aloittaa **sukelluksen** (vesi tummuu, kalat ja kuplat ohittavat,
+Korallikylän kupolit nousevat pohjasta; napautus ohittaa). Meren pohjassa
+**paikat** (`DEEP_PLACES`, rekisterin `place`-kentästä maailmoille, joilla
+`region: 'deep'`) toimivat kuten Kaukamaalla, mutta nappulana on
+kuplasukellusvene. Hämärät laikut (`DEEP_FOG`) vihjaavat tulevista paikoista.
+Vasemman yläosan **pintapoiju** nostaa takaisin Kaukamaalle. Jokaisen
+tavallisen paikan vartija palauttaa **valohelmen** oikean yläkulman
+Merikuningattaren kruunuun (`storySeen.pearls`, paljastus kuten Kaukamaan
+säteet); kruunussa on paikka myös hämärien paikkojen helmille. Kartan
+yllätykset: simpukka aukeaa (3.: rapu kurkistaa), kalaparvi pyrähtää, valas
+laulaa, kruunu kilisee, mustekalan luolan silmät painuvat kiinni (3.: helmien
+hohde luolan perällä, vihje tulevasta) ja muualle napautus puhaltaa kuplan.
 
 **Tarina:** Myrskynoidan myrsky huuhtoi sateenkaaren värit merelle. Jokaisen
 saaren vartija palauttaa yhden värin, ja saaristokartan sateenkaari täyttyy
