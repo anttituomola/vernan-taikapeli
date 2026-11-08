@@ -1745,6 +1745,7 @@ var WORLDS = [
         tap: function (x, y) { handleSeahorseTap(x, y); },
         resize: function () { resizeSeahorse(); },
         renderBg: function (b, w, h) { renderSeahorseBg(b, w, h); },
+        renderBgLayers: function () { return seahorseLayers(); },
         light: { rays: true, raysColor: '#d8f6ff', raysAlpha: 0.3, tint: ['rgba(120,220,255,0.05)', 'rgba(20,60,120,0.08)'], vignette: 0.26 },
         respawn: function () { respawnSeahorse(); }
       },
