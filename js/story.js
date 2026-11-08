@@ -667,7 +667,7 @@ STORY_SCENES.worldintro = function (c, w, h, t, a) {
     artFillPath(c, '#f0b8e4', py - h * 0.1, py - h * 0.03, h * 0.05, { lineColor: '#8a5a8a' });
     artGlow(c, px, py - h * 0.01, h * 0.12, '#ffffff', 0.5 + Math.sin(t * 3) * 0.2);
     drawDeepPearl(c, px, py - h * 0.01, h * 0.03, 0);
-    drawDeepSub(c, w * 0.24, h * 0.72, h * 0.07, 1, false);
+    drawDeepSub(c, w * 0.45, h * 0.8, h * 0.065, 1, false);
     return;
   }
   if (a.gold) {
