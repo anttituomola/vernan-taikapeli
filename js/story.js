@@ -73,6 +73,26 @@ var STORY_CHAPTERS = [
       { scene: 'invite', text: 'TU-LE MEI-DÄN LIN-NAAN, MYRS-KY-NOI-TA! OL-LAAN YS-TÄ-VI-Ä.' },
       { scene: 'party', text: 'JA SIT-TEN JUH-LIT-TIIN KAIK-KI YH-DES-SÄ. LOP-PU.' }
     ]
+  },
+  {
+    // Uusi seikkailu: pullopostin kutsu meren pohjaan (Kaukamaan kartalla
+    // ystävyysjuhlan jälkeen); sukellusvene ilmestyy länsirannikolle
+    id: 'kutsu', title: 'PUL-LO-POS-TI', where: 'land', cover: 'bottle',
+    cond: function () { return storyWorldDone('Myrskyvuori') && !!storySeen.ystava && DEEP_PLACES.length > 0; },
+    pages: [
+      { scene: 'bottle', text: 'RAN-TAAN AJE-LEH-TI PUL-LO. SII-NÄ ON KIR-JE!' },
+      { scene: 'deepdark', text: 'ME-REN VAL-TA-KUN-NAS-SA ON PI-ME-ÄÄ. VA-LO-HEL-MET O-VAT KA-DOK-SIS-SA.' },
+      { scene: 'divego', text: 'KUP-LA-SU-KEL-LUS-VE-NE O-DOT-TAA. SU-KEL-LE-TAAN AUT-TA-MAAN!' }
+    ]
+  },
+  {
+    // Meren valtakuntaan saavuttaessa: kuningattaren kruunu ja mitä täältä etsitään
+    id: 'meri', title: 'ME-REN VAL-TA-KUN-TA', where: 'deep', cover: 'queen',
+    cond: function () { return true; },
+    pages: [
+      { scene: 'queen', text: 'TÄ-MÄ ON ME-REN VAL-TA-KUN-TA. TÄÄL-LÄ HAL-LIT-SEE ME-RI-KU-NIN-GA-TAR.' },
+      { scene: 'pearlcrown', text: 'KRUU-NUN HEL-MET O-VAT KA-DOK-SIS-SA. JO-KAI-NEN PAIK-KA AN-TAA YH-DEN HEL-MEN.' }
+    ]
   }
 ];
 
@@ -95,7 +115,8 @@ var STORY_WORLD_INTROS = {
   'Kellopaja': { name: 'KEL-LO-PA-JA', ray: true },
   'Maalaiskylä': { name: 'MAA-LAIS-KY-LÄ', ray: true },
   'Pupula': { name: 'PU-PU-LA', ray: true },
-  'Myrskyvuori': { name: 'MYRS-KY-VUO-RI', witch: true }
+  'Myrskyvuori': { name: 'MYRS-KY-VUO-RI', witch: true },
+  'Korallikylä': { name: 'KO-RAL-LI-KY-LÄ', pearl: true }
 };
 (function () {
   var i, w, d, pages, arg;
@@ -103,7 +124,7 @@ var STORY_WORLD_INTROS = {
     w = WORLDS[i];
     d = STORY_WORLD_INTROS[w.name];
     if (!d) continue;
-    arg = { world: w.id, color: d.color, gold: d.gold, fox: d.fox, ray: d.ray, witch: d.witch };
+    arg = { world: w.id, color: d.color, gold: d.gold, fox: d.fox, ray: d.ray, witch: d.witch, pearl: d.pearl };
     if (d.witch) {
       pages = [
         { scene: 'witchsad', text: 'MYRS-KY-NOI-TA ON VUO-REL-LA. HÄN O-SAA TEH-DÄ VAIN SA-DET-TA.' },
@@ -119,6 +140,10 @@ var STORY_WORLD_INTROS = {
       pages = [
         { scene: 'worldintro', arg: arg, text: 'MYRS-KY-PIL-VI PA-KE-NI POH-JOI-SEEN. TÄ-MÄ ON ' + d.name + '.' },
         { scene: 'worldintro', arg: arg, text: 'RE-VON-TU-LI-KET-TU TIE-TÄÄ TIEN E-TEEN-PÄIN. ET-SI-TÄÄN SE!' }
+      ];
+    } else if (d.pearl) {
+      pages = [
+        { scene: 'worldintro', arg: arg, text: 'TÄ-MÄ ON ' + d.name + '. TÄÄL-TÄ LÖY-TYY KRUU-NUUN VA-LO-HEL-MI!' }
       ];
     } else if (d.ray) {
       pages = [
@@ -178,7 +203,7 @@ function storyLegacySeen() {
   var i, ch;
   for (i = 0; i < STORY_CHAPTERS.length; i++) {
     ch = STORY_CHAPTERS[i];
-    if (ch.id === 'alku' || ch.where === 'land' || ch.where === 'world') continue;
+    if (ch.id === 'alku' || ch.where === 'land' || ch.where === 'deep' || ch.where === 'world') continue;
     if (ch.cond()) storySeen[ch.id] = true;
   }
 }
@@ -632,7 +657,19 @@ STORY_SCENES.worldintro = function (c, w, h, t, a) {
     try { th.backdrop(c, w, h, { ox: w * 0.5, oy: h * 0.55, cell: h * 0.07, cols: 0, rows: 0 }); } catch (e) { /* teema ilman tukea pienelle kortille */ }
   }
   var cx = w * 0.64, cy = h * 0.22, bob = Math.sin(t * 2) * h * 0.015;
-  if (!a.ray || a.witch) drawWitchCloud(c, cx, cy, h * 0.1, t, 0.7);
+  if ((!a.ray && !a.pearl) || a.witch) drawWitchCloud(c, cx, cy, h * 0.1, t, 0.7);
+  if (a.pearl) {
+    // Avoin simpukka, jossa valohelmi hehkuu, ja kuplasukellusvene
+    var px = w * 0.7, py = h * 0.5 + bob * 0.5;
+    c.beginPath(); c.arc(px, py, h * 0.07, 0, Math.PI); c.closePath();
+    artFillPath(c, '#d8a0d0', py, py + h * 0.07, h * 0.05, { lineColor: '#8a5a8a' });
+    c.beginPath(); c.arc(px, py - h * 0.03, h * 0.07, Math.PI * 1.05, Math.PI * 1.95); c.closePath();
+    artFillPath(c, '#f0b8e4', py - h * 0.1, py - h * 0.03, h * 0.05, { lineColor: '#8a5a8a' });
+    artGlow(c, px, py - h * 0.01, h * 0.12, '#ffffff', 0.5 + Math.sin(t * 3) * 0.2);
+    drawDeepPearl(c, px, py - h * 0.01, h * 0.03, 0);
+    drawDeepSub(c, w * 0.24, h * 0.72, h * 0.07, 1, false);
+    return;
+  }
   if (a.gold) {
     artGlow(c, cx, cy + h * 0.25 + bob, h * 0.12, '#ffe27a', 0.6);
     drawStar(c, cx, cy + h * 0.25 + bob, h * 0.06, t, 1);
@@ -749,6 +786,93 @@ STORY_SCENES.invite = function (c, w, h, t) {
   drawCastle(c, w * 0.78, h * 0.84, h * 0.3);
   storyRider(c, w * 0.3, h * 0.82, h * 0.0028, 1, false, t);
   drawStormWitch(c, w * 0.55, h * 0.55 + Math.sin(t * 2) * h * 0.02, h * 0.06, -1, 'happy');
+};
+// Meren valtakunnan kohtaukset
+function storyUnderwater(c, w, h, top, bot) {
+  var g = c.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, top);
+  g.addColorStop(1, bot);
+  c.fillStyle = g;
+  c.fillRect(0, 0, w, h);
+}
+function storySeabed(c, w, h, y, t) {
+  var x;
+  c.fillStyle = '#e9d6a0';
+  c.beginPath(); c.moveTo(0, h);
+  for (x = 0; x <= w; x += w / 20) c.lineTo(x, y + Math.sin(x / w * 7) * h * 0.02);
+  c.lineTo(w, h); c.closePath(); c.fill();
+  drawKelp(c, w * 0.08, y + h * 0.04, h * 0.3, 0, Math.sin(t) * 0.7);
+  drawKelp(c, w * 0.92, y + h * 0.05, h * 0.26, 0, Math.sin(t + 1) * 0.7);
+  drawCoral(c, w * 0.2, y + h * 0.06, h * 0.07, '#ff8fa8', false);
+  drawCoral(c, w * 0.8, y + h * 0.07, h * 0.06, '#ffb35c', false);
+}
+STORY_SCENES.bottle = function (c, w, h, t) {
+  storySky(c, w, h, '#a8dcff', '#fff2d8');
+  storySea(c, w, h, h * 0.55, t, false);
+  storyHill(c, w, h, h * 0.86, '#f0dba0', 0.4);
+  // Pullo keinuu aalloilla rantaa kohti, kirje sisällä
+  var k = Math.min(1, t / 3), bx = w * (0.75 - k * 0.25), by = h * (0.66 + k * 0.12) + Math.sin(t * 2.5) * h * 0.01;
+  c.save();
+  c.translate(bx, by);
+  c.rotate(-0.4 + Math.sin(t * 2) * 0.15);
+  artRoundRect(c, -h * 0.07, -h * 0.03, h * 0.12, h * 0.06, h * 0.03, '#bfe8d8', { lineColor: '#5a9a8a', hi: 0.5 });
+  artRoundRect(c, h * 0.045, -h * 0.015, h * 0.04, h * 0.03, h * 0.008, '#bfe8d8', { lineColor: '#5a9a8a' });
+  artRoundRect(c, h * 0.08, -h * 0.017, h * 0.02, h * 0.034, h * 0.006, '#b8865a', { lineColor: '#7a5030' });
+  artRoundRect(c, -h * 0.05, -h * 0.017, h * 0.08, h * 0.034, h * 0.006, '#fff6e0', { lineColor: '#c8a870' });
+  c.restore();
+  storyRider(c, w * 0.22, h * 0.86, h * 0.0026, 1, false, t);
+};
+STORY_SCENES.deepdark = function (c, w, h, t) {
+  var i;
+  storyUnderwater(c, w, h, '#4a6a9a', '#1a2a5a');
+  storySeabed(c, w, h, h * 0.8, t);
+  drawDeepMermaid(c, w * 0.5, h * 0.5 + Math.sin(t * 1.4) * h * 0.02, h * 0.16, { hair: '#ffd24f', tail: '#8a7cff', crown: true, mood: 'sad', t: t });
+  // Kruunun tyhjät helmipaikat
+  for (i = 0; i < 5; i++) artCircle(c, w * 0.5 + (i - 2) * h * 0.05, h * 0.12, h * 0.016, '#3a5a7a', { lineColor: '#b8862a' });
+  c.fillStyle = 'rgba(10,20,50,0.25)';
+  c.fillRect(0, 0, w, h);
+};
+STORY_SCENES.divego = function (c, w, h, t) {
+  var i, b, k = Math.min(1, t / 3);
+  storySky(c, w, h, '#a8dcff', '#e6f6ff');
+  storySea(c, w, h, h * 0.42, t, false);
+  drawDeepSub(c, w * 0.5, h * (0.5 + k * 0.25), h * 0.1, 1, true);
+  for (i = 0; i < 5; i++) {
+    b = (t * 0.6 + i / 5) % 1;
+    drawDeepBubble(c, w * 0.42 + Math.sin(i * 2 + t * 3) * h * 0.03, h * (0.75 - b * 0.35) + k * h * 0.2, h * 0.012, 1 - b);
+  }
+  // Ystävä Myrskynoita vilkuttaa matkaan
+  drawStormWitch(c, w * 0.82, h * 0.2 + Math.sin(t * 2) * h * 0.02, h * 0.05, -1, 'happy');
+};
+STORY_SCENES.queen = function (c, w, h, t) {
+  storyUnderwater(c, w, h, '#8fe4f4', '#2a6fb8');
+  drawDeepRays(c, w, h, t, 0.8);
+  storySeabed(c, w, h, h * 0.82, t);
+  drawDeepMermaid(c, w * 0.62, h * 0.48 + Math.sin(t * 1.5) * h * 0.02, h * 0.17, { hair: '#ffd24f', tail: '#8a7cff', crown: true, mood: 'happy', t: t, wave: true });
+  drawDeepSub(c, w * 0.25, h * 0.66, h * 0.07, 1, false);
+  drawDeepFish(c, w * 0.85, h * 0.3, h * 0.025, '#ff9d5c', -1, t * 6);
+};
+STORY_SCENES.pearlcrown = function (c, w, h, t) {
+  var i, n = 5, lit = Math.min(n, Math.floor(t * 1.2)), cx = w * 0.5, cy = h * 0.45, s = h * 0.1, px;
+  storyUnderwater(c, w, h, '#6fc4e8', '#2a5fa8');
+  artGlow(c, cx, cy, s * 3, '#bff4ff', 0.25);
+  c.beginPath();
+  c.moveTo(cx - s * 2, cy + s * 0.6);
+  for (i = 0; i <= n; i++) {
+    px = cx - s * 2 + i * s * 0.8;
+    c.lineTo(px, cy);
+    if (i < n) c.lineTo(px + s * 0.4, cy - s * 0.8);
+  }
+  c.lineTo(cx + s * 2, cy + s * 0.6);
+  c.closePath();
+  artFillPath(c, '#ffd24f', cy - s * 0.8, cy + s * 0.6, s * 0.6, { lineColor: '#b8862a' });
+  for (i = 0; i < n; i++) {
+    px = cx - s * 2 + i * s * 0.8 + s * 0.4;
+    // Helmet syttyvät vuorotellen ja sammuvat: niitä etsitään
+    if (i < lit && (t % 5) < 3.5) drawDeepPearl(c, px, cy - s * 0.85, s * 0.17, 1);
+    else artCircle(c, px, cy - s * 0.85, s * 0.13, '#3a5a7a', { lineColor: '#b8862a' });
+  }
+  storySeabed(c, w, h, h * 0.84, t);
 };
 STORY_SCENES.party = function (c, w, h, t) {
   storySky(c, w, h, '#8fd0ff', '#e6f6ff');

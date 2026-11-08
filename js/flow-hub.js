@@ -305,6 +305,7 @@ function hubArrive(ch) {
   if (ch === 'B') {
     // Satama: vene vie saaristokartalle; mantereella tienviitta vie Kaukamaan kartalle
     if (worldRegion(hubWorld) === 'land') showLand();
+    else if (worldRegion(hubWorld) === 'deep') showDeep();
     else showSea();
     return;
   }
@@ -1005,6 +1006,7 @@ function drawHub() {
       room = hubRooms()[ch];
       if (ch === 'B') {
         if (worldRegion(hubWorld) === 'land') drawLandSign(ctx, x, y, s);
+        else if (worldRegion(hubWorld) === 'deep') drawDeepSign(ctx, x, y, s);
         else drawHarbor(ctx, x, y, s);
         if (seaHarborHint()) drawHintArrow(ctx, x, y - s * 0.95);
       } else if (ch === 'G') {

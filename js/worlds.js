@@ -1715,6 +1715,68 @@ var WORLDS = [
         respawn: function () { respawnConstel(); }
       }
     ]
+  },
+  {
+    // Meren valtakunta (region 'deep'): pelin kolmas ylätason kartta meren
+    // pohjassa. Sinne sukelletaan Kaukamaan rannikon kuplapoijusta, kun
+    // Myrskynoita on ystävä. Paikat palauttavat Merikuningattaren kruunuun
+    // valohelmiä (flow-deep.js). Ensimmäinen paikka: Korallikylä.
+    id: 19, name: 'Korallikylä', region: 'deep', band: 'coral',
+    place: { fx: 0.30, fy: 0.62, size: 0.95, finaleKind: 'crabking', deco: ['seahorse', 'pearlshop', 'crabking'] },
+    map: [
+      '#########',
+      '#B.....M#',
+      '#######.#',
+      '#H......#',
+      '#.#######',
+      '#......K#',
+      '#########'
+    ],
+    levels: [
+      {
+        // Pitkä ja helpohko: merihevosella kelpometsän, korallikaarien ja
+        // hohtoluolan läpi, kalaparvi kerääntyy perään
+        kind: 'seahorse', room: 'M', name: 'Merihevoskyyti', color: '#4fc8c0', script: 'play-seahorse',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#3a9ed0', ambient: null, fg: null,
+        init: function () { initSeahorse(); },
+        update: function (dt) { updateSeahorse(dt); },
+        draw: function () { drawSeahorse(); },
+        tap: function (x, y) { handleSeahorseTap(x, y); },
+        resize: function () { resizeSeahorse(); },
+        renderBg: function (b, w, h) { renderSeahorseBg(b, w, h); },
+        light: { rays: true, raysColor: '#d8f6ff', raysAlpha: 0.3, tint: ['rgba(120,220,255,0.05)', 'rgba(20,60,120,0.08)'], vignette: 0.26 },
+        respawn: function () { respawnSeahorse(); }
+      },
+      {
+        // Tilaus ja kokoa (leipomon logiikka): merenneidot tilaavat helminauhoja
+        kind: 'pearlshop', room: 'H', name: 'Helmipaja', color: '#ff9fc8', script: 'play-pearlshop',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 6000,
+        bgColor: '#9fd8e8', ambient: null, fg: null,
+        init: function () { initPearlshop(); },
+        update: function (dt) { updatePearlshop(dt); },
+        draw: function () { drawPearlshop(); },
+        tap: function (x, y) { handlePearlshopTap(x, y); },
+        resize: function () { resizePearlshop(); },
+        renderBg: function (b, w, h) { renderPearlshopBg(b, w, h); },
+        light: { rays: true, raysColor: '#e8fbff', raysAlpha: 0.26, tint: ['rgba(255,230,240,0.05)', 'rgba(40,100,150,0.06)'], vignette: 0.22 },
+        respawn: function () { respawnPearlshop(); }
+      },
+      {
+        // Vartija: Rapukuningas piilottaa valohelmen simpukankuoren alle ja sekoittaa
+        kind: 'crabking', room: 'K', name: 'Rapukuningas', color: '#ff7a5a', script: 'play-crabking',
+        control: 'tap', usesJump: false, usesWand: false, usesHearts: false, celebrateMs: 7000,
+        bgColor: '#f2dcae', ambient: null, fg: null,
+        init: function () { initCrabking(); },
+        update: function (dt) { updateCrabking(dt); },
+        draw: function () { drawCrabking(); },
+        tap: function (x, y) { handleCrabkingTap(x, y); },
+        resize: function () { resizeCrabking(); },
+        renderBg: function (b, w, h) { renderCrabkingBg(b, w, h); },
+        light: { rays: true, raysColor: '#e0f8ff', raysAlpha: 0.3, tint: ['rgba(255,240,210,0.05)', 'rgba(30,80,140,0.07)'], vignette: 0.24 },
+        respawn: function () { respawnCrabking(); }
+      }
+    ]
   }
 ];
 
@@ -1723,6 +1785,7 @@ var PHASES = {};
 var HUB_WORLDS = {};
 var ISLANDS = [];       // saaristokartan saaret (region 'sea')
 var LAND_PLACES = [];   // Kaukamaan paikat (region 'land')
+var DEEP_PLACES = [];   // Meren valtakunnan paikat (region 'deep')
 var WORLD_INFO = {};    // id -> { name, region, band }
 (function () {
   var lvl = 0, wi, li, ni, w, lv, p, rooms, order, nxt;
@@ -1780,7 +1843,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
       });
     }
     if (w.place) {
-      LAND_PLACES.push({
+      (w.region === 'deep' ? DEEP_PLACES : LAND_PLACES).push({
         world: w.id, name: w.name,
         fx: w.place.fx, fy: w.place.fy, size: w.place.size,
         finaleKind: w.place.finaleKind, deco: w.place.deco, final: !!w.place.final,
@@ -1795,7 +1858,7 @@ var WORLD_INFO = {};    // id -> { name, region, band }
 function scriptManifest() {
   var files = [
     'state', 'art', 'audio', 'progress', 'world', 'draw-actors', 'fx', 'ambient', 'props',
-    'flow-hub', 'hub-themes', 'hub-theme-linna', 'hub-theme-saaret1', 'hub-theme-saaret2', 'hub-theme-pohjoinen', 'hub-theme-manner', 'hub-theme-storm', 'flow-sea', 'flow-land', 'flow-home', 'flow-bank', 'flow-yard', 'flow-coop', 'flow-stable', 'flow-pasture', 'flow-castle', 'story',
+    'flow-hub', 'hub-themes', 'hub-theme-linna', 'hub-theme-saaret1', 'hub-theme-saaret2', 'hub-theme-pohjoinen', 'hub-theme-manner', 'hub-theme-storm', 'hub-theme-meri', 'flow-sea', 'flow-land', 'flow-deep', 'flow-home', 'flow-bank', 'flow-yard', 'flow-coop', 'flow-stable', 'flow-pasture', 'flow-castle', 'story',
     'tasks-core', 'tasks-extra', 'tasks-drag', 'tasks-mix', 'tasks-more', 'tasks-read', 'tasks-fair', 'tasks-north', 'tasks-write',
     'platformer', 'pen-core'
   ];

@@ -28,6 +28,9 @@ function loop(ts) {
   } else if (mode === 'land') {
     updateLand(dt);
     drawLand();
+  } else if (mode === 'deep') {
+    updateDeep(dt);
+    drawDeep();
   } else if (mode === 'home') {
     updateHome(dt);
     drawHome();
@@ -117,6 +120,10 @@ function pointerDown(e) {
   }
   if (mode === 'land') {
     handleLandTap(p.x, p.y);
+    return;
+  }
+  if (mode === 'deep') {
+    handleDeepTap(p.x, p.y);
     return;
   }
   if (mode === 'home') {
@@ -228,6 +235,7 @@ document.getElementById('karttaBtn').addEventListener('click', function () {
 document.getElementById('castleBtn').addEventListener('click', function () {
   if (mode === 'sea') showCastle('sea');
   else if (mode === 'land' && land.state === 'map') showCastle('land');
+  else if (mode === 'deep' && deep.state === 'map') showCastle('deep');
 });
 
 // Vene-nappi: saaren sokkelosta takaisin saaristokartalle (mantereella Kaukamaan
@@ -236,6 +244,7 @@ document.getElementById('seaBtn').addEventListener('click', function () {
   if (mode === 'castle') { castleBack(); return; }
   if (mode !== 'hub') return;
   if (worldRegion(hubWorld) === 'land') showLand();
+  else if (worldRegion(hubWorld) === 'deep') showDeep();
   else showSea();
 });
 
@@ -316,6 +325,11 @@ window.VT = {
   landTap: handleLandTap,
   landTick: function (dt) { updateLand(dt); drawLand(); },
   places: LAND_PLACES,
+  deep: showDeep,
+  deepState: function () { return deep; },
+  deepTap: handleDeepTap,
+  deepTick: function (dt) { updateDeep(dt); drawDeep(); },
+  deepPlaces: DEEP_PLACES,
   nest: function () { return nest; },
   fly: function () { return fly; },
   fire: function () { tryFire(); },
@@ -465,12 +479,13 @@ hubWorld = lastIsland;
 resize();
 // Peli alkaa siltä kartalta, jolla viimeksi oltiin: saaristo tai Kaukamaa
 if (worldRegion(hubWorld) === 'land' && landUnlocked()) showLand();
+else if (worldRegion(hubWorld) === 'deep' && deepUnlocked()) showDeep();
 else showSea();
 // Kun fontti on ladattu, esirenderöidyt taustat (sokkelo, meri, koti, etuala)
 // piirretään uudestaan, jotta canvas-teksti käyttää oikeaa fonttia.
 if (document.fonts && document.fonts.load) {
   document.fonts.load('bold 20px Fredoka').then(function () {
-    hubBgKey = ''; seaBgKey = ''; homeBgKey = ''; castleBgKey = ''; fgKey = '';
+    hubBgKey = ''; seaBgKey = ''; homeBgKey = ''; castleBgKey = ''; fgKey = ''; deepBgKey = '';
     resize();
   }).catch(function () {});
 }

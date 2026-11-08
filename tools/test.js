@@ -207,7 +207,7 @@ check(!!ISLANDS, 'ISLANDS exists');
 if (ISLANDS && HUB_WORLDS && PHASES) {
   const wkeys = Object.keys(HUB_WORLDS).map(Number).sort((a, b) => a - b);
   // Saaret (region 'sea') ja Kaukamaan paikat (region 'land') yhdessä kattavat maailmat
-  const places = g('LAND_PLACES') || [];
+  const places = (g('LAND_PLACES') || []).concat(g('DEEP_PLACES') || []);
   check(
     ISLANDS.concat(places).map((i) => i.world).sort((a, b) => a - b).join(',') === wkeys.join(','),
     'islands and land places match hub worlds in order'

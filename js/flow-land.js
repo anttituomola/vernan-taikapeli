@@ -284,6 +284,7 @@ function handleLandTap(px, py) {
     return;
   }
   if (mapWitchTap(px, py)) return;
+  if (deepEntryTap(px, py)) return;
   h = landHarbor();
   dx = px - h.x; dy = py - h.y;
   if (dx * dx + dy * dy <= h.r * h.r * 1.6) {
@@ -373,6 +374,7 @@ function drawLand() {
   // Satama ja vene länsirannalla
   var bob = Math.sin(globalT * 2.5) * viewH * 0.005;
   drawBoat(ctx, h.x, h.y + bob, viewH * 0.09);
+  drawDeepEntry(ctx);
 
   for (i = 0; i < LAND_FOG.length; i++) {
     p = landPlacePos(LAND_FOG[i]);

@@ -72,6 +72,7 @@ function showCastle(from) {
 
 function castleBack() {
   if (castleFrom === 'land' && landUnlocked()) showLand();
+  else if (castleFrom === 'deep' && deepUnlocked()) showDeep();
   else showSea();
 }
 
