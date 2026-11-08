@@ -1585,8 +1585,10 @@ function pshDrawTrophy(c) {
   if (k <= 0) return;
   c.save();
   c.translate(x, y);
-  c.scale(k, k);
-  artGlow(c, 0, 0, H * 0.26, gold ? '#ffe27a' : '#ffd0e0', 0.6);
+  c.scale(k * 1.15, k * 1.15);
+  c.fillStyle = 'rgba(255,250,255,0.6)';
+  c.beginPath(); c.arc(0, 0, H * 0.25, 0, Math.PI * 2); c.fill();
+  artGlow(c, 0, 0, H * 0.3, gold ? '#ffe27a' : '#ffd0e0', 0.6);
   for (i = 0; i < 8; i++) drawStar(c, Math.cos(globalT + i * Math.PI / 4) * H * 0.24, Math.sin(globalT + i * Math.PI / 4) * H * 0.17, H * 0.014, globalT * 2, 0.4);
   // Kuningattaren helminauha isona
   c.strokeStyle = '#ffd8ec';
